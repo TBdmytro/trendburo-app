@@ -14,6 +14,11 @@ export default async function handler(req, res) {
     res.end(JSON.stringify({ products, generatedAt: new Date(now).toISOString(), demo: !!store.demo }));
   } catch (e) {
     res.statusCode = 503; res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.end(JSON.stringify({ products: [], error: "Каталог временно недоступен" }));
+    // Код причины без секретов — чтобы по ответу было видно, что чинить
+    const m = String(e && e.message || "");
+    const reason = /не настроена|не настроена|SANITY_PROJECT_ID/.test(m) ? "no-config"
+      : /Sanity query (\d+)/.test(m) ? "sanity-" + m.match(/Sanity query (\d+)/)[1]
+      : /fetch failed|ENOTFOUND|getaddrinfo/i.test(m) ? "sanity-unreachable" : "other";
+    res.end(JSON.stringify({ products: [], error: "Каталог временно недоступен", reason }));
   }
 }
