@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-09-29-admin-v2">
+<meta name="trendburo-build" content="2026-09-29-admin-v3">
 <title>Trend Büro — Каталог</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -178,6 +178,32 @@ label.f{display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--g2
 .actbar .btn.pub{background:#fff;color:var(--ink)}
 .more{display:flex;justify-content:center;margin-top:18px}
 
+/* ---------- Новый товар ---------- */
+.addg{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+.addf{padding:22px;display:flex;flex-direction:column;gap:20px}
+.addf h3{margin:0;font-size:15px}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.slot{position:relative;aspect-ratio:4/5;border:1.5px dashed #d3d4d8;border-radius:14px;background:#fafafb;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:12.5px;cursor:pointer;overflow:hidden;transition:border-color .15s,background .15s}
+.slot:hover,.slot.over{border-color:var(--ink);background:#f3f3f5}
+.slot.has{border-style:solid;border-color:var(--line);background:#f4f4f5;cursor:default}
+.slot img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
+.slot .tag{position:absolute;left:8px;top:8px;font-size:11px;background:var(--ink);color:#fff;padding:2px 8px;border-radius:99px}
+.slot .ctl{position:absolute;right:6px;bottom:6px;display:flex;gap:4px}
+.slot .ctl button{width:28px;height:28px;border-radius:8px;border:0;background:rgba(255,255,255,.95);box-shadow:0 1px 3px rgba(0,0,0,.12);font-size:13px}
+.slot .busy{position:absolute;inset:0;display:grid;place-items:center;background:rgba(255,255,255,.7)}
+.prev{position:sticky;top:24px}
+.prev .pv{overflow:hidden}
+.prev .ph{aspect-ratio:4/5;background:linear-gradient(180deg,#f7f7f8,#efeff1);display:grid;place-items:center}
+.prev .ph img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
+.prev .dots{display:flex;gap:5px;justify-content:center;padding:10px 0 0}
+.prev .dots i{width:6px;height:6px;border-radius:50%;background:#d6d7db}.prev .dots i.on{background:var(--ink)}
+.prev .bd{padding:14px 18px 18px;display:flex;flex-direction:column;gap:4px}
+.prev .bd .br{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.prev .bd .tt{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.prev .bd .pr{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:6px}
+.prev .bd .dl{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--g2)}
+@media (max-width:1100px){.addg{grid-template-columns:1fr}.prev{position:static}}
+
 /* ---------- Товары ---------- */
 .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
 .toolbar input{max-width:340px}
@@ -279,10 +305,13 @@ const IC = {
   warn: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',
   ok: '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/>',
-  file: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>'
+  file: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
+  add: '<path d="M12 5v14M5 12h14"/>',
+  van: '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/>',
+  img: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 9"/>'
 };
 const svg = k => `<svg class="i" viewBox="0 0 24 24">${IC[k]}</svg>`;
-const NAV = [["home", "Обзор"], ["load", "Загрузка"], ["jobs", "Задачи"], ["products", "Товары"], ["prices", "Цены"], ["sources", "Источники"]];
+const NAV = [["home", "Обзор"], ["add", "Новый товар"], ["load", "Загрузка"], ["jobs", "Задачи"], ["products", "Товары"], ["prices", "Цены"], ["sources", "Источники"]];
 const STATUS = { queued: ["В очереди", "run"], running: ["Загружается", "dark run"], waiting: ["Пауза, повтор", "warn run"], done: ["Готово", "ok"], failed: ["Ошибка", "err"], blocked: ["Сайт блокирует", "err"], cancelled: ["Отменено", ""] };
 const MODE = { link: "Один товар", links: "По ссылкам", category: "Разделы сайта", full: "Весь каталог", file: "Файл" };
 const IKIND = { new: "Новые", update: "Обновления", duplicate: "Возможные дубли", incomplete: "Неполные", error: "Ошибки", excluded: "Исключены", pricechange: "Изменения цен" };
@@ -323,7 +352,7 @@ function go(v) {
   document.querySelectorAll("#nav button").forEach(b => b.dataset.v === (k === "job" ? "jobs" : k) ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
   $("#main").innerHTML = `<div class="empty"><span class="spin"></span></div>`; $("#main").onclick = null; $(".actbar")?.remove();
   window.scrollTo(0, 0);
-  const fn = { home: vHome, load: vLoad, jobs: vJobs, job: vJob, products: vProducts, prices: vPrices, sources: vSources }[k] || vHome;
+  const fn = { home: vHome, add: vAdd, load: vLoad, jobs: vJobs, job: vJob, products: vProducts, prices: vPrices, sources: vSources }[k] || vHome;
   fn(v.split(":")[1]).catch(e => { $("#main").innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(e.message)}</div></div>`; });
 }
 async function getSources(force) { if (!sources || force) sources = (await api("sources")).sources; return sources; }
@@ -351,14 +380,14 @@ async function pump() {
 }
 let refreshT = 0;
 function refreshCurrent(force) { const now = Date.now(); if (!force && now - refreshT < 2500) return; refreshT = now; if (view === "jobs") vJobs(true); else if (view.startsWith("job:")) vJob(view.split(":")[1], true); }
-const srcName = id => (sources || []).find(s => s.id === id)?.name || id;
+const srcName = id => id === "manual" ? "Добавлен вручную" : (sources || []).find(s => s.id === id)?.name || id;
 
 /* ---------- Обзор ---------- */
 async function vHome() {
   const [o, src] = await Promise.all([api("overview"), getSources(true)]);
   const h = new Date().getHours(), hi = h < 5 ? "Доброй ночи" : h < 12 ? "Доброе утро" : h < 18 ? "Добрый день" : "Добрый вечер";
   const brands = src.filter(s => s.connected && s.id !== "feed");
-  $("#main").innerHTML = head(`${hi}, ${esc(me)}`, "Каталог Trend Büro: что на витрине и что ждёт проверки", `<button class="btn" data-go="load">${svg("load")}Загрузить товары</button>`) + `
+  $("#main").innerHTML = head(`${hi}, ${esc(me)}`, "Каталог Trend Büro: что на витрине и что ждёт проверки", `<button class="btn ghost" data-go="load">${svg("load")}Загрузить с сайта</button><button class="btn" data-go="add">${svg("add")}Новый товар</button>`) + `
   <div class="stats">
     <div class="card stat"><span>На витрине</span><b class="num">${o.published}</b></div>
     <div class="card stat"><span>Ждут проверки</span><b class="num">${o.waiting}</b></div>
@@ -488,6 +517,128 @@ function downloadTemplate() {
   a.download = "trendburo-shablon.csv"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+/* ---------- Новый товар (вручную) ---------- */
+const BRAND_LIST = ["Louis Vuitton", "Dior", "Gucci", "Hermès", "Chanel", "Prada", "Miu Miu", "Bottega Veneta", "Saint Laurent", "Celine", "Loewe", "The Row", "Balenciaga", "Fendi", "Valentino", "Cartier", "Loro Piana", "Brunello Cucinelli"];
+const SIZE_PRESETS = { clothing: ["XS", "S", "M", "L", "XL"], shoes: ["35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45"], jewelry: ["15", "16", "17", "18"] };
+async function vAdd(editId) {
+  const F = { id: null, brand: "", title: "", category: "bags", gender: "w", boutique: "", sizes: [], color: "", availability: "online", images: [], url: "", status: "published" };
+  if (editId) {
+    const { product: p } = await api("product", { query: { id: editId } });
+    Object.assign(F, { id: p._id, brand: p.brand, title: p.title, category: p.category, gender: p.gender, boutique: p.offers?.[0]?.boutique || "", sizes: p.sizes || [], color: (p.colors || [])[0] || "", availability: Object.values(p.offers?.[0]?.availability || {})[0]?.status || "online", images: (p.images || []).map(i => i.url), url: p.sourceUrl || "" });
+  }
+  let busy = 0, price = null, shot = 0;
+  $("#main").innerHTML = head(editId ? "Изменить карточку" : "Новый товар", "Три фото, название и цена бутика — наша цена посчитается сама") + `
+  <div class="addg">
+    <div class="card addf">
+      <div><h3>Фото</h3><p class="hint" style="margin:4px 0 12px">Первое — обложка. Перетащите файлы, выберите с компьютера или телефона. Лучше на светлом фоне.</p>
+        <div class="slots" id="slots"></div>
+        <input type="file" id="fpick" accept="image/jpeg,image/png,image/webp,image/heic" multiple hidden>
+        <div class="row" style="margin-top:10px"><input type="text" id="furl" placeholder="…или вставьте ссылку на фото (https://…)" style="flex:1"><button class="btn ghost sm" id="furlAdd">Добавить</button></div></div>
+      <div class="row" style="align-items:flex-end">
+        <label class="f" style="flex:1;min-width:200px">Бренд<input type="text" id="fBrand" list="brandList" value="${esc(F.brand)}" placeholder="Louis Vuitton"><datalist id="brandList">${BRAND_LIST.map(b => `<option value="${esc(b)}">`).join("")}</datalist></label>
+        <label class="f" style="flex:2;min-width:240px">Название<input type="text" id="fTitle" value="${esc(F.title)}" placeholder="Neverfull MM"></label></div>
+      <div><h3 style="margin-bottom:10px">Категория</h3><div class="chips" id="fCat">${LOADCATS.concat(["watches"]).map(c => `<button class="chip" data-fcat="${c}" aria-pressed="${F.category === c}">${CATS[c]}</button>`).join("")}</div></div>
+      <div class="seg" id="fG">${[["w", "Женское"], ["m", "Мужское"], ["u", "Унисекс"]].map(([k, v]) => `<button data-fg="${k}" aria-pressed="${F.gender === k}">${v}</button>`).join("")}</div>
+      <div class="row" style="align-items:flex-end">
+        <label class="f" style="flex:1;min-width:180px">Цена в бутике, €<input type="number" id="fPrice" min="1" step="1" inputmode="decimal" value="${esc(F.boutique)}" placeholder="3000"></label>
+        <div style="flex:2;min-width:240px" class="hint" id="fCalc">Наша цена появится здесь</div></div>
+      <div><h3 style="margin-bottom:10px">Размеры <span class="hint" style="font-weight:400">если есть</span></h3><div class="chips" id="fSizes"></div>
+        <div class="row" style="margin-top:10px"><input type="text" id="fSizeIn" placeholder="Свой размер, например 38.5" style="max-width:240px"><button class="btn ghost sm" id="fSizeAdd">Добавить</button></div></div>
+      <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:180px">Цвет<input type="text" id="fColor" value="${esc(F.color)}" placeholder="Monogram, Black…"></label>
+        <label class="f" style="flex:2;min-width:240px">Ссылка на товар у бренда <span class="hint" style="font-weight:400">для менеджера, клиенту не видна</span><input type="text" id="fUrl" value="${esc(F.url)}" placeholder="https://…"></label></div>
+      <div><h3 style="margin-bottom:10px">Наличие</h3><div class="seg" id="fAv">${[["online", "Можно заказать"], ["boutique", "Уточнить наличие"], ["out", "Нет в наличии"]].map(([k, v]) => `<button data-fav="${k}" aria-pressed="${F.availability === k}">${v}</button>`).join("")}</div></div>
+      <div class="row" style="padding-top:6px;border-top:1px solid var(--line)"><button class="btn lg" id="fPub">${editId ? "Сохранить" : "Опубликовать на витрину"}</button><button class="btn ghost lg" id="fDraft">В черновик</button><span class="err" id="fErr"></span></div>
+    </div>
+    <aside class="prev"><div class="hint" style="margin:0 0 8px 4px">Так увидит клиент</div><div class="card pv" id="pv"></div></aside>
+  </div>`;
+  const drawSlots = () => {
+    const n = Math.max(3, F.images.length + (F.images.length < 8 ? 1 : 0));
+    $("#slots").innerHTML = Array.from({ length: n }, (_, i) => {
+      const u = F.images[i];
+      if (u) return `<div class="slot has">${i === 0 ? '<span class="tag">обложка</span>' : ""}<img src="${esc(u)}" alt=""><div class="ctl">${i ? `<button data-left="${i}" aria-label="Левее">←</button>` : ""}<button data-rm="${i}" aria-label="Убрать">×</button></div></div>`;
+      return `<div class="slot" data-pick>${busy && i === F.images.length ? '<span class="spin"></span>Загружаем…' : `${svg("img")}<span>${i === 0 ? "Главное фото" : "Фото " + (i + 1)}</span>`}</div>`;
+    }).join("");
+  };
+  const drawSizes = () => {
+    const preset = SIZE_PRESETS[F.category] || [];
+    const all = [...new Set([...preset, ...F.sizes])];
+    $("#fSizes").innerHTML = all.length ? all.map(z => `<button class="chip" data-fsz="${esc(z)}" aria-pressed="${F.sizes.includes(z)}">${esc(z)}</button>`).join("") : `<span class="hint">Для этой категории размеров нет — добавьте свой, если нужно</span>`;
+  };
+  const drawPrev = () => {
+    const img = F.images[shot] || F.images[0];
+    $("#pv").innerHTML = `<div class="ph">${img ? `<img src="${esc(img)}" alt="">` : `<span class="hint">${svg("img")}</span>`}</div>
+      ${F.images.length > 1 ? `<div class="dots">${F.images.map((_, i) => `<i class="${i === shot ? "on" : ""}" data-shot="${i}"></i>`).join("")}</div>` : ""}
+      <div class="bd"><span class="br">${esc(F.brand || "Бренд")}</span><span class="tt">${esc(F.title || "Название")}</span>
+      ${F.sizes.length ? `<div class="hint">Размеры: ${esc(F.sizes.join(", "))}</div>` : ""}
+      <span class="pr num">${price ? eur(price.ua) : "— €"}</span><span class="dl">${svg("van")}С доставкой в Украину</span>
+      ${price ? `<span class="hint">Европа и Дубай: ${eur(price.eu)} + доставка</span>` : ""}</div>`;
+  };
+  let pt;
+  const calc = () => { clearTimeout(pt); pt = setTimeout(async () => {
+    const b = Number(F.boutique);
+    if (!(b > 0)) { price = null; $("#fCalc").textContent = "Наша цена появится здесь"; return drawPrev(); }
+    try { price = await api("pricePreview", { method: "POST", body: { boutique: b } }); $("#fCalc").innerHTML = `На витрине: <b class="num" style="color:var(--fg)">${eur(price.ua)}</b> Украина с доставкой · ${eur(price.eu)} Европа/Дубай + доставка`; } catch {}
+    drawPrev();
+  }, 250); };
+  const resize = file => new Promise(async (ok, bad) => {
+    try {
+      const bmp = await createImageBitmap(file).catch(() => null);
+      let w, h, src;
+      if (bmp) { src = bmp; w = bmp.width; h = bmp.height; }
+      else { const im = new Image(); im.src = URL.createObjectURL(file); await im.decode(); src = im; w = im.naturalWidth; h = im.naturalHeight; }
+      const k = Math.min(1, 1600 / Math.max(w, h)); const c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(src, 0, 0, c.width, c.height);
+      c.toBlob(b => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.readAsDataURL(b); }, "image/jpeg", 0.86);
+    } catch (e) { bad(new Error("Не удалось прочитать фото: " + file.name)); }
+  });
+  const addFiles = async files => {
+    for (const f of [...files].slice(0, 8 - F.images.length)) {
+      if (!/^image\//.test(f.type) && !/\.(heic|jpe?g|png|webp)$/i.test(f.name)) { toast("Это не фото: " + f.name); continue; }
+      busy++; drawSlots();
+      try { const data = await resize(f); const { url } = await api("imageUpload", { method: "POST", body: { data } }); F.images.push(url); }
+      catch (e) { toast(e.message); }
+      busy--; drawSlots(); drawPrev();
+    }
+  };
+  drawSlots(); drawSizes(); drawPrev(); calc();
+  const main = $("#main");
+  main.onclick = e => {
+    const t = e.target.closest("[data-pick],[data-rm],[data-left],[data-fcat],[data-fg],[data-fav],[data-fsz],[data-shot],button"); if (!t) return;
+    if ("pick" in t.dataset) return $("#fpick").click();
+    if (t.dataset.rm) { F.images.splice(+t.dataset.rm, 1); shot = 0; drawSlots(); return drawPrev(); }
+    if (t.dataset.left) { const i = +t.dataset.left; [F.images[i - 1], F.images[i]] = [F.images[i], F.images[i - 1]]; drawSlots(); return drawPrev(); }
+    if (t.dataset.fcat) { F.category = t.dataset.fcat; document.querySelectorAll("[data-fcat]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fcat === F.category)); F.sizes = F.sizes.filter(z => !Object.values(SIZE_PRESETS).flat().includes(z) || (SIZE_PRESETS[F.category] || []).includes(z)); drawSizes(); return drawPrev(); }
+    if (t.dataset.fg) { F.gender = t.dataset.fg; document.querySelectorAll("[data-fg]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fg === F.gender)); return; }
+    if (t.dataset.fav) { F.availability = t.dataset.fav; document.querySelectorAll("[data-fav]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fav === F.availability)); return; }
+    if (t.dataset.fsz) { const z = t.dataset.fsz; F.sizes = F.sizes.includes(z) ? F.sizes.filter(x => x !== z) : [...F.sizes, z]; t.setAttribute("aria-pressed", F.sizes.includes(z)); return drawPrev(); }
+    if (t.dataset.shot) { shot = +t.dataset.shot; return drawPrev(); }
+    if (t.id === "fSizeAdd") { const v = $("#fSizeIn").value.trim(); if (v && !F.sizes.includes(v)) F.sizes.push(v); $("#fSizeIn").value = ""; drawSizes(); return drawPrev(); }
+    if (t.id === "furlAdd") { const v = $("#furl").value.trim(); if (!/^https:\/\//.test(v)) return toast("Нужна ссылка https://…"); if (F.images.length < 8) F.images.push(v); $("#furl").value = ""; drawSlots(); return drawPrev(); }
+    if (t.id === "fPub" || t.id === "fDraft") return save(t.id === "fDraft" ? "draft" : "published", t);
+  };
+  main.oninput = e => {
+    const id = e.target.id;
+    if (id === "fBrand") F.brand = e.target.value; else if (id === "fTitle") F.title = e.target.value; else if (id === "fColor") F.color = e.target.value; else if (id === "fUrl") F.url = e.target.value;
+    else if (id === "fPrice") { F.boutique = e.target.value; calc(); }
+    if (["fBrand", "fTitle"].includes(id)) drawPrev();
+  };
+  main.onkeydown = e => { if (e.key === "Enter" && e.target.id === "fSizeIn") { e.preventDefault(); $("#fSizeAdd").click(); } if (e.key === "Enter" && e.target.id === "furl") { e.preventDefault(); $("#furlAdd").click(); } };
+  $("#fpick").onchange = e => { addFiles(e.target.files); e.target.value = ""; };
+  $("#slots").addEventListener("dragover", e => { e.preventDefault(); e.target.closest(".slot")?.classList.add("over"); });
+  $("#slots").addEventListener("dragleave", e => e.target.closest(".slot")?.classList.remove("over"));
+  $("#slots").addEventListener("drop", e => { e.preventDefault(); addFiles(e.dataTransfer.files); });
+  const save = async (status, btn) => {
+    $("#fErr").textContent = "";
+    if (busy) return toast("Подождите, фото ещё загружаются");
+    const t = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+    try {
+      const { product } = await api("manualSave", { method: "POST", body: { ...F, status, boutique: Number(F.boutique) } });
+      toast(status === "draft" ? "Сохранено в черновик" : `На витрине: ${product.title} · ${eur(product.pricing?.ua)}`);
+      if (editId) go("products"); else vAdd();
+    } catch (err) { $("#fErr").textContent = err.message; btn.disabled = false; btn.textContent = t; }
+  };
+}
+
 /* ---------- Задачи ---------- */
 async function vJobs(quiet) {
   const [{ jobs }] = await Promise.all([api("jobs"), getSources()]);
@@ -608,7 +759,7 @@ function itemCard(i, sel) {
 /* ---------- Товары ---------- */
 async function vProducts() {
   const F = { q: "", status: "" };
-  $("#main").innerHTML = head("Товары", "Правки хранятся отдельно от данных сайта — обновление цен их не перезапишет") + `
+  $("#main").innerHTML = head("Товары", "Правки хранятся отдельно от данных сайта — обновление цен их не перезапишет", `<button class="btn" data-go="add">${svg("add")}Новый товар</button>`) + `
   <div class="toolbar"><input type="search" id="pq" placeholder="Поиск: бренд, название, артикул"><div class="seg" id="pst">${[["", "Все"], ["published", "На витрине"], ["draft", "Черновики"], ["hidden", "Скрытые"]].map(([k, v]) => `<button data-st="${k}" aria-pressed="${k === ""}">${v}</button>`).join("")}</div><span class="sp"></span><span class="hint num" id="ptot"></span></div>
   <div class="pgrid" id="plist"></div>`;
   const load = async () => {
@@ -623,6 +774,7 @@ async function vProducts() {
   };
   let t; $("#pq").oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(load, 300); };
   $("#main").onclick = e => {
+    if (e.target.closest("[data-go]")) return go(e.target.closest("[data-go]").dataset.go);
     const s = e.target.closest("[data-st]"); if (s) { F.status = s.dataset.st; document.querySelectorAll("#pst button").forEach(b => b.setAttribute("aria-pressed", b.dataset.st === F.status)); return load(); }
     const r = e.target.closest("[data-open]"); if (r) editor(r.dataset.open, load);
   };
@@ -651,7 +803,7 @@ async function editor(id, reload) {
       ${sizes.length || colors.length ? `<div class="hint">${colors.length ? "Цвета: " + esc(colors.join(", ")) : ""}${colors.length && sizes.length ? " · " : ""}${sizes.length ? "Размеры: " + esc(sizes.join(", ")) : ""}</div>` : ""}
       <div><div class="f" style="margin-bottom:8px">Фото — порядок и обложка <span class="hint" style="font-weight:400">${(p.images || []).length}${(p.images || []).length < 3 ? ", меньше трёх" : ""}</span></div>
       <div class="imgs">${order.map((u, i) => { const im = imgBy.get(u) || { url: u }; return `<figure class="${u === cover ? "cover" : ""}"><img src="${esc(im.url)}" alt="" loading="lazy"><div class="ctl"><button data-up="${i}" aria-label="Левее">←</button><button data-cov="${i}">${u === cover ? "обложка" : "обложкой"}</button><button data-dn="${i}" aria-label="Правее">→</button></div></figure>`; }).join("")}</div></div>
-      <div class="row"><button class="btn" data-save>Сохранить</button>
+      <div class="row"><button class="btn" data-save>Сохранить</button>${p.manual ? `<button class="btn ghost" data-editcard>Изменить фото, цену, размеры</button>` : ""}
         ${p.status === "published" ? `<button class="btn ghost" data-st="draft">Снять с витрины</button>` : `<button class="btn ghost" data-st="published">Опубликовать</button>`}</div>
     </div>
     <div class="sec"><h2>На витрине</h2><div class="card pad hint">${storefront ? `Показывается как «${esc(storefront.title)}» · ${eur(storefront.price.ua)} Украина · ${eur(storefront.price.eu)} Европа/Дубай · наличие: ${esc(AV[storefront.availability]?.[0] || storefront.availability)}` : "Не показывается: черновик, скрыт или нет цены"}</div></div>
@@ -671,6 +823,7 @@ async function editor(id, reload) {
     if (b.dataset.up) return sw(+b.dataset.up, +b.dataset.up - 1);
     if (b.dataset.dn) return sw(+b.dataset.dn, +b.dataset.dn + 1);
     if (b.dataset.cov) { cover = order[+b.dataset.cov]; return draw(); }
+    if ("editcard" in b.dataset) { close(); return go("add:" + id); }
     if (b.dataset.primary) { await api("productSave", { method: "POST", body: { id, changes: { primaryOffer: b.dataset.primary } } }); toast("Основное предложение выбрано"); close(); reload(); editor(id, reload); return; }
     if (b.dataset.st) { await api("status", { method: "POST", body: { ids: [id], status: b.dataset.st } }); toast(b.dataset.st === "published" ? "Опубликовано" : "Снято с витрины"); close(); reload(); return; }
     if ("save" in b.dataset) {

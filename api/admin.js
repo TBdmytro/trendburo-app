@@ -10,6 +10,7 @@ import { createJob, tick, cancelJob, ACTIVE } from "../lib/worker.js";
 import { publishItems, setStatus, saveOverrides, computePricing } from "../lib/publish.js";
 import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
 import { toStorefront } from "../lib/catalog.js";
+import { saveManualProduct } from "../lib/manual.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
 const slim = j => { if (!j) return j; const { rows, seen, queue, attempts, catRoot, discover, ...rest } = j; return { ...rest, queued: (queue || []).length, discoverLeft: (j.discover || []).length }; };
@@ -135,6 +136,23 @@ export default async function handler(req, res) {
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });
         return send(res, 200, { product: p, storefront: toStorefront(p) });
+      }
+      case "imageUpload": {
+        // Фото для ручной карточки: только JPEG/PNG/WebP до 3,5 МБ (браузер заранее уменьшает до 1600 px)
+        const buf = Buffer.from(String(body.data || ""), "base64");
+        if (!buf.length) return send(res, 400, { error: "Пустой файл" });
+        if (buf.length > 3.5e6) return send(res, 400, { error: "Фото больше 3,5 МБ" });
+        const type = buf[0] === 0xff && buf[1] === 0xd8 ? "image/jpeg" : buf[0] === 0x89 && buf[1] === 0x50 ? "image/png" : buf.slice(8, 12).toString() === "WEBP" ? "image/webp" : null;
+        if (!type) return send(res, 400, { error: "Нужен JPEG, PNG или WebP" });
+        if (!store.uploadImage) return send(res, 400, { error: "Хранилище фото не подключено" });
+        const up = await store.uploadImage(buf, { filename: "manual-" + Date.now() + "." + type.split("/")[1], contentType: type });
+        return send(res, 200, { url: up.url });
+      }
+      case "manualSave": return send(res, 200, { product: await saveManualProduct(store, body, { by: me.name, pricingCfg }) });
+      case "pricePreview": {
+        const { priceFor } = await import("../lib/pipeline.js");
+        const p = priceFor({ sourceKind: "official", boutique: Number(body.boutique) || null, region: "DE", currency: "EUR" }, pricingCfg, Number(body.pinned) || null);
+        return send(res, 200, { ua: p.ua, eu: p.eu, dxb: p.dxb });
       }
       case "productSave": return send(res, 200, { product: await saveOverrides(store, body.id, body.changes || {}, me.name, pricingCfg) });
 

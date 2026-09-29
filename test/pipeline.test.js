@@ -297,3 +297,20 @@ test("разделы сайта: «Название | ссылка» даёт п
   assert.deepEqual(job.discover, ["https://de.louisvuitton.com/deu-de/damen/handtaschen", "https://de.louisvuitton.com/deu-de/herren/taschen"]);
   assert.equal(job.labels["https://de.louisvuitton.com/deu-de/damen/handtaschen"], "Женские сумки");
 });
+
+test("ручная карточка: 3 фото, название, цена бутика → витрина с ценой ×1,10 и размерами", async () => {
+  const { saveManualProduct } = await import("../lib/manual.js");
+  const store = new MemoryStore();
+  await assert.rejects(saveManualProduct(store, { brand: "Louis Vuitton", title: "Neverfull MM", category: "bags", boutique: 2200, images: [] }), /фото/);
+  const p = await saveManualProduct(store, { brand: "Louis Vuitton", title: "Neverfull MM", category: "bags", gender: "w", boutique: 2200,
+    images: ["https://cdn.sanity.io/images/x/y/1.jpg", "https://cdn.sanity.io/images/x/y/2.jpg", "https://cdn.sanity.io/images/x/y/3.jpg"], availability: "online" });
+  assert.equal(p.status, "published"); assert.equal(p.pricing.ua, 2420); assert.equal(p.pricing.eu, 2375);
+  const sf = toStorefront(p);
+  assert.equal(sf.images.length, 3); assert.equal(sf.price.ua, 2420); assert.equal(sf.title, "Neverfull MM"); assert.equal(sf.orderable, true);
+  const shoe = await saveManualProduct(store, { brand: "Dior", title: "B27", category: "shoes", gender: "m", boutique: 1150, sizes: ["40", "41"], images: ["https://cdn.sanity.io/images/x/y/4.jpg"] });
+  assert.deepEqual(toStorefront(shoe).sizes.map(s => s.size), ["40", "41"]);
+  // правка той же карточки не создаёт новую
+  const again = await saveManualProduct(store, { id: p._id, brand: "Louis Vuitton", title: "Neverfull MM", category: "bags", boutique: 2300, images: p.images.map(i => i.url) });
+  assert.equal(again._id, p._id); assert.equal(again.pricing.ua, 2530);
+  assert.equal((await store.list("product")).length, 2);
+});

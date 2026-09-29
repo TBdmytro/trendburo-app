@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-09-29-live-v2">
+<meta name="trendburo-build" content="2026-09-29-live-v3">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
@@ -262,6 +262,13 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero{position:relative;height:430px;background:var(--studio);display:grid;place-items:center;overflow:hidden}
 .pv-hero .v{width:62%;display:grid;place-items:center;transition:opacity .25s,transform .45s var(--ease)}
 .pv-hero .v.low{width:78%}
+.pv-gal{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.pv-gal::-webkit-scrollbar{display:none}
+.pv-gal .sl{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;padding:calc(64px + env(safe-area-inset-top,0px)) 12% 70px}
+.pv-gal img{max-width:100%;max-height:300px;object-fit:contain;mix-blend-mode:multiply}
+.pv-dots{position:absolute;left:0;right:0;bottom:44px;display:flex;justify-content:center;gap:6px;pointer-events:none}
+.pv-dots i{width:6px;height:6px;border-radius:50%;background:rgba(28,29,32,.2);transition:background .2s,width .2s}
+.pv-dots i.on{background:#1c1d20;width:16px;border-radius:3px}
 .pv-hero .v svg{width:100%;height:auto}
 .pv-hero .v.swap{opacity:0;transform:scale(.96)}
 .pv-hero .newp{position:absolute;top:calc(64px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;padding:5px 10px;border-radius:99px}
@@ -1185,12 +1192,13 @@ function openProduct(id){
   if(sizes){const pz=p.cat==="shoes"?prefs.shoe:prefs.cloth;if(pz&&sizes.includes(pz))size=pz}
   const more=p?P.filter(x=>x.bk===p.bk&&x.id!==p.id):[];
   const like=p?P.filter(x=>x.cat===p.cat&&x.bk!==p.bk&&x.price<p.price*1.6&&x.price>p.price*.5).slice(0,8):RESALE.filter(x=>x.id!==it.id);
-  const s=push(it.brand,`<div class="pv-hero">${p&&p.st?'<span class="newp">В наличии</span>':p&&p.isNew?'<span class="newp">Новинка</span>':r?`<span class="newp">${esc(r.cond)}</span>`:""}<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span></div>
+  const s=push(it.brand,`<div class="pv-hero">${p&&p.st?'<span class="newp">В наличии</span>':p&&p.isNew?'<span class="newp">Новинка</span>':r?`<span class="newp">${esc(r.cond)}</span>`:""}${p&&p.live&&p.imgs&&p.imgs.length>1?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl"><img src="${esc(im.src)}" alt="" ${i?'loading="lazy"':""} decoding="async"></div>`).join("")}</div><div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:18px"></div>
    ${more.length?`<div class="ondark"><div class="sech"><h2>Ещё ${esc(it.brand)}</h2><button class="more" data-act="brand" data-bk="${p.bk}">Все</button></div><div class="hrail">${more.map(pcHTML).join("")}</div></div>`:""}
    ${like.length?`<div class="ondark"><div class="sech"><h2>${r?"Ещё в ресейле":"Похожее"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div></div>`:""}
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
     foot:`<div class="foot dark"><button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order>${r?"Купить":(p&&p.live&&!p.orderable)?"Уточнить наличие":"В корзину"}</button></div>`});
+  {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/g.clientWidth);dots.forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true})}}
   const priceNote=()=>r?"Цена продавца":d==="ua"?dIcon("ua",13)+"С доставкой в Украину":dIcon(d,13)+"+ доставка "+(d==="eu"?"по Европе":"в Дубай");
   const draw=()=>{const cw=cws[ci];
     s.querySelector("#pvb").innerHTML=`
@@ -1208,7 +1216,7 @@ function openProduct(id){
     </div>`;
     s.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{d=b.dataset.d;draw()});
     s.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=size===b.dataset.sz?"":b.dataset.sz;draw()});
-    s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;const v=s.querySelector("#pvv");v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180);resetBtn();draw()});
+    s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;const v=s.querySelector("#pvv");if(v){v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180)}resetBtn();draw()});
   };
   const ob=s.querySelector("[data-order]"),fb=s.querySelector("[data-favp]");
   const resetBtn=()=>{if(!r){delete ob.dataset.added;ob.textContent="В корзину"}};
