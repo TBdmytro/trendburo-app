@@ -1,0 +1,239 @@
+import { test, beforeEach } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { setDnsCheck, checkUrl, parseRobots, robotsAllows, isPrivateIp } from "../lib/http.js";
+import { parseProductPage, mapAvailability } from "../lib/jsonld.js";
+import { normalize, shortTitle, detectCategory } from "../lib/normalize.js";
+import { findMatch, chooseOffer, leadMax, effectiveAvailability, mergeOffer } from "../lib/match.js";
+import { MemoryStore } from "../lib/store.js";
+import { createJob, tick, cancelJob } from "../lib/worker.js";
+import { publishItems, setStatus, saveOverrides } from "../lib/publish.js";
+import { toStorefront } from "../lib/catalog.js";
+import { SOURCES } from "../lib/sources.js";
+
+setDnsCheck(false);
+const fx = n => readFileSync(new URL("./fixtures/" + n, import.meta.url), "utf8");
+const LV = "https://de.louisvuitton.com/deu-de/products/test-tote-nvprod1";
+
+/** Поддельная сеть: карта адрес → ответ (ТЕСТОВЫЙ РЕЖИМ). */
+function fakeFetch(routes, log = []) {
+  return async (url, opts) => {
+    log.push(url);
+    const r = typeof routes === "function" ? routes(url) : routes[url];
+    if (!r) return new Response("not found", { status: 404, headers: { "content-type": "text/html" } });
+    if (r.status && r.status >= 300 && r.status < 400) return new Response(null, { status: r.status, headers: { location: r.location } });
+    return new Response(r.body ?? "", { status: r.status || 200, headers: { "content-type": r.type || "text/html; charset=utf-8" } });
+  };
+}
+const robots = { "https://de.louisvuitton.com/robots.txt": { body: "User-agent: *\nDisallow: /deu-de/search\n", type: "text/plain" } };
+const noSleep = async () => {};
+
+test("защита ссылок: только https, только домен источника, без IP и внутренних адресов", async () => {
+  await assert.rejects(checkUrl("http://de.louisvuitton.com/x", ["louisvuitton.com"]), /https/);
+  await assert.rejects(checkUrl("https://evil.com/x", ["louisvuitton.com"]), /не относится/);
+  await assert.rejects(checkUrl("https://127.0.0.1/x", ["louisvuitton.com"]), /IP/);
+  await assert.rejects(checkUrl("https://louisvuitton.com.evil.io/x", ["louisvuitton.com"]), /не относится/);
+  assert.ok(isPrivateIp("10.0.0.1") && isPrivateIp("192.168.1.2") && isPrivateIp("::1") && !isPrivateIp("8.8.8.8"));
+});
+
+test("robots.txt: запреты соблюдаются", () => {
+  const g = parseRobots("User-agent: *\nCrawl-delay: 1\nDisallow: /*sort=\nDisallow: *fashion/products/couture-*\nAllow: */mylv/newsletter");
+  assert.equal(robotsAllows(g, "/de_de/fashion/products/couture-X1"), false);
+  assert.equal(robotsAllows(g, "/de_de/fashion/products/M123"), true);
+  assert.equal(robotsAllows(g, "/cat?sort=price"), false);
+  assert.equal(g.delay, 1);
+});
+
+test("разбор страницы: группа вариантов, цвета, GTIN, наличие по вариантам", () => {
+  const raw = parseProductPage(fx("brand-product.html"), LV);
+  assert.equal(raw.modelSku, "TST001");
+  assert.equal(raw.variants.length, 2);
+  assert.equal(raw.variants[0].color, "Braun");
+  assert.equal(raw.variants[1].offers[0].availability, "boutique");
+  assert.equal(raw.variants[0].images.length, 4);
+  assert.equal(mapAvailability("https://schema.org/PreOrder"), "preorder");
+});
+test("разбор: один Product с offers по размерам → варианты", () => {
+  const raw = parseProductPage(fx("brand-shoe.html"), "https://www.dior.com/de_de/fashion/products/SHO9");
+  assert.equal(raw.variants.length, 2);
+  assert.equal(raw.variants[1].offers[0].availability, "out");
+  assert.equal(raw.images[0], "https://www.dior.com/img/test/shoe1.jpg");
+});
+
+test("нормализация: категория, пол, короткое название, неполнота", () => {
+  const n = normalize(parseProductPage(fx("brand-product.html"), LV), SOURCES["louis-vuitton"]);
+  assert.equal(n.model.category, "bags"); assert.equal(n.model.gender, "w");
+  assert.equal(n.model.title, "Test Tote MM Canvas");
+  assert.equal(n.offer.region, "DE"); assert.equal(n.offer.currency, "EUR"); assert.equal(n.offer.boutique, 2150);
+  assert.equal(shortTitle("Louis Vuitton Neverfull MM Monogram - Braun", "Louis Vuitton"), "Neverfull MM Monogram");
+  assert.equal(detectCategory("Herren Schuhe"), "shoes");
+});
+
+test("дубли: только по точным идентификаторам", () => {
+  const n = normalize(parseProductPage(fx("brand-product.html"), LV), SOURCES["louis-vuitton"]);
+  assert.equal(findMatch(n, []).status, "new");
+  assert.equal(findMatch(n, [{ _id: "x", brand: "Louis Vuitton", modelSku: "TST001" }]).status, "update");
+  assert.equal(findMatch(n, [{ _id: "y", brand: "Other", variants: [{ gtin: "3000000000028" }] }]).by, "GTIN/EAN");
+  assert.equal(findMatch(n, [{ _id: "z", brand: "Louis Vuitton", title: "Test Tote MM Canvas" }]).status, "possible-duplicate");
+});
+
+test("выбор предложения: поставщик в приоритете, 14 дней, конфликт цена/срок", () => {
+  assert.equal(leadMax("10-20"), 20); assert.equal(leadMax(14), 14); assert.equal(leadMax(null), null);
+  const off = { _key: "off", sourceKind: "official", final: 500, variantMatch: true };
+  const a = { _key: "a", sourceKind: "eyewear-supplier", final: 400, supplierLeadDays: 14, variantMatch: true };
+  const b = { _key: "b", sourceKind: "eyewear-supplier", final: 380, supplierLeadDays: "10-20", variantMatch: true };
+  const c = { _key: "c", sourceKind: "eyewear-supplier", final: 350, supplierLeadDays: null, variantMatch: true };
+  assert.equal(chooseOffer([off, a, b, c]).primary, "a");
+  const d = { _key: "d", sourceKind: "eyewear-supplier", final: 390, supplierLeadDays: 7, variantMatch: true };
+  const e = { _key: "e", sourceKind: "eyewear-supplier", final: 360, supplierLeadDays: 12, variantMatch: true };
+  const r = chooseOffer([d, e]); assert.equal(r.conflict, true); assert.equal(r.primary, null);
+  assert.equal(chooseOffer([d, e], { strategy: "cheaper" }).primary, "e");
+  const f = { _key: "f", sourceKind: "eyewear-supplier", final: 350, supplierLeadDays: 5, variantMatch: true };
+  assert.equal(chooseOffer([d, f]).primary, "f");
+  assert.equal(chooseOffer([{ ...a, variantMatch: false }, off]).primary, "off");
+});
+
+test("наличие: устаревшие данные → уточнить; ошибка не обнуляет цену", () => {
+  const now = Date.parse("2026-09-29T12:00:00Z");
+  assert.equal(effectiveAvailability("online", "2026-09-29T00:00:00Z", now), "online");
+  assert.equal(effectiveAvailability("online", "2026-09-20T00:00:00Z", now), "unknown");
+  const prev = { boutique: 2000, availability: { v1: { status: "online" } }, errors: [] };
+  const m = mergeOffer(prev, null, new Error("timeout"));
+  assert.equal(m.boutique, 2000); assert.equal(m.availability.v1.status, "online"); assert.equal(m.errors.length, 1);
+});
+
+test("сквозной импорт: ссылка → предпросмотр → публикация → витрина; повтор без дубля", async () => {
+  const store = new MemoryStore();
+  const f = fakeFetch({ ...robots, [LV]: { body: fx("brand-product.html") } });
+  const { job } = await createJob(store, { sourceId: "louis-vuitton", mode: "link", input: LV });
+  const r = await tick(store, { fetchImpl: f, sleep: noSleep });
+  assert.equal(r.status, "done");
+  const items = await store.list("importItem", { jobId: job._id });
+  assert.equal(items.length, 1); assert.equal(items[0].kind, "new");
+  assert.equal(items[0].pricing.ua, 2365); // 2150 × 1,10
+  assert.equal(items[0].pricing.eu, 2320); // 2150 × 1,08 = 2322 → 2320
+  const pub = await publishItems(store, [items[0]._id], { fetchImpl: f });
+  assert.equal(pub[0].ok, true, pub[0].reason);
+  const prod = await store.get(pub[0].productId);
+  const sf = toStorefront(prod, Date.now());
+  assert.equal(sf.brand, "Louis Vuitton"); assert.equal(sf.price.ua, 2365);
+  assert.equal(sf.colors.length, 2);
+  // разные цвета — разные фото
+  assert.notEqual(sf.colors[0].image, sf.colors[1].image);
+  // предметное фото — обложка, фото «на модели» в конце
+  assert.ok(!/worn_model/.test(sf.images[0].src));
+  // фото не скопированы: разрешения нет
+  assert.equal(prod.images[0].rights, "source-link");
+  // повторный импорт той же ссылки → обновление того же товара
+  const j2 = (await createJob(store, { sourceId: "louis-vuitton", mode: "link", input: LV, now: new Date(Date.now() - 1000).toISOString() })).job;
+  await tick(store, { fetchImpl: f, sleep: noSleep });
+  const it2 = (await store.list("importItem", { jobId: j2._id }))[0];
+  assert.equal(it2.kind, "update");
+  await publishItems(store, [it2._id], { fetchImpl: f });
+  assert.equal((await store.list("product")).length, 1);
+});
+
+test("идемпотентность: та же задача в очереди не создаётся дважды", async () => {
+  const store = new MemoryStore();
+  const a = await createJob(store, { sourceId: "louis-vuitton", mode: "link", input: LV });
+  const b = await createJob(store, { sourceId: "louis-vuitton", mode: "link", input: LV + " " });
+  assert.equal(b.existing, true); assert.equal(a.job._id, b.job._id);
+});
+
+test("защита от ботов: не обходим, задача останавливается с понятной причиной", async () => {
+  const store = new MemoryStore();
+  const urls = [1, 2, 3, 4].map(i => `https://de.louisvuitton.com/deu-de/products/p-${i}`);
+  const f = fakeFetch(u => u.endsWith("robots.txt") ? robots["https://de.louisvuitton.com/robots.txt"] : { status: 403, body: fx("blocked.html") });
+  await createJob(store, { sourceId: "louis-vuitton", mode: "links", input: urls.join("\n") });
+  const r = await tick(store, { fetchImpl: f, sleep: noSleep });
+  assert.equal(r.status, "blocked");
+  const j = (await store.list("importJob"))[0];
+  assert.match(j.coverage.note, /обход не выполняется/);
+  assert.equal(j.errors.length, 3);
+});
+
+test("временная ошибка: повтор с задержкой и продолжение с места остановки", async () => {
+  const store = new MemoryStore();
+  let calls = 0; let t = Date.parse("2026-09-29T10:00:00Z");
+  const f = fakeFetch(u => u.endsWith("robots.txt") ? robots["https://de.louisvuitton.com/robots.txt"] : (++calls === 1 ? { status: 500, body: "err" } : { body: fx("brand-product.html") }));
+  await createJob(store, { sourceId: "louis-vuitton", mode: "link", input: LV, now: new Date(t).toISOString() });
+  const r1 = await tick(store, { fetchImpl: f, sleep: noSleep, clock: () => t });
+  assert.equal(r1.status, "waiting");
+  const r0 = await tick(store, { fetchImpl: f, sleep: noSleep, clock: () => t });
+  assert.equal(r0.done, 0); // рано — ждём задержку
+  t += 6000;
+  const r2 = await tick(store, { fetchImpl: f, sleep: noSleep, clock: () => t });
+  assert.equal(r2.status, "done");
+  assert.equal((await store.list("importItem")).length, 1);
+});
+
+test("категория: все страницы, только товары своего региона, без повторов; отчёт покрытия", async () => {
+  const store = new MemoryStore();
+  const cat = "https://de.louisvuitton.com/deu-de/women/handbags";
+  const prod = u => ({ body: fx("brand-product.html").replace("TST001", "TST-" + u.slice(-1)).replace(/TST001-/g, "X" + u.slice(-1) + "-").replace(/30000000000(\d)(\d)/g, "4" + u.slice(-1) + "0000000000$2") });
+  const f = fakeFetch(u => u.endsWith("robots.txt") ? robots["https://de.louisvuitton.com/robots.txt"]
+    : u === cat ? { body: fx("category-p1.html") } : u === cat + "?page=2" ? { body: fx("category-p2.html") } : /nvprod\d$/.test(u) ? prod(u) : null);
+  const { job } = await createJob(store, { sourceId: "louis-vuitton", mode: "category", input: cat, category: "Сумки" });
+  let r; for (let i = 0; i < 5 && (!r || r.status !== "done"); i++) r = await tick(store, { fetchImpl: f, sleep: noSleep });
+  const j = await store.get(job._id);
+  assert.equal(j.status, "done");
+  assert.equal(j.found, 3); assert.equal(j.coverage.pages, 2);
+  assert.equal(j.coverage.categories["Сумки"].complete, true);
+  assert.equal((await store.list("importItem")).length, 3);
+});
+
+test("отмена задачи", async () => {
+  const store = new MemoryStore();
+  const { job } = await createJob(store, { sourceId: "louis-vuitton", mode: "links", input: [1, 2].map(i => LV + i).join(" ") });
+  await cancelJob(store, job._id);
+  assert.equal((await store.get(job._id)).status, "cancelled");
+  assert.equal((await tick(store, { fetchImpl: fakeFetch({}), sleep: noSleep })).done, 0);
+});
+
+test("ручные правки не перезаписываются синхронизацией; история с автором", async () => {
+  const store = new MemoryStore();
+  const f = fakeFetch({ ...robots, [LV]: { body: fx("brand-product.html") } });
+  await createJob(store, { sourceId: "louis-vuitton", mode: "link", input: LV });
+  await tick(store, { fetchImpl: f, sleep: noSleep });
+  const it = (await store.list("importItem"))[0];
+  const [{ productId }] = await publishItems(store, [it._id], { fetchImpl: f });
+  await saveOverrides(store, productId, { title: "Мой Tote", pinnedPrice: 2400 }, "Дмитрий");
+  await createJob(store, { sourceId: "louis-vuitton", mode: "link", input: LV, now: new Date(Date.now() - 5000).toISOString() });
+  await tick(store, { fetchImpl: f, sleep: noSleep });
+  const it2 = (await store.list("importItem")).find(i => i._id !== it._id);
+  await publishItems(store, [it2._id], { fetchImpl: f });
+  const p = await store.get(productId);
+  const sf = toStorefront(p);
+  assert.equal(sf.title, "Мой Tote"); assert.equal(sf.price.ua, 2400);
+  assert.ok(p.history.some(h => h.by === "Дмитрий" && h.field === "title"));
+  // снятие с публикации
+  await setStatus(store, [productId], "draft");
+  assert.equal(toStorefront(await store.get(productId)), null);
+});
+
+test("фото копируются только при разрешении с основанием", async () => {
+  const store = new MemoryStore();
+  await store.put({ _id: "source.louis-vuitton", _type: "sourceSettings", photoCopy: { allowed: true, basis: "Письмо LV от 29.09.2026" } });
+  const img = new Uint8Array([255, 216, 255, 0, 1, 2]);
+  const f = async (url) => url.endsWith(".jpg") ? new Response(img, { headers: { "content-type": "image/jpeg" } })
+    : fakeFetch({ ...robots, [LV]: { body: fx("brand-product.html") } })(url);
+  await createJob(store, { sourceId: "louis-vuitton", mode: "link", input: LV });
+  await tick(store, { fetchImpl: f, sleep: noSleep });
+  const it = (await store.list("importItem"))[0];
+  const [res] = await publishItems(store, [it._id], { fetchImpl: f });
+  const p = await store.get(res.productId);
+  assert.equal(p.images[0].rights, "copied");
+  assert.match(p.images[0].url, /cdn\.sanity\.io/);
+  assert.equal(p.images[0].sourceUrl.startsWith("https://de.louisvuitton.com"), true);
+});
+
+test("CSV-импорт: группировка вариантов, цена, правило очков у поставщика", async () => {
+  const store = new MemoryStore();
+  const csv = "brand;title;model_sku;sku;color;price;purchase;currency;availability;images;category;lead_days\nGucci;GG1169S Sunglasses;GG1169S;GG1169S-001;Black;330;240;EUR;in stock;https://x/1.jpg|https://x/2.jpg|https://x/3.jpg;sunglasses;7\nGucci;GG1169S Sunglasses;GG1169S;GG1169S-002;Havana;330;240;EUR;in stock;https://x/4.jpg;sunglasses;7";
+  await store.put({ _id: "source.file", _type: "sourceSettings", kindOverride: null });
+  const { job } = await createJob(store, { sourceId: "file", mode: "file", input: csv });
+  await tick(store, { sleep: noSleep });
+  const items = await store.list("importItem", { jobId: job._id });
+  assert.equal(items.length, 1); assert.equal(items[0].variants.length, 2);
+  assert.equal(items[0].model.category, "eyewear");
+});
