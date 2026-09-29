@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-09-29-admin-v4">
+<meta name="trendburo-build" content="2026-09-29-admin-v5">
 <title>Trend Büro — Каталог</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -519,6 +519,34 @@ function downloadTemplate() {
 }
 
 /* ---------- Новый товар (вручную) ---------- */
+// Закладка «В Trend Büro»: читает открытую человеком страницу товара (schema.org / og-метки) и открывает форму заполненной
+const BOOKMARKLET = `javascript:(()=>{const d={url:location.href.split('?')[0],host:location.hostname,images:[]};const add=u=>{if(typeof u==='object'&&u)u=u.url||u.contentUrl;if(u)d.images.push(new URL(u,location.href).href)};
+for(const s of document.querySelectorAll('script[type="application/ld+json"]')){try{const j=JSON.parse(s.textContent);for(const o of [].concat(j['@graph']||j)){const t=[].concat(o['@type']||[]);if(t.includes('Product')||t.includes('ProductGroup')){d.title=d.title||o.name;d.brand=d.brand||(o.brand&&(o.brand.name||o.brand));d.sku=d.sku||o.sku||o.productGroupID;d.color=d.color||o.color;let f=[].concat(o.offers||[])[0]||{};if(f.offers)f=[].concat(f.offers)[0]||{};d.price=d.price||f.price||f.lowPrice;d.currency=d.currency||f.priceCurrency;[].concat(o.image||[]).forEach(add);[].concat(o.hasVariant||[]).forEach(v=>{let g=[].concat(v.offers||[])[0]||{};d.price=d.price||g.price;d.currency=d.currency||g.priceCurrency;[].concat(v.image||[]).forEach(add)})}}}catch(e){}}
+const m=n=>(document.querySelector('meta[property="'+n+'"],meta[name="'+n+'"]')||{}).content;d.title=d.title||m('og:title')||document.title;d.price=d.price||m('product:price:amount');d.currency=d.currency||m('product:price:currency');
+if(d.images.length<3)document.querySelectorAll('meta[property="og:image"]').forEach(x=>add(x.content));if(d.images.length<3)[...document.images].filter(i=>i.naturalWidth>=500&&i.naturalHeight>=400).forEach(i=>add(i.currentSrc||i.src));
+if(!d.price){const t=(document.querySelector('main')||document.body).innerText.match(/(\\d[\\d.,\\u00a0\\u202f ]{2,})\\s?€|€\\s?(\\d[\\d.,\\u00a0\\u202f ]{2,})/);if(t){d.price=t[1]||t[2];d.currency='EUR'}}
+d.images=[...new Set(d.images.filter(u=>/^https:/.test(u)))].slice(0,8);const j=btoa(unescape(encodeURIComponent(JSON.stringify(d))));
+window.open('${location.origin}/admin.html?prefill='+encodeURIComponent(j)+'#add','_blank')})()`;
+function parsePrice(v) {
+  if (typeof v === "number") return v;
+  let t = String(v || "").replace(/[^\d.,]/g, "");
+  if (!t) return null;
+  if (t.includes(",") && t.includes(".")) t = t.lastIndexOf(",") > t.lastIndexOf(".") ? t.replace(/\./g, "").replace(",", ".") : t.replace(/,/g, "");
+  else if (t.includes(",")) t = /,\d{2}$/.test(t) ? t.replace(",", ".") : t.replace(/,/g, "");
+  else if (/\.\d{3}$/.test(t)) t = t.replace(/\./g, "");
+  const n = Number(t); return n > 0 ? Math.round(n * 100) / 100 : null;
+}
+function readPrefill() {
+  const raw = new URLSearchParams(location.search).get("prefill"); if (!raw) return null;
+  history.replaceState(null, "", location.pathname + location.hash);
+  let d; try { d = JSON.parse(decodeURIComponent(escape(atob(raw)))); } catch { return null; }
+  const host = String(d.host || ""), title = String(d.title || "").replace(/\s*[|–-]\s*(Louis Vuitton|LOUIS VUITTON|DIOR|Dior|GUCCI|Gucci).*$/, "").trim();
+  const brand = String(d.brand || "") || (/louisvuitton/.test(host) ? "Louis Vuitton" : /dior/.test(host) ? "Dior" : /gucci/.test(host) ? "Gucci" : /hermes/.test(host) ? "Hermès" : /chanel/.test(host) ? "Chanel" : "");
+  const tx = (title + " " + d.url).toLowerCase();
+  const category = /(shoe|sneaker|loafer|boot|schuh|sandal|chaussure)/.test(tx) ? "shoes" : /(wallet|portefeuille|card|geldb|belt|g[uü]rtel|scarf|schal)/.test(tx) ? "accessories" : /(ring|necklace|bracelet|earring|kette|armband|collier)/.test(tx) ? "jewelry" : /(sunglass|sonnenbrill|eyewear)/.test(tx) ? "eyewear" : /(jacket|jacke|shirt|hemd|coat|mantel|pullover|dress|kleid|trouser|hose|hoodie|blouson|sweat)/.test(tx) ? "clothing" : "bags";
+  const gender = /(\/men|herren|homme|\/uomo|\/m\/|men-)/.test(String(d.url).toLowerCase()) ? "m" : /(\/women|damen|femme|donna)/.test(String(d.url).toLowerCase()) ? "w" : "u";
+  return { brand, title, category, gender, boutique: parsePrice(d.price) || "", currency: d.currency ? String(d.currency).toUpperCase() : null, color: d.color ? String(d.color) : "", url: String(d.url || ""), images: (d.images || []).filter(u => /^https:\/\//.test(u)).slice(0, 8), host };
+}
 const BRAND_LIST = ["Louis Vuitton", "Dior", "Gucci", "Hermès", "Chanel", "Prada", "Miu Miu", "Bottega Veneta", "Saint Laurent", "Celine", "Loewe", "The Row", "Balenciaga", "Fendi", "Valentino", "Cartier", "Loro Piana", "Brunello Cucinelli"];
 const SIZE_PRESETS = { clothing: ["XS", "S", "M", "L", "XL"], shoes: ["35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45"], jewelry: ["15", "16", "17", "18"] };
 async function vAdd(editId) {
@@ -527,8 +555,13 @@ async function vAdd(editId) {
     const { product: p } = await api("product", { query: { id: editId } });
     Object.assign(F, { id: p._id, brand: p.brand, title: p.title, category: p.category, gender: p.gender, boutique: p.offers?.[0]?.boutique || "", sizes: p.sizes || [], color: (p.colors || [])[0] || "", availability: Object.values(p.offers?.[0]?.availability || {})[0]?.status || "online", images: (p.images || []).map(i => i.url), url: p.sourceUrl || "" });
   }
+  const pre = !editId && readPrefill();
+  if (pre) Object.assign(F, pre);
   let busy = 0, price = null, shot = 0;
   $("#main").innerHTML = head(editId ? "Изменить карточку" : "Новый товар", "Три фото, название и цена бутика — наша цена посчитается сама") + `
+  ${pre ? `<div class="note-box ok" style="margin-bottom:14px">${svg("ok")}<div>Заполнено со страницы <b>${esc(pre.host || "")}</b>: ${esc(pre.title || "без названия")}${pre.boutique ? " · " + eur(pre.boutique) : " · цену не нашли, впишите"} · фото: ${pre.images.length}. Проверьте и нажмите «Опубликовать».${pre.currency && pre.currency !== "EUR" ? ` <b>Валюта на странице: ${esc(pre.currency)} — впишите цену в евро.</b>` : ""}</div></div>` : ""}
+  ${!editId && !pre ? `<div class="card pad row" style="margin-bottom:14px;gap:14px"><div style="flex:1;min-width:260px"><b>Быстрее: кнопка «В Trend Büro»</b><div class="hint">Перетащите кнопку на панель закладок браузера. Открыли товар на сайте бренда → нажали закладку → эта форма открывается уже заполненной: название, цена, фото.</div></div>
+    <a class="btn ghost" id="bmk" href="#" title="Перетащите на панель закладок">＋ В Trend Büro</a></div>` : ""}
   <div class="addg">
     <div class="card addf">
       <div><h3>Фото</h3><p class="hint" style="margin:4px 0 12px">Первое — обложка. Перетащите файлы, выберите с компьютера или телефона. Лучше на светлом фоне.</p>
@@ -602,6 +635,7 @@ async function vAdd(editId) {
     }
   };
   drawSlots(); drawSizes(); drawPrev(); calc();
+  if ($("#bmk")) { $("#bmk").href = BOOKMARKLET; $("#bmk").onclick = e => { e.preventDefault(); toast("Перетащите кнопку на панель закладок браузера"); }; }
   const main = $("#main");
   main.onclick = e => {
     const t = e.target.closest("[data-pick],[data-rm],[data-left],[data-fcat],[data-fg],[data-fav],[data-fsz],[data-shot],button"); if (!t) return;
