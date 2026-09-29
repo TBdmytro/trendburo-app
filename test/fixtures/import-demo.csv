@@ -1,0 +1,3 @@
+brand;title;model_sku;sku;color;size;price;currency;availability;images;category;gender;region;url
+Louis Vuitton;Louis Vuitton Tote Test MM - Monogram;TESTLV1;TESTLV1-T;Tan;;3000;EUR;in stock;http://localhost:3100/test/fixtures/img/tan-1.jpg|http://localhost:3100/test/fixtures/img/tan-2.jpg|http://localhost:3100/test/fixtures/img/tan-3.jpg;Handbags;women;DE;https://de.louisvuitton.com/deu-de/products/testlv1
+Louis Vuitton;Louis Vuitton Tote Test MM - Monogram;TESTLV1;TESTLV1-B;Black;;3000;EUR;boutique only;http://localhost:3100/test/fixtures/img/blk-1.jpg|http://localhost:3100/test/fixtures/img/blk-2.jpg;Handbags;women;DE;https://de.louisvuitton.com/deu-de/products/testlv1

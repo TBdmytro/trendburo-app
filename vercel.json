@@ -1,0 +1,8 @@
+{
+  "functions": { "api/*.js": { "maxDuration": 60 } },
+  "crons": [{ "path": "/api/cron", "schedule": "15 3 * * *" }],
+  "headers": [
+    { "source": "/admin.html", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }, { "key": "Cache-Control", "value": "no-store" }] },
+    { "source": "/api/(.*)", "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }] }
+  ]
+}

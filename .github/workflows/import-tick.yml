@@ -1,0 +1,14 @@
+# Продолжает фоновые задачи импорта каждые 10 минут (бесплатный Vercel Cron — только раз в сутки).
+# Нужны секреты репозитория: APP_URL (https://ваш-домен) и CRON_SECRET (тот же, что в Vercel).
+name: import-tick
+on:
+  schedule: [{ cron: "*/10 * * * *" }]
+  workflow_dispatch: {}
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Tick
+        run: |
+          curl -fsS -m 90 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" "${{ secrets.APP_URL }}/api/cron" | head -c 2000

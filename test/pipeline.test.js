@@ -237,3 +237,37 @@ test("CSV-импорт: группировка вариантов, цена, п�
   assert.equal(items.length, 1); assert.equal(items[0].variants.length, 2);
   assert.equal(items[0].model.category, "eyewear");
 });
+
+test("плановое обновление: цена обновляется, ошибка источника не удаляет товар и не обнуляет цену", async () => {
+  const { planRefresh } = await import("../api/cron.js");
+  const store = new MemoryStore();
+  let page = fx("brand-product.html");
+  let fail = false;
+  const f = async url => fail && !url.endsWith("robots.txt") ? new Response("x", { status: 500, headers: { "content-type": "text/html" } }) : fakeFetch({ ...robots, [LV]: { body: page } })(url);
+  await createJob(store, { sourceId: "louis-vuitton", mode: "link", input: LV });
+  await tick(store, { fetchImpl: f, sleep: noSleep });
+  const [{ productId }] = await publishItems(store, [(await store.list("importItem"))[0]._id], { fetchImpl: f });
+  await store.put({ _id: "source.louis-vuitton", _type: "sourceSettings", schedule: "daily" });
+  // цена в источнике выросла
+  page = page.replace(/2150\.00/g, "2300.00");
+  const planned = await planRefresh(store);
+  assert.equal(planned.length, 1);
+  await tick(store, { fetchImpl: f, sleep: noSleep });
+  assert.equal(toStorefront(await store.get(productId)).price.ua, 2530); // 2300 × 1,10
+  // следующий день: источник падает
+  fail = true;
+  await store.put({ ...(await store.get("source.louis-vuitton")), lastRefreshAt: "2026-01-01T00:00:00Z" });
+  await planRefresh(store);
+  let t = Date.now();
+  for (let i = 0; i < 4; i++) { t += 70000; await tick(store, { fetchImpl: f, sleep: noSleep, clock: () => t }); }
+  const p = await store.get(productId);
+  assert.equal(p.status, "published");
+  assert.equal(toStorefront(p, t).price.ua, 2530);
+  assert.ok(p.offers[0].errors.length >= 1);
+});
+
+test("закреплённая цена — для Украины; Европа пересчитывается от неё", async () => {
+  const { priceFor } = await import("../lib/pipeline.js");
+  const r = priceFor({ sourceKind: "official", boutique: 3000, purchase: null }, null, 3350);
+  assert.equal(r.ua, 3350); assert.equal(r.eu, 3290); // 3350 × 1,08 / 1,10 = 3289,1 → 3290
+});
