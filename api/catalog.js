@@ -1,8 +1,20 @@
 /** Публичный каталог для витрины: только опубликованные товары, без закупок и техданных. */
 import { getStore } from "../lib/store.js";
 import { toStorefront } from "../lib/catalog.js";
+import { SOURCES, makeNet } from "../lib/sources.js";
 
 export default async function handler(req, res) {
+  // Временная проверка: пускают ли сайты брендов наш сервер (только код ответа главной страницы, кэш 10 минут)
+  if (/[?&]probe=brands/.test(req.url || "")) {
+    const out = {};
+    await Promise.all(["louis-vuitton", "dior", "gucci"].map(async id => {
+      const t0 = Date.now();
+      try { const r = await makeNet().get(SOURCES[id], SOURCES[id].home); out[id] = { ok: true, status: r.status, ms: Date.now() - t0, bytes: r.text.length, productLinks: (r.text.match(new RegExp(SOURCES[id].productPattern.replace(/[/]/g, "\\/"), "g")) || []).length }; }
+      catch (e) { out[id] = { ok: false, error: e.message, status: e.status || null, ms: Date.now() - t0 }; }
+    }));
+    res.statusCode = 200; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "public, s-maxage=600");
+    return res.end(JSON.stringify(out));
+  }
   try {
     const store = getStore();
     const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 5000,
