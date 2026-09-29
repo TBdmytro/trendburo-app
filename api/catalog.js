@@ -5,7 +5,8 @@ import { toStorefront } from "../lib/catalog.js";
 export default async function handler(req, res) {
   try {
     const store = getStore();
-    const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 5000 });
+    const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 5000,
+      fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock" });
     const now = Date.now();
     const products = list.map(p => toStorefront(p, now)).filter(Boolean);
     res.setHeader("Content-Type", "application/json; charset=utf-8");

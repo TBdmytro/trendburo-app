@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-09-29-live-v1">
+<meta name="trendburo-build" content="2026-09-29-live-v2">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
@@ -21,7 +21,7 @@
   --ink-grad:linear-gradient(180deg,#3d4046 0%,#282a2e 52%,#1d1f22 100%);
   --ink-hi:inset 0 1px 0 rgba(255,255,255,.12),0 1px 2px rgba(20,22,25,.18);
   --studio:radial-gradient(130% 85% at 50% 30%,#fdfdfd 0%,#f2f2f4 55%,#e7e8ea 100%);
-  --glass:rgba(255,255,255,.82);
+  --glass:rgba(255,255,255,.965);
   --c-concierge:#2f5b4e; --c-travel:#35577a; --c-resale:#7a3a3d; --c-stylist:#5c5670;
   --ok:#2f7d55; --wait:#a8671c;
   --f:"Onest",-apple-system,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
@@ -54,7 +54,7 @@ button{cursor:pointer}
 .tab.on{opacity:1;visibility:visible;transform:none;transition:opacity .28s var(--ease),transform .28s var(--ease)}
 
 /* compact bar + large title */
-.bar{position:absolute;left:0;right:0;top:0;z-index:5;height:calc(48px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 12px 0;display:flex;align-items:center;justify-content:center;background:var(--glass);backdrop-filter:saturate(180%) blur(18px);-webkit-backdrop-filter:saturate(180%) blur(18px);border-bottom:1px solid transparent;opacity:0;pointer-events:none;transition:opacity .2s,border-color .2s}
+.bar{position:absolute;left:0;right:0;top:0;z-index:5;height:calc(48px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 12px 0;display:flex;align-items:center;justify-content:center;background:var(--glass);border-bottom:1px solid transparent;opacity:0;pointer-events:none;transition:opacity .2s,border-color .2s}
 .bar.show{opacity:1;pointer-events:auto;border-color:var(--line)}
 .bar b{font-weight:600;font-size:16px}
 .bigtitle{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:calc(20px + env(safe-area-inset-top,0px)) 18px 12px}
@@ -66,7 +66,7 @@ button{cursor:pointer}
 .dotn[data-n="0"]{display:none}
 
 /* tab bar */
-.tabbar{position:absolute;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:20;display:grid;grid-template-columns:repeat(4,1fr);padding:9px 4px 8px;border-radius:26px;background:linear-gradient(180deg,rgba(58,61,67,.94),rgba(31,33,36,.96));backdrop-filter:saturate(160%) blur(18px);-webkit-backdrop-filter:saturate(160%) blur(18px);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 12px 30px rgba(20,22,25,.28),0 2px 6px rgba(20,22,25,.18);transition:transform .45s var(--ease)}
+.tabbar{position:absolute;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:20;display:grid;grid-template-columns:repeat(4,1fr);padding:9px 4px 8px;border-radius:26px;background:linear-gradient(180deg,rgba(58,61,67,.985),rgba(31,33,36,.99));box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 12px 30px rgba(20,22,25,.28),0 2px 6px rgba(20,22,25,.18);transition:transform .45s var(--ease)}
 .tabbar.hide{transform:translateY(160%)}
 .tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:rgba(255,255,255,.46);padding:2px 0;font-weight:500;position:relative}
 .tabbar svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s var(--ease)}
@@ -79,11 +79,11 @@ button{cursor:pointer}
 .pushed.in{transform:none}
 .screen.behind{transform:translateX(-22%);transition:transform .5s var(--ease)}
 .screen.behind::after{content:"";position:absolute;inset:0;background:rgba(20,22,25,.08);pointer-events:none}
-.navbar{position:absolute;top:0;left:0;right:0;z-index:5;height:calc(52px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 10px 0;display:flex;align-items:center;gap:8px;background:var(--glass);backdrop-filter:saturate(180%) blur(18px);-webkit-backdrop-filter:saturate(180%) blur(18px);border-bottom:1px solid var(--line)}
+.navbar{position:absolute;top:0;left:0;right:0;z-index:5;height:calc(52px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 10px 0;display:flex;align-items:center;gap:8px;background:var(--glass);border-bottom:1px solid var(--line)}
 .navbar.clear{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border-color:transparent}
 .navbar .t{flex:1;text-align:center;font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .2s}
 .navbar.solid .t{opacity:1}
-.navbar.clear.solid{background:var(--glass);backdrop-filter:saturate(180%) blur(18px);-webkit-backdrop-filter:saturate(180%) blur(18px);border-color:var(--line)}
+.navbar.clear.solid{background:var(--glass);border-color:var(--line)}
 .pushed .scroll{padding-top:calc(52px + env(safe-area-inset-top,0px))}
 .pushed .scroll.under{padding-top:0}
 
@@ -143,7 +143,10 @@ button{cursor:pointer}
 .pc .p{font-size:14px;font-weight:600;color:var(--fg)}
 .pc .ct{font-size:11.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px;padding-inline:18px}
-.grid2 .pc{animation:rise .5s var(--ease) both;animation-delay:calc(var(--i,0) * 35ms)}
+.grid2 .pc{animation:rise .5s var(--ease) both;animation-delay:calc(min(var(--i,0),12) * 35ms)}
+.grid2 .pc.nofx{animation:none}
+.grid2 .pc{content-visibility:auto;contain-intrinsic-size:auto 320px}
+.grid-more{grid-column:1/-1;height:1px}
 @keyframes rise{from{opacity:.35;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* search & chips */
@@ -192,7 +195,7 @@ button{cursor:pointer}
 .row span:first-child{color:var(--muted)}
 .row.tot{border-top:1px solid var(--line);padding-top:10px;font-weight:600;font-size:17px}
 .row.tot span:first-child{color:var(--fg)}
-.foot{position:absolute;left:0;right:0;bottom:0;z-index:6;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:var(--glass);backdrop-filter:saturate(180%) blur(18px);-webkit-backdrop-filter:saturate(180%) blur(18px);border-top:1px solid var(--line);display:flex;gap:10px;align-items:center}
+.foot{position:absolute;left:0;right:0;bottom:0;z-index:6;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:var(--glass);border-top:1px solid var(--line);display:flex;gap:10px;align-items:center}
 .foot .pr{flex:1;min-width:0;display:flex;flex-direction:column}
 .foot .pr small{font-size:12px;color:var(--muted)}
 .foot .pr b{font-size:18px}
@@ -637,7 +640,8 @@ textarea{min-height:88px;resize:vertical}
 /* OPTIX entry on feed */
 .o-entry{position:relative;margin:16px 18px 0;width:calc(100% - 36px);border:0;border-radius:22px;background:radial-gradient(90% 60% at 50% 22%,#2c4a63,#12293e 70%);color:#f1eee8;padding:0;text-align:left;display:flex;flex-direction:column;overflow:hidden}
 .o-entry-art{display:grid;place-items:center;height:150px}
-.o-entry-art svg{width:72%;height:auto;animation:ofloat 6s ease-in-out infinite}
+.o-entry-art svg{width:72%;height:auto}
+@media (prefers-reduced-motion:no-preference){.o-entry-art svg{animation:ofloat 6s ease-in-out infinite}}
 @keyframes ofloat{50%{transform:translateY(-5px) rotate(-1deg)}}
 .o-entry-tx{display:flex;flex-direction:column;gap:4px;padding:4px 18px 18px}
 .o-entry .cap{color:rgba(241,238,232,.55)}
@@ -1053,8 +1057,8 @@ function renderFeed(){
   $("#leadNews").innerHTML=`<button class="lead-news press" data-act="news" data-id="${L.id}" style="--c:${lp.c}"><div class="art">${lightShape(lp.shape,lp.c)}</div><div class="tx"><span class="cap">${esc(BRANDS.find(b=>b[0]===L.bk)[1])} · ${L.tag}</span><h3>${esc(L.title)}</h3><p>${esc(L.text)}</p></div></button>`;
   $("#newsList").innerHTML=NEWS.slice(1).map(n=>{const p=P.find(x=>x.id===n.pid);return `<button class="newsrow press" data-act="news" data-id="${n.id}" style="--c:${p.c}"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div><span class="cap">${esc(BRANDS.find(b=>b[0]===n.bk)[1])} · ${n.when}</span><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div></button>`}).join("");
   $("#newRail").innerHTML=P.filter(p=>p.isNew).slice(0,10).map(pcHTML).join("");
-  $("#bagRail").innerHTML=P.filter(p=>p.cat==="bags"&&p.price<=3000).map(pcHTML).join("");
-  $("#menRail").innerHTML=P.filter(p=>p.g==="m").map(pcHTML).join("");
+  $("#bagRail").innerHTML=P.filter(p=>p.cat==="bags"&&p.price<=3000).slice(0,12).map(pcHTML).join("");
+  $("#menRail").innerHTML=P.filter(p=>p.g==="m").slice(0,12).map(pcHTML).join("");
   ["#newRail","#bagRail","#menRail"].forEach(id=>{const e=$(id);e.closest(".sec").hidden=!e.children.length});
   $("#stories").hidden=!STORY_BRANDS.length;
 }
@@ -1083,9 +1087,16 @@ function renderCatalog(){
   renderGrid();
 }
 function sorted(list){const s=F.sort;return list.sort((a,b)=>s==="asc"?a.price-b.price:s==="desc"?b.price-a.price:(!!b.st-!!a.st)||(b.isNew-a.isNew)||(a.price-b.price))}
+let gridList=[],gridShown=0,gridIO=null;const GRID_STEP=24;
+function gridMore(){const g=$("#grid");if(!g)return;const from=gridShown,to=Math.min(gridList.length,gridShown+GRID_STEP);if(from>=to)return;
+  g.querySelector(".grid-more")?.remove();
+  g.insertAdjacentHTML("beforeend",gridList.slice(from,to).map((p,i)=>pcHTML(p,from?0:i).replace('class="pc press"',from?'class="pc press nofx"':'class="pc press"')).join("")+(to<gridList.length?'<div class="grid-more"></div>':""));
+  gridShown=to;const s=g.querySelector(".grid-more");if(s){gridIO=gridIO||new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))gridMore()},{root:g.closest(".scroll"),rootMargin:"900px 0px"});gridIO.observe(s)}}
 function renderGrid(){const list=sorted(baseSet()),n=list.length;
   $("#count").textContent=n+" "+plural(n,["товар","товара","товаров"]);
-  $("#grid").innerHTML=n?list.map(pcHTML).join(""):`<div class="empty" style="grid-column:1/-1"><h3>Ничего не нашли</h3><p>Поднимите бюджет или уберите бренд. Вещь не из витрины найдём по запросу.</p><button class="btn sm" data-act="svc" data-s="concierge" style="margin-top:8px">Найти под заказ</button></div>`}
+  gridIO&&gridIO.disconnect();gridList=list;gridShown=0;
+  if(n){$("#grid").innerHTML="";gridMore();return}
+  $("#grid").innerHTML=n?"":`<div class="empty" style="grid-column:1/-1"><h3>Ничего не нашли</h3><p>Поднимите бюджет или уберите бренд. Вещь не из витрины найдём по запросу.</p><button class="btn sm" data-act="svc" data-s="concierge" style="margin-top:8px">Найти под заказ</button></div>`}
 
 function filtersSheet(){
   const body=()=>{const fb=baseSet("brands");const cats=(F.cats.size?[...F.cats]:Object.keys(CATS)).filter(c=>catMax(c)>0);
@@ -1770,7 +1781,7 @@ function init(){
   {const h=(location.hash||"").slice(1);if(h==="optix"&&!LIVE){tab("feed");playIntro("optix","optix")}else tab(h==="optix"?"feed":h)}
 }
 (async()=>{
-  if(LIVE){try{const r=await fetch("/api/catalog",{cache:"no-store"});const j=await r.json();applyLive(j.products||[])}catch(e){applyLive([])}}
+  if(LIVE){try{const r=await fetch("/api/catalog");const j=await r.json();applyLive(j.products||[])}catch(e){applyLive([])}}
   init();
 })();
 </script>

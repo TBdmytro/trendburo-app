@@ -271,3 +271,29 @@ test("закреплённая цена — для Украины; Европа 
   const r = priceFor({ sourceKind: "official", boutique: 3000, purchase: null }, null, 3350);
   assert.equal(r.ua, 3350); assert.equal(r.eu, 3290); // 3350 × 1,08 / 1,10 = 3289,1 → 3290
 });
+
+test("фильтр категорий и пола: сохраняются только выбранные, остальное считается; размеры в вариантах", async () => {
+  const store = new MemoryStore();
+  const csv = [
+    "brand;title;model_sku;sku;size;color;price;currency;region;availability;images;category;gender",
+    "Dior;Жакет;J1;J1-48;48;Black;3400;EUR;DE;in stock;https://x/1.jpg;clothing;men",
+    "Dior;Жакет;J1;J1-50;50;Black;3400;EUR;DE;out of stock;https://x/1.jpg;clothing;men",
+    "Dior;Платье;D1;D1-36;36;Red;2900;EUR;DE;in stock;https://x/2.jpg;clothing;women",
+    "Dior;Сумка;B1;B1;;Beige;4100;EUR;DE;in stock;https://x/3.jpg;bags;women"
+  ].join("\n");
+  const { job } = await createJob(store, { sourceId: "file", mode: "file", input: csv, onlyCats: ["clothing"], gender: "m" });
+  await tick(store, { sleep: noSleep });
+  const items = await store.list("importItem", { jobId: job._id });
+  assert.equal(items.length, 1);
+  assert.deepEqual(items[0].variants.map(v => v.size), ["48", "50"]);
+  const j = await store.get(job._id);
+  assert.equal(j.filtered, 2); assert.equal(j.status, "done");
+  assert.deepEqual(j.labels, {}); // строки файла с «|» не принимаются за подписи разделов
+});
+
+test("разделы сайта: «Название | ссылка» даёт подпись раздела в отчёте", async () => {
+  const store = new MemoryStore();
+  const { job } = await createJob(store, { sourceId: "louis-vuitton", mode: "category", input: "Женские сумки | https://de.louisvuitton.com/deu-de/damen/handtaschen\nhttps://de.louisvuitton.com/deu-de/herren/taschen" });
+  assert.deepEqual(job.discover, ["https://de.louisvuitton.com/deu-de/damen/handtaschen", "https://de.louisvuitton.com/deu-de/herren/taschen"]);
+  assert.equal(job.labels["https://de.louisvuitton.com/deu-de/damen/handtaschen"], "Женские сумки");
+});

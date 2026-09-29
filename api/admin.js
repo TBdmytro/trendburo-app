@@ -4,14 +4,15 @@
  */
 import { getStore } from "../lib/store.js";
 import { checkPassword, issueCookie, clearCookie, readSession } from "../lib/auth.js";
-import { SOURCES, sourceWith } from "../lib/sources.js";
+import { SOURCES, sourceWith, makeNet } from "../lib/sources.js";
+import { SourceBlocked } from "../lib/http.js";
 import { createJob, tick, cancelJob, ACTIVE } from "../lib/worker.js";
 import { publishItems, setStatus, saveOverrides, computePricing } from "../lib/publish.js";
 import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
 import { toStorefront } from "../lib/catalog.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
-const slim = j => { if (!j) return j; const { rows, seen, queue, attempts, ...rest } = j; return { ...rest, queued: (queue || []).length, discoverLeft: (j.discover || []).length }; };
+const slim = j => { if (!j) return j; const { rows, seen, queue, attempts, catRoot, discover, ...rest } = j; return { ...rest, queued: (queue || []).length, discoverLeft: (j.discover || []).length }; };
 
 export default async function handler(req, res) {
   const a = (req.query && req.query.a) || new URL(req.url, "http://x").searchParams.get("a");
@@ -32,9 +33,42 @@ export default async function handler(req, res) {
       case "logout": res.setHeader("Set-Cookie", clearCookie()); return send(res, 200, { ok: true });
       case "me": return send(res, 200, { name: me.name, store: store.kind, demo: !!store.demo });
 
+      case "overview": {
+        const [published, draft, hidden, jobs, pending] = await Promise.all([
+          store.count("product", { status: "published" }), store.count("product", { status: "draft" }), store.count("product", { status: "hidden" }),
+          store.list("importJob", {}, { order: "createdAt desc", limit: 8 }),
+          store.list("importItem", {}, { limit: 20000, fields: "kind, publishedAs" })
+        ]);
+        const waiting = pending.filter(i => !i.publishedAs && ["new", "update", "duplicate"].includes(i.kind)).length;
+        return send(res, 200, { published, draft, hidden, waiting, jobs: jobs.map(slim), active: jobs.filter(j => ACTIVE.includes(j.status)).length });
+      }
+      case "sourceCheck": {
+        // Проверка доступа с нашего сервера: robots.txt + главная страница источника. Без обхода защиты.
+        const id = body.id; if (!SOURCES[id]) return send(res, 400, { error: "Неизвестный источник" });
+        const settings = await store.get("source." + id);
+        const src = sourceWith(settings, id);
+        let check;
+        if (!src.home) check = { ok: false, state: "none", text: "У источника нет адреса сайта — используйте файл" };
+        else {
+          const t0 = Date.now();
+          try {
+            const r = await makeNet().get(src, src.home);
+            const hasProducts = r.text.includes(src.productPattern || "/products/");
+            check = { ok: true, state: "ok", text: `Сайт открывается с сервера (${r.status}, ${Math.round((Date.now() - t0) / 100) / 10} с)` + (hasProducts ? "" : ". Ссылок на товары на главной не видно — возможно, каталог подгружается скриптом") };
+          } catch (e) {
+            check = e instanceof SourceBlocked
+              ? { ok: false, state: "blocked", text: "Сайт не пускает автоматическую загрузку с нашего сервера (" + e.message + "). Обход защиты не выполняется — используйте файл или фид." }
+              : { ok: false, state: "error", text: e.message };
+          }
+        }
+        check.at = new Date().toISOString();
+        const cur = settings || { _id: "source." + id, _type: "sourceSettings", sourceId: id };
+        cur.check = check; await store.put(cur);
+        return send(res, 200, { check });
+      }
       case "sources": {
-        const jobs = await store.list("importJob", {}, { order: "createdAt desc", limit: 200 });
-        const products = await store.list("product");
+        const jobs = await store.list("importJob", {}, { order: "createdAt desc", limit: 200, fields: "_id, sourceId, status, mode, createdAt, processed, found, errors, filtered" });
+        const products = await store.list("product", {}, { fields: "status, category, offers[]{sourceId}" });
         const out = [];
         for (const id of Object.keys(SOURCES)) {
           const settings = await store.get("source." + id);
@@ -47,7 +81,7 @@ export default async function handler(req, res) {
             photoCopy: settings?.photoCopy || { allowed: false, basis: "" },
             schedule: settings?.schedule || "off", autoUpdate: settings?.autoUpdate !== false, autoPublish: !!settings?.autoPublish,
             sitemaps: settings?.sitemaps || src.sitemaps || [], collections: src.collections || [],
-            lastSync: settings?.lastSync || null, lastJob: slim(last), running: jobs.some(j => j.sourceId === id && ACTIVE.includes(j.status)),
+            lastSync: settings?.lastSync || null, check: settings?.check || null, home: src.home || null, lastJob: slim(last), running: jobs.some(j => j.sourceId === id && ACTIVE.includes(j.status)),
             stats: { found: mine.length, published: mine.filter(p => p.status === "published").length },
             categories: [...new Set(mine.map(p => p.category).filter(Boolean))]
           });
@@ -71,7 +105,7 @@ export default async function handler(req, res) {
       }
 
       case "jobCreate": {
-        const { job, existing } = await createJob(store, { sourceId: body.sourceId, mode: body.mode, input: body.input || "", category: body.category || null, createdBy: me.name });
+        const { job, existing } = await createJob(store, { sourceId: body.sourceId, mode: body.mode, input: body.input || "", category: body.category || null, createdBy: me.name, onlyCats: body.onlyCats || null, gender: body.gender || null });
         return send(res, 200, { job: slim(job), existing });
       }
       case "jobs": return send(res, 200, { jobs: (await store.list("importJob", {}, { order: "createdAt desc", limit: 50 })).map(slim) });
@@ -82,7 +116,7 @@ export default async function handler(req, res) {
       case "items": {
         const where = { jobId: req.query.jobId }; if (req.query.kind) where.kind = req.query.kind;
         const items = await store.list("importItem", where, { limit: 2000 });
-        const counts = {}; (await store.list("importItem", { jobId: req.query.jobId }, { limit: 20000 })).forEach(i => counts[i.kind] = (counts[i.kind] || 0) + 1);
+        const counts = {}; (await store.list("importItem", { jobId: req.query.jobId }, { limit: 20000, fields: "kind" })).forEach(i => counts[i.kind] = (counts[i.kind] || 0) + 1);
         return send(res, 200, { items, counts });
       }
       case "publish": {
