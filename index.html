@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-09-29-live-v3">
+<meta name="trendburo-build" content="2026-09-29-live-v4">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
@@ -262,6 +262,12 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero{position:relative;height:430px;background:var(--studio);display:grid;place-items:center;overflow:hidden}
 .pv-hero .v{width:62%;display:grid;place-items:center;transition:opacity .25s,transform .45s var(--ease)}
 .pv-hero .v.low{width:78%}
+.watch .wtiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 18px 6px}
+.wtile{border:0;text-align:left;border-radius:18px;padding:16px 16px 14px;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;color:#fff;background:linear-gradient(180deg,#3a3d43,#232529 60%,#1b1c1f)}
+.wtile small{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:600}
+.wtile b{font-size:16px;font-weight:600;line-height:1.25}
+.wtile span{display:flex;align-items:center;gap:4px;font-size:12px;color:rgba(255,255,255,.6)}
+.wtile span svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
 .pv-gal{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .pv-gal::-webkit-scrollbar{display:none}
 .pv-gal .sl{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;padding:calc(64px + env(safe-area-inset-top,0px)) 12% 70px}
@@ -700,6 +706,7 @@ textarea{min-height:88px;resize:vertical}
         <div><div class="sub" id="dateLine"></div><h1>Лента</h1></div>
         <div class="topicons"></div>
       </div>
+      <div class="sec watch" id="watchSec" hidden><div class="sech"><h2>Мониторинг</h2><button class="more" data-act="watch-lock">Скрыть</button></div><div class="wtiles" id="watchTiles"></div></div>
       <div class="stories" id="stories"></div>
       <div class="ship"><div><small>Ближайшая отправка в Украину</small><b id="shipDate"></b></div><span class="pulse" aria-hidden="true"></span></div>
       <button class="o-entry press" data-act="tab" data-tab="optix" aria-label="Открыть OPTIX">
@@ -1788,7 +1795,18 @@ function init(){
   if(LIVE&&!P.length)$("#t-feed .ship").insertAdjacentHTML("afterend",'<div class="live-empty">Каталог наполняется — новые поступления появятся здесь. Ищете конкретную вещь? Напишите менеджеру, найдём.</div>');
   {const h=(location.hash||"").slice(1);if(h==="optix"&&!LIVE){tab("feed");playIntro("optix","optix")}else tab(h==="optix"?"feed":h)}
 }
+/* ===== Личный «Мониторинг»: плитки открывают разделы сайтов брендов внутри Telegram ===== */
+async function loadWatch(){const code=store.get("tb_watch","");const sec=$("#watchSec");if(!sec)return;if(!code){sec.hidden=true;return}
+  try{const r=await fetch("/api/catalog?watch="+encodeURIComponent(code),{cache:"no-store"});if(!r.ok){if(r.status===404)store.set("tb_watch","");sec.hidden=true;return}
+    const{tiles}=await r.json();sec.hidden=!tiles.length;
+    $("#watchTiles").innerHTML=tiles.map(t=>`<button class="wtile press" data-act="watch-open" data-url="${esc(t.url)}"><small>${esc(t.brand||"")}</small><b>${esc(t.title)}</b><span>Открыть<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span></button>`).join("")}catch(e){sec.hidden=true}}
+function openExternal(u){const tg=window.Telegram&&window.Telegram.WebApp;try{if(tg&&tg.initData)tg.openLink(u,{try_instant_view:false});else window.open(u,"_blank","noopener")}catch(e){window.open(u,"_blank","noopener")}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act=watch-open],[data-act=watch-lock]");if(!b)return;e.stopPropagation();
+  if(b.dataset.act==="watch-open")openExternal(b.dataset.url);else{store.set("tb_watch","");$("#watchSec").hidden=true}},true);
+{let t=null;const h=document.querySelector("#t-feed .bigtitle h1");if(h){const start=()=>{t=setTimeout(async()=>{const c=(prompt("Код доступа к «Мониторингу»")||"").trim();if(/^\d{6}$/.test(c)){store.set("tb_watch",c);await loadWatch();if($("#watchSec").hidden)alert("Код не подошёл")}},1800)},stop=()=>clearTimeout(t);
+  h.addEventListener("touchstart",start,{passive:true});h.addEventListener("mousedown",start);["touchend","touchmove","mouseup","mouseleave"].forEach(ev=>h.addEventListener(ev,stop))}}
 (async()=>{
+  loadWatch();
   if(LIVE){try{const r=await fetch("/api/catalog");const j=await r.json();applyLive(j.products||[])}catch(e){applyLive([])}}
   init();
 })();

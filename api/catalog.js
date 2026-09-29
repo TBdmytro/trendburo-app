@@ -3,6 +3,16 @@ import { getStore } from "../lib/store.js";
 import { toStorefront } from "../lib/catalog.js";
 
 export default async function handler(req, res) {
+  // Личный раздел «Мониторинг»: плитки отдаются только по коду владельца
+  const wm = String(req.url || "").match(/[?&]watch=(\d{6})/);
+  if (wm) {
+    try {
+      const w = await getStore().get("settings.watch");
+      res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store");
+      if (!w || w.code !== wm[1]) { await new Promise(r => setTimeout(r, 800)); res.statusCode = 404; return res.end(JSON.stringify({ error: "Неверный код" })); }
+      res.statusCode = 200; return res.end(JSON.stringify({ tiles: w.tiles || [] }));
+    } catch (e) { res.statusCode = 503; return res.end(JSON.stringify({ error: "Недоступно" })); }
+  }
   try {
     const store = getStore();
     const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 5000,

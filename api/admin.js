@@ -154,6 +154,20 @@ export default async function handler(req, res) {
         const p = priceFor({ sourceKind: "official", boutique: Number(body.boutique) || null, region: "DE", currency: "EUR" }, pricingCfg, Number(body.pinned) || null);
         return send(res, 200, { ua: p.ua, eu: p.eu, dxb: p.dxb });
       }
+      case "watchGet": {
+        let w = await store.get("settings.watch");
+        if (!w) { w = { _id: "settings.watch", _type: "settings", code: String(Math.floor(100000 + Math.random() * 900000)), tiles: [] }; await store.put(w); }
+        return send(res, 200, { code: w.code, tiles: w.tiles || [] });
+      }
+      case "watchSave": {
+        const w = (await store.get("settings.watch")) || { _id: "settings.watch", _type: "settings", code: String(Math.floor(100000 + Math.random() * 900000)) };
+        w.tiles = (body.tiles || []).slice(0, 40).map((t, i) => ({ id: String(t.id || "t" + Date.now() + i).slice(0, 30), title: String(t.title || "").trim().slice(0, 60), brand: String(t.brand || "").trim().slice(0, 40), url: String(t.url || "").trim().slice(0, 600) }))
+          .filter(t => t.title && /^https:\/\//.test(t.url));
+        if (body.newCode) w.code = String(Math.floor(100000 + Math.random() * 900000));
+        w.by = me.name; w.at = new Date().toISOString();
+        await store.put(w);
+        return send(res, 200, { code: w.code, tiles: w.tiles });
+      }
       case "productSave": return send(res, 200, { product: await saveOverrides(store, body.id, body.changes || {}, me.name, pricingCfg) });
 
       case "pricing": return send(res, 200, { config: mergeConfig(pricingCfg), defaults: PRICING_DEFAULTS });
