@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-09-29-admin-v5">
+<meta name="trendburo-build" content="2026-09-30-admin-v6">
 <title>Trend Büro — Каталог</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -228,8 +228,21 @@ tr:last-child td{border-bottom:0}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px}
 .kv dt{color:var(--muted)}.kv dd{margin:0}
 .hist{font-size:12.5px;color:var(--g2);display:flex;flex-direction:column;gap:5px}
+.btn.danger{background:none;border:1px solid #f0c9c5;color:var(--err);font-weight:500}
+.btn.danger:hover{background:var(--err-bg)}
+.actbar .btn.danger{border-color:rgba(255,255,255,.2);color:#ffb4ad}
+.modal{position:fixed;inset:0;z-index:70;background:rgba(20,21,24,.4);display:grid;place-items:center;padding:16px;animation:fd .15s}
+.modal .box{background:#fff;border-radius:20px;padding:22px;width:min(420px,100%);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h3{margin:0 0 6px;font-size:17px}.modal p{margin:0 0 18px;color:var(--g2);font-size:14px;line-height:1.5}
+.modal .row{justify-content:flex-end}
+#busy{position:fixed;left:0;top:0;height:2px;width:0;background:var(--ink);z-index:80;transition:width .3s,opacity .3s;opacity:0}
+#busy.on{opacity:1;width:70%;transition:width 8s cubic-bezier(.1,.7,.2,1),opacity .2s}
+.pc .ck2{position:absolute;left:10px;top:10px;width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.95);border:1px solid var(--line);display:grid;place-items:center;z-index:2}
+.pc .ck2 input{width:16px;height:16px;margin:0;accent-color:#1c1d20;cursor:pointer}
+.status-tag{left:auto!important;right:10px}
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,10px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:99px;z-index:60;opacity:0;transition:all .2s;pointer-events:none;font-weight:500}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+body:has(.actbar) .toast{bottom:96px}
 
 /* ---------- Вход ---------- */
 .login-wrap{min-height:100%;display:grid;place-items:center;padding:20px;background:var(--side)}
@@ -276,7 +289,7 @@ tr:last-child td{border-bottom:0}
   </aside>
   <main class="main" id="main"></main>
 </div>
-<div class="toast" id="toast" role="status"></div>
+<div class="toast" id="toast" role="status"></div><div id="busy"></div>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -285,7 +298,24 @@ const eur = n => n === null || n === undefined ? "—" : new Intl.NumberFormat("
 const dt = s => s ? new Date(s).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
 const plural = (n, f) => f[(n % 10 === 1 && n % 100 !== 11) ? 0 : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? 1 : 2];
 function toast(t) { const e = $("#toast"); e.textContent = t; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("on"), 2800); }
-async function api(a, { method = "GET", body, query = {} } = {}) {
+let busyN = 0, busyT = 0;
+function busy(d) { busyN = Math.max(0, busyN + d); clearTimeout(busyT); const b = document.getElementById("busy"); if (!b) return;
+  if (busyN) busyT = setTimeout(() => b.classList.add("on"), 250); else { b.classList.remove("on"); b.style.width = "100%"; setTimeout(() => { b.style.width = ""; }, 300); } }
+function confirmBox(title, text, ok = "Удалить") {
+  return new Promise(res => {
+    const m = document.createElement("div"); m.className = "modal";
+    m.innerHTML = `<div class="box" role="alertdialog" aria-modal="true"><h3>${esc(title)}</h3><p>${esc(text)}</p><div class="row"><button class="btn soft" data-no>Отмена</button><button class="btn" data-yes style="background:var(--err)">${esc(ok)}</button></div></div>`;
+    const done = v => { m.remove(); document.removeEventListener("keydown", kd); res(v); };
+    const kd = e => { if (e.key === "Escape") done(false); if (e.key === "Enter") done(true); };
+    m.onclick = e => { if (e.target === m || e.target.closest("[data-no]")) done(false); if (e.target.closest("[data-yes]")) done(true); };
+    document.addEventListener("keydown", kd); document.body.append(m); m.querySelector("[data-yes]").focus();
+  });
+}
+async function api(a, { method = "GET", body, query = {}, silent = false } = {}) {
+  if (!silent) busy(1);
+  try { return await api_(a, { method, body, query }); } finally { if (!silent) busy(-1); }
+}
+async function api_(a, { method, body, query }) {
   const u = "/api/admin?" + new URLSearchParams({ a, ...query });
   const r = await fetch(u, { method, credentials: "same-origin", headers: body ? { "Content-Type": "application/json", "X-TB": "1" } : { "X-TB": "1" }, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({ error: "Сервер ответил с ошибкой (" + r.status + ")" }));
@@ -364,7 +394,7 @@ async function pump() {
   if (pumpOn) return; pumpOn = true;
   try {
     while (true) {
-      let jobs; try { jobs = (await api("jobs")).jobs; } catch { break; }
+      let jobs; try { jobs = (await api("jobs", { silent: true })).jobs; } catch { break; }
       const act = jobs.filter(j => ACTIVE.includes(j.status)); pumpActive = act.length;
       const cnt = $("#jobCnt"); if (cnt) { cnt.hidden = !act.length; cnt.textContent = act.length; }
       const p = $("#pump");
@@ -373,7 +403,7 @@ async function pump() {
       p.hidden = false;
       p.innerHTML = `<b>${esc(srcName(j.sourceId))}</b> · ${esc(STATUS[j.status][0].toLowerCase())}<div>${j.phase === "discover" ? "ищем товары… найдено " + j.found : `${j.processed} из ${j.found}`}</div><div class="bar"><i style="width:${j.phase === "discover" ? 8 : pct}%"></i></div>`;
       if (view === "job:" + j._id || view === "jobs") refreshCurrent();
-      try { await api("tick", { method: "POST", body: {} }); } catch {}
+      try { await api("tick", { method: "POST", body: {}, silent: true }); } catch {}
       await new Promise(r => setTimeout(r, 1200));
     }
   } finally { pumpOn = false; }
@@ -416,10 +446,11 @@ function jobRow(j) {
   const what = (j.onlyCats && j.onlyCats.length ? j.onlyCats.map(c => CATS[c] || c).join(", ") : MODE[j.mode] || j.mode) + (j.gender ? (j.gender === "w" ? " · женское" : " · мужское") : "");
   return `<div class="li" data-job="${esc(j._id)}"><div class="t"><b>${esc(srcName(j.sourceId))} — ${esc(what)}</b><span>${dt(j.createdAt)} · ${esc(j.createdBy)}${j.meta?.refresh ? " · плановое обновление" : ""}</span></div>
     <div class="pr"><div class="bar"><i style="width:${ACTIVE.includes(j.status) && j.phase === "discover" ? 6 : pct}%"></i></div><div class="hint num" style="margin-top:4px">${j.processed} из ${j.found}${j.errors?.length ? " · ошибок " + j.errors.length : ""}</div></div>
-    <span class="pill ${st[1]}"><span class="dot"></span>${st[0]}</span></div>`;
+    <span class="pill ${st[1]}"><span class="dot"></span>${st[0]}</span><button class="btn soft sm" data-deljob="${esc(j._id)}" aria-label="Удалить задачу" title="Удалить задачу">×</button></div>`;
 }
 async function homeClick(e) {
-  const t = e.target.closest("[data-go],[data-load],[data-check],[data-job]"); if (!t) return;
+  const t = e.target.closest("[data-deljob],[data-go],[data-load],[data-check],[data-job]"); if (!t) return;
+  if (t.dataset.deljob) return delJob(t.dataset.deljob);
   if (t.dataset.go) return go(t.dataset.go);
   if (t.dataset.load) return go("load:" + t.dataset.load);
   if (t.dataset.job) return go("job:" + t.dataset.job);
@@ -428,6 +459,15 @@ async function homeClick(e) {
     try { const { check } = await api("sourceCheck", { method: "POST", body: { id: t.dataset.check } }); toast(CHECK[check.state][0]); } catch (err) { toast(err.message); }
     await getSources(true); if (view === "home") vHome(); else if (view === "sources") vSources();
   }
+}
+
+async function delJob(id, after) {
+  if (!(await confirmBox("Удалить задачу?", "Задача и её предпросмотр будут удалены. Уже опубликованные товары останутся на витрине."))) return;
+  try { const r = await api("jobDelete", { method: "POST", body: { id } }); toast("Задача удалена" + (r.items ? " · строк предпросмотра: " + r.items : "")); }
+  catch (err) { return toast(err.message); }
+  if (after) return after();
+  if (view === "home") vHome(); else if (view.startsWith("job")) go("jobs"); else vJobs();
+  pump();
 }
 
 /* ---------- Загрузка (мастер) ---------- */
@@ -718,7 +758,8 @@ async function vJob(id, quiet) {
   const [{ job: j }, { items, counts }] = await Promise.all([api("job", { query: { id } }), api("items", { query: { jobId: id } })]);
   await getSources();
   if (quiet && view !== "job:" + id) return;
-  if (!j) throw new Error("Задача не найдена");
+  if (!j) { if (quiet) return; throw new Error("Задача не найдена"); }
+  const sig = JSON.stringify(counts) + "|" + items.length + "|" + items.filter(i => i.publishedAs).length;
   const keep = quiet ? { kind: vJob.kind, sel: new Set(vJob.sel || []), y: window.scrollY, shown: vJob.shown } : { kind: null, sel: new Set(), y: 0, shown: 60 };
   const pc = items.filter(i => i.kind === "update" && i.priceBefore !== null && i.priceBefore !== undefined && i.priceBefore !== i.pricing.ua);
   counts.pricechange = pc.length;
@@ -733,8 +774,8 @@ async function vJob(id, quiet) {
   const failTxt = j.status === "failed" || (j.status === "done" && !j.processed && lastErr) ? `<div class="note-box err">${svg("warn")}<div><b>Загрузка не удалась.</b> Последняя ошибка: ${esc(lastErr?.text || "неизвестно")}${lastErr?.url && !lastErr.url.startsWith("row:") ? `<div class="hint" style="margin-top:4px">${esc(lastErr.url)}</div>` : ""}</div></div>` : "";
   const cov = j.coverage || {};
   const unav = (cov.unavailable || []).slice(-3);
-  $("#main").innerHTML = head(`${esc(srcName(j.sourceId))} — ${esc(what)}`, `${dt(j.createdAt)} · ${esc(j.createdBy)}`, `<button class="btn ghost sm" data-go="jobs">Все задачи</button>${ACTIVE.includes(j.status) ? `<button class="btn soft sm" data-cancel="${esc(j._id)}">Остановить</button>` : ""}`) + `
-  <div class="card jhead">
+  const btns = `<button class="btn ghost sm" data-go="jobs">Все задачи</button>${ACTIVE.includes(j.status) ? `<button class="btn soft sm" data-cancel="${esc(j._id)}">Остановить</button>` : ""}<button class="btn danger sm" data-deljob="${esc(j._id)}">Удалить задачу</button>`;
+  const jheadInner = `
     <div class="row"><span class="pill ${st[1]}"><span class="dot"></span>${st[0]}</span><span class="hint">${ACTIVE.includes(j.status) ? (j.phase === "discover" ? "Ищем товары в каталоге…" : `Обработано ${j.processed} из ${j.found}`) : j.finishedAt ? "Завершено " + dt(j.finishedAt) : ""}</span><span class="sp"></span><span class="hint num">${pct}%</span></div>
     <div class="bar"><i style="width:${ACTIVE.includes(j.status) && j.phase === "discover" ? 6 : pct}%"></i></div>
     <div class="jstats">
@@ -744,7 +785,16 @@ async function vJob(id, quiet) {
     </div>
     ${blockedTxt}${failTxt}
     ${unav.length && j.status !== "blocked" ? `<div class="note-box warn">${svg("info")}<div>Недоступно: ${unav.map(u => esc(u.reason)).join("; ")}</div></div>` : ""}
-    ${j.meta?.warn ? `<div class="note-box warn">${svg("info")}<div>${esc(j.meta.warn)}</div></div>` : ""}
+    ${j.meta?.warn ? `<div class="note-box warn">${svg("info")}<div>${esc(j.meta.warn)}</div></div>` : ""}`;
+  if (quiet && vJob.sig === sig && vJob.id === id && $(".jhead")) {
+    // список товаров не изменился — обновляем только прогресс, не трогая выбор, прокрутку и выпадающие списки
+    $(".jhead").innerHTML = jheadInner;
+    const hb = $("#jhBtns"); if (hb) hb.innerHTML = btns;
+    return;
+  }
+  vJob.sig = sig; vJob.id = id;
+  $("#main").innerHTML = head(`${esc(srcName(j.sourceId))} — ${esc(what)}`, `${dt(j.createdAt)} · ${esc(j.createdBy)}`, `<div class="row" id="jhBtns">${btns}</div>`) + `
+  <div class="card jhead">${jheadInner}
   </div>
   ${items.length ? `<div class="tabs" id="kTabs">${Object.keys(IKIND).filter(k => counts[k]).map(k => `<button data-kind="${k}" aria-pressed="${k === kind}">${IKIND[k]}<span class="c num">${counts[k]}</span></button>`).join("")}</div><div class="pgrid" id="pg"></div><div class="more" id="more"></div>`
     : `<div class="card empty" style="margin-top:18px"><b>${ACTIVE.includes(j.status) ? "Товары появятся здесь по мере загрузки" : "Товаров нет"}</b>${ACTIVE.includes(j.status) ? "Можно закрыть страницу — загрузка продолжится в фоне" : ""}</div>`}
@@ -786,7 +836,7 @@ async function vJob(id, quiet) {
       const ok = results.filter(r => r.ok).length, bad = results.filter(r => !r.ok);
       toast(`${status === "published" ? "Опубликовано" : "В черновиках"}: ${ok}${bad.length ? " · пропущено " + bad.length : ""}`);
       if (bad.length) setTimeout(() => toast("Не опубликовано: " + [...new Set(bad.map(x => x.reason))].slice(0, 2).join("; ")), 2900);
-      vJob.sel = []; vJob(id, true);
+      vJob.sel = []; vJob.sig = ""; vJob(id, true);
     } catch (err) { toast(err.message); b.disabled = false; }
   };
   if (items.length) drawGrid();
@@ -794,7 +844,8 @@ async function vJob(id, quiet) {
     const t = e.target.closest("button,input[data-sel]");
     if (!t) { const card = e.target.closest(".pc[data-id]"); if (card && !e.target.closest("select,a")) toggleSel(card.dataset.id); return; }
     if (t.dataset.go) return go(t.dataset.go);
-    if (t.dataset.cancel) { await api("jobCancel", { method: "POST", body: { id: t.dataset.cancel } }); toast("Остановлено"); return vJob(id, true); }
+    if (t.dataset.cancel) { await api("jobCancel", { method: "POST", body: { id: t.dataset.cancel } }); toast("Остановлено"); vJob.sig = ""; return vJob(id, true); }
+    if (t.dataset.deljob) return delJob(t.dataset.deljob, () => go("jobs"));
     if (t.dataset.kind) { vJob.kind = t.dataset.kind; vJob.shown = 60; document.querySelectorAll("#kTabs button").forEach(b => b.setAttribute("aria-pressed", b.dataset.kind === vJob.kind)); return drawGrid(); }
     if ("more" in t.dataset) { vJob.shown += 60; return drawGrid(); }
     if (t.dataset.sel) toggleSel(t.dataset.sel);
@@ -824,24 +875,54 @@ function itemCard(i, sel) {
 
 /* ---------- Товары ---------- */
 async function vProducts() {
-  const F = { q: "", status: "" };
-  $("#main").innerHTML = head("Товары", "Правки хранятся отдельно от данных сайта — обновление цен их не перезапишет", `<button class="btn" data-go="add">${svg("add")}Новый товар</button>`) + `
+  const F = { q: "", status: "" }; let sel = new Set(), list = [];
+  $("#main").innerHTML = head("Товары", "Отметьте товары, чтобы снять с витрины или удалить сразу несколько", `<button class="btn" data-go="add">${svg("add")}Новый товар</button>`) + `
   <div class="toolbar"><input type="search" id="pq" placeholder="Поиск: бренд, название, артикул"><div class="seg" id="pst">${[["", "Все"], ["published", "На витрине"], ["draft", "Черновики"], ["hidden", "Скрытые"]].map(([k, v]) => `<button data-st="${k}" aria-pressed="${k === ""}">${v}</button>`).join("")}</div><span class="sp"></span><span class="hint num" id="ptot"></span></div>
   <div class="pgrid" id="plist"></div>`;
-  const load = async () => {
-    const { products, total } = await api("products", { query: { q: F.q, status: F.status } });
-    $("#ptot").textContent = total + " " + plural(total, ["товар", "товара", "товаров"]);
-    $("#plist").innerHTML = products.map(p => `<article class="card pc" data-open="${esc(p._id)}" style="cursor:pointer">
-      <div class="ph">${p.cover ? `<img src="${esc(p.cover)}" alt="" loading="lazy" decoding="async">` : ""}<span class="status-tag pill ${p.status === "published" && !p.hidden ? "ok" : ""}">${p.hidden ? "скрыт" : { published: "на витрине", draft: "черновик", hidden: "скрыт" }[p.status] || p.status}</span></div>
+  const bar = () => {
+    let b = $(".actbar");
+    if (!list.length) { b?.remove(); return; }
+    if (!b) { b = document.createElement("div"); b.className = "actbar"; document.body.append(b); }
+    const n = sel.size;
+    b.innerHTML = `<span class="num" style="font-weight:600">${n ? "Выбрано " + n : "Выберите товары"}</span>
+      <button class="btn soft sm" data-pall>${n ? "Снять выбор" : "Выбрать все " + list.length}</button>
+      <button class="btn soft sm" data-pst="draft" ${n ? "" : "disabled"}>Снять с витрины</button>
+      <button class="btn danger sm" data-pdel ${n ? "" : "disabled"}>Удалить</button>
+      <button class="btn pub sm" data-pst="published" ${n ? "" : "disabled"}>Опубликовать</button>`;
+    b.onclick = async e => {
+      const t = e.target.closest("button"); if (!t) return;
+      if ("pall" in t.dataset) { sel = n ? new Set() : new Set(list.map(p => p._id)); return draw(); }
+      const ids = [...sel]; if (!ids.length) return;
+      if ("pdel" in t.dataset) {
+        if (!(await confirmBox(`Удалить ${ids.length} ${plural(ids.length, ["товар", "товара", "товаров"])}?`, "Товары исчезнут из админки и с витрины. Это нельзя отменить."))) return;
+        try { await api("productDelete", { method: "POST", body: { ids } }); toast("Удалено: " + ids.length); sel = new Set(); load(); } catch (err) { toast(err.message); }
+        return;
+      }
+      if (t.dataset.pst) { try { await api("status", { method: "POST", body: { ids, status: t.dataset.pst } }); toast((t.dataset.pst === "published" ? "Опубликовано: " : "Снято с витрины: ") + ids.length); sel = new Set(); load(); } catch (err) { toast(err.message); } }
+    };
+  };
+  const card = p => `<article class="card pc ${sel.has(p._id) ? "sel" : ""}" data-open="${esc(p._id)}" style="cursor:pointer">
+      <div class="ph"><label class="ck2"><input type="checkbox" data-psel="${esc(p._id)}" ${sel.has(p._id) ? "checked" : ""} aria-label="Выбрать"></label>${p.cover ? `<img src="${esc(p.cover)}" alt="" loading="lazy" decoding="async">` : ""}<span class="status-tag pill ${p.status === "published" && !p.hidden ? "ok" : ""}" style="position:absolute;top:10px">${p.hidden ? "скрыт" : { published: "на витрине", draft: "черновик", hidden: "скрыт" }[p.status] || p.status}</span></div>
       <div class="bd"><span class="br">${esc(p.brand)}</span><span class="tt">${esc(p.title)}</span><span class="hint">${esc(CATS[p.category] || "—")}${p.issues ? " · " + p.issues + " замеч." : ""}</span>
-      <div class="prc"><b class="num">${eur(p.price?.ua)}</b>${p.price?.conflict ? '<span class="pill warn">конфликт цен</span>' : ""}</div></div></article>`).join("") ||
-      `<div class="card empty" style="grid-column:1/-1"><b>Товаров нет</b>Загрузите товары и опубликуйте их из задачи</div>`;
-    if (total > products.length) $("#plist").insertAdjacentHTML("beforeend", `<div class="hint" style="grid-column:1/-1">Показано ${products.length} из ${total} — уточните поиск</div>`);
+      <div class="prc"><b class="num">${eur(p.price?.ua)}</b>${p.price?.conflict ? '<span class="pill warn">конфликт цен</span>' : ""}</div></div></article>`;
+  let total = 0;
+  const draw = () => {
+    $("#plist").innerHTML = list.map(card).join("") || `<div class="card empty" style="grid-column:1/-1"><b>Товаров нет</b>Добавьте через «Новый товар» или загрузку файлом</div>`;
+    if (total > list.length) $("#plist").insertAdjacentHTML("beforeend", `<div class="hint" style="grid-column:1/-1">Показано ${list.length} из ${total} — уточните поиск</div>`);
+    bar();
+  };
+  const load = async () => {
+    const r = await api("products", { query: { q: F.q, status: F.status } });
+    list = r.products; total = r.total; sel = new Set([...sel].filter(id => list.some(p => p._id === id)));
+    $("#ptot").textContent = total + " " + plural(total, ["товар", "товара", "товаров"]);
+    draw();
   };
   let t; $("#pq").oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(load, 300); };
   $("#main").onclick = e => {
     if (e.target.closest("[data-go]")) return go(e.target.closest("[data-go]").dataset.go);
     const s = e.target.closest("[data-st]"); if (s) { F.status = s.dataset.st; document.querySelectorAll("#pst button").forEach(b => b.setAttribute("aria-pressed", b.dataset.st === F.status)); return load(); }
+    const ck = e.target.closest("[data-psel]"); if (ck) { ck.checked ? sel.add(ck.dataset.psel) : sel.delete(ck.dataset.psel); ck.closest(".pc").classList.toggle("sel", ck.checked); return bar(); }
+    if (e.target.closest(".ck2")) return;
     const r = e.target.closest("[data-open]"); if (r) editor(r.dataset.open, load);
   };
   await load();
@@ -870,7 +951,7 @@ async function editor(id, reload) {
       <div><div class="f" style="margin-bottom:8px">Фото — порядок и обложка <span class="hint" style="font-weight:400">${(p.images || []).length}${(p.images || []).length < 3 ? ", меньше трёх" : ""}</span></div>
       <div class="imgs">${order.map((u, i) => { const im = imgBy.get(u) || { url: u }; return `<figure class="${u === cover ? "cover" : ""}"><img src="${esc(im.url)}" alt="" loading="lazy"><div class="ctl"><button data-up="${i}" aria-label="Левее">←</button><button data-cov="${i}">${u === cover ? "обложка" : "обложкой"}</button><button data-dn="${i}" aria-label="Правее">→</button></div></figure>`; }).join("")}</div></div>
       <div class="row"><button class="btn" data-save>Сохранить</button>${p.manual ? `<button class="btn ghost" data-editcard>Изменить фото, цену, размеры</button>` : ""}
-        ${p.status === "published" ? `<button class="btn ghost" data-st="draft">Снять с витрины</button>` : `<button class="btn ghost" data-st="published">Опубликовать</button>`}</div>
+        ${p.status === "published" ? `<button class="btn ghost" data-st="draft">Снять с витрины</button>` : `<button class="btn ghost" data-st="published">Опубликовать</button>`}<span class="sp"></span><button class="btn danger" data-delp>Удалить товар</button></div>
     </div>
     <div class="sec"><h2>На витрине</h2><div class="card pad hint">${storefront ? `Показывается как «${esc(storefront.title)}» · ${eur(storefront.price.ua)} Украина · ${eur(storefront.price.eu)} Европа/Дубай · наличие: ${esc(AV[storefront.availability]?.[0] || storefront.availability)}` : "Не показывается: черновик, скрыт или нет цены"}</div></div>
     <div class="sec"><h2>Предложения</h2><div class="card tw"><table><thead><tr><th>Источник</th><th>Цена бутика</th><th>Закупка</th><th>Наличие</th><th>Проверено</th></tr></thead><tbody>
@@ -890,8 +971,13 @@ async function editor(id, reload) {
     if (b.dataset.dn) return sw(+b.dataset.dn, +b.dataset.dn + 1);
     if (b.dataset.cov) { cover = order[+b.dataset.cov]; return draw(); }
     if ("editcard" in b.dataset) { close(); return go("add:" + id); }
+    if ("delp" in b.dataset) {
+      if (!(await confirmBox("Удалить товар?", `«${o.title || p.title}» исчезнет из админки и с витрины. Это нельзя отменить.`))) return;
+      try { await api("productDelete", { method: "POST", body: { ids: [id] } }); toast("Товар удалён"); close(); reload(); } catch (err) { toast(err.message); }
+      return;
+    }
     if (b.dataset.primary) { await api("productSave", { method: "POST", body: { id, changes: { primaryOffer: b.dataset.primary } } }); toast("Основное предложение выбрано"); close(); reload(); editor(id, reload); return; }
-    if (b.dataset.st) { await api("status", { method: "POST", body: { ids: [id], status: b.dataset.st } }); toast(b.dataset.st === "published" ? "Опубликовано" : "Снято с витрины"); close(); reload(); return; }
+    if (b.dataset.st) { await api("status", { method: "POST", body: { ids: [id], status: b.dataset.st } }); toast(b.dataset.st === "published" ? "Опубликовано — на витрине через ~10 секунд" : "Снято с витрины"); close(); reload(); return; }
     if ("save" in b.dataset) {
       const changes = { title: $("#eTitle").value.trim() || null, category: $("#eCat").value || null, pinnedPrice: Number($("#ePin").value) || null, hidden: $("#eHide").checked || null };
       if (cover !== cover0) changes.cover = cover;

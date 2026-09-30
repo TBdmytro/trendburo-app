@@ -6,14 +6,16 @@ import { getStore } from "../lib/store.js";
 import { checkPassword, issueCookie, clearCookie, readSession } from "../lib/auth.js";
 import { SOURCES, sourceWith, makeNet } from "../lib/sources.js";
 import { SourceBlocked } from "../lib/http.js";
-import { createJob, tick, cancelJob, ACTIVE } from "../lib/worker.js";
+import { createJob, tick, cancelJob, deleteJob, ACTIVE } from "../lib/worker.js";
 import { publishItems, setStatus, saveOverrides, computePricing } from "../lib/publish.js";
 import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
 import { toStorefront } from "../lib/catalog.js";
 import { saveManualProduct } from "../lib/manual.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
-const slim = j => { if (!j) return j; const { rows, seen, queue, attempts, catRoot, discover, ...rest } = j; return { ...rest, queued: (queue || []).length, discoverLeft: (j.discover || []).length }; };
+const slim = j => { if (!j) return j; const { rows, seen, queue, attempts, catRoot, discover, ...rest } = j; return { ...rest, queued: j.queuedCount ?? (queue || []).length, discoverLeft: j.discoverLeft ?? (discover || []).length }; };
+// Задачи без тяжёлых полей (строки файла, очередь ссылок) — список грузится мгновенно
+const JOB_FIELDS = `..., "rows": null, "seen": null, "queue": null, "attempts": null, "catRoot": null, "discover": null, "queuedCount": count(queue), "discoverLeft": count(discover)`;
 
 export default async function handler(req, res) {
   const a = (req.query && req.query.a) || new URL(req.url, "http://x").searchParams.get("a");
@@ -35,12 +37,11 @@ export default async function handler(req, res) {
       case "me": return send(res, 200, { name: me.name, store: store.kind, demo: !!store.demo });
 
       case "overview": {
-        const [published, draft, hidden, jobs, pending] = await Promise.all([
+        const [published, draft, hidden, jobs, waiting] = await Promise.all([
           store.count("product", { status: "published" }), store.count("product", { status: "draft" }), store.count("product", { status: "hidden" }),
-          store.list("importJob", {}, { order: "createdAt desc", limit: 8 }),
-          store.list("importItem", {}, { limit: 20000, fields: "kind, publishedAs" })
+          store.list("importJob", {}, { order: "createdAt desc", limit: 8, fields: JOB_FIELDS }),
+          store.count("importItem", { publishedAs: null, kind: ["new", "update", "duplicate"] })
         ]);
-        const waiting = pending.filter(i => !i.publishedAs && ["new", "update", "duplicate"].includes(i.kind)).length;
         return send(res, 200, { published, draft, hidden, waiting, jobs: jobs.map(slim), active: jobs.filter(j => ACTIVE.includes(j.status)).length });
       }
       case "sourceCheck": {
@@ -109,10 +110,22 @@ export default async function handler(req, res) {
         const { job, existing } = await createJob(store, { sourceId: body.sourceId, mode: body.mode, input: body.input || "", category: body.category || null, createdBy: me.name, onlyCats: body.onlyCats || null, gender: body.gender || null });
         return send(res, 200, { job: slim(job), existing });
       }
-      case "jobs": return send(res, 200, { jobs: (await store.list("importJob", {}, { order: "createdAt desc", limit: 50 })).map(slim) });
-      case "job": return send(res, 200, { job: slim(await store.get(req.query.id)) });
+      case "jobs": return send(res, 200, { jobs: (await store.list("importJob", {}, { order: "createdAt desc", limit: 50, fields: JOB_FIELDS })).map(slim) });
+      case "job": return send(res, 200, { job: slim((await store.list("importJob", { _id: String(req.query.id || "") }, { limit: 1, fields: JOB_FIELDS }))[0] || null) });
       case "jobCancel": return send(res, 200, { job: slim(await cancelJob(store, body.id)) });
-      case "tick": return send(res, 200, await tick(store, { budgetMs: 20000, owner: "admin-" + me.name }));
+      case "jobDelete": {
+        const j = await store.get(body.id);
+        if (j && ACTIVE.includes(j.status)) { await cancelJob(store, body.id); await store.patchMany([body.id], { status: "cancelled", lock: null }); }
+        return send(res, 200, await deleteJob(store, body.id));
+      }
+      case "tick": return send(res, 200, await tick(store, { budgetMs: 9000, owner: "admin-" + me.name }));
+      case "productDelete": {
+        const ids = (body.ids || []).filter(i => typeof i === "string" && i.startsWith("product.")).slice(0, 2000);
+        const linked = await store.list("importItem", { publishedAs: ids }, { limit: 20000, fields: "_id" });
+        if (linked.length) await store.patchMany(linked.map(i => i._id), { publishedAs: null, publishedAt: null });
+        await store.delMany(ids);
+        return send(res, 200, { ok: true, deleted: ids.length });
+      }
 
       case "items": {
         const where = { jobId: req.query.jobId }; if (req.query.kind) where.kind = req.query.kind;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-09-29-live-v4">
+<meta name="trendburo-build" content="2026-09-30-live-v5">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
@@ -1774,7 +1774,7 @@ $("#app").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.ta
 /* ===== Запуск: живой каталог из /api/catalog; демо-данные только с ?demo=1 ===== */
 const LIVE=!/[?&]demo=1/.test(location.search);
 const OPTIX_URL="https://trendburoglasses.vercel.app/";
-function applyLive(list){
+function applyLive(list,fresh){
   const shapeByCat={bags:"bag",shoes:"loafer",clothing:"coat",eyewear:"glasses",accessories:"wallet",jewelry:"bracelet",watches:"watch",fragrance:"wallet",other:"bag"};
   P.length=0;
   list.forEach(x=>{if(!CATS[x.cat])CATS[x.cat]="Другое";
@@ -1785,6 +1785,10 @@ function applyLive(list){
   BRANDS=[...new Map(P.map(p=>[p.bk,p.brand])).entries()];
   STORY_BRANDS.length=0;STORY_BRANDS.push(...BRANDS.map(b=>b[0]).slice(0,12));
   resetBudgets();
+  // товары, снятые с витрины или удалённые в админке, убираем из корзины и избранного
+  if(fresh){const ids=new Set(P.map(p=>p.id));
+    const c2=cart.filter(c=>ids.has(c.id));if(c2.length!==cart.length){cart=c2;store.set("tb_cart",cart)}
+    const gone=[...favs].filter(id=>!ids.has(id)&&!/^o/.test(id));if(gone.length){gone.forEach(id=>favs.delete(id));store.set("tb_favs",[...favs])}}
 }
 function init(){
   renderTopIcons();
@@ -1807,7 +1811,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act=watch-
   h.addEventListener("touchstart",start,{passive:true});h.addEventListener("mousedown",start);["touchend","touchmove","mouseup","mouseleave"].forEach(ev=>h.addEventListener(ev,stop))}}
 (async()=>{
   loadWatch();
-  if(LIVE){try{const r=await fetch("/api/catalog");const j=await r.json();applyLive(j.products||[])}catch(e){applyLive([])}}
+  if(LIVE){try{const r=await fetch("/api/catalog");const j=await r.json();applyLive(j.products||[],r.ok&&Array.isArray(j.products))}catch(e){applyLive([],false)}}
   init();
 })();
 </script>

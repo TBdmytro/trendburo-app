@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     const now = Date.now();
     const products = list.map(p => toStorefront(p, now)).filter(Boolean);
     res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+    res.setHeader("Cache-Control", "public, s-maxage=10, stale-while-revalidate=30");
     res.statusCode = 200;
     res.end(JSON.stringify({ products, generatedAt: new Date(now).toISOString(), demo: !!store.demo }));
   } catch (e) {

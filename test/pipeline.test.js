@@ -149,7 +149,29 @@ test("защита от ботов: не обходим, задача остан
   assert.equal(r.status, "blocked");
   const j = (await store.list("importJob"))[0];
   assert.match(j.coverage.note, /обход не выполняется/);
-  assert.equal(j.errors.length, 3);
+  assert.equal(j.errors.length, 1); // первый же ответ защиты останавливает задачу — сайт не долбим
+  const src = await store.get("source.louis-vuitton");
+  assert.equal(src.check.state, "blocked");
+  // повторный запуск сразу получает понятный отказ, без пустой задачи
+  await assert.rejects(createJob(store, { sourceId: "louis-vuitton", mode: "link", input: urls[0] }), /не пускает автоматическую загрузку/);
+});
+
+test("удаление задачи и товаров: строки предпросмотра убираются, ссылки на удалённый товар снимаются", async () => {
+  const { deleteJob } = await import("../lib/worker.js");
+  const store = new MemoryStore();
+  const csv = "brand;title;model_sku;sku;price;currency;region;availability;images;category\nDior;Сумка;B1;B1;4100;EUR;DE;in stock;https://x/1.jpg;bags";
+  const { job } = await createJob(store, { sourceId: "file", mode: "file", input: csv });
+  await tick(store, { sleep: noSleep });
+  const [item] = await store.list("importItem", { jobId: job._id });
+  const [{ productId }] = await publishItems(store, [item._id]);
+  assert.equal(await store.count("importItem", { publishedAs: null, kind: ["new"] }), 0);
+  await store.patchMany([item._id], { publishedAs: null });
+  assert.equal(await store.count("importItem", { publishedAs: null, kind: ["new"] }), 1);
+  await store.delMany([productId]);
+  assert.equal(await store.get(productId), null);
+  const r = await deleteJob(store, job._id);
+  assert.equal(r.items, 1);
+  assert.equal((await store.list("importItem")).length, 0); assert.equal(await store.get(job._id), null);
 });
 
 test("временная ошибка: повтор с задержкой и продолжение с места остановки", async () => {
