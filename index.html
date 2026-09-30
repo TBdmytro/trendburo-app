@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-09-30-live-v6">
+<meta name="trendburo-build" content="2026-09-30-live-v7">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}/* ===== Наполнение из админки ===== */
@@ -1965,6 +1965,32 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act=watch-
   document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[target="_blank"]');if(!a)return;var u=a.href;e.preventDefault();
     try{if(/^https:\/\/t\.me\//.test(u))tg.openTelegramLink(u);else tg.openLink(u)}catch(x){window.open(u,"_blank")}},true);
 })();
+</script>
+<script src="/vendor/motion-13.4.6.js" defer></script>
+<script>
+/* Анимации на Motion: плавное появление блоков и карточек при прокрутке, «пружина» на сердечке.
+   Если библиотека не загрузилась или в телефоне включено «Уменьшить движение» — сайт работает как раньше. */
+document.addEventListener("DOMContentLoaded",function(){
+  var M=window.Motion;if(!M||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  var animate=M.animate,inView=M.inView,EASE=[.22,1,.36,1];
+  var SEL="#t-feed .sec,#bnr,.story,.pc,.newsrow,.lead-news,.ctile,.btile,.icard,.svc-card,.cartrow,.ord";
+  var done=new WeakSet(),q=0,qt=0;
+  function slot(){if(!qt)qt=requestAnimationFrame(function(){q=0;qt=0});return Math.min(q++,8)*0.045}
+  function reveal(el){
+    if(done.has(el)||el.closest(".sv,.sheet,.intro")||(el.classList.contains("sec")&&el.querySelector(".hrail")))return;done.add(el);
+    var root=el.closest(".scroll");if(!root)return;
+    el.style.opacity="0";el.style.transform="translateY(14px)";
+    inView(el,function(){
+      var a=animate(el,{opacity:1,transform:"translateY(0px)"},{duration:.55,ease:EASE,delay:slot()});
+      a.then(function(){el.style.opacity="";el.style.transform=""});
+    },{root:root,margin:"0px 0px -4% 0px"});
+  }
+  function scan(n){if(n.nodeType!==1)return;if(n.matches(SEL))reveal(n);n.querySelectorAll(SEL).forEach(reveal)}
+  scan(document.getElementById("app"));
+  new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(scan)})}).observe(document.getElementById("app"),{childList:true,subtree:true});
+  document.addEventListener("click",function(e){var f=e.target.closest&&e.target.closest("[data-fav],[data-favp],[data-follow]");if(!f)return;
+    animate(f,{transform:["scale(1)","scale(1.22)","scale(1)"]},{duration:.45,ease:EASE})});
+});
 </script>
 </body>
 </html>
