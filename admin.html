@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-09-30-admin-v6">
+<meta name="trendburo-build" content="2026-09-30-admin-v7">
 <title>Trend Büro — Каталог</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Prata&display=swap">
@@ -268,6 +269,84 @@ body:has(.actbar) .toast{bottom:96px}
   .pgrid{grid-template-columns:repeat(2,1fr);gap:10px}
   .li .pr{display:none}
 }
+
+/* ---------- Витрина: списки, поле фото, выбор товара ---------- */
+.cms-li{gap:12px}
+.cms-li.sel{background:#f4f4f6}
+.ck2.static{position:static;width:26px;height:26px;border-radius:8px;border:1px solid var(--line);display:grid;place-items:center;flex:none;background:#fff}
+.ck2.static input{width:16px;height:16px;margin:0;accent-color:#1c1d20;cursor:pointer}
+.cms-th{width:76px;height:52px;border-radius:10px;background:var(--soft);overflow:hidden;display:grid;place-items:center;color:var(--muted);flex:none}
+.cms-th.round{width:52px;border-radius:50%}
+.cms-th img{width:100%;height:100%;object-fit:cover}
+.cms-li .t .pill{margin-top:4px;font-weight:500}
+.cms-ctl{display:flex;align-items:center;gap:6px;flex:none}
+.cms-ctl .toggle{margin-left:6px}
+.form{display:flex;flex-direction:column;gap:16px}
+.imgf-row{display:flex;gap:12px;align-items:center;margin-top:7px}
+.imgf-pv{width:120px;height:80px;border-radius:12px;background:var(--soft);display:grid;place-items:center;overflow:hidden;color:var(--muted);flex:none;border:1px solid var(--line)}
+.imgf-pv img{width:100%;height:100%;object-fit:cover}
+.imgf-act{display:flex;gap:6px;flex-wrap:wrap}
+.actf{display:flex;flex-direction:column;gap:8px}
+.ppick{display:flex;flex-direction:column;gap:8px}
+.pchips{display:flex;flex-direction:column;gap:6px}
+.pchip{display:flex;align-items:center;gap:10px;background:var(--soft);border-radius:12px;padding:6px 8px;font-size:13px}
+.pchip img{width:36px;height:44px;object-fit:contain;background:#fff;border-radius:7px;mix-blend-mode:multiply}
+.pchip span{flex:1;min-width:0}
+.pchip button{border:0;background:#fff;width:28px;height:28px;border-radius:8px;flex:none}
+.ppick-res{display:flex;flex-direction:column;border-radius:12px;overflow:hidden}
+.ppick-res:not(:empty){border:1px solid var(--line)}
+.pres{display:flex;gap:10px;align-items:center;border:0;border-top:1px solid var(--line);background:#fff;padding:8px 10px;text-align:left;font-size:13px}
+.pres:first-child{border-top:0}.pres:hover{background:var(--soft)}
+.pres img,.pres i{width:34px;height:42px;object-fit:contain;flex:none;background:var(--soft);border-radius:6px}
+.pres small{display:block;color:var(--muted)}
+.slides{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.slide{display:flex;flex-direction:column;gap:12px;box-shadow:none}
+pre.msg{white-space:pre-wrap;font:13px/1.5 var(--f);background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:0}
+.cline{flex-wrap:nowrap;margin-bottom:8px}
+.nav .cnt.red,.mnav .cnt{background:#e0463b;color:#fff}
+
+/* ---------- Панель редактора ---------- */
+.sheet .in{padding:0;display:flex;flex-direction:column;width:min(620px,100%)}
+.sh-h{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:2}
+.sh-h b{font-size:16px}
+.sh-b{padding:20px;flex:1}
+.sh-f{position:sticky;bottom:0;display:flex;gap:10px;flex-wrap:wrap;padding:14px 20px calc(14px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line)}
+.sh-f .btn.lg{flex:1}
+
+/* ---------- Нижнее меню (телефон, Telegram) ---------- */
+.mnav{display:none}
+@media (max-width:900px){
+  .side .nav{display:none}
+  .shell{grid-template-rows:auto 1fr;align-content:start}
+  .cms-li .t span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .side{justify-content:center}
+  .mnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:35;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .mnav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:var(--muted);padding:4px 0;position:relative;font-weight:500}
+  .mnav button svg{width:22px;height:22px}
+  .mnav button.on{color:var(--fg)}
+  .mnav button.plus svg{width:34px;height:34px;padding:7px;border-radius:12px;background:var(--ink-g);color:#fff;margin-top:-4px}
+  .mnav .cnt{position:absolute;top:0;left:calc(50% + 6px);font-size:10px;font-style:normal;padding:0 5px;border-radius:99px;min-width:16px;text-align:center;line-height:16px}
+  .main{padding:18px 14px calc(96px + env(safe-area-inset-bottom))}
+  .actbar{bottom:calc(72px + env(safe-area-inset-bottom));flex-wrap:wrap}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+  body:has(.actbar) .toast{bottom:calc(150px + env(safe-area-inset-bottom))}
+  input[type=text],input[type=password],input[type=number],input[type=search],input[type=date],select,textarea{font-size:16px}
+  .drawer .in{width:100%;padding:18px 14px calc(30px + env(safe-area-inset-bottom))}
+  .sheet .in{padding:0}
+  .sh-b{padding:16px 14px}
+  .sh-f{padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
+  .cms-ctl .btn.sm{padding:6px 9px}
+  .cms-th{width:56px;height:44px}.cms-th.round{width:44px}
+  .cms-li{padding:12px}
+  .head .btn{width:100%}
+  .cline{flex-wrap:wrap;background:var(--soft);padding:10px;border-radius:12px}
+  .seg{max-width:100%}
+  .li{padding:12px 14px}
+  .imgs figure{width:96px}.imgs img{width:96px;height:120px}
+}
+input[type=date]{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 13px;min-height:44px}
+html.tg .side{display:none}
+html.tg .main{padding-top:14px}
 </style>
 </head>
 <body>
@@ -339,10 +418,13 @@ const IC = {
   add: '<path d="M12 5v14M5 12h14"/>',
   watch: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/>',
   van: '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/>',
+  show: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+  leads: '<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/>',
+  more: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
   img: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 9"/>'
 };
 const svg = k => `<svg class="i" viewBox="0 0 24 24">${IC[k]}</svg>`;
-const NAV = [["home", "Обзор"], ["add", "Новый товар"], ["load", "Загрузка"], ["jobs", "Задачи"], ["products", "Товары"], ["watch", "Мониторинг"], ["prices", "Цены"], ["sources", "Источники"]];
+const NAV = [["home", "Обзор"], ["leads", "Заявки"], ["products", "Товары"], ["add", "Новый товар"], ["show", "Витрина"], ["load", "Загрузка"], ["jobs", "Задачи"], ["watch", "Мониторинг"], ["prices", "Цены"], ["sources", "Источники"]];
 const STATUS = { queued: ["В очереди", "run"], running: ["Загружается", "dark run"], waiting: ["Пауза, повтор", "warn run"], done: ["Готово", "ok"], failed: ["Ошибка", "err"], blocked: ["Сайт блокирует", "err"], cancelled: ["Отменено", ""] };
 const MODE = { link: "Один товар", links: "По ссылкам", category: "Разделы сайта", full: "Весь каталог", file: "Файл" };
 const IKIND = { new: "Новые", update: "Обновления", duplicate: "Возможные дубли", incomplete: "Неполные", error: "Ошибки", excluded: "Исключены", pricechange: "Изменения цен" };
@@ -370,20 +452,24 @@ async function start() {
   let r; try { r = await api("me"); } catch { return; }
   me = r.name;
   $("#meName").textContent = r.name + (r.demo ? " · демо" : ""); $("#meAv").textContent = (r.name || "?").slice(0, 1).toUpperCase();
-  $("#nav").innerHTML = NAV.map(([k, v]) => `<button data-v="${k}">${svg(k)}<span>${v}</span>${k === "jobs" ? '<span class="cnt" id="jobCnt" hidden></span>' : ""}</button>`).join("");
+  $("#nav").innerHTML = NAV.map(([k, v]) => `<button data-v="${k}">${svg(k)}<span>${v}</span>${k === "jobs" ? '<span class="cnt" id="jobCnt" hidden></span>' : k === "leads" ? '<span class="cnt red" id="leadCnt" hidden></span>' : ""}</button>`).join("");
+  if (!$("#mnav")) mobileNav();
   $("#loginView").hidden = true; $("#appView").hidden = false;
   go(location.hash.slice(1) || "home");
-  pump();
+  pump(); pollLeads();
 }
+// новые заявки: счётчик в меню обновляется раз в минуту
+async function pollLeads() { try { const { fresh } = await api("leads", { query: { status: "new" }, silent: true }); updateLeadBadge(fresh); } catch {} clearTimeout(pollLeads.t); pollLeads.t = setTimeout(pollLeads, 60000); }
 $("#nav").onclick = e => { const b = e.target.closest("[data-v]"); if (b) go(b.dataset.v); };
 window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (h && h !== view) go(h); });
 function go(v) {
   view = v; if (location.hash.slice(1) !== v) location.hash = v;
   const k = v.split(":")[0];
   document.querySelectorAll("#nav button").forEach(b => b.dataset.v === (k === "job" ? "jobs" : k) ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
-  $("#main").innerHTML = `<div class="empty"><span class="spin"></span></div>`; $("#main").onclick = null; $(".actbar")?.remove();
-  window.scrollTo(0, 0);
-  const fn = { home: vHome, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts, prices: vPrices, sources: vSources }[k] || vHome;
+  $("#main").innerHTML = `<div class="empty"><span class="spin"></span></div>`; $("#main").onclick = $("#main").oninput = $("#main").onchange = null; $(".actbar")?.remove();
+  document.querySelectorAll(".drawer").forEach(x => x.remove()); tgBack.stack = [];
+  window.scrollTo(0, 0); mobileNavSync();
+  const fn = { home: vHome, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts, prices: vPrices, sources: vSources, show: vShow, leads: vLeads }[k] || vHome;
   fn(v.split(":")[1]).catch(e => { $("#main").innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(e.message)}</div></div>`; });
 }
 async function getSources(force) { if (!sources || force) sources = (await api("sources")).sources; return sources; }
@@ -425,6 +511,8 @@ async function vHome() {
     <div class="card stat"><span>Черновики</span><b class="num">${o.draft}</b></div>
     <div class="card stat"><span>Идёт загрузок</span><b class="num">${o.active}</b></div>
   </div>
+  ${o.leadsNew ? `<div class="note-box err" style="margin-top:14px;cursor:pointer" data-go="leads:new">${svg("leads")}<div><b>${o.leadsNew} ${plural(o.leadsNew, ["новая заявка", "новые заявки", "новых заявок"])}</b> — откройте «Заявки» и поменяйте статус, когда возьмёте в работу.</div></div>` : ""}
+  <div class="sec"><h2>Витрина</h2><div class="chips">${[["banner", "Баннеры"], ["story", "Сторис"], ["news", "Новости"], ["rail", "Подборки"], ["site", "Контакты и настройки"]].map(([k, v]) => `<button class="chip" data-go="show:${k}">${v}</button>`).join("")}</div></div>
   ${o.waiting ? `<div class="note-box warn" style="margin-top:14px">${svg("info")}<div>${o.waiting} ${plural(o.waiting, ["товар ждёт", "товара ждут", "товаров ждут"])} вашей проверки. Откройте задачу загрузки, отметьте товары и нажмите «Опубликовать».</div></div>` : ""}
   <div class="sec"><h2>Бренды и поставщики</h2><div class="brands">${brands.map(brandCard).join("")}</div></div>
   <div class="sec"><h2>Последние загрузки</h2><div class="card list">${o.jobs.length ? o.jobs.map(jobRow).join("") : `<div class="empty"><b>Загрузок пока не было</b>Начните с бренда: выберите категории или вставьте ссылки на товары</div>`}</div></div>`;
@@ -590,10 +678,10 @@ function readPrefill() {
 const BRAND_LIST = ["Louis Vuitton", "Dior", "Gucci", "Hermès", "Chanel", "Prada", "Miu Miu", "Bottega Veneta", "Saint Laurent", "Celine", "Loewe", "The Row", "Balenciaga", "Fendi", "Valentino", "Cartier", "Loro Piana", "Brunello Cucinelli"];
 const SIZE_PRESETS = { clothing: ["XS", "S", "M", "L", "XL"], shoes: ["35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45"], jewelry: ["15", "16", "17", "18"] };
 async function vAdd(editId) {
-  const F = { id: null, brand: "", title: "", category: "bags", gender: "w", boutique: "", sizes: [], color: "", availability: "online", images: [], url: "", status: "published" };
+  const F = { id: null, brand: "", title: "", category: "bags", gender: "w", boutique: "", sizes: [], color: "", availability: "online", images: [], url: "", status: "published", stock: { loc: "", city: "", size: "" } };
   if (editId) {
     const { product: p } = await api("product", { query: { id: editId } });
-    Object.assign(F, { id: p._id, brand: p.brand, title: p.title, category: p.category, gender: p.gender, boutique: p.offers?.[0]?.boutique || "", sizes: p.sizes || [], color: (p.colors || [])[0] || "", availability: Object.values(p.offers?.[0]?.availability || {})[0]?.status || "online", images: (p.images || []).map(i => i.url), url: p.sourceUrl || "" });
+    Object.assign(F, { id: p._id, brand: p.brand, title: p.title, category: p.category, gender: p.gender, boutique: p.offers?.[0]?.boutique || "", sizes: p.sizes || [], color: (p.colors || [])[0] || "", availability: Object.values(p.offers?.[0]?.availability || {})[0]?.status || "online", images: (p.images || []).map(i => i.url), url: p.sourceUrl || "", stock: { loc: p.stock?.loc || "", city: p.stock?.city || "", size: p.stock?.size || "" } });
   }
   const pre = !editId && readPrefill();
   if (pre) Object.assign(F, pre);
@@ -621,6 +709,8 @@ async function vAdd(editId) {
       <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:180px">Цвет<input type="text" id="fColor" value="${esc(F.color)}" placeholder="Monogram, Black…"></label>
         <label class="f" style="flex:2;min-width:240px">Ссылка на товар у бренда <span class="hint" style="font-weight:400">для менеджера, клиенту не видна</span><input type="text" id="fUrl" value="${esc(F.url)}" placeholder="https://…"></label></div>
       <div><h3 style="margin-bottom:10px">Наличие</h3><div class="seg" id="fAv">${[["online", "Можно заказать"], ["boutique", "Уточнить наличие"], ["out", "Нет в наличии"]].map(([k, v]) => `<button data-fav="${k}" aria-pressed="${F.availability === k}">${v}</button>`).join("")}</div></div>
+      <div><h3 style="margin-bottom:4px">Уже выкуплено, лежит у нас</h3><p class="hint" style="margin:0 0 10px">Товар попадёт в блок «В наличии» с быстрой доставкой</p><div class="seg" id="fSt">${[["", "Нет"], ["ua", "В Украине"], ["eu", "В Европе"]].map(([k, v]) => `<button data-fst="${k}" aria-pressed="${F.stock.loc === k}">${v}</button>`).join("")}</div>
+        <div class="row" id="fStX" style="margin-top:10px" ${F.stock.loc ? "" : "hidden"}><input type="text" id="fStCity" value="${esc(F.stock.city)}" placeholder="Город, напр. Киев" style="flex:1;min-width:150px"><input type="text" id="fStSize" value="${esc(F.stock.size)}" placeholder="Размер, если есть" style="flex:1;min-width:120px"></div></div>
       <div class="row" style="padding-top:6px;border-top:1px solid var(--line)"><button class="btn lg" id="fPub">${editId ? "Сохранить" : "Опубликовать на витрину"}</button><button class="btn ghost lg" id="fDraft">В черновик</button><span class="err" id="fErr"></span></div>
     </div>
     <aside class="prev"><div class="hint" style="margin:0 0 8px 4px">Так увидит клиент</div><div class="card pv" id="pv"></div></aside>
@@ -654,17 +744,7 @@ async function vAdd(editId) {
     try { price = await api("pricePreview", { method: "POST", body: { boutique: b } }); $("#fCalc").innerHTML = `На витрине: <b class="num" style="color:var(--fg)">${eur(price.ua)}</b> Украина с доставкой · ${eur(price.eu)} Европа/Дубай + доставка`; } catch {}
     drawPrev();
   }, 250); };
-  const resize = file => new Promise(async (ok, bad) => {
-    try {
-      const bmp = await createImageBitmap(file).catch(() => null);
-      let w, h, src;
-      if (bmp) { src = bmp; w = bmp.width; h = bmp.height; }
-      else { const im = new Image(); im.src = URL.createObjectURL(file); await im.decode(); src = im; w = im.naturalWidth; h = im.naturalHeight; }
-      const k = Math.min(1, 1600 / Math.max(w, h)); const c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
-      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(src, 0, 0, c.width, c.height);
-      c.toBlob(b => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.readAsDataURL(b); }, "image/jpeg", 0.86);
-    } catch (e) { bad(new Error("Не удалось прочитать фото: " + file.name)); }
-  });
+  const resize = file => fileToJpegB64(file, 1600);
   const addFiles = async files => {
     for (const f of [...files].slice(0, 8 - F.images.length)) {
       if (!/^image\//.test(f.type) && !/\.(heic|jpe?g|png|webp)$/i.test(f.name)) { toast("Это не фото: " + f.name); continue; }
@@ -678,12 +758,13 @@ async function vAdd(editId) {
   if ($("#bmk")) { $("#bmk").href = BOOKMARKLET; $("#bmk").onclick = e => { e.preventDefault(); toast("Перетащите кнопку на панель закладок браузера"); }; }
   const main = $("#main");
   main.onclick = e => {
-    const t = e.target.closest("[data-pick],[data-rm],[data-left],[data-fcat],[data-fg],[data-fav],[data-fsz],[data-shot],button"); if (!t) return;
+    const t = e.target.closest("[data-pick],[data-rm],[data-left],[data-fcat],[data-fg],[data-fav],[data-fst],[data-fsz],[data-shot],button"); if (!t) return;
     if ("pick" in t.dataset) return $("#fpick").click();
     if (t.dataset.rm) { F.images.splice(+t.dataset.rm, 1); shot = 0; drawSlots(); return drawPrev(); }
     if (t.dataset.left) { const i = +t.dataset.left; [F.images[i - 1], F.images[i]] = [F.images[i], F.images[i - 1]]; drawSlots(); return drawPrev(); }
     if (t.dataset.fcat) { F.category = t.dataset.fcat; document.querySelectorAll("[data-fcat]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fcat === F.category)); F.sizes = F.sizes.filter(z => !Object.values(SIZE_PRESETS).flat().includes(z) || (SIZE_PRESETS[F.category] || []).includes(z)); drawSizes(); return drawPrev(); }
     if (t.dataset.fg) { F.gender = t.dataset.fg; document.querySelectorAll("[data-fg]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fg === F.gender)); return; }
+    if (t.dataset.fst !== undefined) { F.stock.loc = t.dataset.fst; document.querySelectorAll("[data-fst]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fst === F.stock.loc)); $("#fStX").hidden = !F.stock.loc; return; }
     if (t.dataset.fav) { F.availability = t.dataset.fav; document.querySelectorAll("[data-fav]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fav === F.availability)); return; }
     if (t.dataset.fsz) { const z = t.dataset.fsz; F.sizes = F.sizes.includes(z) ? F.sizes.filter(x => x !== z) : [...F.sizes, z]; t.setAttribute("aria-pressed", F.sizes.includes(z)); return drawPrev(); }
     if (t.dataset.shot) { shot = +t.dataset.shot; return drawPrev(); }
@@ -693,7 +774,7 @@ async function vAdd(editId) {
   };
   main.oninput = e => {
     const id = e.target.id;
-    if (id === "fBrand") F.brand = e.target.value; else if (id === "fTitle") F.title = e.target.value; else if (id === "fColor") F.color = e.target.value; else if (id === "fUrl") F.url = e.target.value;
+    if (id === "fBrand") F.brand = e.target.value; else if (id === "fTitle") F.title = e.target.value; else if (id === "fColor") F.color = e.target.value; else if (id === "fUrl") F.url = e.target.value; else if (id === "fStCity") F.stock.city = e.target.value; else if (id === "fStSize") F.stock.size = e.target.value;
     else if (id === "fPrice") { F.boutique = e.target.value; calc(); }
     if (["fBrand", "fTitle"].includes(id)) drawPrev();
   };
@@ -934,7 +1015,8 @@ async function editor(id, reload) {
   let cover = o.cover || order[0];
   const order0 = JSON.stringify(order), cover0 = cover;
   const d = document.createElement("div"); d.className = "drawer"; document.body.append(d);
-  const close = () => d.remove();
+  tgBack.push(() => d.remove());
+  const close = () => { d.remove(); tgBack.pop(); };
   const sizes = [...new Set((p.variants || []).map(v => v.size).filter(Boolean))], colors = [...new Set((p.variants || []).map(v => v.color).filter(Boolean))];
   const draw = () => {
     const imgBy = new Map((p.images || []).map(i => [i.sourceUrl || i.url, i]));
@@ -947,6 +1029,10 @@ async function editor(id, reload) {
       <label class="f" style="flex:1;min-width:160px">Категория<select id="eCat"><option value="">${esc(CATS[p.category] || "как на сайте")}</option>${Object.entries(CATS).map(([k, v]) => `<option value="${k}" ${o.category === k ? "selected" : ""}>${v}</option>`).join("")}</select></label></div>
       <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:200px">Своя цена для Украины, €<input type="number" id="ePin" min="0" step="5" value="${esc(o.pinnedPrice || "")}" placeholder="По правилам: ${esc(p.pricing?.ua ?? "—")}"></label>
       <label class="toggle" style="flex:1;min-width:200px;padding-bottom:10px"><input type="checkbox" id="eHide" ${o.hidden ? "checked" : ""}>Скрыть с витрины</label></div>
+      <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:150px">Для кого<select id="eG"><option value="">${esc({ w: "Женское", m: "Мужское", u: "Унисекс" }[p.gender] || "как на сайте")}</option><option value="w" ${o.gender === "w" ? "selected" : ""}>Женское</option><option value="m" ${o.gender === "m" ? "selected" : ""}>Мужское</option><option value="u" ${o.gender === "u" ? "selected" : ""}>Унисекс</option></select></label>
+      <label class="f" style="flex:1;min-width:150px">Метка «Новинка»<select id="eNew"><option value="">Авто: 14 дней после публикации</option><option value="on" ${o.isNew === "on" ? "selected" : ""}>Показывать</option><option value="off" ${o.isNew === "off" ? "selected" : ""}>Не показывать</option></select></label></div>
+      <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:150px">В наличии у нас<select id="eSt"><option value="">Нет, под заказ</option><option value="ua" ${(o.stock || p.stock)?.loc === "ua" ? "selected" : ""}>Лежит в Украине</option><option value="eu" ${(o.stock || p.stock)?.loc === "eu" ? "selected" : ""}>Лежит в Европе</option></select></label>
+      <label class="f" style="flex:1;min-width:120px">Город<input type="text" id="eStCity" value="${esc((o.stock || p.stock)?.city || "")}" placeholder="Киев"></label><label class="f" style="flex:1;min-width:100px">Размер<input type="text" id="eStSize" value="${esc((o.stock || p.stock)?.size || "")}"></label></div>
       ${sizes.length || colors.length ? `<div class="hint">${colors.length ? "Цвета: " + esc(colors.join(", ")) : ""}${colors.length && sizes.length ? " · " : ""}${sizes.length ? "Размеры: " + esc(sizes.join(", ")) : ""}</div>` : ""}
       <div><div class="f" style="margin-bottom:8px">Фото — порядок и обложка <span class="hint" style="font-weight:400">${(p.images || []).length}${(p.images || []).length < 3 ? ", меньше трёх" : ""}</span></div>
       <div class="imgs">${order.map((u, i) => { const im = imgBy.get(u) || { url: u }; return `<figure class="${u === cover ? "cover" : ""}"><img src="${esc(im.url)}" alt="" loading="lazy"><div class="ctl"><button data-up="${i}" aria-label="Левее">←</button><button data-cov="${i}">${u === cover ? "обложка" : "обложкой"}</button><button data-dn="${i}" aria-label="Правее">→</button></div></figure>`; }).join("")}</div></div>
@@ -960,7 +1046,7 @@ async function editor(id, reload) {
       <td>${Object.values(of.availability || {}).slice(0, 8).map(a => `<span class="pill ${AV[a.status]?.[1] || ""}">${AV[a.status]?.[0] || a.status}</span>`).join(" ")}</td><td>${dt(of.checkedAt)}</td></tr>`).join("")}
     </tbody></table></div>
     ${p.pricing ? `<p class="hint">Правило ${esc(p.pricing.rule || "—")}${p.pricing.spread !== null && p.pricing.spread !== undefined ? " · разница с закупкой " + eur(p.pricing.spread) : ""}</p>` : ""}</div>
-    <div class="sec"><h2>История</h2><div class="card pad hist">${(p.history || []).slice().reverse().map(h => `<div>${dt(h.at)} · <b>${esc(h.by)}</b> · ${esc(h.action)}${h.field ? " «" + esc({ title: "название", category: "категория", pinnedPrice: "цена", hidden: "скрыт", cover: "обложка", imageOrder: "порядок фото", primaryOffer: "основное предложение" }[h.field] || h.field) + "»" + (["imageOrder", "cover"].includes(h.field) ? " изменено" : ": " + esc(JSON.stringify(h.from)) + " → " + esc(JSON.stringify(h.to))) : ""}${h.to && !h.field ? " → " + esc(h.to) : ""}</div>`).join("") || "—"}</div></div></div>`;
+    <div class="sec"><h2>История</h2><div class="card pad hist">${(p.history || []).slice().reverse().map(h => `<div>${dt(h.at)} · <b>${esc(h.by)}</b> · ${esc(h.action)}${h.field ? " «" + esc({ title: "название", category: "категория", pinnedPrice: "цена", hidden: "скрыт", gender: "для кого", isNew: "новинка", stock: "в наличии", cover: "обложка", imageOrder: "порядок фото", primaryOffer: "основное предложение" }[h.field] || h.field) + "»" + (["imageOrder", "cover"].includes(h.field) ? " изменено" : ": " + esc(JSON.stringify(h.from)) + " → " + esc(JSON.stringify(h.to))) : ""}${h.to && !h.field ? " → " + esc(h.to) : ""}</div>`).join("") || "—"}</div></div></div>`;
   };
   draw();
   d.onclick = async e => {
@@ -979,7 +1065,8 @@ async function editor(id, reload) {
     if (b.dataset.primary) { await api("productSave", { method: "POST", body: { id, changes: { primaryOffer: b.dataset.primary } } }); toast("Основное предложение выбрано"); close(); reload(); editor(id, reload); return; }
     if (b.dataset.st) { await api("status", { method: "POST", body: { ids: [id], status: b.dataset.st } }); toast(b.dataset.st === "published" ? "Опубликовано — на витрине через ~10 секунд" : "Снято с витрины"); close(); reload(); return; }
     if ("save" in b.dataset) {
-      const changes = { title: $("#eTitle").value.trim() || null, category: $("#eCat").value || null, pinnedPrice: Number($("#ePin").value) || null, hidden: $("#eHide").checked || null };
+      const changes = { title: $("#eTitle").value.trim() || null, category: $("#eCat").value || null, pinnedPrice: Number($("#ePin").value) || null, hidden: $("#eHide").checked || null,
+        gender: $("#eG").value || null, isNew: $("#eNew").value || null, stock: $("#eSt").value ? { loc: $("#eSt").value, city: $("#eStCity").value.trim(), size: $("#eStSize").value.trim() } : (p.stock ? { loc: "" } : null) };
       if (cover !== cover0) changes.cover = cover;
       if (JSON.stringify(order) !== order0) changes.imageOrder = order;
       try { await api("productSave", { method: "POST", body: { id, changes } }); toast("Сохранено"); close(); reload(); } catch (err) { toast(err.message); }
@@ -1059,6 +1146,405 @@ async function vSources() {
       toast("Сохранено"); vSources();
     } catch (err) { toast(err.message); }
   };
+}
+
+/* =====================================================================
+   Общие инструменты: фото, выбор действия, всплывающая панель редактора
+   ===================================================================== */
+function fileToJpegB64(file, max = 1600) {
+  return new Promise(async (ok, bad) => {
+    try {
+      const bmp = await createImageBitmap(file).catch(() => null);
+      let w, h, src;
+      if (bmp) { src = bmp; w = bmp.width; h = bmp.height; }
+      else { const im = new Image(); im.src = URL.createObjectURL(file); await im.decode(); src = im; w = im.naturalWidth; h = im.naturalHeight; }
+      const k = Math.min(1, max / Math.max(w, h)); const c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(src, 0, 0, c.width, c.height);
+      c.toBlob(b => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.readAsDataURL(b); }, "image/jpeg", 0.86);
+    } catch (e) { bad(new Error("Не удалось прочитать фото: " + file.name)); }
+  });
+}
+async function uploadPhoto(file, max) {
+  const data = await fileToJpegB64(file, max);
+  return (await api("imageUpload", { method: "POST", body: { data } })).url;
+}
+function pickFile(multiple = false) {
+  return new Promise(res => { const i = document.createElement("input"); i.type = "file"; i.accept = "image/jpeg,image/png,image/webp,image/heic"; i.multiple = multiple; i.onchange = () => res([...i.files]); i.click(); });
+}
+/** Поле фото: превью + «Загрузить» / «Ссылка» / «Убрать». Значение хранится в data-url у .imgf. */
+function imgFieldHTML(key, url, label = "Фото", hint = "") {
+  return `<div class="imgf" data-imgf="${key}" data-url="${esc(url || "")}"><div class="f">${esc(label)}${hint ? ` <span class="hint" style="font-weight:400">${esc(hint)}</span>` : ""}</div>
+    <div class="imgf-row"><div class="imgf-pv">${url ? `<img src="${esc(url)}" alt="">` : svg("img")}</div>
+    <div class="imgf-act"><button class="btn ghost sm" data-imgup="${key}">${url ? "Заменить" : "Загрузить"}</button><button class="btn soft sm" data-imglink="${key}">Ссылка</button>${url ? `<button class="btn soft sm" data-imgrm="${key}">Убрать</button>` : ""}</div></div></div>`;
+}
+function imgFieldValue(root, key) { return root.querySelector(`[data-imgf="${key}"]`)?.dataset.url || ""; }
+async function imgFieldClick(root, e) {
+  const t = e.target.closest("[data-imgup],[data-imglink],[data-imgrm]"); if (!t) return false;
+  const key = t.dataset.imgup || t.dataset.imglink || t.dataset.imgrm, box = root.querySelector(`[data-imgf="${key}"]`);
+  const set = u => { box.dataset.url = u; const pv = box.querySelector(".imgf-pv"); pv.innerHTML = u ? `<img src="${esc(u)}" alt="">` : svg("img");
+    box.querySelector(".imgf-act").innerHTML = `<button class="btn ghost sm" data-imgup="${key}">${u ? "Заменить" : "Загрузить"}</button><button class="btn soft sm" data-imglink="${key}">Ссылка</button>${u ? `<button class="btn soft sm" data-imgrm="${key}">Убрать</button>` : ""}`; };
+  if (t.dataset.imgrm) { set(""); return true; }
+  if (t.dataset.imglink) { const u = prompt("Ссылка на фото (https://…)", box.dataset.url || ""); if (u !== null) { if (u && !/^https:\/\//.test(u.trim())) toast("Нужна ссылка https://…"); else set(u.trim()); } return true; }
+  const [f] = await pickFile(); if (!f) return true;
+  box.querySelector(".imgf-pv").innerHTML = '<span class="spin"></span>';
+  try { set(await uploadPhoto(f, key === "image" ? 2000 : 1600)); } catch (err) { toast(err.message); set(box.dataset.url); }
+  return true;
+}
+
+const ACT_LABEL = { none: "Без перехода", product: "Товар", brand: "Бренд", category: "Категория", new: "Новинки", service: "Сервис", url: "Ссылка" };
+const SVC_LABEL = { concierge: "Консьерж", travel: "Путешествия", resale: "Ресейл", stylist: "ИИ-стилист", optix: "OPTIX" };
+let BRANDS_CACHE = null;
+async function brandsList() { if (!BRANDS_CACHE) BRANDS_CACHE = (await api("brands", { silent: true })).brands; return BRANDS_CACHE; }
+function actionText(a) {
+  if (!a || a.type === "none") return "без перехода";
+  if (a.type === "category") return "категория «" + (CATS[a.value] || a.value) + "»";
+  if (a.type === "service") return "сервис «" + (SVC_LABEL[a.value] || a.value) + "»";
+  if (a.type === "brand") return "бренд " + a.value;
+  if (a.type === "product") return "товар";
+  if (a.type === "new") return "новинки";
+  return "ссылка";
+}
+/** Выбор, куда ведёт баннер / слайд / новость. */
+function actionFieldHTML(key, a = { type: "none", value: "" }) {
+  return `<div class="actf" data-actf="${key}" data-type="${esc(a.type || "none")}" data-value="${esc(a.value || "")}">
+    <label class="f">По нажатию открыть<select data-acttype>${Object.entries(ACT_LABEL).map(([k, v]) => `<option value="${k}" ${k === (a.type || "none") ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+    <div class="actf-v"></div></div>`;
+}
+async function actionFieldInit(root) {
+  for (const box of root.querySelectorAll("[data-actf]")) await actionFieldDraw(box);
+}
+async function actionFieldDraw(box) {
+  const type = box.dataset.type, value = box.dataset.value, v = box.querySelector(".actf-v");
+  if (type === "category") v.innerHTML = `<select data-actval>${Object.entries(CATS).map(([k, n]) => `<option value="${k}" ${k === value ? "selected" : ""}>${n}</option>`).join("")}</select>`;
+  else if (type === "service") v.innerHTML = `<select data-actval>${Object.entries(SVC_LABEL).map(([k, n]) => `<option value="${k}" ${k === value ? "selected" : ""}>${n}</option>`).join("")}</select>`;
+  else if (type === "brand") { const bs = await brandsList(); v.innerHTML = bs.length ? `<select data-actval>${bs.map(b => `<option ${b === value ? "selected" : ""}>${esc(b)}</option>`).join("")}</select>` : `<input type="text" data-actval value="${esc(value)}" placeholder="Название бренда">`; }
+  else if (type === "url") v.innerHTML = `<input type="text" data-actval value="${esc(value)}" placeholder="https://…">`;
+  else if (type === "product") {
+    let cur = null; if (value) { try { cur = (await api("productPick", { query: { ids: value }, silent: true })).products[0]; } catch {} }
+    v.innerHTML = `<div class="ppick" data-ppick>${cur ? pickChip(cur) : ""}<input type="search" data-pq placeholder="Найти товар: бренд или название"><div class="ppick-res"></div></div>`;
+  } else v.innerHTML = "";
+  if (["category", "service", "brand"].includes(type) && !value) { const s = v.querySelector("[data-actval]"); if (s) box.dataset.value = s.value; }
+}
+const pickChip = p => `<div class="pchip" data-pid="${esc(p._id)}">${p.cover ? `<img src="${esc(p.cover)}" alt="">` : ""}<span><b>${esc(p.brand)}</b> ${esc(p.title)}${p.price ? ` · ${eur(p.price)}` : ""}${p.status !== "published" ? " · не на витрине" : ""}</span><button type="button" data-unpick aria-label="Убрать">×</button></div>`;
+function actionFieldBind(root) {
+  root.addEventListener("change", e => {
+    const box = e.target.closest("[data-actf]"); if (!box) return;
+    if (e.target.matches("[data-acttype]")) { box.dataset.type = e.target.value; box.dataset.value = ""; actionFieldDraw(box); }
+    if (e.target.matches("[data-actval]")) box.dataset.value = e.target.value.trim();
+  });
+  root.addEventListener("input", e => {
+    const box = e.target.closest("[data-actf]");
+    if (box && e.target.matches("[data-actval]")) box.dataset.value = e.target.value.trim();
+    if (e.target.matches("[data-pq]")) productSearch(e.target);
+  });
+  root.addEventListener("click", e => {
+    const r = e.target.closest("[data-pickres]");
+    if (r) {
+      const pp = r.closest("[data-ppick]"), p = JSON.parse(r.dataset.pickres);
+      const box = r.closest("[data-actf]");
+      if (box) { box.dataset.value = p._id; pp.querySelectorAll(".pchip").forEach(x => x.remove()); pp.insertAdjacentHTML("afterbegin", pickChip(p)); }
+      else if (pp.dataset.multi !== undefined) { if (!pp.querySelector(`.pchip[data-pid="${CSS.escape(p._id)}"]`)) pp.querySelector(".pchips").insertAdjacentHTML("beforeend", pickChip(p)); }
+      pp.querySelector("[data-pq]").value = ""; pp.querySelector(".ppick-res").innerHTML = ""; return;
+    }
+    const u = e.target.closest("[data-unpick]");
+    if (u) { const box = u.closest("[data-actf]"); if (box) box.dataset.value = ""; u.closest(".pchip").remove(); }
+  });
+}
+let pqT;
+function productSearch(inp) {
+  clearTimeout(pqT); const res = inp.parentElement.querySelector(".ppick-res");
+  const q = inp.value.trim(); if (!q) { res.innerHTML = ""; return; }
+  pqT = setTimeout(async () => {
+    const { products } = await api("productPick", { query: { q }, silent: true });
+    res.innerHTML = products.slice(0, 8).map(p => `<button type="button" class="pres" data-pickres='${esc(JSON.stringify(p))}'>${p.cover ? `<img src="${esc(p.cover)}" alt="">` : "<i></i>"}<span><b>${esc(p.brand)}</b> ${esc(p.title)}<small>${p.price ? eur(p.price) : ""}${p.status !== "published" ? " · не на витрине" : ""}</small></span></button>`).join("") || `<div class="hint" style="padding:8px">Ничего не нашли</div>`;
+  }, 250);
+}
+function actionFieldValue(root, key) { const b = root.querySelector(`[data-actf="${key}"]`); return b ? { type: b.dataset.type, value: b.dataset.value || "" } : { type: "none", value: "" }; }
+
+/** Панель редактора: справа на компьютере, во весь экран на телефоне. */
+function sheet(title, bodyHTML, footHTML) {
+  const d = document.createElement("div"); d.className = "drawer sheet";
+  d.innerHTML = `<div class="in" role="dialog" aria-label="${esc(title)}"><div class="sh-h"><button class="btn soft sm" data-x aria-label="Закрыть">✕</button><b>${esc(title)}</b></div><div class="sh-b">${bodyHTML}</div>${footHTML ? `<div class="sh-f">${footHTML}</div>` : ""}</div>`;
+  document.body.append(d); tgBack.push(() => d.remove());
+  d.addEventListener("click", e => { if (e.target === d || e.target.closest("[data-x]")) close(); });
+  const close = () => { d.remove(); tgBack.pop(); };
+  d.close = close; return d;
+}
+
+/* =====================================================================
+   Витрина: баннеры, сторис, новости, подборки, настройки
+   ===================================================================== */
+const SHOW_TABS = [["banner", "Баннеры"], ["story", "Сторис"], ["news", "Новости"], ["rail", "Подборки"], ["site", "Настройки"]];
+const KIND_ONE = { banner: "баннер", story: "сторис", news: "новость", rail: "подборку" };
+const KIND_HINT = {
+  banner: "Большие карточки вверху «Ленты». Листаются пальцем, меняются сами каждые 5 секунд.",
+  story: "Кружки под заголовком «Ленты». Внутри — слайды с фото, текстом и кнопкой.",
+  news: "Блок «Новости» в «Ленте» и в сторис бренда.",
+  rail: "Горизонтальные ленты товаров в «Ленте»: новинки, категория, бренд, «в наличии» или ваш список."
+};
+async function vShow(sub) {
+  const kind = SHOW_TABS.some(t => t[0] === sub) ? sub : "banner";
+  const tabs = `<div class="seg" style="margin-bottom:16px;max-width:100%;overflow-x:auto">${SHOW_TABS.map(([k, v]) => `<button data-show="${k}" aria-pressed="${k === kind}">${v}</button>`).join("")}</div>`;
+  if (kind === "site") return vSite(tabs);
+  let items = (await api("cmsList", { query: { kind } })).items, sel = new Set();
+  const meta = x => kind === "banner" ? [x.subtitle, actionText(x.action)].filter(Boolean).join(" · ")
+    : kind === "story" ? `${x.slides.length} ${plural(x.slides.length, ["слайд", "слайда", "слайдов"])}`
+    : kind === "news" ? [x.tag, dt(x.createdAt)].filter(Boolean).join(" · ")
+    : ({ new: "Новинки", category: "Категория: " + (CATS[x.value] || x.value), brand: "Бренд: " + x.value, manual: `Свой список: ${x.ids.length}`, stock: "В наличии" }[x.rule] || "") + (x.gender ? (x.gender === "w" ? " · женское" : " · мужское") : "") + (x.maxPrice ? " · до " + eur(x.maxPrice) : "");
+  const thumb = x => kind === "banner" ? x.image : kind === "story" ? x.cover : kind === "news" ? x.image : "";
+  const dates = x => x.from || x.to ? `<span class="pill">${x.from ? "с " + x.from.split("-").reverse().join(".") : ""}${x.to ? " до " + x.to.split("-").reverse().join(".") : ""}</span>` : "";
+  const draw = () => {
+    $("#main").innerHTML = head("Витрина", KIND_HINT[kind], `<button class="btn" data-new>${svg("add")}Добавить ${KIND_ONE[kind]}</button>`) + tabs + `
+    <div class="card list cms-list">${items.map((x, i) => `<div class="li cms-li ${sel.has(x._id) ? "sel" : ""}" data-open="${esc(x._id)}">
+      <label class="ck2 static" data-noop><input type="checkbox" data-csel="${esc(x._id)}" ${sel.has(x._id) ? "checked" : ""} aria-label="Выбрать"></label>
+      ${kind !== "rail" ? `<div class="cms-th ${kind === "story" ? "round" : ""}">${thumb(x) ? `<img src="${esc(thumb(x))}" alt="" loading="lazy">` : svg("img")}</div>` : ""}
+      <div class="t"><b>${esc(x.title || "Без заголовка")}</b><span>${esc(meta(x))}</span>${dates(x)}</div>
+      <div class="cms-ctl" data-noop><button class="btn soft sm" data-up="${i}" ${i ? "" : "disabled"} aria-label="Выше">↑</button><button class="btn soft sm" data-dn="${i}" ${i < items.length - 1 ? "" : "disabled"} aria-label="Ниже">↓</button>
+      <label class="toggle" title="${x.active ? "Показывается" : "Скрыт"}"><input type="checkbox" data-act1="${esc(x._id)}" ${x.active ? "checked" : ""}></label></div></div>`).join("")
+      || `<div class="empty"><b>Пока пусто</b>Нажмите «Добавить ${KIND_ONE[kind]}»${kind === "story" ? ". Пока своих сторис нет, на витрине показываются кружки брендов." : ""}</div>`}</div>`;
+    bar();
+  };
+  const bar = () => {
+    let b = $(".actbar"); const n = sel.size;
+    if (!n) { b?.remove(); return; }
+    if (!b) { b = document.createElement("div"); b.className = "actbar"; document.body.append(b); }
+    b.innerHTML = `<span class="num" style="font-weight:600">Выбрано ${n}</span><button class="btn soft sm" data-bon>Показать</button><button class="btn soft sm" data-boff>Скрыть</button><button class="btn danger sm" data-bdel>Удалить</button><button class="btn soft sm" data-bclr>✕</button>`;
+    b.onclick = async e => {
+      const t = e.target.closest("button"); if (!t) return; const ids = [...sel];
+      if ("bclr" in t.dataset) { sel.clear(); return draw(); }
+      if ("bdel" in t.dataset) { if (!(await confirmBox(`Удалить ${n}?`, "Элементы исчезнут с витрины. Это нельзя отменить."))) return; await api("cmsDelete", { method: "POST", body: { ids } }); toast("Удалено: " + n); }
+      else await api("cmsActive", { method: "POST", body: { ids, active: "bon" in t.dataset } });
+      sel.clear(); reload();
+    };
+  };
+  const reload = async () => { items = (await api("cmsList", { query: { kind } })).items; draw(); };
+  draw();
+  $("#main").onclick = async e => {
+    const t = e.target.closest("[data-show],[data-new],[data-up],[data-dn],[data-act1],[data-csel],[data-noop],[data-open]"); if (!t || "noop" in t.dataset) return;
+    if (t.dataset.show) return go("show:" + t.dataset.show);
+    if ("new" in t.dataset) return cmsEditor(kind, null, reload);
+    if (t.dataset.up || t.dataset.dn) {
+      const i = +(t.dataset.up ?? t.dataset.dn), j = t.dataset.up ? i - 1 : i + 1;
+      [items[i], items[j]] = [items[j], items[i]]; draw();
+      await api("cmsReorder", { method: "POST", body: { kind, ids: items.map(x => x._id) } }); return;
+    }
+    if (t.dataset.act1) { await api("cmsActive", { method: "POST", body: { ids: [t.dataset.act1], active: t.checked } }); const x = items.find(y => y._id === t.dataset.act1); if (x) x.active = t.checked; toast(t.checked ? "Показывается на витрине" : "Скрыт с витрины"); return; }
+    if (t.dataset.csel) { t.checked ? sel.add(t.dataset.csel) : sel.delete(t.dataset.csel); t.closest(".li").classList.toggle("sel", t.checked); return bar(); }
+    if (t.dataset.open) return cmsEditor(kind, items.find(x => x._id === t.dataset.open), reload);
+  };
+}
+
+function datesHTML(x) {
+  return `<div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:140px">Показывать с<input type="date" data-k="from" value="${esc(x.from || "")}"></label>
+    <label class="f" style="flex:1;min-width:140px">по<input type="date" data-k="to" value="${esc(x.to || "")}"></label></div>
+    <p class="hint" style="margin:-8px 0 0">Даты необязательны: без них показывается всегда.</p>
+    <label class="toggle"><input type="checkbox" data-k="active" ${x.active !== false ? "checked" : ""}>Показывать на витрине</label>`;
+}
+async function cmsEditor(kind, item, reload) {
+  const x = item || { active: true, action: { type: "none", value: "" }, slides: [], ids: [], rule: "new", limit: 12 };
+  let body = "";
+  if (kind === "banner") body = `
+    ${imgFieldHTML("image", x.image, "Фото баннера", "горизонтальное, от 1200 px")}
+    <label class="f">Заголовок<input type="text" data-k="title" value="${esc(x.title || "")}" maxlength="80" placeholder="Новая коллекция Louis Vuitton"></label>
+    <label class="f">Подзаголовок<input type="text" data-k="subtitle" value="${esc(x.subtitle || "")}" maxlength="160" placeholder="Выкуп из бутиков Парижа за 7 дней"></label>
+    <label class="f">Текст кнопки<input type="text" data-k="button" value="${esc(x.button || "")}" maxlength="30" placeholder="Смотреть"></label>
+    ${actionFieldHTML("action", x.action)}
+    <div><div class="f" style="margin-bottom:8px">Текст на фото</div><div class="seg" data-seg="theme">${[["dark", "Белый на тёмном"], ["light", "Тёмный на светлом"]].map(([k, v]) => `<button type="button" data-v="${k}" aria-pressed="${(x.theme || "dark") === k}">${v}</button>`).join("")}</div></div>
+    ${datesHTML(x)}`;
+  else if (kind === "news") body = `
+    ${imgFieldHTML("image", x.image, "Фото")}
+    <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:140px">Метка<input type="text" data-k="tag" value="${esc(x.tag || "")}" maxlength="24" placeholder="Новинка"></label>
+    <label class="f" style="flex:2;min-width:180px">Бренд <span class="hint" style="font-weight:400">для сторис бренда</span><input type="text" data-k="brand" list="brandDl" value="${esc(x.brand || "")}" placeholder="Louis Vuitton"></label></div>
+    <label class="f">Заголовок<input type="text" data-k="title" value="${esc(x.title || "")}" maxlength="100"></label>
+    <label class="f">Текст<textarea data-k="text" maxlength="600" style="min-height:110px">${esc(x.text || "")}</textarea></label>
+    ${actionFieldHTML("action", x.action)}
+    ${datesHTML(x)}`;
+  else if (kind === "rail") body = `
+    <label class="f">Заголовок ленты<input type="text" data-k="title" value="${esc(x.title || "")}" maxlength="60" placeholder="Сумки до 3 000 €"></label>
+    <div><div class="f" style="margin-bottom:8px">Что показывать</div><div class="seg" data-seg="rule">${[["new", "Новинки"], ["category", "Категория"], ["brand", "Бренд"], ["stock", "В наличии"], ["manual", "Свой список"]].map(([k, v]) => `<button type="button" data-v="${k}" aria-pressed="${x.rule === k}">${v}</button>`).join("")}</div></div>
+    <div data-rulebox></div>
+    <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:140px">Для кого<select data-k="gender"><option value="">Всем</option><option value="w" ${x.gender === "w" ? "selected" : ""}>Женское</option><option value="m" ${x.gender === "m" ? "selected" : ""}>Мужское</option></select></label>
+    <label class="f" style="flex:1;min-width:140px">Цена до, € <span class="hint" style="font-weight:400">необязательно</span><input type="number" data-k="maxPrice" value="${esc(x.maxPrice || "")}" min="0" step="100"></label>
+    <label class="f" style="flex:1;min-width:120px">Сколько товаров<input type="number" data-k="limit" value="${esc(x.limit || 12)}" min="3" max="24"></label></div>
+    <label class="toggle"><input type="checkbox" data-k="band" ${x.band ? "checked" : ""}>Тёмный фон ленты (выделить)</label>
+    ${datesHTML(x)}`;
+  else if (kind === "story") body = `
+    <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:160px">Подпись под кружком<input type="text" data-k="title" value="${esc(x.title || "")}" maxlength="24" placeholder="LV · осень"></label></div>
+    ${imgFieldHTML("cover", x.cover, "Обложка кружка", "если пусто — первое фото слайда")}
+    <div><div class="row"><b>Слайды</b><span class="sp"></span><button type="button" class="btn ghost sm" data-addslide>${svg("add")}Слайд</button></div><div class="slides" data-slides></div></div>
+    ${datesHTML(x)}`;
+  const d = sheet((item ? "Изменить " : "Новый ") + ({ banner: "баннер", story: "сторис", news: "новость", rail: "подборку" }[kind]),
+    `<div class="form">${body}</div><datalist id="brandDl"></datalist>`,
+    `<button class="btn lg" data-save>Сохранить</button>${item ? `<button class="btn danger lg" data-del>Удалить</button>` : ""}`);
+  const root = d.querySelector(".sh-b");
+  brandsList().then(bs => { const dl = d.querySelector("#brandDl"); if (dl) dl.innerHTML = bs.map(b => `<option value="${esc(b)}">`).join(""); }).catch(() => {});
+  actionFieldBind(root); await actionFieldInit(root);
+  root.addEventListener("click", e => { const b = e.target.closest("[data-seg] button"); if (!b) return; b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); if (b.parentElement.dataset.seg === "rule") ruleBox(b.dataset.v); });
+  // подборки: поле под выбранное правило
+  const ruleBox = async rule => {
+    const rb = root.querySelector("[data-rulebox]"); if (!rb) return;
+    if (rule === "category") rb.innerHTML = `<label class="f">Категория<select data-k="value">${Object.entries(CATS).map(([k, v]) => `<option value="${k}" ${x.value === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>`;
+    else if (rule === "brand") { const bs = await brandsList(); rb.innerHTML = `<label class="f">Бренд<select data-k="value">${bs.map(b => `<option ${b === x.value ? "selected" : ""}>${esc(b)}</option>`).join("")}</select></label>`; }
+    else if (rule === "manual") {
+      let cur = []; if (x.ids?.length) { try { const m = (await api("productPick", { query: { ids: x.ids.join(",") }, silent: true })).products; cur = x.ids.map(i => m.find(p => p._id === i)).filter(Boolean); } catch {} }
+      rb.innerHTML = `<div class="f">Товары в ленте <span class="hint" style="font-weight:400">в этом порядке</span></div><div class="ppick" data-ppick data-multi><div class="pchips">${cur.map(pickChip).join("")}</div><input type="search" data-pq placeholder="Добавить товар: бренд или название"><div class="ppick-res"></div></div>`;
+    } else rb.innerHTML = `<p class="hint" style="margin:0">${rule === "new" ? "Товары, опубликованные за последние 14 дней (или отмеченные «Новинка»)." : "Товары с отметкой «В наличии» — уже выкуплены и лежат в Украине или Европе."}</p>`;
+  };
+  if (kind === "rail") ruleBox(x.rule || "new");
+  // сторис: слайды
+  let slides = (x.slides || []).map(s => ({ ...s }));
+  const drawSlides = () => {
+    const box = root.querySelector("[data-slides]"); if (!box) return;
+    box.innerHTML = slides.map((s, i) => `<div class="slide card pad" data-si="${i}">
+      <div class="row"><b>Слайд ${i + 1}</b><span class="sp"></span><button type="button" class="btn soft sm" data-sup="${i}" ${i ? "" : "disabled"}>↑</button><button type="button" class="btn soft sm" data-sdel="${i}">Удалить</button></div>
+      ${imgFieldHTML("s" + i, s.image, "Фото", "вертикальное")}
+      <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:120px">Метка<input type="text" data-sk="caption" value="${esc(s.caption || "")}" maxlength="40"></label><label class="f" style="flex:2;min-width:160px">Заголовок<input type="text" data-sk="title" value="${esc(s.title || "")}" maxlength="80"></label></div>
+      <label class="f">Текст<input type="text" data-sk="text" value="${esc(s.text || "")}" maxlength="200"></label>
+      <label class="f">Кнопка<input type="text" data-sk="button" value="${esc(s.button || "")}" maxlength="30" placeholder="Смотреть"></label>
+      ${actionFieldHTML("sa" + i, s.action)}</div>`).join("") || `<p class="hint">Добавьте первый слайд</p>`;
+    actionFieldInit(box);
+  };
+  const readSlides = () => slides.map((s, i) => { const el = root.querySelector(`[data-si="${i}"]`); if (!el) return s; const g = k => el.querySelector(`[data-sk="${k}"]`).value; return { ...s, image: imgFieldValue(el, "s" + i), caption: g("caption"), title: g("title"), text: g("text"), button: g("button"), action: actionFieldValue(el, "sa" + i) }; });
+  if (kind === "story") { if (!slides.length) slides = [{}]; drawSlides(); }
+  root.addEventListener("click", async e => {
+    if (await imgFieldClick(root, e)) return;
+    const t = e.target.closest("[data-addslide],[data-sdel],[data-sup]"); if (!t) return;
+    slides = readSlides();
+    if ("addslide" in t.dataset) slides.push({});
+    if (t.dataset.sdel) slides.splice(+t.dataset.sdel, 1);
+    if (t.dataset.sup) { const i = +t.dataset.sup; [slides[i - 1], slides[i]] = [slides[i], slides[i - 1]]; }
+    drawSlides();
+  });
+  const read = () => {
+    const v = k => root.querySelector(`[data-k="${k}"]`); const val = k => v(k) ? (v(k).type === "checkbox" ? v(k).checked : v(k).value) : undefined;
+    const seg = k => root.querySelector(`[data-seg="${k}"] [aria-pressed="true"]`)?.dataset.v;
+    const o = { _id: item?._id, active: val("active"), from: val("from"), to: val("to") };
+    if (kind === "banner") Object.assign(o, { image: imgFieldValue(root, "image"), title: val("title"), subtitle: val("subtitle"), button: val("button"), theme: seg("theme"), action: actionFieldValue(root, "action") });
+    if (kind === "news") Object.assign(o, { image: imgFieldValue(root, "image"), tag: val("tag"), brand: val("brand"), title: val("title"), text: val("text"), action: actionFieldValue(root, "action") });
+    if (kind === "rail") Object.assign(o, { title: val("title"), rule: seg("rule"), value: val("value") || "", gender: val("gender"), maxPrice: val("maxPrice"), limit: val("limit"), band: val("band"), ids: [...root.querySelectorAll("[data-multi] .pchip")].map(c => c.dataset.pid) });
+    if (kind === "story") Object.assign(o, { title: val("title"), cover: imgFieldValue(root, "cover"), slides: readSlides() });
+    return o;
+  };
+  d.querySelector(".sh-f").onclick = async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if ("del" in b.dataset) { if (!(await confirmBox("Удалить?", "Элемент исчезнет с витрины."))) return; await api("cmsDelete", { method: "POST", body: { ids: [item._id] } }); toast("Удалено"); d.close(); return reload(); }
+    b.disabled = true; const t0 = b.textContent; b.innerHTML = '<span class="spin"></span>';
+    try { await api("cmsSave", { method: "POST", body: { kind, item: read() } }); toast("Сохранено — на витрине через ~10 секунд"); d.close(); reload(); }
+    catch (err) { toast(err.message); b.disabled = false; b.textContent = t0; }
+  };
+}
+
+async function vSite(tabs) {
+  const { site } = await api("siteGet");
+  const WD = [[1, "понедельник"], [2, "вторник"], [3, "среда"], [4, "четверг"], [5, "пятница"], [6, "суббота"], [0, "воскресенье"]];
+  let contacts = site.contacts.map(c => ({ ...c }));
+  const draw = () => {
+    $("#main").innerHTML = head("Витрина", "Общие настройки приложения") + tabs + `
+    <div class="card pad form" style="max-width:760px">
+      <h3 style="margin:0">Отправка в Украину</h3>
+      <label class="f">День отправки<select id="sWd">${WD.map(([k, v]) => `<option value="${k}" ${site.shipWeekday === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+      <h3 style="margin:10px 0 0">Объявление вверху «Ленты»</h3>
+      <label class="toggle"><input type="checkbox" id="sAnOn" ${site.announce.on ? "checked" : ""}>Показывать</label>
+      <label class="f">Текст<input type="text" id="sAn" value="${esc(site.announce.text)}" maxlength="140" placeholder="Например: до 5 октября доставка в Украину бесплатно"></label>
+      <h3 style="margin:10px 0 0">Блоки «Ленты»</h3>
+      <label class="toggle"><input type="checkbox" id="sOptix" ${site.optix.on ? "checked" : ""}>Блок OPTIX</label>
+      <label class="f">Ссылка OPTIX<input type="text" id="sOptixUrl" value="${esc(site.optix.url)}"></label>
+      <label class="toggle"><input type="checkbox" id="sStock" ${site.stockBlock ? "checked" : ""}>Блок «В наличии»</label>
+      <label class="toggle"><input type="checkbox" id="sBrandSt" ${site.brandStories ? "checked" : ""}>Кружки брендов, когда своих сторис нет</label>
+      <h3 style="margin:10px 0 0">Контакты</h3><p class="hint" style="margin:0">Первый контакт — менеджер: на него уходят заказы и вопросы из приложения.</p>
+      <div id="sC">${contacts.map((c, i) => `<div class="row cline" data-ci="${i}"><input type="text" data-ck="label" value="${esc(c.label)}" placeholder="Подпись" style="flex:1;min-width:140px"><input type="text" data-ck="handle" value="${esc(c.handle)}" placeholder="@ник" style="flex:1;min-width:110px"><input type="text" data-ck="url" value="${esc(c.url)}" placeholder="https://t.me/…" style="flex:2;min-width:160px"><button class="btn soft sm" data-cdel="${i}" aria-label="Удалить">×</button></div>`).join("")}</div>
+      <div><button class="btn ghost sm" id="sCadd">${svg("add")}Контакт</button></div>
+      <div class="row" style="border-top:1px solid var(--line);padding-top:14px"><button class="btn lg" id="sSave">Сохранить</button></div>
+    </div>`;
+  };
+  const readC = () => [...document.querySelectorAll(".cline")].map(r => ({ label: r.querySelector('[data-ck="label"]').value, handle: r.querySelector('[data-ck="handle"]').value, url: r.querySelector('[data-ck="url"]').value }));
+  draw();
+  $("#main").onclick = async e => {
+    const t = e.target.closest("button"); if (!t) return;
+    if (t.dataset.show) return go("show:" + t.dataset.show);
+    if (t.id === "sCadd") { contacts = readC(); contacts.push({ label: "", handle: "", url: "" }); return draw(); }
+    if (t.dataset.cdel) { contacts = readC(); contacts.splice(+t.dataset.cdel, 1); return draw(); }
+    if (t.id === "sSave") {
+      const s = { shipWeekday: +$("#sWd").value, announce: { on: $("#sAnOn").checked, text: $("#sAn").value }, optix: { on: $("#sOptix").checked, url: $("#sOptixUrl").value }, stockBlock: $("#sStock").checked, brandStories: $("#sBrandSt").checked, contacts: readC() };
+      try { const r = await api("siteSave", { method: "POST", body: { site: s } }); Object.assign(site, r.site); contacts = r.site.contacts; toast("Сохранено"); draw(); } catch (err) { toast(err.message); }
+    }
+  };
+}
+
+/* =====================================================================
+   Заявки
+   ===================================================================== */
+const LEAD_KIND = { order: "Заказ", availability: "Уточнить наличие", concierge: "Консьерж", travel: "Поездка", resale: "Ресейл", request: "Запрос", optix: "OPTIX" };
+const LEAD_ST = { new: ["Новая", "err"], work: ["В работе", "warn"], bought: ["Выкуплено", "dark"], shipping: ["В пути", "dark"], delivered: ["Доставлено", "ok"], cancelled: ["Отменена", ""] };
+async function vLeads(st) {
+  const status = LEAD_ST[st] ? st : "";
+  const { leads, fresh } = await api("leads", { query: status ? { status } : {} });
+  updateLeadBadge(fresh);
+  $("#main").innerHTML = head("Заявки", "Заказы и вопросы из приложения. Статус видит клиент в «Мои заказы».") + `
+    <div class="seg" style="margin-bottom:16px;max-width:100%;overflow-x:auto"><button data-lst="" aria-pressed="${!status}">Все</button>${Object.entries(LEAD_ST).map(([k, v]) => `<button data-lst="${k}" aria-pressed="${status === k}">${v[0]}${k === "new" && fresh ? ` · ${fresh}` : ""}</button>`).join("")}</div>
+    <div class="card list">${leads.map(l => `<div class="li" data-lead="${esc(l._id)}"><div class="t"><b>${esc(LEAD_KIND[l.kind] || l.kind)} ${esc(l.number)}${l.total ? " · " + eur(l.total) : ""}</b>
+      <span>${dt(l.createdAt)} · ${esc(l.tg?.username ? "@" + l.tg.username : l.tg?.name || "клиент")}${l.items?.length ? " · " + esc(l.items.map(i => i.title).slice(0, 2).join(", ")) + (l.items.length > 2 ? "…" : "") : ""}</span></div>
+      <span class="pill ${LEAD_ST[l.status]?.[1] || ""}"><span class="dot"></span>${LEAD_ST[l.status]?.[0] || l.status}</span></div>`).join("")
+      || `<div class="empty"><b>Заявок нет</b>Когда клиент оформит заказ или задаст вопрос в приложении, заявка появится здесь</div>`}</div>
+    <p class="hint" style="margin-top:12px">Чтобы получать заявки сразу в Telegram, добавьте в Vercel переменные TELEGRAM_BOT_TOKEN и TELEGRAM_MANAGER_CHAT.</p>`;
+  $("#main").onclick = e => {
+    const f = e.target.closest("[data-lst]"); if (f) return go("leads" + (f.dataset.lst ? ":" + f.dataset.lst : ""));
+    const r = e.target.closest("[data-lead]"); if (r) leadSheet(leads.find(l => l._id === r.dataset.lead), () => vLeads(status));
+  };
+}
+function updateLeadBadge(n) { const c = $("#leadCnt"); if (c) { c.hidden = !n; c.textContent = n; } const m = $("#mLeadCnt"); if (m) { m.hidden = !n; m.textContent = n; } }
+function leadSheet(l, reload) {
+  const who = l.tg?.username ? `<a href="https://t.me/${esc(l.tg.username)}" target="_blank" rel="noopener">@${esc(l.tg.username)}</a>` : esc(l.tg?.name || "не указан");
+  const d = sheet(`${LEAD_KIND[l.kind] || "Заявка"} ${l.number}`, `<div class="form">
+    <dl class="kv"><dt>Когда</dt><dd>${dt(l.createdAt)}</dd><dt>Клиент</dt><dd>${who}</dd>${l.dest ? `<dt>Доставка</dt><dd>${{ ua: "Украина", eu: "Европа", dxb: "Дубай" }[l.dest]}</dd>` : ""}${l.total ? `<dt>Сумма</dt><dd class="num">${eur(l.total)}</dd>` : ""}</dl>
+    ${l.items?.length ? `<div class="card list">${l.items.map(i => `<div class="li" style="cursor:default"><div class="t"><b>${esc(i.brand)} · ${esc(i.title)}</b><span>${[i.size && "размер " + i.size, i.color, i.price && eur(i.price)].filter(Boolean).map(esc).join(" · ")}</span></div></div>`).join("")}</div>` : ""}
+    <div><div class="f" style="margin-bottom:6px">Сообщение клиента</div><pre class="msg">${esc(l.message || "—")}</pre></div>
+    <div><div class="f" style="margin-bottom:8px">Статус</div><div class="seg" data-seg="st" style="flex-wrap:wrap">${Object.entries(LEAD_ST).map(([k, v]) => `<button type="button" data-v="${k}" aria-pressed="${l.status === k}">${v[0]}</button>`).join("")}</div></div>
+    <label class="f">Заметка для себя<textarea id="lNote" style="min-height:80px">${esc(l.note || "")}</textarea></label>
+    <div class="hist">${(l.history || []).slice().reverse().map(h => `<div>${dt(h.at)} · ${esc(LEAD_ST[h.status]?.[0] || h.status)} · ${esc(h.by)}</div>`).join("")}</div></div>`,
+    `<button class="btn lg" data-save>Сохранить</button>${l.tg?.username ? `<a class="btn ghost lg" href="https://t.me/${esc(l.tg.username)}" target="_blank" rel="noopener">Написать</a>` : ""}<button class="btn danger lg" data-del>Удалить</button>`);
+  d.querySelector(".sh-b").addEventListener("click", e => { const b = e.target.closest("[data-seg] button"); if (b) b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); });
+  d.querySelector(".sh-f").onclick = async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if ("del" in b.dataset) { if (!(await confirmBox("Удалить заявку?", "Клиент перестанет видеть её статус."))) return; await api("leadDelete", { method: "POST", body: { ids: [l._id] } }); d.close(); return reload(); }
+    const status = d.querySelector('[data-seg="st"] [aria-pressed="true"]')?.dataset.v;
+    try { await api("leadSave", { method: "POST", body: { id: l._id, status, note: d.querySelector("#lNote").value } }); toast("Сохранено"); d.close(); reload(); } catch (err) { toast(err.message); }
+  };
+}
+
+/* =====================================================================
+   Телефон и Telegram: нижнее меню, кнопка «Назад» Telegram
+   ===================================================================== */
+const TG = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
+const tgBack = {
+  stack: [],
+  push(fn) { this.stack.push(fn); this.sync(); },
+  pop() { this.stack.pop(); this.sync(); },
+  sync() { if (!TG) return; const need = this.stack.length || /^(job|add|show|leads):/.test(view); try { need ? TG.BackButton.show() : TG.BackButton.hide(); } catch {} }
+};
+if (TG) {
+  try { TG.ready(); TG.expand(); TG.setHeaderColor && TG.setHeaderColor("#1c1d20"); TG.setBackgroundColor && TG.setBackgroundColor("#f6f6f7"); TG.disableVerticalSwipes && TG.disableVerticalSwipes(); } catch {}
+  document.documentElement.classList.add("tg");
+  TG.BackButton.onClick(() => { const top = tgBack.stack[tgBack.stack.length - 1]; if (top) { top(); tgBack.stack.pop(); tgBack.sync(); } else history.back(); });
+}
+function mobileNav() {
+  const m = document.createElement("nav"); m.className = "mnav"; m.id = "mnav";
+  m.innerHTML = [["home", "Обзор", "home"], ["products", "Товары", "products"], ["add", "Добавить", "add"], ["leads", "Заявки", "leads"], ["more", "Ещё", "more"]]
+    .map(([k, v, ic]) => `<button data-m="${k}" class="${k === "add" ? "plus" : ""}">${svg(ic)}<span>${v}</span>${k === "leads" ? '<i class="cnt" id="mLeadCnt" hidden></i>' : ""}</button>`).join("");
+  document.body.append(m);
+  m.onclick = e => {
+    const b = e.target.closest("[data-m]"); if (!b) return;
+    if (b.dataset.m !== "more") return go(b.dataset.m);
+    const d = sheet("Меню", `<div class="card list">${NAV.filter(([k]) => !["home", "products", "add", "leads"].includes(k)).map(([k, v]) => `<div class="li" data-mgo="${k}">${svg(k)}<div class="t"><b>${v}</b></div><span class="hint">›</span></div>`).join("")}
+      <div class="li" data-mgo="logout"><div class="t"><b>Выйти</b><span>${esc(me || "")}</span></div></div></div>`);
+    d.querySelector(".sh-b").onclick = e2 => { const r = e2.target.closest("[data-mgo]"); if (!r) return; d.close(); if (r.dataset.mgo === "logout") return $("#logout").click(); go(r.dataset.mgo); };
+  };
+}
+function mobileNavSync() {
+  const m = $("#mnav"); if (!m) return; const k = view.split(":")[0];
+  const map = { home: "home", products: "products", add: "add", leads: "leads" };
+  m.querySelectorAll("[data-m]").forEach(b => b.classList.toggle("on", b.dataset.m === (map[k] || (["show", "load", "jobs", "job", "watch", "prices", "sources"].includes(k) ? "more" : ""))));
+  tgBack.sync();
 }
 
 start();

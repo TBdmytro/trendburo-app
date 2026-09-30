@@ -1,6 +1,7 @@
 /** Публичный каталог для витрины: только опубликованные товары, без закупок и техданных. */
 import { getStore } from "../lib/store.js";
 import { toStorefront } from "../lib/catalog.js";
+import { publicContent } from "../lib/cms.js";
 
 export default async function handler(req, res) {
   // Личный раздел «Мониторинг»: плитки отдаются только по коду владельца
@@ -19,10 +20,11 @@ export default async function handler(req, res) {
       fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock" });
     const now = Date.now();
     const products = list.map(p => toStorefront(p, now)).filter(Boolean);
+    let content = null; try { content = await publicContent(store, new Date(now)); } catch { content = null; }
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     res.setHeader("Cache-Control", "public, s-maxage=10, stale-while-revalidate=30");
     res.statusCode = 200;
-    res.end(JSON.stringify({ products, generatedAt: new Date(now).toISOString(), demo: !!store.demo }));
+    res.end(JSON.stringify({ products, content, generatedAt: new Date(now).toISOString(), demo: !!store.demo }));
   } catch (e) {
     res.statusCode = 503; res.setHeader("Content-Type", "application/json; charset=utf-8");
     // Код причины без секретов — чтобы по ответу было видно, что чинить

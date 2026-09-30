@@ -7,7 +7,7 @@ import { join, extname } from "node:path";
 if (!process.env.SANITY_PROJECT_ID) process.env.DEMO_MODE = "1";
 process.env.ADMIN_PASSWORD ||= "demo";
 const root = new URL("..", import.meta.url).pathname;
-const routes = { "/api/admin": "../api/admin.js", "/api/catalog": "../api/catalog.js", "/api/cron": "../api/cron.js" };
+const routes = { "/api/admin": "../api/admin.js", "/api/catalog": "../api/catalog.js", "/api/cron": "../api/cron.js", "/api/lead": "../api/lead.js" };
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".css": "text/css", ".svg": "image/svg+xml" };
 
 http.createServer(async (req, res) => {

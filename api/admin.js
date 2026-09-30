@@ -11,6 +11,8 @@ import { publishItems, setStatus, saveOverrides, computePricing } from "../lib/p
 import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
 import { toStorefront } from "../lib/catalog.js";
 import { saveManualProduct } from "../lib/manual.js";
+import { LEAD_STATUS } from "./lead.js";
+import { listItems, saveItem, deleteItems, reorder, setActive, getSite, saveSite, KINDS } from "../lib/cms.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
 const slim = j => { if (!j) return j; const { rows, seen, queue, attempts, catRoot, discover, ...rest } = j; return { ...rest, queued: j.queuedCount ?? (queue || []).length, discoverLeft: j.discoverLeft ?? (discover || []).length }; };
@@ -37,12 +39,13 @@ export default async function handler(req, res) {
       case "me": return send(res, 200, { name: me.name, store: store.kind, demo: !!store.demo });
 
       case "overview": {
-        const [published, draft, hidden, jobs, waiting] = await Promise.all([
+        const [published, draft, hidden, jobs, waiting, leadsNew] = await Promise.all([
           store.count("product", { status: "published" }), store.count("product", { status: "draft" }), store.count("product", { status: "hidden" }),
           store.list("importJob", {}, { order: "createdAt desc", limit: 8, fields: JOB_FIELDS }),
-          store.count("importItem", { publishedAs: null, kind: ["new", "update", "duplicate"] })
+          store.count("importItem", { publishedAs: null, kind: ["new", "update", "duplicate"] }),
+          store.count("lead", { status: "new" })
         ]);
-        return send(res, 200, { published, draft, hidden, waiting, jobs: jobs.map(slim), active: jobs.filter(j => ACTIVE.includes(j.status)).length });
+        return send(res, 200, { published, draft, hidden, waiting, leadsNew, jobs: jobs.map(slim), active: jobs.filter(j => ACTIVE.includes(j.status)).length });
       }
       case "sourceCheck": {
         // Проверка доступа с нашего сервера: robots.txt + главная страница источника. Без обхода защиты.
@@ -180,6 +183,43 @@ export default async function handler(req, res) {
         w.by = me.name; w.at = new Date().toISOString();
         await store.put(w);
         return send(res, 200, { code: w.code, tiles: w.tiles });
+      }
+      case "leads": {
+        const where = LEAD_STATUS.includes(req.query.status) ? { status: req.query.status } : {};
+        const [leads, fresh] = await Promise.all([store.list("lead", where, { order: "createdAt desc", limit: 300 }), store.count("lead", { status: "new" })]);
+        return send(res, 200, { leads, fresh });
+      }
+      case "leadSave": {
+        const l = await store.get(body.id); if (!l || l._type !== "lead") return send(res, 404, { error: "Заявка не найдена" });
+        const now = new Date().toISOString();
+        if (body.status && LEAD_STATUS.includes(body.status) && body.status !== l.status) { l.history = [...(l.history || []).slice(-30), { at: now, status: body.status, by: me.name }]; l.status = body.status; }
+        if (body.note !== undefined) l.note = String(body.note).slice(0, 2000);
+        l.updatedAt = now; l.manager = me.name;
+        return send(res, 200, { lead: await store.put(l) });
+      }
+      case "leadDelete": { const ids = (body.ids || []).filter(i => String(i).startsWith("lead.")).slice(0, 200); await store.delMany(ids); return send(res, 200, { deleted: ids.length }); }
+      case "cmsList": {
+        const kind = String(req.query.kind || "");
+        if (!KINDS.includes(kind)) return send(res, 400, { error: "Неизвестный тип" });
+        return send(res, 200, { items: await listItems(store, kind) });
+      }
+      case "cmsSave": return send(res, 200, { item: await saveItem(store, body.kind, body.item || {}, me.name) });
+      case "cmsDelete": return send(res, 200, { deleted: await deleteItems(store, body.ids) });
+      case "cmsReorder": return send(res, 200, { ok: await reorder(store, body.kind, body.ids) });
+      case "cmsActive": return send(res, 200, { ok: await setActive(store, body.ids, body.active) });
+      case "siteGet": return send(res, 200, { site: await getSite(store) });
+      case "siteSave": return send(res, 200, { site: await saveSite(store, body.site || {}, me.name) });
+      case "brands": {
+        const list = await store.list("product", {}, { limit: 5000, fields: "brand" });
+        return send(res, 200, { brands: [...new Set(list.map(p => p.brand).filter(Boolean))].sort() });
+      }
+      case "productPick": {
+        // быстрый поиск товаров для баннеров и подборок
+        const q = String(req.query.q || "").toLowerCase(), ids = String(req.query.ids || "").split(",").filter(Boolean);
+        let list = await store.list("product", {}, { limit: 5000, order: "updatedAt desc", fields: "_id, brand, title, overrides, status, images[0...1]{url}, pricing{ua}" });
+        if (ids.length) list = list.filter(p => ids.includes(p._id));
+        else if (q) list = list.filter(p => [p.brand, p.overrides?.title, p.title].join(" ").toLowerCase().includes(q));
+        return send(res, 200, { products: list.slice(0, 40).map(p => ({ _id: p._id, brand: p.brand, title: p.overrides?.title || p.title, status: p.status, cover: p.images?.[0]?.url || null, price: p.pricing?.ua ?? null })) });
       }
       case "productSave": return send(res, 200, { product: await saveOverrides(store, body.id, body.changes || {}, me.name, pricingCfg) });
 
