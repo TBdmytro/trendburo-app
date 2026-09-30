@@ -12,6 +12,8 @@ import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
 import { toStorefront } from "../lib/catalog.js";
 import { saveManualProduct } from "../lib/manual.js";
 import { LEAD_STATUS } from "./lead.js";
+import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier } from "../lib/suppliers.js";
+import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
 import { listItems, saveItem, deleteItems, reorder, setActive, getSite, saveSite, KINDS } from "../lib/cms.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
@@ -49,11 +51,16 @@ export default async function handler(req, res) {
       }
       case "sourceCheck": {
         // Проверка доступа с нашего сервера: robots.txt + главная страница источника. Без обхода защиты.
-        const id = body.id; if (!SOURCES[id]) return send(res, 400, { error: "Неизвестный источник" });
+        const id = body.id;
         const settings = await store.get("source." + id);
+        if (!SOURCES[id] && !settings?.custom) return send(res, 400, { error: "Неизвестный источник" });
         const src = sourceWith(settings, id);
         let check;
-        if (!src.home) check = { ok: false, state: "none", text: "У источника нет адреса сайта — используйте файл" };
+        if (src.custom) {
+          const d = await detectSupplier(src.home);
+          check = d.ok ? { ok: true, state: "ok", text: `Каталог открыт: ${d.sample}${d.more ? "+" : ""} товаров на первой странице, валюта ${d.currency}` } : { ok: false, state: /не пускает|закрыл/.test(d.reason) ? "blocked" : "error", text: d.reason };
+        }
+        else if (!src.home) check = { ok: false, state: "none", text: "У источника нет адреса сайта — используйте файл" };
         else {
           const t0 = Date.now();
           try {
@@ -75,7 +82,8 @@ export default async function handler(req, res) {
         const jobs = await store.list("importJob", {}, { order: "createdAt desc", limit: 200, fields: "_id, sourceId, status, mode, createdAt, processed, found, errors, filtered" });
         const products = await store.list("product", {}, { fields: "status, category, offers[]{sourceId}" });
         const out = [];
-        for (const id of Object.keys(SOURCES)) {
+        const fx = await getFx(store);
+        for (const id of await allSourceIds(store)) {
           const settings = await store.get("source." + id);
           const src = sourceWith(settings, id);
           const mine = products.filter(p => (p.offers || []).some(o => o.sourceId === id));
@@ -88,14 +96,18 @@ export default async function handler(req, res) {
             sitemaps: settings?.sitemaps || src.sitemaps || [], collections: src.collections || [],
             lastSync: settings?.lastSync || null, check: settings?.check || null, home: src.home || null, lastJob: slim(last), running: jobs.some(j => j.sourceId === id && ACTIVE.includes(j.status)),
             stats: { found: mine.length, published: mine.filter(p => p.status === "published").length },
-            categories: [...new Set(mine.map(p => p.category).filter(Boolean))]
+            categories: [...new Set(mine.map(p => p.category).filter(Boolean))],
+            custom: !!src.custom, catalog: !!src.catalog, shopCurrency: src.shopCurrency || null, factor: src.factor || 1, brands: src.brands || [], cats: src.cats || [],
+            fx: src.shopCurrency && src.shopCurrency !== "EUR" ? fx.rates[src.shopCurrency] : null
           });
         }
         return send(res, 200, { sources: out });
       }
       case "sourceSave": {
-        const id = body.id; if (!SOURCES[id]) return send(res, 400, { error: "Неизвестный источник" });
-        const cur = (await store.get("source." + id)) || { _id: "source." + id, _type: "sourceSettings", sourceId: id };
+        const id = body.id;
+        let cur = (await store.get("source." + id)) || { _id: "source." + id, _type: "sourceSettings", sourceId: id };
+        if (!SOURCES[id] && !cur.custom) return send(res, 400, { error: "Неизвестный источник" });
+        if (cur.custom && (body.factor !== undefined || body.brands !== undefined || body.cats !== undefined || body.name || body.kind)) cur = await updateSupplier(store, id, { factor: body.factor ?? cur.factor, brands: body.brands ?? cur.brands, cats: body.cats ?? cur.cats, name: body.name, kind: body.kind });
         if (body.photoCopy) {
           const allowed = !!body.photoCopy.allowed, basis = String(body.photoCopy.basis || "").trim();
           if (allowed && basis.length < 5) return send(res, 400, { error: "Укажите основание: кто и когда разрешил использовать фото" });
@@ -108,6 +120,13 @@ export default async function handler(req, res) {
         await store.put(cur);
         return send(res, 200, { ok: true });
       }
+
+      case "supplierDetect": return send(res, 200, { result: await detectSupplier(String(body.url || "")) });
+      case "supplierAdd": return send(res, 200, await addSupplier(store, body, { by: me.name }));
+      case "supplierRemove": return send(res, 200, await removeSupplier(store, String(body.id || ""), { deleteProducts: !!body.deleteProducts }));
+      case "fxGet": return send(res, 200, await getFx(store));
+      case "fxRefresh": { const r = await refreshFx(store, { force: true }); return send(res, 200, { ...(await getFx(store)), refresh: r }); }
+      case "fxSave": return send(res, 200, await saveManualFx(store, body.manual || {}, me.name));
 
       case "jobCreate": {
         const { job, existing } = await createJob(store, { sourceId: body.sourceId, mode: body.mode, input: body.input || "", category: body.category || null, createdBy: me.name, onlyCats: body.onlyCats || null, gender: body.gender || null });
@@ -140,14 +159,30 @@ export default async function handler(req, res) {
         const r = await publishItems(store, body.ids || [], { status: body.status === "draft" ? "draft" : "published", by: me.name, resolution: body.resolution || {}, pricingCfg });
         return send(res, 200, { results: r });
       }
-      case "status": return send(res, 200, { results: await setStatus(store, body.ids || [], ["published", "draft", "hidden"].includes(body.status) ? body.status : "draft", me.name) });
+      case "status": return send(res, 200, { results: await setStatus(store, (body.ids || []).slice(0, 5000), ["published", "draft", "hidden"].includes(body.status) ? body.status : "draft", me.name) });
+      case "productIds": {
+        // все товары по текущему фильтру — для «Показать все найденные»
+        const all = await store.list("product", {}, { limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, offers[]{sourceId}" });
+        const Q = req.query, q = String(Q.q || "").toLowerCase();
+        const ids = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (!Q.status || p.status === Q.status)
+          && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source)) && (!Q.brand || p.brand === Q.brand) && (!Q.cat || (p.overrides?.category || p.category) === Q.cat)).map(p => p._id);
+        return send(res, 200, { ids });
+      }
 
       case "products": {
-        let list = await store.list("product", {}, { order: "updatedAt desc", limit: 5000 });
-        const q = String(req.query.q || "").toLowerCase();
-        if (q) list = list.filter(p => [p.brand, p.title, p.sourceTitle, p.modelSku].join(" ").toLowerCase().includes(q));
-        if (req.query.status) list = list.filter(p => p.status === req.query.status);
-        return send(res, 200, { products: list.slice(0, 300).map(p => ({ _id: p._id, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden })), total: list.length });
+        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, issues, offers[]{sourceId, onlineOrder}" });
+        const Q = req.query, q = String(Q.q || "").toLowerCase();
+        const cat = p => p.overrides?.category || p.category;
+        // фильтры применяются по очереди; списки для выпадающих меню строятся по остальным фильтрам
+        const base = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q))
+          && (!Q.status || p.status === Q.status) && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source)));
+        const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat));
+        const facet = (arr, f) => { const m = {}; arr.forEach(p => { const k = f(p); if (k) m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ k, n })); };
+        const offset = Math.max(0, Number(Q.offset) || 0), limit = Math.min(300, Math.max(1, Number(Q.limit) || 120));
+        return send(res, 200, { total: list.length, offset,
+          facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId) },
+          shown: list.filter(p => p.status === "published").length,
+          products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder) })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });

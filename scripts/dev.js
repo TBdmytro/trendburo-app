@@ -7,6 +7,27 @@ import { join, extname } from "node:path";
 if (!process.env.SANITY_PROJECT_ID) process.env.DEMO_MODE = "1";
 process.env.ADMIN_PASSWORD ||= "demo";
 const root = new URL("..", import.meta.url).pathname;
+// ТЕСТОВЫЙ РЕЖИМ (только локально, FAKE_SHOP=1): магазин shop.test на Shopify с 40 товарами в долларах — для проверки админки без интернета
+if (process.env.FAKE_SHOP === "1") {
+  const { setDnsCheck } = await import("../lib/http.js"); setDnsCheck(false);
+  const real = globalThis.fetch;
+  const brands = ["Kith", "Fear of God", "The Row", "Amiri"], types = ["Hoodies", "Bags", "Sneakers", "Jackets"];
+  const all = Array.from({ length: 40 }, (_, i) => ({ id: i + 1, title: `${types[i % 4].replace(/s$/, "")} ${i + 1}`, handle: `item-${i + 1}`, vendor: brands[i % 4], product_type: types[i % 4], tags: [i % 3 ? "Mens" : "Womens"],
+    options: [{ name: "Size" }], images: [1, 2, 3].map(k => ({ id: i * 10 + k, src: `https://cdn.shopify.com/fake/${i + 1}-${k}.jpg` })),
+    variants: [{ sku: `S${i}-1`, option1: "S", price: String(150 + i * 25), available: i % 7 !== 0 }, { sku: `S${i}-2`, option1: "M", price: String(150 + i * 25), available: true }] }));
+  const json = o => new Response(JSON.stringify(o), { headers: { "content-type": "application/json" } });
+  globalThis.fetch = async (url, o) => {
+    const u = new URL(url);
+    if (u.hostname.endsWith("shop.test")) {
+      if (u.pathname === "/robots.txt") return new Response("User-agent: *\nDisallow: /cart", { headers: { "content-type": "text/plain" } });
+      if (u.pathname === "/meta.json") return json({ name: "Test Shop", currency: "USD" });
+      if (u.pathname === "/products.json") { const lim = +u.searchParams.get("limit") || 30, pg = +u.searchParams.get("page") || 1; return json({ products: all.slice((pg - 1) * lim, pg * lim) }); }
+      return new Response("nf", { status: 404, headers: { "content-type": "text/html" } });
+    }
+    if (u.hostname.endsWith("ecb.europa.eu")) return new Response("<Cube currency='USD' rate='1.1700'/><Cube currency='GBP' rate='0.8600'/>", { headers: { "content-type": "text/xml" } });
+    return real(url, o);
+  };
+}
 const routes = { "/api/admin": "../api/admin.js", "/api/catalog": "../api/catalog.js", "/api/cron": "../api/cron.js", "/api/lead": "../api/lead.js" };
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".css": "text/css", ".svg": "image/svg+xml" };
 

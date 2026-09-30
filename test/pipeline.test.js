@@ -336,3 +336,76 @@ test("ручная карточка: 3 фото, название, цена бу
   assert.equal(again._id, p._id); assert.equal(again.pricing.ua, 2530);
   assert.equal((await store.list("product")).length, 2);
 });
+
+/* ---------- Поставщик-каталог, подключённый по ссылке (Shopify, цены в долларах) ---------- */
+import { detectSupplier, addSupplier, allSourceIds, removeSupplier } from "../lib/suppliers.js";
+import { saveManualFx, toEur, parseEcb } from "../lib/fx.js";
+
+function shopFixture(n, { drop = [] } = {}) {
+  const products = [];
+  for (let i = 1; i <= n; i++) if (!drop.includes(i)) products.push({
+    id: i, title: `Hoodie ${i}`, handle: `hoodie-${i}`, vendor: i % 2 ? "Kith" : "Fear of God", product_type: "Hoodies", tags: ["Mens", "Apparel"],
+    options: [{ name: "Size" }], images: [{ id: 10 + i, src: `https://cdn.shopify.com/s/files/h${i}-1.jpg` }, { id: 20 + i, src: `https://cdn.shopify.com/s/files/h${i}-2.jpg` }, { id: 30 + i, src: `https://cdn.shopify.com/s/files/h${i}-3.jpg` }],
+    variants: [{ sku: `K${i}-S`, option1: "S", price: "234.00", available: true }, { sku: `K${i}-M`, option1: "M", price: "234.00", available: false }]
+  });
+  return products;
+}
+function shopFetch(state) {
+  return fakeFetch(u => {
+    if (u.endsWith("/robots.txt")) return { body: "User-agent: *\nDisallow: /cart\n", type: "text/plain" };
+    if (u.includes("/meta.json")) return { body: JSON.stringify({ name: "Kith", currency: "USD" }), type: "application/json" };
+    const m = u.match(/\/products\.json\?limit=(\d+)(?:&page=(\d+))?/);
+    if (m) { const page = Number(m[2] || 1), all = shopFixture(state.n, state), lim = Number(m[1]); return { body: JSON.stringify({ products: all.slice((page - 1) * lim, page * lim) }), type: "application/json" }; }
+    return null;
+  });
+}
+
+test("fx: курс ЕЦБ читается, пересчёт в евро с коэффициентом", () => {
+  assert.equal(parseEcb("<Cube currency='USD' rate='1.1700'/><Cube currency='GBP' rate='0.8700'/>").USD, 1.17);
+  assert.equal(toEur(234, "USD", { rates: { USD: { rate: 1.17 } } }), 200);
+  assert.equal(toEur(234, "USD", { rates: { USD: { rate: 1.17 } } }, 1.1), 220);
+  assert.equal(toEur(100, "EUR", null), 100);
+});
+
+test("поставщик по ссылке: проверка, подключение, весь каталог скрытыми товарами, повтор без дублей, исчезнувшие — нет в наличии", async () => {
+  const store = new MemoryStore(); const state = { n: 3 };
+  await saveManualFx(store, { USD: 1.17 });
+  const det = await detectSupplier("kith.com", { fetchImpl: shopFetch(state) });
+  assert.ok(det.ok, det.reason); assert.equal(det.currency, "USD"); assert.equal(det.kind, "retailer"); assert.equal(det.sample, 3);
+  const { id } = await addSupplier(store, { url: "https://kith.com" }, { fetchImpl: shopFetch(state) });
+  assert.ok((await allSourceIds(store)).includes(id));
+  const { job } = await createJob(store, { sourceId: id, mode: "full" });
+  for (let i = 0; i < 10; i++) { const r = await tick(store, { fetchImpl: shopFetch(state), sleep: noSleep }); if (!r.jobId) break; }
+  const j1 = await store.get(job._id);
+  assert.equal(j1.status, "done", JSON.stringify(j1.errors)); assert.equal(j1.saved, 3);
+  let prods = await store.list("product");
+  assert.equal(prods.length, 3); assert.ok(prods.every(p => p.status === "draft"), "новые товары скрыты с витрины");
+  const p1 = prods.find(p => p.title.includes("Hoodie 1"));
+  assert.equal(p1.offers[0].boutique, 200, "234 $ / 1.17 = 200 €"); assert.equal(p1.pricing.ua, 220, "Украина ×1,10");
+  assert.equal(p1.category, "clothing"); assert.equal(p1.gender, "m"); assert.deepEqual(p1.sizes, ["S", "M"]);
+  assert.equal((await store.list("importItem")).length, 0, "каталог не засоряет предпросмотр");
+  // показываем один товар, затем поставщик убрал товар 3 и добавил 4
+  await setStatus(store, [p1._id], "published");
+  state.n = 4; state.drop = [3];
+  const { job: job2 } = await createJob(store, { sourceId: id, mode: "full", meta: { refresh: true } });
+  for (let i = 0; i < 10; i++) { const r = await tick(store, { fetchImpl: shopFetch(state), sleep: noSleep }); if (!r.jobId) break; }
+  assert.equal((await store.get(job2._id)).status, "done");
+  prods = await store.list("product");
+  assert.equal(prods.length, 4, "без дублей: 3 прежних + 1 новый");
+  assert.equal((await store.get(p1._id)).status, "published", "показанный товар остаётся на витрине");
+  const gone = prods.find(p => p.title.includes("Hoodie 3"));
+  assert.ok(Object.values(gone.offers[0].availability).every(a => a.status === "out"), "исчезнувший товар — нет в наличии");
+  assert.equal(toStorefront(await store.get(p1._id)).price.ua, 220);
+  // отключение: показанные товары скрываются
+  await removeSupplier(store, id);
+  assert.equal((await store.get(p1._id)).status, "draft");
+  assert.ok(!(await allSourceIds(store)).includes(id));
+});
+
+test("поставщик по ссылке: robots.txt запрещает или нет каталога — не подключаем", async () => {
+  const f1 = fakeFetch(u => u.endsWith("/robots.txt") ? { body: "User-agent: *\nDisallow: /products\n", type: "text/plain" } : null);
+  assert.equal((await detectSupplier("https://closed.example", { fetchImpl: f1 })).ok, false);
+  const f2 = fakeFetch(u => u.endsWith("/robots.txt") ? { body: "", type: "text/plain" } : { body: "<html></html>" });
+  const d2 = await detectSupplier("https://nocatalog.example", { fetchImpl: f2 });
+  assert.equal(d2.ok, false); assert.match(d2.reason, /не магазин на Shopify/);
+});
