@@ -409,3 +409,19 @@ test("поставщик по ссылке: robots.txt запрещает или
   const d2 = await detectSupplier("https://nocatalog.example", { fetchImpl: f2 });
   assert.equal(d2.ok, false); assert.match(d2.reason, /не магазин на Shopify/);
 });
+
+test("скриншоты: ответ Gemini чистится, цена в USD пересчитывается, мусор отбрасывается", async () => {
+  const { cleanReading, readScreen } = await import("../lib/screens.js");
+  const fx = { rates: { USD: { rate: 1.17 } } };
+  const r = cleanReading({ isProduct: true, brand: " Kith ", title: "Hoodie", price: "185", currency: "usd", sizes: ["S", "M"], category: "clothing", gender: "m", box: [100, 50, 600, 950] }, fx);
+  assert.equal(r.currency, "USD"); assert.equal(r.priceEur, 158.12); assert.deepEqual(r.box, [100, 50, 600, 950]); assert.equal(r.brand, "Kith");
+  const bad = cleanReading({ isProduct: true, brand: "X", title: "Y", price: -5, currency: "XYZ", category: "rockets", gender: "q", box: [0, 0, 5, 5] }, fx);
+  assert.equal(bad.price, null); assert.equal(bad.category, "other"); assert.equal(bad.gender, "u"); assert.equal(bad.box, null); assert.equal(bad.currencyKnown, false);
+  await assert.rejects(readScreen("AAAA", "image/jpeg", { fx, key: "" }), /GEMINI_API_KEY/);
+  const f429 = async () => new Response("{}", { status: 429 });
+  await assert.rejects(readScreen("AAAA", "image/jpeg", { fx, key: "k", fetchImpl: f429 }), e => e.retryAfter > 0);
+  let sentKeyInUrl = null;
+  const fok = async (url, o) => { sentKeyInUrl = String(url).includes("k-secret"); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ isProduct: true, brand: "LV", title: "Keepall", price: 2600, currency: "EUR", category: "bags", gender: "m", box: [0, 0, 900, 900] }) }] } }] }), { status: 200 }); };
+  const ok = await readScreen("AAAA", "image/jpeg", { fx, key: "k-secret", fetchImpl: fok });
+  assert.equal(ok.priceEur, 2600); assert.equal(sentKeyInUrl, false);
+});

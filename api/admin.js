@@ -14,6 +14,7 @@ import { saveManualProduct } from "../lib/manual.js";
 import { LEAD_STATUS } from "./lead.js";
 import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier } from "../lib/suppliers.js";
 import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
+import { readScreen, screensEnabled, ScreenError } from "../lib/screens.js";
 import { listItems, saveItem, deleteItems, reorder, setActive, getSite, saveSite, KINDS } from "../lib/cms.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
@@ -198,6 +199,17 @@ export default async function handler(req, res) {
         if (!store.uploadImage) return send(res, 400, { error: "Хранилище фото не подключено" });
         const up = await store.uploadImage(buf, { filename: "manual-" + Date.now() + "." + type.split("/")[1], contentType: type });
         return send(res, 200, { url: up.url });
+      }
+      case "screenStatus": return send(res, 200, { enabled: screensEnabled() });
+      case "screenRead": {
+        // Скриншот → данные товара (Gemini). Сам скриншот нигде не сохраняется.
+        const data = String(body.data || "");
+        const buf = Buffer.from(data, "base64");
+        if (!buf.length || buf.length > 3.5e6) return send(res, 400, { error: "Скриншот пустой или больше 3,5 МБ" });
+        const type = buf[0] === 0xff && buf[1] === 0xd8 ? "image/jpeg" : buf[0] === 0x89 && buf[1] === 0x50 ? "image/png" : buf.slice(8, 12).toString() === "WEBP" ? "image/webp" : null;
+        if (!type) return send(res, 400, { error: "Нужен JPEG, PNG или WebP" });
+        try { return send(res, 200, { item: await readScreen(data, type, { fx: await getFx(store) }) }); }
+        catch (e) { if (e instanceof ScreenError) return send(res, e.status === 429 ? 429 : 422, { error: e.message, retryAfter: e.retryAfter }); throw e; }
       }
       case "manualSave": return send(res, 200, { product: await saveManualProduct(store, body, { by: me.name, pricingCfg }) });
       case "pricePreview": {

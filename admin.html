@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-09-30-admin-v9">
+<meta name="trendburo-build" content="2026-10-01-admin-v10">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -357,6 +357,14 @@ pre.msg{white-space:pre-wrap;font:13px/1.5 var(--f);background:#fff;border:1px s
 input[type=date]{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 13px;min-height:44px}
 html.tg .side{display:none}
 html.tg .main{padding-top:14px}
+/* ---------- Со скриншотов ---------- */
+.scgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.scc.off{opacity:.5}
+.scimgs{display:flex;gap:6px;overflow-x:auto;padding:10px 10px 0}
+.scimgs figure{margin:0;position:relative;flex:none}
+.scimgs img{width:96px;height:120px;object-fit:contain;background:#f4f4f5;border-radius:10px;display:block}
+.scimgs button{position:absolute;right:4px;top:4px;width:24px;height:24px;border-radius:12px;border:0;background:rgba(255,255,255,.95);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+@media (max-width:900px){.scgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -430,11 +438,12 @@ const IC = {
   van: '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/>',
   show: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
   leads: '<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/>',
+  screens: '<rect x="4" y="3" width="11" height="18" rx="2"/><path d="M15 8h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7"/><path d="M7 17h5"/>',
   more: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
   img: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 9"/>'
 };
 const svg = k => `<svg class="i" viewBox="0 0 24 24">${IC[k]}</svg>`;
-const NAV = [["home", "Обзор"], ["leads", "Заявки"], ["products", "Товары"], ["add", "Новый товар"], ["show", "Витрина"], ["load", "Загрузка"], ["jobs", "Задачи"], ["watch", "Мониторинг"], ["prices", "Цены"], ["sources", "Источники"]];
+const NAV = [["home", "Обзор"], ["leads", "Заявки"], ["products", "Товары"], ["add", "Новый товар"], ["screens", "Со скриншотов"], ["show", "Витрина"], ["load", "Загрузка"], ["jobs", "Задачи"], ["watch", "Мониторинг"], ["prices", "Цены"], ["sources", "Источники"]];
 const STATUS = { queued: ["В очереди", "run"], running: ["Загружается", "dark run"], waiting: ["Пауза, повтор", "warn run"], done: ["Готово", "ok"], failed: ["Ошибка", "err"], blocked: ["Сайт блокирует", "err"], cancelled: ["Отменено", ""] };
 const MODE = { link: "Один товар", links: "По ссылкам", category: "Разделы сайта", full: "Весь каталог", file: "Файл" };
 const IKIND = { new: "Новые", update: "Обновления", duplicate: "Возможные дубли", incomplete: "Неполные", error: "Ошибки", excluded: "Исключены", pricechange: "Изменения цен" };
@@ -479,7 +488,7 @@ function go(v) {
   $("#main").innerHTML = `<div class="empty"><span class="spin"></span></div>`; $("#main").onclick = $("#main").oninput = $("#main").onchange = null; $(".actbar")?.remove();
   document.querySelectorAll(".drawer").forEach(x => x.remove()); tgBack.stack = [];
   window.scrollTo(0, 0); mobileNavSync();
-  const fn = { home: vHome, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts, prices: vPrices, sources: vSources, show: vShow, leads: vLeads }[k] || vHome;
+  const fn = { home: vHome, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts, prices: vPrices, sources: vSources, show: vShow, leads: vLeads, screens: vScreens }[k] || vHome;
   fn(v.split(":")[1]).catch(e => { $("#main").innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(e.message)}</div></div>`; });
 }
 async function getSources(force) { if (!sources || force) sources = (await api("sources")).sources; return sources; }
@@ -696,7 +705,7 @@ async function vAdd(editId) {
   const pre = !editId && readPrefill();
   if (pre) Object.assign(F, pre);
   let busy = 0, price = null, shot = 0;
-  $("#main").innerHTML = head(editId ? "Изменить карточку" : "Новый товар", "Три фото, название и цена бутика — наша цена посчитается сама") + `
+  $("#main").innerHTML = head(editId ? "Изменить карточку" : "Новый товар", "Три фото, название и цена бутика — наша цена посчитается сама", editId ? "" : `<a class="btn ghost" href="#screens">${svg("screens")}Со скриншотов</a>`) + `
   ${pre ? `<div class="note-box ok" style="margin-bottom:14px">${svg("ok")}<div>Заполнено со страницы <b>${esc(pre.host || "")}</b>: ${esc(pre.title || "без названия")}${pre.boutique ? " · " + eur(pre.boutique) : " · цену не нашли, впишите"} · фото: ${pre.images.length}. Проверьте и нажмите «Опубликовать».${pre.currency && pre.currency !== "EUR" ? ` <b>Валюта на странице: ${esc(pre.currency)} — впишите цену в евро.</b>` : ""}</div></div>` : ""}
   ${!editId && !pre ? `<div class="card pad row" style="margin-bottom:14px;gap:14px"><div style="flex:1;min-width:260px"><b>Быстрее: кнопка «В Trend Büro»</b><div class="hint">Перетащите кнопку на панель закладок браузера. Открыли товар на сайте бренда → нажали закладку → эта форма открывается уже заполненной: название, цена, фото.</div></div>
     <a class="btn ghost" id="bmk" href="#" title="Перетащите на панель закладок">＋ В Trend Büro</a></div>` : ""}
@@ -1674,6 +1683,121 @@ function mobileNavSync() {
   m.querySelectorAll("[data-m]").forEach(b => b.classList.toggle("on", b.dataset.m === (map[k] || (["show", "load", "jobs", "job", "watch", "prices", "sources"].includes(k) ? "more" : ""))));
   tgBack.sync();
 }
+
+
+/* =====================================================================
+   Со скриншотов: Gemini читает скриншот, браузер вырезает фото, одинаковые товары склеиваются
+   ===================================================================== */
+async function loadBitmap(file) {
+  try { return await createImageBitmap(file); }
+  catch { const im = new Image(); im.src = URL.createObjectURL(file); await im.decode(); return im; }
+}
+async function cropToB64(file, box) {
+  const src = await loadBitmap(file); const W = src.width || src.naturalWidth, H = src.height || src.naturalHeight;
+  let [y0, x0, y1, x1] = box.map(v => v / 1000); const py = (y1 - y0) * 0.03, px = (x1 - x0) * 0.03;
+  y0 = Math.max(0, y0 - py); x0 = Math.max(0, x0 - px); y1 = Math.min(1, y1 + py); x1 = Math.min(1, x1 + px);
+  const sw = (x1 - x0) * W, sh = (y1 - y0) * H, k = Math.min(1, 1600 / Math.max(sw, sh));
+  const c = document.createElement("canvas"); c.width = Math.round(sw * k); c.height = Math.round(sh * k);
+  const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(src, x0 * W, y0 * H, sw, sh, 0, 0, c.width, c.height);
+  return new Promise(ok => c.toBlob(b => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.readAsDataURL(b); }, "image/jpeg", 0.88));
+}
+const SCR = { queue: [], groups: new Map(), running: false, enabled: null, last: 0 };
+const scrKey = r => (r.brand + "|" + r.title).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9а-я|]+/g, "");
+async function vScreens() {
+  if (SCR.enabled === null) SCR.enabled = (await api("screenStatus")).enabled;
+  const draw = () => {
+    const q = SCR.queue, done = q.filter(i => i.state === "done").length, bad = q.filter(i => i.state === "err" || i.state === "skip").length, left = q.filter(i => i.state === "wait" || i.state === "read").length;
+    const groups = [...SCR.groups.values()].filter(g => !g.saved);
+    $("#main").innerHTML = head("Со скриншотов", "Скриншоты страниц товаров → готовые карточки. Каждый скриншот — один товар; несколько скриншотов одного товара склеятся в одну карточку с галереей.",
+      `<button class="btn" id="scPick" ${SCR.enabled ? "" : "disabled"}>${svg("img")}Выбрать скриншоты</button>`) + `
+      ${SCR.enabled ? "" : `<div class="note-box warn">${svg("warn")}<div><b>Распознавание не подключено.</b> Добавьте в Vercel переменную <b>GEMINI_API_KEY</b> (ключ с aistudio.google.com) и сделайте Redeploy.</div></div>`}
+      <input type="file" id="scFile" accept="image/*" multiple hidden>
+      ${q.length ? `<div class="card pad" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+        <div class="row"><b>Скриншоты: ${done} готово${bad ? ` · ${bad} пропущено` : ""}${left ? ` · ${left} в очереди` : ""}</b><span class="sp"></span>${left ? `<span class="hint">${SCR.running ? '<span class="spin"></span> читаю…' : ""}</span>` : `<button class="btn ghost sm" id="scClear">Очистить список</button>`}</div>
+        <div class="bar"><i style="width:${q.length ? Math.round((done + bad) / q.length * 100) : 0}%"></i></div>
+        ${left ? `<p class="hint" style="margin:0">Не закрывайте эту страницу, пока идёт разбор. Бесплатный Gemini — около 14 скриншотов в минуту.</p>` : ""}
+        ${q.filter(i => i.state === "err" || i.state === "skip").slice(0, 8).map(i => `<div class="hint err">${esc(i.name)}: ${esc(i.msg)}</div>`).join("")}
+      </div>` : SCR.enabled ? `<div class="card empty"><b>Выберите скриншоты из галереи</b>Можно сразу 50–100 штук. Снимайте страницу товара так, чтобы были видны фото, название и цена.</div>` : ""}
+      ${groups.length ? `<div class="row" style="margin:6px 0 12px"><h2 style="margin:0;font-size:18px">Карточки · ${groups.length}</h2><span class="sp"></span>
+        <button class="btn ghost" id="scDraft">В черновики</button><button class="btn" id="scPub">Опубликовать</button></div>
+        <div class="scgrid">${groups.map(g => scCard(g)).join("")}</div>` : ""}`;
+  };
+  const scCard = g => `<article class="card scc ${g.checked ? "" : "off"}" data-g="${esc(g.key)}">
+    <div class="scimgs">${g.images.map((u, i) => `<figure><img src="${esc(u)}" alt=""><button data-rmimg="${i}" aria-label="Убрать фото">×</button></figure>`).join("") || `<div class="hint" style="padding:20px">нет фото</div>`}</div>
+    <div class="form" style="gap:10px;padding:12px">
+      <label class="toggle"><input type="checkbox" data-gk="checked" ${g.checked ? "checked" : ""}>Сохранять эту карточку</label>
+      <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:120px">Бренд<input type="text" data-gk="brand" value="${esc(g.brand)}"></label>
+      <label class="f" style="flex:2;min-width:160px">Название<input type="text" data-gk="title" value="${esc(g.title)}"></label></div>
+      <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:120px">Цена бутика, €<input type="number" data-gk="priceEur" value="${esc(g.priceEur ?? "")}" min="1"></label>
+      <label class="f" style="flex:1;min-width:120px">Категория<select data-gk="category">${Object.entries(CATS).map(([k, v]) => `<option value="${k}" ${g.category === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+      <label class="f" style="flex:1;min-width:100px">Для кого<select data-gk="gender">${[["w", "Женское"], ["m", "Мужское"], ["u", "Унисекс"]].map(([k, v]) => `<option value="${k}" ${g.gender === k ? "selected" : ""}>${v}</option>`).join("")}</select></label></div>
+      <div class="hint">${g.price ? `На скриншоте: ${esc(g.price)} ${esc(g.currency)}${g.currency !== "EUR" ? (g.currencyKnown ? " → пересчитано в € по курсу" : " — валюта неизвестна, впишите цену в €") : ""}` : "Цену не нашли — впишите"}${g.color ? " · " + esc(g.color) : ""}${g.sizes.length ? " · размеры " + esc(g.sizes.join(", ")) : ""} · скриншотов: ${g.count}</div>
+      ${g.err ? `<div class="err hint">${esc(g.err)}</div>` : ""}
+    </div></article>`;
+  const addFiles = files => {
+    for (const f of files) { if (!/^image\//.test(f.type) && !/\.(png|jpe?g|webp|heic)$/i.test(f.name)) continue; SCR.queue.push({ file: f, name: f.name, state: "wait" }); }
+    draw(); run();
+  };
+  const run = async () => {
+    if (SCR.running) return; SCR.running = true;
+    try {
+      for (const it of SCR.queue) {
+        if (it.state !== "wait") continue;
+        it.state = "read"; if (view === "screens") draw();
+        for (let attempt = 0; attempt < 6; attempt++) {
+          const gap = 4300 - (Date.now() - SCR.last); if (gap > 0) await new Promise(r => setTimeout(r, gap));
+          SCR.last = Date.now();
+          try {
+            const data = await fileToJpegB64(it.file, 1600);
+            const r = await fetch("/api/admin?a=screenRead", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-TB": "1" }, body: JSON.stringify({ data }) });
+            const j = await r.json().catch(() => ({ error: "Ошибка сервера " + r.status }));
+            if (r.status === 429) { await new Promise(res => setTimeout(res, (j.retryAfter || 40) * 1000)); continue; }
+            if (!r.ok) { it.state = "err"; it.msg = j.error || "ошибка"; break; }
+            const rd = j.item;
+            if (!rd.isProduct || (!rd.title && !rd.brand)) { it.state = "skip"; it.msg = "не похоже на страницу товара"; break; }
+            let url = null;
+            if (rd.box) { const b64 = await cropToB64(it.file, rd.box); url = (await api("imageUpload", { method: "POST", body: { data: b64 }, silent: true })).url; }
+            const key = scrKey(rd) || "x" + Math.random();
+            const g = SCR.groups.get(key) || { key, brand: rd.brand, title: rd.title, price: rd.price, currency: rd.currency, currencyKnown: rd.currencyKnown, priceEur: rd.priceEur, color: rd.color, sizes: [], sku: rd.sku, category: rd.category, gender: rd.gender, images: [], count: 0, checked: true };
+            if (url && g.images.length < 8) g.images.push(url);
+            g.sizes = [...new Set([...g.sizes, ...rd.sizes])]; g.count++; if (!g.priceEur && rd.priceEur) { g.priceEur = rd.priceEur; g.price = rd.price; g.currency = rd.currency; }
+            SCR.groups.set(key, g); it.state = "done"; break;
+          } catch (e) { it.state = "err"; it.msg = e.message; break; }
+        }
+        if (it.state === "read") { it.state = "err"; it.msg = "Gemini занят — попробуйте позже"; }
+        if (view === "screens") draw();
+      }
+    } finally { SCR.running = false; if (view === "screens") draw(); }
+  };
+  const save = async status => {
+    const groups = [...SCR.groups.values()].filter(g => g.checked && !g.saved); let ok = 0;
+    for (const g of groups) {
+      try {
+        await api("manualSave", { method: "POST", body: { brand: g.brand, title: g.title, category: g.category, gender: g.gender, boutique: Number(g.priceEur), sizes: g.sizes, color: g.color, sku: g.sku, availability: "online", images: g.images, status } });
+        g.saved = true; g.err = null; ok++;
+      } catch (e) { g.err = e.message; }
+    }
+    toast((status === "draft" ? "В черновиках: " : "На витрине: ") + ok + (ok < groups.length ? ` · с ошибками: ${groups.length - ok}` : ""));
+    draw();
+  };
+  draw();
+  if (SCR.queue.some(i => i.state === "wait")) run();
+  $("#main").onclick = async e => {
+    const t = e.target.closest("button,input"); if (!t) return;
+    if (t.id === "scPick") return $("#scFile").click();
+    if (t.id === "scClear") { SCR.queue = []; return draw(); }
+    if (t.id === "scDraft" || t.id === "scPub") return save(t.id === "scDraft" ? "draft" : "published");
+    if (t.dataset.rmimg) { const g = SCR.groups.get(t.closest("[data-g]").dataset.g); g.images.splice(+t.dataset.rmimg, 1); return draw(); }
+  };
+  $("#main").onchange = e => {
+    if (e.target.id === "scFile") { addFiles([...e.target.files]); e.target.value = ""; return; }
+    const card = e.target.closest("[data-g]"); if (!card || !e.target.dataset.gk) return;
+    const g = SCR.groups.get(card.dataset.g), k = e.target.dataset.gk;
+    g[k] = e.target.type === "checkbox" ? e.target.checked : k === "priceEur" ? Number(e.target.value) || null : e.target.value;
+    if (k === "checked") card.classList.toggle("off", !g.checked);
+  };
+}
+window.addEventListener("beforeunload", e => { if (SCR.running) { e.preventDefault(); e.returnValue = ""; } });
 
 start();
 </script>

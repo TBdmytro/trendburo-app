@@ -9,6 +9,7 @@ process.env.ADMIN_PASSWORD ||= "demo";
 const root = new URL("..", import.meta.url).pathname;
 // ТЕСТОВЫЙ РЕЖИМ (только локально, FAKE_SHOP=1): магазин shop.test на Shopify с 40 товарами в долларах — для проверки админки без интернета
 if (process.env.FAKE_SHOP === "1") {
+  process.env.GEMINI_API_KEY ||= "fake-local-key";
   const { setDnsCheck } = await import("../lib/http.js"); setDnsCheck(false);
   const real = globalThis.fetch;
   const brands = ["Kith", "Fear of God", "The Row", "Amiri"], types = ["Hoodies", "Bags", "Sneakers", "Jackets"];
@@ -23,6 +24,14 @@ if (process.env.FAKE_SHOP === "1") {
       if (u.pathname === "/meta.json") return json({ name: "Test Shop", currency: "USD" });
       if (u.pathname === "/products.json") { const lim = +u.searchParams.get("limit") || 30, pg = +u.searchParams.get("page") || 1; return json({ products: all.slice((pg - 1) * lim, pg * lim) }); }
       return new Response("nf", { status: 404, headers: { "content-type": "text/html" } });
+    }
+    if (u.hostname === "generativelanguage.googleapis.com") {
+      // имитация Gemini: по размеру картинки выдаём один из трёх товаров
+      const body = JSON.parse(o.body); const n = body.contents[0].parts[0].inline_data.data.length % 3;
+      const r = [{ isProduct: true, brand: "Louis Vuitton", title: "Keepall Bandoulière 50", price: 2600, currency: "EUR", color: "Monogram", sizes: [], sku: "M41416", category: "bags", gender: "m", box: [120, 60, 620, 940] },
+        { isProduct: true, brand: "Louis Vuitton", title: "Keepall Bandoulière 50", price: 2600, currency: "EUR", color: "Monogram", sizes: [], sku: "M41416", category: "bags", gender: "m", box: [100, 40, 640, 960] },
+        { isProduct: true, brand: "Kith", title: "Williams III Hoodie", price: 185, currency: "USD", color: "Black", sizes: ["S", "M", "L"], sku: "", category: "clothing", gender: "m", box: [80, 100, 560, 900] }][n];
+      return json({ candidates: [{ content: { parts: [{ text: JSON.stringify(r) }] } }] });
     }
     if (u.hostname.endsWith("ecb.europa.eu")) return new Response("<Cube currency='USD' rate='1.1700'/><Cube currency='GBP' rate='0.8600'/>", { headers: { "content-type": "text/xml" } });
     return real(url, o);
