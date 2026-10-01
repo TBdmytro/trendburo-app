@@ -7,7 +7,26 @@ import { getStore } from "../lib/store.js";
 import { createHash } from "node:crypto";
 
 export const LEAD_KINDS = { order: "Заказ", availability: "Уточнить наличие", concierge: "Консьерж", travel: "Поездка", resale: "Ресейл", request: "Запрос под заказ", optix: "OPTIX" };
-export const LEAD_STATUS = ["new", "work", "bought", "shipping", "delivered", "cancelled"];
+export const LEAD_STATUS = ["new", "work", "paid", "bought", "shipping", "delivered", "cancelled"];
+/** Что бот пишет клиенту при смене статуса заказа. */
+export const CLIENT_TEXT = {
+  work: n => `Заказ ${n} принят менеджером. Скоро напишем по деталям.`,
+  paid: n => `Оплата по заказу ${n} получена, спасибо! Выкупаем.`,
+  bought: n => `Заказ ${n} выкуплен в бутике. Готовим к отправке.`,
+  shipping: (n, track) => `Заказ ${n} в пути.${track ? " Трек-номер: " + track : ""}`,
+  delivered: n => `Заказ ${n} доставлен. Спасибо, что выбрали Trend Büro!`,
+  cancelled: n => `Заказ ${n} отменён. Если это ошибка — напишите менеджеру.`
+};
+/** Сообщение клиенту в Telegram от бота (если клиент открывал мини-апп из бота и токен задан). */
+export async function notifyClient(lead, status) {
+  const token = process.env.TELEGRAM_BOT_TOKEN, chat = lead.tg?.id;
+  const text = CLIENT_TEXT[status]?.(lead.number, lead.track);
+  if (!token || !chat || !text) return false;
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat, text }) });
+    return r.ok;
+  } catch { return false; }
+}
 const str = (v, n) => String(v ?? "").slice(0, n);
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
@@ -45,7 +64,7 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       const client = new URL(req.url, "http://x").searchParams.get("client") || "";
       if (!/^[a-z0-9]{16,48}$/i.test(client)) return send(res, 400, { error: "Нет ключа клиента" });
-      const list = await store.list("lead", { client }, { order: "createdAt desc", limit: 50, fields: "number, kind, status, createdAt, total, items[]{title, brand}" });
+      const list = await store.list("lead", { client }, { order: "createdAt desc", limit: 50, fields: "number, kind, status, createdAt, total, track, items[]{title, brand}" });
       return send(res, 200, { leads: list });
     }
     if (req.method !== "POST") return send(res, 405, { error: "Метод не поддерживается" });

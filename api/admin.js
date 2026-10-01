@@ -11,11 +11,11 @@ import { publishItems, setStatus, saveOverrides, computePricing } from "../lib/p
 import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
 import { toStorefront } from "../lib/catalog.js";
 import { saveManualProduct } from "../lib/manual.js";
-import { LEAD_STATUS } from "./lead.js";
+import { LEAD_STATUS, notifyClient } from "./lead.js";
 import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier } from "../lib/suppliers.js";
 import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
 import { readScreen, screensEnabled, ScreenError } from "../lib/screens.js";
-import { listItems, saveItem, deleteItems, reorder, setActive, getSite, saveSite, KINDS } from "../lib/cms.js";
+import { listItems, saveItem, deleteItems, reorder, setActive, getSite, saveSite, seedRails, FEED_BLOCKS, TEXTS, KINDS } from "../lib/cms.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
 const slim = j => { if (!j) return j; const { rows, seen, queue, attempts, catRoot, discover, ...rest } = j; return { ...rest, queued: j.queuedCount ?? (queue || []).length, discoverLeft: j.discoverLeft ?? (discover || []).length }; };
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
 
     switch (a) {
       case "logout": res.setHeader("Set-Cookie", clearCookie()); return send(res, 200, { ok: true });
-      case "me": return send(res, 200, { name: me.name, store: store.kind, demo: !!store.demo });
+      case "me": { await seedRails(store, me.name).catch(() => {}); return send(res, 200, { name: me.name, store: store.kind, demo: !!store.demo }); }
 
       case "overview": {
         const [published, draft, hidden, jobs, waiting, leadsNew] = await Promise.all([
@@ -48,7 +48,20 @@ export default async function handler(req, res) {
           store.count("importItem", { publishedAs: null, kind: ["new", "update", "duplicate"] }),
           store.count("lead", { status: "new" })
         ]);
-        return send(res, 200, { published, draft, hidden, waiting, leadsNew, jobs: jobs.map(slim), active: jobs.filter(j => ACTIVE.includes(j.status)).length });
+        const [orders, cms, srcs] = await Promise.all([
+          store.list("lead", { kind: "order", status: ["work", "paid", "bought", "shipping"] }, { limit: 500, fields: "status" }),
+          store.list("cms", { active: true }, { limit: 400, fields: "_id, kind, title, to" }),
+          store.list("sourceSettings", {}, { limit: 200, fields: "sourceId, custom, check, lastSync" })
+        ]);
+        const soon = new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10), today = new Date().toISOString().slice(0, 10);
+        const attention = [];
+        if (leadsNew) attention.push({ level: "err", text: `${leadsNew} — новые заявки ждут ответа`, go: "leads:new" });
+        const paid = orders.filter(o => o.status === "paid").length;
+        if (paid) attention.push({ level: "warn", text: `${paid} — оплачены, ждут выкупа`, go: "leads:paid" });
+        cms.filter(x => x.to && x.to >= today && x.to <= soon).forEach(x => attention.push({ level: "info", text: `«${x.title || "Без названия"}» снимется с витрины ${x.to.split("-").reverse().slice(0, 2).join(".")}`, go: "show:" + x.kind }));
+        srcs.filter(s => s.custom && s.check && s.check.state !== "ok").forEach(s => attention.push({ level: "warn", text: `${s.custom.name}: ${s.check.text}`, go: "sources" }));
+        srcs.filter(s => s.custom && s.lastSync && ["failed", "blocked"].includes(s.lastSync.status)).forEach(s => attention.push({ level: "warn", text: `${s.custom.name}: последнее обновление каталога не удалось`, go: "sources" }));
+        return send(res, 200, { published, draft, hidden, waiting, leadsNew, ordersActive: orders.length, ordersPaid: paid, attention: attention.slice(0, 8), jobs: jobs.map(slim), active: jobs.filter(j => ACTIVE.includes(j.status)).length });
       }
       case "sourceCheck": {
         // Проверка доступа с нашего сервера: robots.txt + главная страница источника. Без обхода защиты.
@@ -240,9 +253,31 @@ export default async function handler(req, res) {
         const l = await store.get(body.id); if (!l || l._type !== "lead") return send(res, 404, { error: "Заявка не найдена" });
         const now = new Date().toISOString();
         if (body.status && LEAD_STATUS.includes(body.status) && body.status !== l.status) { l.history = [...(l.history || []).slice(-30), { at: now, status: body.status, by: me.name }]; l.status = body.status; }
+        const changed = body.status && LEAD_STATUS.includes(body.status) && l.history?.[l.history.length - 1]?.at === now;
         if (body.note !== undefined) l.note = String(body.note).slice(0, 2000);
+        if (body.track !== undefined) l.track = String(body.track).replace(/[^\w\- ]/g, "").slice(0, 40);
+        if (changed && body.notify !== false) l.clientNotified = await notifyClient(l, l.status);
         l.updatedAt = now; l.manager = me.name;
         return send(res, 200, { lead: await store.put(l) });
+      }
+      case "finance": {
+        const days = { week: 7, month: 31, quarter: 92, year: 366 }[req.query.period] || 31;
+        const since = new Date(Date.now() - days * 864e5).toISOString();
+        const all = (await store.list("lead", { kind: "order" }, { order: "createdAt desc", limit: 5000, fields: "createdAt, status, total, dest, items[]{brand, price}" })).filter(l => l.status !== "cancelled");
+        const inPeriod = all.filter(l => l.createdAt >= since);
+        const done = inPeriod.filter(l => ["paid", "bought", "shipping", "delivered"].includes(l.status));
+        const mk = mergeConfig(pricingCfg).official.markup;
+        const margin = l => (l.total || 0) - (l.total || 0) / (1 + (l.dest === "ua" || !l.dest ? mk.ua : l.dest === "eu" ? mk.eu : mk.dxb));
+        const sum = (a, f) => Math.round(a.reduce((s, x) => s + (f(x) || 0), 0));
+        const byBrand = {};
+        done.forEach(l => (l.items || []).forEach(i => { if (i.brand) byBrand[i.brand] = (byBrand[i.brand] || 0) + (i.price || 0); }));
+        const buckets = 6, step = days * 864e5 / buckets, start = Date.now() - days * 864e5;
+        const series = Array.from({ length: buckets }, (_, k) => sum(done.filter(l => { const t = Date.parse(l.createdAt); return t >= start + k * step && t < start + (k + 1) * step; }), l => l.total));
+        return send(res, 200, {
+          revenue: sum(done, l => l.total), margin: sum(done, margin), orders: done.length, avg: done.length ? Math.round(sum(done, l => l.total) / done.length) : 0, series,
+          pipeline: { awaiting: sum(all.filter(l => ["new", "work"].includes(l.status)), l => l.total), paid: sum(all.filter(l => l.status === "paid"), l => l.total), moving: sum(all.filter(l => ["bought", "shipping"].includes(l.status)), l => l.total) },
+          brands: Object.entries(byBrand).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([brand, total]) => ({ brand, total: Math.round(total) }))
+        });
       }
       case "leadDelete": { const ids = (body.ids || []).filter(i => String(i).startsWith("lead.")).slice(0, 200); await store.delMany(ids); return send(res, 200, { deleted: ids.length }); }
       case "cmsList": {
@@ -254,7 +289,7 @@ export default async function handler(req, res) {
       case "cmsDelete": return send(res, 200, { deleted: await deleteItems(store, body.ids) });
       case "cmsReorder": return send(res, 200, { ok: await reorder(store, body.kind, body.ids) });
       case "cmsActive": return send(res, 200, { ok: await setActive(store, body.ids, body.active) });
-      case "siteGet": return send(res, 200, { site: await getSite(store) });
+      case "siteGet": { await seedRails(store, me.name); return send(res, 200, { site: await getSite(store), blocks: FEED_BLOCKS, texts: TEXTS }); }
       case "siteSave": return send(res, 200, { site: await saveSite(store, body.site || {}, me.name) });
       case "brands": {
         const list = await store.list("product", {}, { limit: 5000, fields: "brand" });

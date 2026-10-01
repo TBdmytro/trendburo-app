@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-09-30-live-v7">
+<meta name="trendburo-build" content="2026-10-01-live-v8">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}/* ===== Наполнение из админки ===== */
@@ -40,6 +40,7 @@
 .ordl{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line);font-size:14px}
 .ordl span{flex:1;min-width:0}.ordl small{color:var(--muted);display:block;font-size:12.5px}
 .ordl em{font-style:normal;font-size:12px;font-weight:600;background:var(--soft);padding:3px 9px;border-radius:99px;white-space:nowrap}
+[data-off]{display:none!important}
 </style>
 <title>Trend Büro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -744,7 +745,7 @@ textarea{min-height:88px;resize:vertical}
       <div class="announce" id="announce" hidden></div>
       <div class="stories" id="stories"></div>
       <div class="bnr" id="bnr" hidden></div>
-      <div class="ship"><div><small>Ближайшая отправка в Украину</small><b id="shipDate"></b></div><span class="pulse" aria-hidden="true"></span></div>
+      <div class="ship"><div><small id="shipTitle">Ближайшая отправка в Украину</small><b id="shipDate"></b></div><span class="pulse" aria-hidden="true"></span></div>
       <button class="o-entry press" data-act="tab" data-tab="optix" aria-label="Открыть OPTIX">
         <span class="o-entry-art" id="oEntryArt"></span>
         <span class="o-entry-tx"><span class="cap">Наш продукт</span><span class="wordmark">OPTIX</span><span class="o-entry-sub">Солнцезащитные очки под заказ</span>
@@ -753,12 +754,13 @@ textarea{min-height:88px;resize:vertical}
       </button>
 
       <div class="sec"><button class="stockban press" data-act="stock-all" id="stockBanFeed"></button></div>
-      <div class="sec"><div class="sech"><h2>Новости брендов</h2></div>
+      <div class="sec"><div class="sech"><h2 id="newsTitle">Новости брендов</h2></div>
         <div id="leadNews"></div>
         <div id="newsList" style="margin-top:6px"></div>
       </div>
 
       <div id="followRail"></div>
+      <div id="railsWrap">
       <div id="cmsRails"></div>
       <div class="sec band"><div class="sech"><h2>Новинки недели</h2><button class="more" data-act="catalog-new">Все</button></div>
         <div class="hrail" id="newRail"></div></div>
@@ -768,6 +770,7 @@ textarea{min-height:88px;resize:vertical}
 
       <div class="sec"><div class="sech"><h2>Для него</h2><button class="more" data-act="catalog-preset" data-p="men">Все</button></div>
         <div class="hrail" id="menRail"></div></div>
+      </div>
       <p class="foot-note" id="feedNote">Новости и товары в прототипе — демонстрационное наполнение</p>
     </div>
   </div>
@@ -810,36 +813,36 @@ textarea{min-height:88px;resize:vertical}
     <div class="scroll">
       <div class="bigtitle"><h1>Сервисы</h1><div class="topicons"></div></div>
       <div class="svc-list">
-        <button class="svc-card press" style="--sc:var(--c-concierge)" data-act="svc" data-s="concierge">
-          <div><div class="cap">Консьерж</div><h3>Задачи в Европе</h3></div>
-          <p>Редкие модели, лист ожидания, подарки, видеошопинг из бутика</p>
+        <button class="svc-card press" style="--sc:var(--c-concierge)" data-act="svc" data-s="concierge" data-svc="concierge">
+          <div><div class="cap" data-t="svc.concierge.cap">Консьерж</div><h3 data-t="svc.concierge.title">Задачи в Европе</h3></div>
+          <p data-t="svc.concierge.text">Редкие модели, лист ожидания, подарки, видеошопинг из бутика</p>
           <span class="gl"><svg viewBox="0 0 100 100"><path d="M18 70h64M26 70a24 24 0 0 1 48 0M50 42v-6M44 36h12"/></svg></span></button>
         <div class="svc-2">
-          <button class="svc-card press" style="--sc:var(--c-travel)" data-act="svc" data-s="travel">
-            <div><div class="cap">Путешествия</div><h3>Поездки</h3></div><p>Отели, столики, шопинг с байером</p>
+          <button class="svc-card press" style="--sc:var(--c-travel)" data-act="svc" data-s="travel" data-svc="travel">
+            <div><div class="cap" data-t="svc.travel.cap">Путешествия</div><h3 data-t="svc.travel.title">Поездки</h3></div><p data-t="svc.travel.text">Отели, столики, шопинг с байером</p>
             <span class="gl"><svg viewBox="0 0 100 100"><path d="M15 60l70-25-18 40-14-12-12 14V60z"/></svg></span></button>
-          <button class="svc-card press" style="--sc:var(--c-resale)" data-act="svc" data-s="resale">
-            <div><div class="cap">Ресейл</div><h3>Вещи с историей</h3></div><p>Проверяем и ведём сделку</p>
+          <button class="svc-card press" style="--sc:var(--c-resale)" data-act="svc" data-s="resale" data-svc="resale">
+            <div><div class="cap" data-t="svc.resale.cap">Ресейл</div><h3 data-t="svc.resale.title">Вещи с историей</h3></div><p data-t="svc.resale.text">Проверяем и ведём сделку</p>
             <span class="gl"><svg viewBox="0 0 100 100"><path d="M24 40h52l-5 42H29zM38 40v-8a12 12 0 0 1 24 0v8"/></svg></span></button>
         </div>
-        <button class="svc-card press" style="--sc:var(--c-stylist)" data-act="tab" data-tab="stylist">
-          <div><div class="cap">AI-стилист</div><h3>Образ из витрины</h3></div>
-          <p>Повод, стиль и бюджет — подбор за минуту</p>
+        <button class="svc-card press" style="--sc:var(--c-stylist)" data-act="tab" data-tab="stylist" data-svc="stylist">
+          <div><div class="cap" data-t="svc.stylist.cap">AI-стилист</div><h3 data-t="svc.stylist.title">Образ из витрины</h3></div>
+          <p data-t="svc.stylist.text">Повод, стиль и бюджет — подбор за минуту</p>
           <span class="gl"><svg viewBox="0 0 100 100"><path d="M50 15l7 20 20 7-20 7-7 20-7-20-20-7 20-7z"/></svg></span></button>
       </div>
-      <div class="sec"><div class="sech"><h2>Как мы работаем</h2></div>
+      <div class="sec"><div class="sech"><h2 data-t="how.title">Как мы работаем</h2></div>
         <div class="steps4">
-          <div><b>Выбор</b><span>В приложении, сторис или на сайте бренда</span></div>
-          <div><b>Сообщение</b><span>Менеджеру в Telegram или в Direct</span></div>
-          <div><b>Выкуп</b><span>Германия, Париж, Милан, Вена, онлайн</span></div>
-          <div><b>Доставка</b><span>Украина <span data-wd>по пятницам</span>, Европа и Дубай</span></div>
+          <div><b data-t="how.1.t">Выбор</b><span data-t="how.1.d">В приложении, сторис или на сайте бренда</span></div>
+          <div><b data-t="how.2.t">Сообщение</b><span data-t="how.2.d">Менеджеру в Telegram или в Direct</span></div>
+          <div><b data-t="how.3.t">Выкуп</b><span data-t="how.3.d">Германия, Париж, Милан, Вена, онлайн</span></div>
+          <div><b data-t="how.4.t">Доставка</b><span>Украина <span data-wd>по пятницам</span>, Европа и Дубай</span></div>
         </div></div>
-      <div class="sec"><div class="sech"><h2>Цена и доставка</h2></div>
+      <div class="sec"><div class="sech"><h2 data-t="price.title">Цена и доставка</h2></div>
         <div class="cells">
-          <div class="cell"><div>Цена в приложении<small>Уже включает выкуп, упаковку и комплимент к заказу</small></div></div>
-          <div class="cell"><div>Доставка в Украину<small>Уже включена в цену, посылка <span data-wd2>каждую пятницу</span></small></div></div>
-          <div class="cell"><div>Доставка по Европе<small>По тарифу перевозчика</small></div></div>
-          <div class="cell"><div>Дубай</div><span class="v">по запросу</span></div>
+          <div class="cell"><div><span data-t="price.1.t">Цена в приложении</span><small data-t="price.1.d">Уже включает выкуп, упаковку и комплимент к заказу</small></div></div>
+          <div class="cell"><div><span data-t="price.2.t">Доставка в Украину</span><small>Уже включена в цену, посылка <span data-wd2>каждую пятницу</span></small></div></div>
+          <div class="cell"><div><span data-t="price.3.t">Доставка по Европе</span><small data-t="price.3.d">По тарифу перевозчика</small></div></div>
+          <div class="cell"><div data-t="price.4.t">Дубай</div><span class="v" data-t="price.4.v">по запросу</span></div>
         </div></div>
     </div>
   </div>
@@ -1417,7 +1420,7 @@ function openAllBrands(){const st={q:"",g:"all",cat:""};
   draw()}
 function toggleFollow(bk){follows.has(bk)?follows.delete(bk):follows.add(bk);store.set("tb_follow",[...follows]);renderCatHome();renderFeedFollow();toast(follows.has(bk)?"Новинки "+bname(bk)+" будут в Ленте":"Вы больше не следите за "+bname(bk))}
 function renderFeedFollow(){const box=$("#followRail");if(!box)return;const l=P.filter(p=>follows.has(p.bk)).sort((a,b)=>b.isNew-a.isNew);
-  box.innerHTML=l.length?`<div class="sec"><div class="sech"><h2>Ваши бренды</h2><button class="more" data-act="allbrands">Все бренды</button></div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`:""}
+  box.innerHTML=l.length?`<div class="sec"><div class="sech"><h2>${esc(FEED_TITLE.follow||"Ваши бренды")}</h2><button class="more" data-act="allbrands">Все бренды</button></div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`:""}
 function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bname(bk);
   const st={cat:"",g:"all",sort:"new"};const lead=all.slice().sort((a,b)=>b.isNew-a.isNew)[0];
   const cats=[...new Set(all.map(p=>p.cat))],gs=[...new Set(all.map(p=>p.g))];
@@ -1828,7 +1831,18 @@ let CMS={banners:[],stories:[],news:[],rails:[],site:null};
 let SHIP_WD=5,OPTIX_LINK="https://trendburoglasses.vercel.app/";
 const WD_PL=["по воскресеньям","по понедельникам","по вторникам","по средам","по четвергам","по пятницам","по субботам"];
 const WD_EACH=["каждое воскресенье","каждый понедельник","каждый вторник","каждую среду","каждый четверг","каждую пятницу","каждую субботу"];
-function applySite(s){if(!s)return;
+let FEED_TITLE={};
+/* Порядок и видимость блоков «Ленты» — из конструктора в админке */
+function applyLayout(feed){if(!Array.isArray(feed))return;
+  const el={announce:$("#announce"),stories:$("#stories"),banners:$("#bnr"),ship:$("#t-feed .ship"),optix:$("#t-feed .o-entry"),stock:$("#stockBanFeed")&&$("#stockBanFeed").closest(".sec"),news:$("#leadNews")&&$("#leadNews").closest(".sec"),follow:$("#followRail"),rails:$("#railsWrap")};
+  const end=$("#feedNote");if(!end)return;
+  feed.forEach(b=>{const e=el[b.id];if(!e)return;end.parentNode.insertBefore(e,end);b.on?e.removeAttribute("data-off"):e.setAttribute("data-off","");if(b.title)FEED_TITLE[b.id]=b.title});
+  if(FEED_TITLE.news)$("#newsTitle").textContent=FEED_TITLE.news;if(FEED_TITLE.ship)$("#shipTitle").textContent=FEED_TITLE.ship;
+  const le=$(".live-empty");if(le&&el.ship)el.ship.after(le)}
+function applyTexts(s){const T=s.texts||{};$$("[data-t]").forEach(e=>{const k=e.dataset.t;if(!e.dataset.t0)e.dataset.t0=e.textContent;e.textContent=T[k]||e.dataset.t0});
+  ["concierge","travel","resale"].forEach(k=>{if(!SVC[k])return;if(T["svc."+k+".cap"])SVC[k].cap=T["svc."+k+".cap"];if(T["svc."+k+".title"])SVC[k].title=T["svc."+k+".title"];if(T["svc."+k+".long"])SVC[k].text=T["svc."+k+".long"]});
+  const hid=s.hiddenServices||[];$$("[data-svc]").forEach(e=>hid.includes(e.dataset.svc)?e.setAttribute("data-off",""):e.removeAttribute("data-off"))}
+function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);
   if(s.contacts&&s.contacts.length){CONTACTS.length=0;CONTACTS.push(...s.contacts)}
   if([0,1,2,3,4,5,6].includes(s.shipWeekday))SHIP_WD=s.shipWeekday;
   if(s.optix&&s.optix.url)OPTIX_LINK=s.optix.url;
@@ -1896,7 +1910,7 @@ function railItems(r){let l=P.slice();
   if(r.maxPrice)l=l.filter(p=>p.price<=r.maxPrice);
   return l}
 function renderRails(){const box=$("#cmsRails");if(!box)return;const on=LIVE&&CMS.rails.length>0;
-  if(on)["#newRail","#bagRail","#menRail"].forEach(id=>$(id).closest(".sec").hidden=true);
+  if(LIVE)["#newRail","#bagRail","#menRail"].forEach(id=>$(id).closest(".sec").hidden=true);
   box.innerHTML=on?CMS.rails.map((r,i)=>{const all=railItems(r),l=all.slice(0,r.limit||12);return l.length?`<div class="sec ${r.band?"band":""}"><div class="sech"><h2>${esc(r.title)}</h2>${all.length>3?`<button class="more" data-act="crail" data-i="${i}">Все</button>`:""}</div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`:""}).join(""):""}
 function openRail(i){const r=CMS.rails[i];if(!r)return;clearFilters();
   if(r.rule==="new")F.onlyNew=true;else if(r.rule==="category")F.cats.add(r.value);else if(r.rule==="brand"){const bk=brandKey(r.value);if(bk)F.brands.add(bk)}else if(r.rule==="stock")F.stock="any";else if(r.rule==="manual")F.ids=new Set(r.ids);
@@ -1908,10 +1922,10 @@ const CLIENT=(()=>{let k=store.get("tb_client","");if(!/^[a-z0-9]{16,48}$/i.test
 const tgUser=()=>{try{const u=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;return u?{id:u.id,username:u.username||"",first_name:u.first_name||"",last_name:u.last_name||""}:null}catch(e){return null}};
 const kindFor=t=>/Уточнить/.test(t)?"availability":/ресейл|с фото/i.test(t)?"resale":/консьерж/i.test(t)?"concierge":/поездк/i.test(t)?"travel":/^Заказ/.test(t)?"order":"request";
 async function sendLead(meta,msg){try{const r=await fetch("/api/lead",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...meta,message:msg,client:CLIENT,tg:tgUser()})});const j=await r.json().catch(()=>({}));return r.ok?j:null}catch(e){return null}}
-const LEAD_ST={new:"Отправлена",work:"В работе",bought:"Выкуплено",shipping:"В пути",delivered:"Доставлено",cancelled:"Закрыта"};
+const LEAD_ST={new:"Отправлена",work:"В работе",paid:"Оплачено",bought:"Выкуплено",shipping:"В пути",delivered:"Доставлено",cancelled:"Закрыта"};
 const LEAD_KIND={order:"Заказ",availability:"Наличие",concierge:"Консьерж",travel:"Поездка",resale:"Ресейл",request:"Запрос",optix:"OPTIX"};
 async function syncOrders(){if(!LIVE)return null;try{const r=await fetch("/api/lead?client="+CLIENT,{cache:"no-store"});if(!r.ok)return null;const{leads}=await r.json();
-  let ch=false;(leads||[]).forEach(l=>{const o=orders.find(x=>x.no===l.number);if(!o)return;const st={new:0,work:0,bought:1,shipping:2,delivered:3,cancelled:-1}[l.status];if(st!==undefined&&o.st!==st){o.st=st;ch=true}});
+  let ch=false;(leads||[]).forEach(l=>{const o=orders.find(x=>x.no===l.number);if(!o)return;const st={new:0,work:0,paid:0,bought:1,shipping:2,delivered:3,cancelled:-1}[l.status];if(st!==undefined&&o.st!==st){o.st=st;ch=true}});
   if(ch)store.set("tb_orders",orders);return leads||[]}catch(e){return null}}
 
 /* ===== Запуск: живой каталог из /api/catalog; демо-данные только с ?demo=1 ===== */

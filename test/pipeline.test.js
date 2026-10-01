@@ -425,3 +425,13 @@ test("скриншоты: ответ Gemini чистится, цена в USD п
   const ok = await readScreen("AAAA", "image/jpeg", { fx, key: "k-secret", fetchImpl: fok });
   assert.equal(ok.priceEur, 2600); assert.equal(sentKeyInUrl, false);
 });
+
+test("витрина: раскладка Ленты, тексты и стандартные подборки", async () => {
+  const { cleanSite, seedRails, listItems, getSite } = await import("../lib/cms.js");
+  const s = cleanSite({ feed: [{ id: "rails" }, { id: "optix", on: false }, { id: "hack" }, { id: "rails" }], texts: { "how.title": " Как это работает ", evil: "<script>" }, hiddenServices: ["travel", "x"] });
+  assert.equal(s.feed[0].id, "rails"); assert.equal(s.feed.length, 9); assert.equal(s.optix.on, false);
+  assert.deepEqual(s.texts, { "how.title": "Как это работает" }); assert.deepEqual(s.hiddenServices, ["travel"]);
+  const store = new MemoryStore();
+  assert.equal(await seedRails(store), true); assert.equal((await listItems(store, "rail")).length, 3);
+  assert.equal(await seedRails(store), false); assert.equal((await getSite(store)).railsSeeded, true);
+});
