@@ -15,6 +15,7 @@ import { LEAD_STATUS, notifyClient } from "./lead.js";
 import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier } from "../lib/suppliers.js";
 import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
 import { readScreen, screensEnabled, ScreenError } from "../lib/screens.js";
+import { setupBot, botToken, publicUrl, tg } from "./bot.js";
 import { listItems, saveItem, deleteItems, reorder, setActive, getSite, saveSite, seedRails, FEED_BLOCKS, TEXTS, KINDS } from "../lib/cms.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
@@ -213,6 +214,14 @@ export default async function handler(req, res) {
         if (!store.uploadImage) return send(res, 400, { error: "Хранилище фото не подключено" });
         const up = await store.uploadImage(buf, { filename: "manual-" + Date.now() + "." + type.split("/")[1], contentType: type });
         return send(res, 200, { url: up.url });
+      }
+      case "botStatus": {
+        if (!botToken()) return send(res, 200, { token: false });
+        try { const me = await tg("getMe"); const hook = await tg("getWebhookInfo"); return send(res, 200, { token: true, username: me.username, name: me.first_name, ready: !!hook.url && hook.url.endsWith("/api/bot"), manager: !!process.env.TELEGRAM_MANAGER_CHAT, url: publicUrl(req) }); }
+        catch (e) { return send(res, 200, { token: true, error: e.message }); }
+      }
+      case "botSetup": {
+        try { return send(res, 200, await setupBot(publicUrl(req))); } catch (e) { return send(res, 400, { error: e.message }); }
       }
       case "screenStatus": return send(res, 200, { enabled: screensEnabled() });
       case "screenRead": {

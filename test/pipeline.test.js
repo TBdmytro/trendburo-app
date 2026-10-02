@@ -435,3 +435,19 @@ test("витрина: раскладка Ленты, тексты и станд�
   assert.equal(await seedRails(store), true); assert.equal((await listItems(store, "rail")).length, 3);
   assert.equal(await seedRails(store), false); assert.equal((await getSite(store)).railsSeeded, true);
 });
+
+test("telegram bot: replies and setup", async () => {
+  const { replyFor, hookSecret, setupBot } = await import("../api/bot.js");
+  const base = "https://shop.example";
+  assert.equal(replyFor("/start", base, 1).reply_markup.inline_keyboard[0][0].web_app.url, base + "/");
+  assert.equal(replyFor("/admin@tb_bot", base, 1).reply_markup.inline_keyboard[0][0].web_app.url, base + "/admin.html");
+  assert.match(replyFor("/id", base, 42).text, /42/);
+  assert.equal(hookSecret("a").length, 40); assert.notEqual(hookSecret("a"), hookSecret("b"));
+  const calls = [];
+  const fetchImpl = async (url, o) => { const m = url.split("/").pop(); calls.push([m, JSON.parse(o.body)]); return { json: async () => ({ ok: true, result: m === "getMe" ? { username: "tb_bot", first_name: "TB" } : true }) }; };
+  const r = await setupBot(base, { token: "T", fetchImpl });
+  assert.equal(r.username, "tb_bot");
+  assert.equal(calls.find(c => c[0] === "setChatMenuButton")[1].menu_button.web_app.url, base + "/");
+  assert.equal(calls.find(c => c[0] === "setWebhook")[1].secret_token, hookSecret("T"));
+  await assert.rejects(() => setupBot("http://x", { token: "T", fetchImpl }));
+});

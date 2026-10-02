@@ -37,7 +37,7 @@ if (process.env.FAKE_SHOP === "1") {
     return real(url, o);
   };
 }
-const routes = { "/api/admin": "../api/admin.js", "/api/catalog": "../api/catalog.js", "/api/cron": "../api/cron.js", "/api/lead": "../api/lead.js" };
+const routes = { "/api/admin": "../api/admin.js", "/api/catalog": "../api/catalog.js", "/api/cron": "../api/cron.js", "/api/lead": "../api/lead.js", "/api/bot": "../api/bot.js" };
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".css": "text/css", ".svg": "image/svg+xml" };
 
 http.createServer(async (req, res) => {

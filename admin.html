@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-02-admin-v12">
+<meta name="trendburo-build" content="2026-10-02-admin-v13">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -730,7 +730,7 @@ function go(v) {
   $("#main").innerHTML = `<div class="empty"><span class="spin"></span></div>`; $("#main").onclick = $("#main").oninput = $("#main").onchange = null; $(".actbar")?.remove();
   document.querySelectorAll(".drawer").forEach(x => x.remove()); tgBack.stack = [];
   window.scrollTo(0, 0); navSync();
-  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, screens: vScreens, finance: vFinance, more: vMore }[k] || vHome2;
+  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, screens: vScreens, finance: vFinance, more: vMore, bot: vBot }[k] || vHome2;
   fn(v.split(":")[1]).catch(e => { $("#main").innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(e.message)}</div></div>`; });
 }
 async function getSources(force) { if (!sources || force) sources = (await api("sources")).sources; return sources; }
@@ -1910,10 +1910,11 @@ Object.assign(IC, {
   rail: '<rect x="3" y="6" width="5" height="12" rx="1.5"/><rect x="10" y="6" width="5" height="12" rx="1.5"/><rect x="17" y="6" width="4" height="12" rx="1.5"/>',
   text: '<path d="M5 6h14M12 6v13M9 19h6"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2 1.2l.4 2.6h4l.4-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/>',
+  send: '<path d="M21 4L3 11l7 2.5L12.5 21z"/><path d="M10 13.5l4.5-4.5"/>',
   out: '<path d="M14 4h5v16h-5"/><path d="M10 16l4-4-4-4M14 12H4"/>'
 });
 const NAV_MAIN = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"]];
-const NAV_MORE = [["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"]];
+const NAV_MORE = [["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
 const chevSvg = '<svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
 const backSvg = '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>';
 const isMainView = v => { const [k, s] = v.split(":"); return ["home", "products", "leads", "more"].includes(k) || (k === "show" && (!s || s === "feed")); };
@@ -2253,6 +2254,31 @@ function bannerPreview(root) {
   root.addEventListener("input", upd); root.addEventListener("click", () => setTimeout(upd, 0));
   new MutationObserver(upd).observe(root, { attributes: true, subtree: true, attributeFilter: ["data-url"] });
   upd();
+}
+
+/* ---------- Telegram-бот ---------- */
+async function vBot() {
+  const s = await api("botStatus");
+  const step = (ok, t, d) => `<div class="row2" style="cursor:default"><span class="ic" style="${ok ? "background:var(--ok-bg);color:var(--ok)" : ""}">${ok ? "✓" : "•"}</span><span class="tx"><b>${t}</b><span>${d}</span></span></div>`;
+  $("#main").innerHTML = `<div class="vh"><h1>Telegram-бот</h1></div><p class="vsub">Кнопка «Витрина» в чате с ботом открывает мини-апп. Бот отвечает клиентам на /start и пишет им о смене статуса заказа.</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${step(s.token, "Токен бота", s.token ? (s.username ? `бот @${esc(s.username)} найден` : esc(s.error || "проверяем…")) : "добавьте в Vercel переменную TELEGRAM_BOT_TOKEN (из @BotFather) и сделайте Redeploy")}
+      ${step(s.ready, "Кнопка «Витрина» и ответы бота", s.ready ? "настроено" : "нажмите «Настроить бота» ниже")}
+      ${step(s.manager, "Заявки вам в Telegram", s.manager ? "включено" : "напишите боту /id, скопируйте номер и добавьте в Vercel как TELEGRAM_MANAGER_CHAT")}
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn lg" id="botSetup" ${s.token && s.username ? "" : "disabled"}>${s.ready ? "Настроить заново" : "Настроить бота"}</button>
+      ${s.username ? `<a class="btn ghost lg" href="https://t.me/${esc(s.username)}" target="_blank" rel="noopener">Открыть бота</a>` : ""}
+    </div>
+    <div class="h2">Что делает бот</div>
+    <div class="kvs"><div><span>Кнопка меню в чате</span><b>Витрина</b></div><div><span>/start</span><span>приветствие и кнопка «Открыть витрину»</span></div><div><span>/admin</span><span>кнопка админки (вход по паролю)</span></div><div><span>/id</span><span>номер чата для заявок</span></div></div>
+    ${s.username ? `<p class="hint" style="margin-top:14px">Ссылка для Instagram и канала: <b>t.me/${esc(s.username)}</b></p>` : ""}`;
+  $("#main").onclick = async e => {
+    if (!e.target.closest("#botSetup")) return;
+    const b = e.target.closest("#botSetup"); b.disabled = true; b.innerHTML = '<span class="spin"></span> Настраиваю…';
+    try { const r = await api("botSetup", { method: "POST", body: {} }); toast(`Готово: @${r.username} — кнопка «Витрина» появилась`); vBot(); }
+    catch (err) { toast(err.message); b.disabled = false; b.textContent = "Настроить бота"; }
+  };
 }
 
 start();
