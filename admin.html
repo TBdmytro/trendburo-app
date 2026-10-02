@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-01-admin-v11">
+<meta name="trendburo-build" content="2026-10-02-admin-v12">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -320,7 +320,7 @@ pre.msg{white-space:pre-wrap;font:13px/1.5 var(--f);background:#fff;border:1px s
 .sh-h{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:2}
 .sh-h b{font-size:16px}
 .sh-b{padding:20px;flex:1}
-.sh-f{position:sticky;bottom:0;display:flex;gap:10px;flex-wrap:wrap;padding:14px 20px calc(14px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line)}
+.sh-f{position:sticky;bottom:0;display:flex;gap:10px;flex-wrap:wrap;padding:14px 20px calc(14px + var(--sb));background:#fff;border-top:1px solid var(--line)}
 .sh-f .btn.lg{flex:1}
 
 /* ---------- Нижнее меню (телефон, Telegram) ---------- */
@@ -330,21 +330,21 @@ pre.msg{white-space:pre-wrap;font:13px/1.5 var(--f);background:#fff;border:1px s
   .shell{grid-template-rows:auto 1fr;align-content:start}
   .cms-li .t span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .side{justify-content:center}
-  .mnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:35;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .mnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:35;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:6px 4px calc(6px + var(--sb))}
   .mnav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:var(--muted);padding:4px 0;position:relative;font-weight:500}
   .mnav button svg{width:22px;height:22px}
   .mnav button.on{color:var(--fg)}
   .mnav button.plus svg{width:34px;height:34px;padding:7px;border-radius:12px;background:var(--ink-g);color:#fff;margin-top:-4px}
   .mnav .cnt{position:absolute;top:0;left:calc(50% + 6px);font-size:10px;font-style:normal;padding:0 5px;border-radius:99px;min-width:16px;text-align:center;line-height:16px}
-  .main{padding:18px 14px calc(96px + env(safe-area-inset-bottom))}
-  .actbar{bottom:calc(72px + env(safe-area-inset-bottom));flex-wrap:wrap}
-  .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
-  body:has(.actbar) .toast{bottom:calc(150px + env(safe-area-inset-bottom))}
+  .main{padding:18px 14px calc(96px + var(--sb))}
+  .actbar{bottom:calc(72px + var(--sb));flex-wrap:wrap}
+  .toast{bottom:calc(84px + var(--sb))}
+  body:has(.actbar) .toast{bottom:calc(150px + var(--sb))}
   input[type=text],input[type=password],input[type=number],input[type=search],input[type=date],select,textarea{font-size:16px}
-  .drawer .in{width:100%;padding:18px 14px calc(30px + env(safe-area-inset-bottom))}
+  .drawer .in{width:100%;padding:18px 14px calc(30px + var(--sb))}
   .sheet .in{padding:0}
   .sh-b{padding:16px 14px}
-  .sh-f{padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
+  .sh-f{padding:12px 14px calc(12px + var(--sb))}
   .cms-ctl .btn.sm{padding:6px 9px}
   .cms-th{width:56px;height:44px}.cms-th.round{width:44px}
   .cms-li{padding:12px}
@@ -517,21 +517,21 @@ textarea{min-height:110px}
   .shell{grid-template-columns:1fr;background:#fff}
   .side{display:none}
   .mnav{display:none!important}
-  .main{padding:16px 16px calc(104px + env(safe-area-inset-bottom));max-width:none}
+  .main{padding:16px 16px calc(104px + var(--sb));max-width:none}
   .head h1,.vh h1{font-size:27px}
   .head .btn{width:auto}
   .mtop{display:flex;align-items:center;gap:8px;padding:12px 14px 0}
   .mtop[hidden]{display:none}
-  .mnav2{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;justify-items:center;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));height:64px;border-radius:24px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 28px rgba(31,33,37,.12);z-index:36}
+  .mnav2{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;justify-items:center;position:fixed;left:12px;right:12px;bottom:calc(12px + var(--sb));height:64px;border-radius:24px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 28px rgba(31,33,37,.12);z-index:36}
   .mnav2 button{width:46px;height:46px;border-radius:15px;border:0;background:none;display:grid;place-items:center;position:relative;color:#8a8d93}
   .mnav2 button svg.i{width:23px;height:23px}
   .mnav2 button.on{background:var(--soft);color:var(--fg)}
   .mnav2 button.plus{width:50px;height:50px;border-radius:17px;background:var(--ink);color:#fff}
   .mnav2 .cnt{position:absolute;top:4px;right:3px;min-width:16px;height:16px;border-radius:8px;background:var(--err);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px;font-style:normal}
-  .actbar,.pbar{bottom:calc(88px + env(safe-area-inset-bottom))}
+  .actbar,.pbar{bottom:calc(88px + var(--sb))}
   .pbar{position:fixed;left:12px;right:12px;margin:0}
-  .toast{bottom:calc(92px + env(safe-area-inset-bottom))}
-  .undo{bottom:calc(92px + env(safe-area-inset-bottom))}
+  .toast{bottom:calc(92px + var(--sb))}
+  .undo{bottom:calc(92px + var(--sb))}
   .quick button{height:84px}
   .drawer .in{width:100%}
 }
@@ -541,9 +541,64 @@ html.tg .mtop{padding-top:8px}
 a.btn{text-decoration:none}
 .adv>summary{margin-top:30px}
 .login-wrap{background:#f2f3f4}.login{border-radius:24px}
+/* ===== Telegram: полный экран, безопасные отступы, заставка ===== */
+:root{--st:max(env(safe-area-inset-top,0px),var(--tgst,0px));--sb:max(env(safe-area-inset-bottom,0px),var(--tgsb,0px))}
+.tglogo{display:none;position:fixed;z-index:400;left:50%;top:var(--tgs,0px);height:var(--tgc,0px);transform:translateX(-50%);align-items:center;justify-content:center;pointer-events:none}
+html.fs .tglogo{display:flex}
+.tglogo i{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em}
+.tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);animation:tgspin 6s linear infinite}
+@keyframes tgspin{to{transform:rotate(360deg)}}
+body:has(.sv) .tglogo,body:has(.splash) .tglogo{opacity:0}
+.splash{position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;cursor:pointer}
+.sp-logo{position:relative;width:92px;height:92px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 30px/1 "Prata",Georgia,serif;animation:sppop .8s cubic-bezier(.34,1.56,.64,1) both}
+.sp-logo svg{position:absolute;inset:-12px;width:116px;height:116px;transform:rotate(-90deg)}
+.sp-logo circle{fill:none;stroke:#1f2125;stroke-width:1.4;stroke-dasharray:302;stroke-dashoffset:302;animation:spring 1s .25s cubic-bezier(.65,0,.35,1) forwards}
+.sp-word{display:flex;font:600 22px/1 "Onest",system-ui,sans-serif;letter-spacing:-.01em;color:#1f2125}
+.sp-word i{font-style:normal;display:inline-block;opacity:0;transform:translateY(10px);filter:blur(4px);animation:spl .55s cubic-bezier(.22,1,.36,1) forwards;animation-delay:calc(.45s + var(--k) * 45ms)}
+.sp-sub{font:500 11px/1 "Onest",system-ui,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:#8a8d93;opacity:0;animation:spf .5s 1s forwards}
+.splash.out{animation:spout .5s cubic-bezier(.7,0,.2,1) forwards}
+.splash.out .sp-logo{animation:spshrink .5s cubic-bezier(.7,0,.2,1) forwards}
+@keyframes sppop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+@keyframes spring{to{stroke-dashoffset:0}}
+@keyframes spl{to{opacity:1;transform:none;filter:none}}
+@keyframes spf{to{opacity:1}}
+@keyframes spout{to{opacity:0;visibility:hidden}}
+@keyframes spshrink{to{transform:scale(.6) translateY(-30px)}}
+@media (prefers-reduced-motion:reduce){.splash{display:none}}
+
+/* отступы под кнопки Telegram */
+#col{padding-top:var(--st)}
+.login-wrap{padding-top:calc(20px + var(--st))}
+@media (max-width:900px){
+  .sheet .sh-h{padding-top:calc(16px + var(--st))}
+  .drawer:not(.sheet) .in{padding-top:calc(18px + var(--st))}
+}
 </style>
 </head>
 <body>
+<div id="splash" class="splash" aria-hidden="true"><div class="sp-logo">TB<svg viewBox="0 0 116 116"><circle cx="58" cy="58" r="48"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Админка</div></div>
+<div class="tglogo" aria-hidden="true"><i>TB</i></div>
+<script>window.__spKey="tb_spa";
+/* Telegram: полный экран на телефоне и отступы под кнопки Telegram (закрыть, меню) */
+(function(){var tg=window.Telegram&&window.Telegram.WebApp;if(!tg||!tg.initData)return;var R=document.documentElement;
+  function ins(){var s=tg.safeAreaInset||{},c=tg.contentSafeAreaInset||{};
+    R.style.setProperty("--tgst",((s.top||0)+(c.top||0))+"px");R.style.setProperty("--tgsb",((s.bottom||0)+(c.bottom||0))+"px");
+    R.style.setProperty("--tgs",(s.top||0)+"px");R.style.setProperty("--tgc",(c.top||0)+"px");R.classList.toggle("fs",!!tg.isFullscreen&&(c.top||0)>0)}
+  ["safeAreaChanged","contentSafeAreaChanged","fullscreenChanged","viewportChanged"].forEach(function(e){try{tg.onEvent(e,ins)}catch(x){}});
+  try{tg.ready();tg.expand();if(tg.disableVerticalSwipes)tg.disableVerticalSwipes();if(tg.setHeaderColor)tg.setHeaderColor("#ffffff");if(tg.setBackgroundColor)tg.setBackgroundColor("#ffffff");if(tg.setBottomBarColor)tg.setBottomBarColor("#ffffff")}catch(x){}
+  ins();
+  var mob=/^(android|ios)$/.test(tg.platform||"");
+  if(mob&&tg.requestFullscreen&&tg.isVersionAtLeast&&tg.isVersionAtLeast("8.0")&&!tg.isFullscreen){try{tg.requestFullscreen()}catch(x){}}
+  setTimeout(ins,300);setTimeout(ins,1200);
+})();
+/* Заставка: показывается при открытии, исчезает, когда приложение готово (не раньше 1,4 с) */
+window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s.dataset.h)return;s.dataset.h=1;
+  var w=Math.max(0,(min==null?1400:min)-(performance.now()-(window.__sp0||0)));
+  setTimeout(function(){s.classList.add("out");setTimeout(function(){s.remove()},520)},w)};
+(function(){var s=document.getElementById("splash");if(!s)return;window.__sp0=performance.now();
+  try{if(sessionStorage.getItem(window.__spKey||"tb_sp")){s.remove();return}sessionStorage.setItem(window.__spKey||"tb_sp","1")}catch(x){}
+  s.addEventListener("click",function(){window.hideSplash(0)});setTimeout(function(){window.hideSplash(0)},4500)})();
+</script>
 <div id="loginView" class="login-wrap" hidden>
   <div class="login card">
     <div><div class="wm">Trend Büro</div><div class="hint" style="margin-top:4px">Управление каталогом</div></div>
@@ -563,7 +618,7 @@ a.btn{text-decoration:none}
     <div class="pump" id="pump" hidden></div>
     <div class="who"><span class="av" id="meAv"></span><span id="meName"></span><button id="logout">Выйти</button></div>
   </aside>
-  <div style="min-width:0">
+  <div id="col" style="min-width:0">
     <div class="mtop" id="mtop" hidden><button class="back" id="mBack"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Назад</button></div>
     <main class="main" id="main"></main>
   </div>
@@ -639,7 +694,7 @@ const ACTIVE = ["queued", "running", "waiting"];
 let me = null, view = "home", sources = null, pumpOn = false, pumpActive = 0;
 
 /* ---------- Вход ---------- */
-function showLogin() { $("#appView").hidden = true; $("#loginView").hidden = false; setTimeout(() => $("#lgName").focus(), 50); }
+function showLogin() { window.hideSplash && hideSplash(600); $("#appView").hidden = true; $("#loginView").hidden = false; setTimeout(() => $("#lgName").focus(), 50); }
 $("#lgBtn").onclick = async () => {
   $("#lgErr").textContent = ""; $("#lgBtn").disabled = true;
   try { const r = await api("login", { method: "POST", body: { name: $("#lgName").value.trim() || "admin", password: $("#lgPw").value } }); me = r.name; await start(); }
@@ -656,6 +711,7 @@ async function start() {
   renderNav();
   $("#loginView").hidden = true; $("#appView").hidden = false;
   go(location.hash.slice(1) || "home");
+  window.hideSplash && hideSplash();
   pump(); pollLeads();
 }
 // новые заявки: счётчик в меню обновляется раз в минуту
