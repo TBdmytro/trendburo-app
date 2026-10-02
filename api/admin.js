@@ -27,6 +27,7 @@ export default async function handler(req, res) {
   const body = typeof req.body === "string" ? safeJson(req.body) : (req.body || {});
   try {
     if (a === "login" && req.method === "POST") {
+      if (!process.env.ADMIN_PASSWORD) return send(res, 500, { error: "На сервере не задан пароль: добавьте ADMIN_PASSWORD в Vercel и сделайте Redeploy" });
       if (!checkPassword(body.password)) { await new Promise(r => setTimeout(r, 1200)); return send(res, 401, { error: "Неверный пароль" }); }
       res.setHeader("Set-Cookie", issueCookie(body.name || "admin"));
       return send(res, 200, { ok: true, name: body.name || "admin" });

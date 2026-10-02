@@ -603,7 +603,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
   <div class="login card">
     <div><div class="wm">Trend Büro</div><div class="hint" style="margin-top:4px">Управление каталогом</div></div>
     <label class="f">Ваше имя<input type="text" id="lgName" autocomplete="username" placeholder="Будет в истории правок"></label>
-    <label class="f">Пароль<input type="password" id="lgPw" autocomplete="current-password"></label>
+    <label class="f">Пароль<input type="password" id="lgPw" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
     <button class="btn lg" id="lgBtn">Войти</button><div class="err" id="lgErr"></div>
   </div>
 </div>
@@ -698,7 +698,7 @@ function showLogin() { window.hideSplash && hideSplash(600); $("#appView").hidde
 $("#lgBtn").onclick = async () => {
   $("#lgErr").textContent = ""; $("#lgBtn").disabled = true;
   try { const r = await api("login", { method: "POST", body: { name: $("#lgName").value.trim() || "admin", password: $("#lgPw").value } }); me = r.name; await start(); }
-  catch (e) { $("#lgErr").textContent = e.message; }
+  catch (e) { $("#lgErr").textContent = /Failed to fetch|NetworkError|Load failed/.test(e.message) ? "Нет связи с сервером — проверьте интернет и попробуйте ещё раз" : e.message; }
   $("#lgBtn").disabled = false;
 };
 $("#lgPw").addEventListener("keydown", e => { if (e.key === "Enter") $("#lgBtn").click(); });
