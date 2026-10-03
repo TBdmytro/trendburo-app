@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-02-admin-v13">
+<meta name="trendburo-build" content="2026-10-03-admin-v14">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1788,14 +1788,113 @@ async function loadBitmap(file) {
   try { return await createImageBitmap(file); }
   catch { const im = new Image(); im.src = URL.createObjectURL(file); await im.decode(); return im; }
 }
+/* Вырезать товар со скриншота: берём рамку от Gemini с запасом, находим цвет фона по краям,
+   оставляем только сам товар (иконки, точки галереи и куски сайта по углам убираются),
+   кладём его по центру на ровный фон 4:5. Светлый фон приводится к чистому белому — на витрине
+   он сливается со студийным фоном, и все карточки выглядят одинаково. */
+function isolateProduct(px, w, h) {
+  const dist = (i, c) => Math.max(Math.abs(px[i] - c[0]), Math.abs(px[i + 1] - c[1]), Math.abs(px[i + 2] - c[2]));
+  // 1. цвет фона — самый частый цвет в рамке по краям
+  const ring = Math.max(2, Math.round(Math.min(w, h) * 0.015)), buckets = new Map(); let total = 0;
+  const addPx = (x, y) => { const i = (y * w + x) * 4, key = (px[i] >> 3) << 10 | (px[i + 1] >> 3) << 5 | (px[i + 2] >> 3); const b = buckets.get(key) || [0, 0, 0, 0]; b[0]++; b[1] += px[i]; b[2] += px[i + 1]; b[3] += px[i + 2]; buckets.set(key, b); total++; };
+  const step = Math.max(1, Math.round(Math.max(w, h) / 400));
+  for (let x = 0; x < w; x += step) for (let r = 0; r < ring; r++) { addPx(x, r); addPx(x, h - 1 - r); }
+  for (let y = 0; y < h; y += step) for (let r = 0; r < ring; r++) { addPx(r, y); addPx(w - 1 - r, y); }
+  let best = null; for (const b of buckets.values()) if (!best || b[0] > best[0]) best = b;
+  const bg = [best[1] / best[0], best[2] / best[0], best[3] / best[0]];
+  let near = 0; for (const [key, b] of buckets) { const c = [b[1] / b[0], b[2] / b[0], b[3] / b[0]]; if (Math.max(Math.abs(c[0] - bg[0]), Math.abs(c[1] - bg[1]), Math.abs(c[2] - bg[2])) <= 14) near += b[0]; }
+  if (near / total < 0.45) return null; // фон не однотонный (фото в интерьере) — просто обрезаем по рамке
+  // 2. маска «не фон»: заливаем фон от краёв мелкими шагами цвета — так переживаем градиент и виньетку студийного фона
+  const cell = Math.max(1, Math.ceil(Math.max(w, h) / 260)), gw = Math.ceil(w / cell), gh = Math.ceil(h / cell);
+  const avg = new Float32Array(gw * gh * 3), sub = Math.max(1, cell >> 1);
+  for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+    let r = 0, g = 0, bl = 0, n = 0;
+    for (let y = gy * cell; y < Math.min(h, gy * cell + cell); y += sub) for (let x = gx * cell; x < Math.min(w, gx * cell + cell); x += sub) { const i = (y * w + x) * 4; r += px[i]; g += px[i + 1]; bl += px[i + 2]; n++; }
+    const o = (gy * gw + gx) * 3; avg[o] = r / n; avg[o + 1] = g / n; avg[o + 2] = bl / n;
+  }
+  const cd = (s, t) => Math.max(Math.abs(avg[s * 3] - avg[t * 3]), Math.abs(avg[s * 3 + 1] - avg[t * 3 + 1]), Math.abs(avg[s * 3 + 2] - avg[t * 3 + 2]));
+  const cb = s => Math.max(Math.abs(avg[s * 3] - bg[0]), Math.abs(avg[s * 3 + 1] - bg[1]), Math.abs(avg[s * 3 + 2] - bg[2]));
+  const isBg = new Uint8Array(gw * gh), fq = new Int32Array(gw * gh); let fh = 0, ft = 0;
+  for (let s = 0; s < gw * gh; s++) { const x = s % gw, y = (s / gw) | 0; if ((x === 0 || y === 0 || x === gw - 1 || y === gh - 1) && (cb(s) <= 22 || [s - 1, s + 1, s - gw, s + gw].every(u => u < 0 || u >= gw * gh || cd(s, u) <= 4))) { isBg[s] = 1; fq[ft++] = s; } }
+  while (fh < ft) {
+    const v = fq[fh++], x = v % gw, y = (v / gw) | 0;
+    for (const u of [x > 0 ? v - 1 : -1, x < gw - 1 ? v + 1 : -1, y > 0 ? v - gw : -1, y < gh - 1 ? v + gw : -1]) if (u >= 0 && !isBg[u] && cd(u, v) <= 6) { isBg[u] = 1; fq[ft++] = u; }
+  }
+  const mask = new Uint8Array(gw * gh); for (let s = 0; s < gw * gh; s++) mask[s] = isBg[s] ? 0 : 1;
+  // 3. связные куски; главный — самый большой, к нему добавляем крупные куски рядом (ремешок, тень)
+  const lab = new Int32Array(gw * gh), comps = []; const q = new Int32Array(gw * gh);
+  for (let s = 0; s < gw * gh; s++) {
+    if (!mask[s] || lab[s]) continue;
+    const id = comps.length + 1; let qh = 0, qt = 0; q[qt++] = s; lab[s] = id;
+    const c = { id, n: 0, x0: gw, y0: gh, x1: 0, y1: 0 };
+    while (qh < qt) {
+      const v = q[qh++], x = v % gw, y = (v / gw) | 0; c.n++;
+      if (x < c.x0) c.x0 = x; if (x > c.x1) c.x1 = x; if (y < c.y0) c.y0 = y; if (y > c.y1) c.y1 = y;
+      for (const u of [x > 0 ? v - 1 : -1, x < gw - 1 ? v + 1 : -1, y > 0 ? v - gw : -1, y < gh - 1 ? v + gw : -1]) if (u >= 0 && mask[u] && !lab[u]) { lab[u] = id; q[qt++] = u; }
+    }
+    comps.push(c);
+  }
+  if (!comps.length) return null;
+  const main = comps.reduce((a, c) => c.n > a.n ? c : a);
+  if (main.n < gw * gh * 0.02) return null;
+  // соседние куски того же товара: ручка над сумкой, вторая туфля, ремешок. Иконки и бейджи в углах — мелкие и сбоку, их не берём
+  const keep = new Set([main.id]); const U = { x0: main.x0, y0: main.y0, x1: main.x1, y1: main.y1 };
+  const edge = c => c.x0 === 0 || c.y0 === 0 || c.x1 === gw - 1 || c.y1 === gh - 1;
+  for (let pass = 0; pass < 3; pass++) for (const c of comps) {
+    if (keep.has(c.id) || c.n < main.n * 0.02 || Math.min(c.x1 - c.x0, c.y1 - c.y0) < 2 || (edge(c) && c.n < main.n * 0.25)) continue;
+    const uw = U.x1 - U.x0 + 1, uh = U.y1 - U.y0 + 1, cw = c.x1 - c.x0 + 1, chh = c.y1 - c.y0 + 1;
+    const gx = Math.max(0, c.x0 - U.x1, U.x0 - c.x1), gy = Math.max(0, c.y0 - U.y1, U.y0 - c.y1);
+    const ox = Math.max(0, Math.min(c.x1, U.x1) - Math.max(c.x0, U.x0) + 1) / cw, oy = Math.max(0, Math.min(c.y1, U.y1) - Math.max(c.y0, U.y0) + 1) / chh;
+    const near = Math.max(gx, gy) <= Math.max(uw, uh) * 0.08;
+    const above = ox >= 0.5 && gy <= uh * 0.5, beside = oy >= 0.5 && gx <= uw * 0.5;
+    if (near || above || beside) { keep.add(c.id); U.x0 = Math.min(U.x0, c.x0); U.y0 = Math.min(U.y0, c.y0); U.x1 = Math.max(U.x1, c.x1); U.y1 = Math.max(U.y1, c.y1); }
+  }
+  let x0 = gw, y0 = gh, x1 = 0, y1 = 0;
+  for (const c of comps) if (keep.has(c.id)) { x0 = Math.min(x0, c.x0); y0 = Math.min(y0, c.y0); x1 = Math.max(x1, c.x1); y1 = Math.max(y1, c.y1); }
+  // зоны: 0 — товар (не трогаем), 1 — фон/лишнее (заливаем), 2 — фон у самого края товара (решаем попиксельно)
+  const drop = new Uint8Array(gw * gh).fill(1);
+  for (let s = 0; s < gw * gh; s++) if (keep.has(lab[s])) {
+    drop[s] = 0; const x = s % gw, y = (s / gw) | 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy, u = yy * gw + xx; if (xx >= 0 && yy >= 0 && xx < gw && yy < gh && !keep.has(lab[u])) drop[u] = 2; }
+  }
+  return { bg, cell, gw, drop, avg, x0: x0 * cell, y0: y0 * cell, x1: Math.min(w, (x1 + 1) * cell), y1: Math.min(h, (y1 + 1) * cell) };
+}
 async function cropToB64(file, box) {
   const src = await loadBitmap(file); const W = src.width || src.naturalWidth, H = src.height || src.naturalHeight;
-  let [y0, x0, y1, x1] = box.map(v => v / 1000); const py = (y1 - y0) * 0.03, px = (x1 - x0) * 0.03;
+  let [y0, x0, y1, x1] = box.map(v => v / 1000); const py = (y1 - y0) * 0.05, px = (x1 - x0) * 0.05;
   y0 = Math.max(0, y0 - py); x0 = Math.max(0, x0 - px); y1 = Math.min(1, y1 + py); x1 = Math.min(1, x1 + px);
   const sw = (x1 - x0) * W, sh = (y1 - y0) * H, k = Math.min(1, 1600 / Math.max(sw, sh));
-  const c = document.createElement("canvas"); c.width = Math.round(sw * k); c.height = Math.round(sh * k);
-  const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(src, x0 * W, y0 * H, sw, sh, 0, 0, c.width, c.height);
-  return new Promise(ok => c.toBlob(b => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.readAsDataURL(b); }, "image/jpeg", 0.88));
+  const wc = document.createElement("canvas"); wc.width = Math.max(1, Math.round(sw * k)); wc.height = Math.max(1, Math.round(sh * k));
+  const wx = wc.getContext("2d", { willReadFrequently: true }); wx.fillStyle = "#fff"; wx.fillRect(0, 0, wc.width, wc.height);
+  wx.drawImage(src, x0 * W, y0 * H, sw, sh, 0, 0, wc.width, wc.height);
+  const toB64 = c => new Promise(ok => c.toBlob(b => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.readAsDataURL(b); }, "image/jpeg", 0.9));
+  const data = wx.getImageData(0, 0, wc.width, wc.height);
+  const iso = isolateProduct(data.data, wc.width, wc.height);
+  if (!iso) return toB64(wc);
+  const { bg } = iso, light = Math.min(...bg) >= 165;
+  // чистим лишнее и выравниваем фон прямо в пикселях
+  const d = data.data, w = wc.width;
+  for (let y = 0; y < wc.height; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4;
+    const s = ((y / iso.cell) | 0) * iso.gw + ((x / iso.cell) | 0), z = iso.drop[s];
+    if (z === 1 || (z === 2 && Math.max(Math.abs(d[i] - iso.avg[s * 3]), Math.abs(d[i + 1] - iso.avg[s * 3 + 1]), Math.abs(d[i + 2] - iso.avg[s * 3 + 2])) <= 16)) { d[i] = bg[0]; d[i + 1] = bg[1]; d[i + 2] = bg[2]; }
+    if (light) { // фон → чистый белый, товар сохраняет цвета (как баланс белого по фону)
+      for (let ch = 0; ch < 3; ch++) d[i + ch] = Math.min(255, d[i + ch] * 255 / Math.max(1, bg[ch]));
+      if (d[i] > 246 && d[i + 1] > 246 && d[i + 2] > 246) d[i] = d[i + 1] = d[i + 2] = 255;
+    } else {
+      const m = Math.max(Math.abs(d[i] - bg[0]), Math.abs(d[i + 1] - bg[1]), Math.abs(d[i + 2] - bg[2]));
+      if (m < 12) { d[i] = bg[0]; d[i + 1] = bg[1]; d[i + 2] = bg[2]; }
+    }
+  }
+  wx.putImageData(data, 0, 0);
+  const fill = light ? "#fff" : `rgb(${bg.map(Math.round).join(",")})`;
+  const cw = iso.x1 - iso.x0, chh = iso.y1 - iso.y0;
+  // кладём товар по центру на холст 4:5 с полями
+  let OW = cw * 1.2, OH = chh * 1.2; if (OW / OH > 0.8) OH = OW / 0.8; else OW = OH * 0.8;
+  const s2 = Math.min(1, 1600 / OH), out = document.createElement("canvas"); out.width = Math.round(OW * s2); out.height = Math.round(OH * s2);
+  const ox = out.getContext("2d"); ox.fillStyle = fill; ox.fillRect(0, 0, out.width, out.height);
+  ox.drawImage(wc, iso.x0, iso.y0, cw, chh, (out.width - cw * s2) / 2, (out.height - chh * s2) / 2, cw * s2, chh * s2);
+  return toB64(out);
 }
 const SCR = { queue: [], groups: new Map(), running: false, enabled: null, last: 0 };
 const scrKey = r => (r.brand + "|" + r.title).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9а-я|]+/g, "");

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-02-live-v9">
+<meta name="trendburo-build" content="2026-10-03-live-v10">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* ===== Telegram: полный экран, безопасные отступы, заставка ===== */
@@ -338,6 +338,23 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero .v.swap{opacity:0;transform:scale(.96)}
 .pv-hero .newp{position:absolute;top:calc(64px + var(--st));left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;padding:5px 10px;border-radius:99px}
 .pv-panel{position:relative;margin-top:-34px;border-radius:30px 30px 0 0;background:var(--ink-grad);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -12px 30px rgba(20,22,25,.12);padding:10px 20px 120px;display:flex;flex-direction:column;gap:18px;min-height:460px;animation:panelUp .7s var(--ease) .1s both}
+/* карточка товара с реальными фото: фото целиком, панель начинается под ним */
+.pv-hero.ph{--ph:min(116vw,54vh,max(260px,calc(100vh - var(--st) - var(--sb) - 300px)));height:calc(var(--st) + 52px + var(--ph) + 64px);display:block}
+.pv-hero.ph .pv-gal .sl{padding:calc(var(--st) + 52px) 16px 64px}
+.pv-hero.ph .pv-gal img{width:100%;height:var(--ph);max-height:none;object-fit:contain;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
+.pv-hero.ph .pv-dots{bottom:46px}
+.pv-hero.ph .newp{left:18px;transform:none;top:calc(var(--st) + 60px);z-index:2}
+.pv-hero.ph .pv-n{position:absolute;right:18px;top:calc(var(--st) + 60px);z-index:2;font-size:11px;font-weight:600;background:rgba(255,255,255,.9);padding:4px 9px;border-radius:99px;color:var(--fg)}
+.zv{position:fixed;inset:0;z-index:90;background:#fff;display:flex;flex-direction:column;opacity:0;transition:opacity .25s}
+.zv.in{opacity:1}
+.zv .zg{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.zv .zg::-webkit-scrollbar{display:none}
+.zv .zg div{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;padding:calc(var(--st) + 56px) 0 calc(var(--sb) + 56px);touch-action:pan-x pinch-zoom}
+.zv .zg img{max-width:100%;max-height:100%;object-fit:contain}
+.zv .zt{position:absolute;top:calc(var(--st) + 8px);left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 12px;z-index:2}
+.zv .zt b{font-size:13px;font-weight:600;color:var(--muted)}
+.zv .zt button{width:40px;height:40px;border-radius:20px;border:0;background:rgba(28,29,32,.06);display:grid;place-items:center}
+.zv .zt svg{width:20px;height:20px;stroke:var(--fg);fill:none;stroke-width:2;stroke-linecap:round}
 @keyframes panelUp{from{transform:translateY(120px);opacity:.4}to{transform:none;opacity:1}}
 .pv-panel .grab2{align-self:center;width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.22)}
 .pv-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
@@ -1280,6 +1297,15 @@ function colorways(it){
   return out}
 const IC={truck:'<path d="M2.5 16V8a1.5 1.5 0 0 1 1.5-1.5h9.5V16"/><path d="M13.5 9.5h4l3 3.5V16h-1.6"/><path d="M15 9.5V13h5.5"/><circle cx="7" cy="17" r="1.8"/><circle cx="17" cy="17" r="1.8"/><path d="M8.8 17h6.4M2.5 16h2.7"/>',chat:'<path d="M4 6h16v10H9l-5 4z"/>',shield:'<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/>'};
 const LOW=["flat","loafer","sneaker","sandal","belt"];
+function zoomView(imgs,start,label){
+  const z=document.createElement("div");z.className="zv";z.setAttribute("role","dialog");z.setAttribute("aria-label",label);
+  z.innerHTML=`<div class="zt"><button data-zx aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><b>${imgs.length>1?`<span data-zc>${start+1}</span> / ${imgs.length}`:""}</b><span style="width:40px"></span></div><div class="zg">${imgs.map(im=>`<div><img src="${esc(im.big||im.src)}" alt="" decoding="async"></div>`).join("")}</div>`;
+  document.body.append(z);const g=z.querySelector(".zg");g.scrollLeft=start*g.clientWidth;
+  requestAnimationFrame(()=>z.classList.add("in"));
+  const close=()=>{z.classList.remove("in");setTimeout(()=>z.remove(),250)};
+  z.querySelector("[data-zx]").onclick=close;
+  g.addEventListener("scroll",()=>{const c=z.querySelector("[data-zc]");if(c)c.textContent=Math.round(g.scrollLeft/g.clientWidth)+1},{passive:true});
+}
 function openProduct(id){
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;
   let d=prefs.dest||"ua",size="",ci=0;
@@ -1290,13 +1316,17 @@ function openProduct(id){
   if(sizes){const pz=p.cat==="shoes"?prefs.shoe:prefs.cloth;if(pz&&sizes.includes(pz))size=pz}
   const more=p?P.filter(x=>x.bk===p.bk&&x.id!==p.id):[];
   const like=p?P.filter(x=>x.cat===p.cat&&x.bk!==p.bk&&x.price<p.price*1.6&&x.price>p.price*.5).slice(0,8):RESALE.filter(x=>x.id!==it.id);
-  const s=push(it.brand,`<div class="pv-hero">${p&&p.st?'<span class="newp">В наличии</span>':p&&p.isNew?'<span class="newp">Новинка</span>':r?`<span class="newp">${esc(r.cond)}</span>`:""}${p&&p.live&&p.imgs&&p.imgs.length>1?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl"><img src="${esc(im.src)}" alt="" ${i?'loading="lazy"':""} decoding="async"></div>`).join("")}</div><div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
+  const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
+  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${p&&p.st?'<span class="newp">В наличии</span>':p&&p.isNew?'<span class="newp">Новинка</span>':r?`<span class="newp">${esc(r.cond)}</span>`:""}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl"><img src="${esc(im.src)}" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:18px"></div>
    ${more.length?`<div class="ondark"><div class="sech"><h2>Ещё ${esc(it.brand)}</h2><button class="more" data-act="brand" data-bk="${p.bk}">Все</button></div><div class="hrail">${more.map(pcHTML).join("")}</div></div>`:""}
    ${like.length?`<div class="ondark"><div class="sech"><h2>${r?"Ещё в ресейле":"Похожее"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div></div>`:""}
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
     foot:`<div class="foot dark"><button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order>${r?"Купить":(p&&p.live&&!p.orderable)?"Уточнить наличие":"В корзину"}</button></div>`});
-  {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/g.clientWidth);dots.forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true})}}
+  {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/g.clientWidth);dots.forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true});
+    const sc=s.querySelector(".scroll"),ims=[...g.querySelectorAll("img")];let raf=0;
+    sc.addEventListener("scroll",()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;const y=Math.max(0,Math.min(sc.scrollTop,500));ims.forEach(im=>im.style.transform=y?`translateY(${y*.35}px) scale(${1-y/2400})`:"")})},{passive:true});
+    g.addEventListener("click",e=>{const im=e.target.closest("img[data-zi]");if(im)zoomView(p.imgs.slice(0,8),+im.dataset.zi,it.brand+" "+it.name)})}}
   const priceNote=()=>r?"Цена продавца":d==="ua"?dIcon("ua",13)+"С доставкой в Украину":dIcon(d,13)+"+ доставка "+(d==="eu"?"по Европе":"в Дубай");
   const draw=()=>{const cw=cws[ci];
     s.querySelector("#pvb").innerHTML=`
