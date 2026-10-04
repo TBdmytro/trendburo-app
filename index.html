@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-03-live-v10">
+<meta name="trendburo-build" content="2026-10-04-live-v11">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* ===== Telegram: полный экран, безопасные отступы, заставка ===== */
@@ -14,21 +14,36 @@ html.fs .tglogo{display:flex}
 .tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);animation:tgspin 6s linear infinite}
 @keyframes tgspin{to{transform:rotate(360deg)}}
 body:has(.sv) .tglogo,body:has(.splash) .tglogo{opacity:0}
-.splash{position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;cursor:pointer}
-.sp-logo{position:relative;width:92px;height:92px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 30px/1 "Prata",Georgia,serif;animation:sppop .8s cubic-bezier(.34,1.56,.64,1) both}
-.sp-logo svg{position:absolute;inset:-12px;width:116px;height:116px;transform:rotate(-90deg)}
-.sp-logo circle{fill:none;stroke:#1f2125;stroke-width:1.4;stroke-dasharray:302;stroke-dashoffset:302;animation:spring 1s .25s cubic-bezier(.65,0,.35,1) forwards}
-.sp-word{display:flex;font:600 22px/1 "Onest",system-ui,sans-serif;letter-spacing:-.01em;color:#1f2125}
-.sp-word i{font-style:normal;display:inline-block;opacity:0;transform:translateY(10px);filter:blur(4px);animation:spl .55s cubic-bezier(.22,1,.36,1) forwards;animation-delay:calc(.45s + var(--k) * 45ms)}
-.sp-sub{font:500 11px/1 "Onest",system-ui,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:#8a8d93;opacity:0;animation:spf .5s 1s forwards}
-.splash.out{animation:spout .5s cubic-bezier(.7,0,.2,1) forwards}
-.splash.out .sp-logo{animation:spshrink .5s cubic-bezier(.7,0,.2,1) forwards}
-@keyframes sppop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.splash{position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;cursor:pointer;overflow:hidden}
+.splash::before{content:"";position:absolute;width:150vmax;height:150vmax;border-radius:50%;background:radial-gradient(circle,rgba(31,33,37,.05) 0,rgba(31,33,37,0) 45%);animation:spglow 2.6s ease-out both}
+.sp-logo{position:relative;width:96px;height:96px;border-radius:50%;background:linear-gradient(160deg,#3a3d43,#1f2125 60%,#17181b);color:#fff;display:grid;place-items:center;box-shadow:0 18px 40px rgba(31,33,37,.22);animation:sppop .9s cubic-bezier(.34,1.56,.64,1) both}
+.sp-logo b{font:400 31px/1 "Prata",Georgia,serif;letter-spacing:.02em;display:block;clip-path:inset(100% 0 0 0);animation:spup .7s .35s cubic-bezier(.22,1,.36,1) forwards}
+.sp-logo svg{position:absolute;inset:-14px;width:124px;height:124px;transform:rotate(-90deg);overflow:visible}
+.sp-logo .r1{fill:none;stroke:#1f2125;stroke-width:1.2;stroke-dasharray:327;stroke-dashoffset:327;animation:spring 1s .3s cubic-bezier(.65,0,.35,1) forwards,spfade .5s 1.35s forwards}
+.sp-logo .r2{fill:none;stroke:#1f2125;stroke-width:2;stroke-linecap:round;stroke-dasharray:70 93.5;opacity:0;transform-origin:62px 62px;animation:spin2 1.6s 1.2s linear infinite,spin2in .4s 1.2s forwards}
+.sp-word{display:flex;font:600 23px/1 "Onest",system-ui,sans-serif;letter-spacing:-.01em;color:#1f2125}
+.sp-word i{font-style:normal;display:inline-block;opacity:0;transform:translateY(12px);filter:blur(5px);animation:spl .6s cubic-bezier(.22,1,.36,1) forwards;animation-delay:calc(.55s + var(--k) * 45ms)}
+.sp-sub{font:500 10.5px/1 "Onest",system-ui,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:#8a8d93;opacity:0;animation:spf .6s 1.1s forwards}
+.sp-bar{position:absolute;bottom:calc(var(--sb,0px) + 56px);width:96px;height:1.5px;border-radius:1px;background:rgba(31,33,37,.1);overflow:hidden}
+.sp-bar i{position:absolute;inset:0;background:#1f2125;transform:scaleX(0);transform-origin:left;animation:spbar var(--spd,2.4s) cubic-bezier(.4,0,.2,1) forwards}
+.splash.quick .sp-logo,.splash.quick .sp-logo b,.splash.quick .sp-word i,.splash.quick .sp-sub{animation-duration:.45s;animation-delay:0s}
+.splash.out{animation:spout .6s cubic-bezier(.7,0,.2,1) forwards}
+.splash.out .sp-logo{animation:spshrink .6s cubic-bezier(.7,0,.2,1) forwards}
+.splash.out .sp-word,.splash.out .sp-sub,.splash.out .sp-bar{transition:opacity .25s,transform .4s;opacity:0;transform:translateY(-8px)}
+html.appin #app{animation:appin .7s cubic-bezier(.22,1,.36,1) both}
+@keyframes sppop{from{transform:scale(.3) rotate(-25deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes spup{to{clip-path:inset(0 0 0 0)}}
 @keyframes spring{to{stroke-dashoffset:0}}
+@keyframes spfade{to{opacity:.12}}
+@keyframes spin2{to{transform:rotate(360deg)}}
+@keyframes spin2in{to{opacity:1}}
 @keyframes spl{to{opacity:1;transform:none;filter:none}}
 @keyframes spf{to{opacity:1}}
-@keyframes spout{to{opacity:0;visibility:hidden}}
-@keyframes spshrink{to{transform:scale(.6) translateY(-30px)}}
+@keyframes spbar{to{transform:scaleX(1)}}
+@keyframes spglow{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes spout{0%{opacity:1}60%{opacity:1}to{opacity:0;visibility:hidden}}
+@keyframes spshrink{to{transform:translateY(-34vh) scale(.32);opacity:0}}
+@keyframes appin{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.splash{display:none}}
 body{margin:0}img{max-width:100%}/* ===== Наполнение из админки ===== */
 .announce{margin:0 18px 14px;padding:11px 14px;border-radius:14px;background:var(--soft);font-size:13.5px;line-height:1.4;color:var(--fg)}
@@ -773,7 +788,7 @@ textarea{min-height:88px;resize:vertical}
 </style>
 </head>
 <body>
-<div id="splash" class="splash" aria-hidden="true"><div class="sp-logo">TB<svg viewBox="0 0 116 116"><circle cx="58" cy="58" r="48"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Байер-сервис</div></div>
+<div id="splash" class="splash" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 124 124"><circle class="r1" cx="62" cy="62" r="52"/><circle class="r2" cx="62" cy="62" r="52"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Байер-сервис · Европа</div><div class="sp-bar"><i></i></div></div>
 <div class="tglogo" aria-hidden="true"><i>TB</i></div>
 <script>window.__spKey="tb_sp";
 /* Telegram: полный экран на телефоне и отступы под кнопки Telegram (закрыть, меню) */
@@ -788,13 +803,16 @@ textarea{min-height:88px;resize:vertical}
   if(mob&&tg.requestFullscreen&&tg.isVersionAtLeast&&tg.isVersionAtLeast("8.0")&&!tg.isFullscreen){try{tg.requestFullscreen()}catch(x){}}
   setTimeout(ins,300);setTimeout(ins,1200);
 })();
-/* Заставка: показывается при открытии, исчезает, когда приложение готово (не раньше 1,4 с) */
+/* Заставка: при первом открытии ~2,5 с (пока грузится каталог), при повторном за сессию — 1,2 с.
+   Уходит не раньше минимума и не позже 6 с; по тапу — сразу. Потом приложение плавно проявляется. */
 window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s.dataset.h)return;s.dataset.h=1;
-  var w=Math.max(0,(min==null?1400:min)-(performance.now()-(window.__sp0||0)));
-  setTimeout(function(){s.classList.add("out");setTimeout(function(){s.remove()},520)},w)};
-(function(){var s=document.getElementById("splash");if(!s)return;window.__sp0=performance.now();
-  try{if(sessionStorage.getItem(window.__spKey||"tb_sp")){s.remove();return}sessionStorage.setItem(window.__spKey||"tb_sp","1")}catch(x){}
-  s.addEventListener("click",function(){window.hideSplash(0)});setTimeout(function(){window.hideSplash(0)},4500)})();
+  var w=Math.max(0,(min==null?(window.__spMin||2500):min)-(performance.now()-(window.__sp0||0)));
+  setTimeout(function(){s.classList.add("out");var R=document.documentElement;setTimeout(function(){R.classList.add("appin")},180);
+    setTimeout(function(){s.remove();setTimeout(function(){R.classList.remove("appin")},700)},620)},w)};
+(function(){var s=document.getElementById("splash");if(!s)return;window.__sp0=performance.now();var seen=false;
+  try{seen=!!sessionStorage.getItem(window.__spKey||"tb_sp");sessionStorage.setItem(window.__spKey||"tb_sp","1")}catch(x){}
+  window.__spMin=seen?1200:2500;if(seen)s.classList.add("quick");s.style.setProperty("--spd",(window.__spMin-100)+"ms");
+  s.addEventListener("click",function(){window.hideSplash(0)});setTimeout(function(){window.hideSplash(0)},6000)})();
 </script>
 <div id="app">
   <!-- FEED -->
@@ -1259,6 +1277,19 @@ function openSheet(title,body,foot){closeSheet(true);
 function closeSheet(instant){if(!sheetEl)return;const s=sheetEl,c=scrimEl;sheetEl=scrimEl=null;window.removeEventListener("pointermove",s._mv);window.removeEventListener("pointerup",s._up);
   if(instant){s.remove();c.remove();return}s.classList.remove("in");c.classList.remove("in");setTimeout(()=>{s.remove();c.remove()},500)}
 
+/* ===== Кнопка «Назад» Telegram: закрывает верхний слой ===== */
+const TGW=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData?Telegram.WebApp:null;
+function backLayer(){
+  const z=document.querySelector(".zv [data-zx]");if(z)return z.click(),true;
+  const x=document.querySelector(".sv [data-x]");if(x)return x.click(),true;
+  if(sheetEl)return closeSheet(),true;
+  if(stack.length)return pop(),true;
+  if($("#app").classList.contains("in-optix"))return tab(lastMain||"feed"),true;
+  return false}
+function syncBack(){if(!TGW||!TGW.BackButton)return;requestAnimationFrame(()=>{const need=!!(document.querySelector(".zv,.sv")||sheetEl||stack.length||$("#app").classList.contains("in-optix"));try{need?TGW.BackButton.show():TGW.BackButton.hide()}catch(e){}})}
+if(TGW&&TGW.BackButton){try{TGW.BackButton.onClick(()=>{backLayer();setTimeout(syncBack,60)})}catch(e){}
+  new MutationObserver(syncBack).observe(document.getElementById("app")||document.body,{childList:true,attributes:true,attributeFilter:["class"]});
+  new MutationObserver(syncBack).observe(document.body,{childList:true})}
 /* ===== Стек экранов ===== */
 const stack=[];
 function currentTabEl(){return $(".tab.on")}
