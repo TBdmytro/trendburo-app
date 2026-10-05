@@ -2,11 +2,18 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-04-live-v11">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="trendburo-build" content="2026-10-05-live-v12">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>/* ===== Telegram: полный экран, безопасные отступы, заставка ===== */
+<style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:pan-x pan-y}
+html,body{overscroll-behavior:none}
+*{touch-action:pan-x pan-y}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+img{-webkit-user-drag:none}
+/* ===== Telegram: полный экран, безопасные отступы, заставка ===== */
 :root{--st:max(env(safe-area-inset-top,0px),var(--tgst,0px));--sb:max(env(safe-area-inset-bottom,0px),var(--tgsb,0px))}
 .tglogo{display:none;position:fixed;z-index:400;left:50%;top:var(--tgs,0px);height:var(--tgc,0px);transform:translateX(-50%);align-items:center;justify-content:center;pointer-events:none}
 html.fs .tglogo{display:flex}
@@ -364,8 +371,11 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .zv.in{opacity:1}
 .zv .zg{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
 .zv .zg::-webkit-scrollbar{display:none}
-.zv .zg div{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;padding:calc(var(--st) + 56px) 0 calc(var(--sb) + 56px);touch-action:pan-x pinch-zoom}
-.zv .zg img{max-width:100%;max-height:100%;object-fit:contain}
+.zv .zg div{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;padding:calc(var(--st) + 56px) 0 calc(var(--sb) + 56px);touch-action:pan-x;overflow:hidden}
+.zv .zg img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center;will-change:transform}
+.zv .zg img.anim{transition:transform .28s cubic-bezier(.22,1,.36,1)}
+.zv .zg.locked{overflow:hidden;touch-action:none}
+.zv .zg.locked div{touch-action:none}
 .zv .zt{position:absolute;top:calc(var(--st) + 8px);left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 12px;z-index:2}
 .zv .zt b{font-size:13px;font-weight:600;color:var(--muted)}
 .zv .zt button{width:40px;height:40px;border-radius:20px;border:0;background:rgba(28,29,32,.06);display:grid;place-items:center}
@@ -788,6 +798,13 @@ textarea{min-height:88px;resize:vertical}
 </style>
 </head>
 <body>
+<script>/* Защита от приближения страницы: iOS игнорирует часть настроек, поэтому гасим жест щипка вручную (кроме фото в просмотре) */
+(function(){var ok=function(t){return t&&t.closest&&t.closest("[data-zoomable]")};
+  ["gesturestart","gesturechange","gestureend"].forEach(function(n){document.addEventListener(n,function(e){if(!ok(e.target))e.preventDefault()},{passive:false})});
+  document.addEventListener("touchmove",function(e){if(e.touches&&e.touches.length>1&&!ok(e.target))e.preventDefault()},{passive:false});
+  var last=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-last<300&&!ok(e.target)&&!(e.target.closest&&e.target.closest("input,textarea,select,button,a,[role=button],label")))e.preventDefault();last=n},{passive:false});
+})();</script>
+
 <div id="splash" class="splash" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 124 124"><circle class="r1" cx="62" cy="62" r="52"/><circle class="r2" cx="62" cy="62" r="52"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Байер-сервис · Европа</div><div class="sp-bar"><i></i></div></div>
 <div class="tglogo" aria-hidden="true"><i>TB</i></div>
 <script>window.__spKey="tb_sp";
@@ -1330,12 +1347,31 @@ const IC={truck:'<path d="M2.5 16V8a1.5 1.5 0 0 1 1.5-1.5h9.5V16"/><path d="M13.
 const LOW=["flat","loafer","sneaker","sandal","belt"];
 function zoomView(imgs,start,label){
   const z=document.createElement("div");z.className="zv";z.setAttribute("role","dialog");z.setAttribute("aria-label",label);
-  z.innerHTML=`<div class="zt"><button data-zx aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><b>${imgs.length>1?`<span data-zc>${start+1}</span> / ${imgs.length}`:""}</b><span style="width:40px"></span></div><div class="zg">${imgs.map(im=>`<div><img src="${esc(im.big||im.src)}" alt="" decoding="async"></div>`).join("")}</div>`;
+  z.innerHTML=`<div class="zt"><button data-zx aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><b>${imgs.length>1?`<span data-zc>${start+1}</span> / ${imgs.length}`:""}</b><span style="width:40px"></span></div><div class="zg">${imgs.map(im=>`<div data-zoomable><img src="${esc(im.big||im.src)}" alt="" decoding="async" draggable="false"></div>`).join("")}</div>`;
   document.body.append(z);const g=z.querySelector(".zg");g.scrollLeft=start*g.clientWidth;
   requestAnimationFrame(()=>z.classList.add("in"));
   const close=()=>{z.classList.remove("in");setTimeout(()=>z.remove(),250)};
   z.querySelector("[data-zx]").onclick=close;
   g.addEventListener("scroll",()=>{const c=z.querySelector("[data-zc]");if(c)c.textContent=Math.round(g.scrollLeft/g.clientWidth)+1},{passive:true});
+  z.querySelectorAll(".zg [data-zoomable]").forEach(sl=>pinchZoom(sl,sl.querySelector("img"),g));
+}
+/* Приближение фото: щипок двумя пальцами (до 4×), двойной тап — 2,5× в точку тапа и обратно, одним пальцем — двигать приближенное */
+function pinchZoom(box,img,gal){
+  let s=1,tx=0,ty=0,st=null,lastTap=0;
+  const D=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),M=(a,b)=>({x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2});
+  const clamp=()=>{const r=box.getBoundingClientRect(),mx=Math.max(0,(img.offsetWidth*s-r.width)/2),my=Math.max(0,(img.offsetHeight*s-r.height)/2)+40;tx=Math.max(-mx,Math.min(mx,tx));ty=Math.max(-my,Math.min(my,ty))};
+  const set=a=>{img.classList.toggle("anim",!!a);img.style.transform=s>1.001?`translate(${tx}px,${ty}px) scale(${s})`:"";gal.classList.toggle("locked",s>1.001)};
+  box.addEventListener("touchstart",e=>{
+    if(e.touches.length===2){st={k:"pinch",d:D(e.touches[0],e.touches[1]),m:M(e.touches[0],e.touches[1]),s,tx,ty}}
+    else if(e.touches.length===1){const t=e.touches[0],now=Date.now();
+      if(now-lastTap<280){e.preventDefault();const r=box.getBoundingClientRect();if(s>1.001){s=1;tx=ty=0}else{s=2.5;tx=(r.left+r.width/2-t.clientX)*1.5;ty=(r.top+r.height/2-t.clientY)*1.5;clamp()}set(true);lastTap=0;st=null;return}
+      lastTap=now;if(s>1.001)st={k:"pan",x:t.clientX,y:t.clientY,tx,ty}}
+  },{passive:false});
+  box.addEventListener("touchmove",e=>{if(!st)return;
+    if(st.k==="pinch"&&e.touches.length===2){e.preventDefault();const d=D(e.touches[0],e.touches[1]),m=M(e.touches[0],e.touches[1]);s=Math.max(1,Math.min(4,st.s*d/st.d));tx=st.tx+(m.x-st.m.x);ty=st.ty+(m.y-st.m.y);set(false)}
+    else if(st.k==="pan"&&e.touches.length===1){e.preventDefault();tx=st.tx+e.touches[0].clientX-st.x;ty=st.ty+e.touches[0].clientY-st.y;clamp();set(false)}
+  },{passive:false});
+  box.addEventListener("touchend",e=>{if(e.touches.length===0){if(s<1.05){s=1;tx=ty=0}clamp();set(true);st=null}else if(e.touches.length===1&&s>1.001){st={k:"pan",x:e.touches[0].clientX,y:e.touches[0].clientY,tx,ty}}});
 }
 function openProduct(id){
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;

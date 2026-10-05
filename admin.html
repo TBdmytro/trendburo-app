@@ -2,15 +2,19 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-03-admin-v14">
+<meta name="trendburo-build" content="2026-10-05-admin-v15">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Prata&display=swap">
-<style>
+<style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:pan-x pan-y}
+html,body{overscroll-behavior:none}
+*{touch-action:pan-x pan-y}
+
 :root{
   --bg:#f6f6f7;--card:#fff;--fg:#1c1d20;--g2:#4d5058;--muted:#8b8e95;--line:#ebebee;--soft:#f1f1f3;--soft2:#e8e8eb;
   --side:#1c1d20;--side2:#26282c;--ink:#1c1d20;--ink-g:linear-gradient(180deg,#3a3d43,#232529 55%,#1a1b1e);
@@ -576,6 +580,13 @@ body:has(.sv) .tglogo,body:has(.splash) .tglogo{opacity:0}
 </style>
 </head>
 <body>
+<script>/* Защита от приближения страницы: iOS игнорирует часть настроек, поэтому гасим жест щипка вручную (кроме фото в просмотре) */
+(function(){var ok=function(t){return t&&t.closest&&t.closest("[data-zoomable]")};
+  ["gesturestart","gesturechange","gestureend"].forEach(function(n){document.addEventListener(n,function(e){if(!ok(e.target))e.preventDefault()},{passive:false})});
+  document.addEventListener("touchmove",function(e){if(e.touches&&e.touches.length>1&&!ok(e.target))e.preventDefault()},{passive:false});
+  var last=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-last<300&&!ok(e.target)&&!(e.target.closest&&e.target.closest("input,textarea,select,button,a,[role=button],label")))e.preventDefault();last=n},{passive:false});
+})();</script>
+
 <div id="splash" class="splash" aria-hidden="true"><div class="sp-logo">TB<svg viewBox="0 0 116 116"><circle cx="58" cy="58" r="48"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Админка</div></div>
 <div class="tglogo" aria-hidden="true"><i>TB</i></div>
 <script>window.__spKey="tb_spa";
