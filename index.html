@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-07-live-v14">
+<meta name="trendburo-build" content="2026-10-07-live-v15">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -20,7 +20,7 @@ html.fs .tglogo{display:flex}
 .tglogo i{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em}
 .tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);animation:tgspin 6s linear infinite}
 @keyframes tgspin{to{transform:rotate(360deg)}}
-body:has(.sv) .tglogo,body:has(.splash) .tglogo{opacity:0}
+body:has(.sv) .tglogo,body:has(.splash) .tglogo,body:has(.oxa.in) .tglogo,body:has(.oxi) .tglogo{opacity:0}
 .splash{position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;cursor:pointer;overflow:hidden}
 .splash::before{content:"";position:absolute;width:150vmax;height:150vmax;border-radius:50%;background:radial-gradient(circle,rgba(31,33,37,.05) 0,rgba(31,33,37,0) 45%);animation:spglow 2.6s ease-out both}
 .sp-logo{position:relative;width:96px;height:96px;border-radius:50%;background:linear-gradient(160deg,#3a3d43,#1f2125 60%,#17181b);color:#fff;display:grid;place-items:center;box-shadow:0 18px 40px rgba(31,33,37,.22);animation:sppop .9s cubic-bezier(.34,1.56,.64,1) both}
@@ -316,7 +316,8 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .infol span{color:var(--muted);font-size:13px}
 /* real photos */
 .shimg{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply;display:block}
-.pc .art img.shimg{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;padding:9%;box-sizing:border-box}
+.pc .art img.shimg{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;padding:0;box-sizing:border-box;object-fit:contain;mix-blend-mode:normal}
+.pc .art:has(img.shimg){background:#fff}
 .pv-hero .v img.shimg{width:100%;height:auto;max-height:330px}
 .pv-hero .v:has(img.shimg){mix-blend-mode:multiply}
 .cw .t img.shimg{width:86%;height:86%}
@@ -706,9 +707,25 @@ textarea{min-height:88px;resize:vertical}
 .ctile.ox .wordmark{color:#f1eee8;opacity:1;font-size:25px;letter-spacing:.2em;font-family:"Prata",Georgia,serif;font-weight:400}
 .ctile.ox span.br{font-size:12px;color:#c9d3dc}
 .ctile.ox .go{width:22px;height:22px;flex:none;fill:none;stroke:#f1eee8;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
-.oxa{position:fixed;inset:0;z-index:95;background:#12293e;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,visibility 0s .35s}
+.oxa{position:fixed;inset:0;z-index:95;background:var(--oxbg,#fbfaf8);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,visibility 0s .35s}
 .oxa.in{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .35s ease}
-.oxa iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#12293e}
+.oxa iframe{position:absolute;left:0;right:0;top:var(--st);bottom:var(--sb);width:100%;height:calc(100% - var(--st) - var(--sb));border:0;background:transparent}
+.oxa.in iframe{animation:oxin 1s cubic-bezier(.22,1,.36,1) both}
+@keyframes oxin{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+.oxa.out{opacity:0;transition:opacity .45s ease}.oxa.out iframe{transform:scale(.97);transition:transform .45s ease}
+.oxi{position:fixed;inset:0;z-index:96;background:radial-gradient(120% 90% at 50% 40%,#1b3a55 0%,#12293e 55%,#0b1a29 100%);color:#f1eee8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;clip-path:circle(0px at var(--x) var(--y));animation:oxgrow .95s cubic-bezier(.65,0,.35,1) forwards;will-change:clip-path,transform}
+.oxi .w{display:flex;font:400 46px/1 "Prata",Georgia,serif;letter-spacing:.24em;padding-left:.24em}
+.oxi .w i{font-style:normal;display:inline-block;opacity:0;transform:translateY(16px);filter:blur(8px);animation:oxl .9s cubic-bezier(.22,1,.36,1) forwards;animation-delay:calc(.55s + var(--k) * 110ms)}
+.oxi .s{font:500 11px/1 "Onest",system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:#9fb2c3;opacity:0;animation:oxf .7s 1.25s forwards}
+.oxi .l{width:132px;height:1px;background:rgba(241,238,232,.18);overflow:hidden;margin-top:8px;opacity:0;animation:oxf .4s 1.2s forwards}
+.oxi .l b{display:block;height:100%;background:#f1eee8;transform:scaleX(0);transform-origin:left;animation:oxbar 1.3s 1.25s cubic-bezier(.6,0,.3,1) forwards}
+.oxi.lift{animation:oxlift .95s cubic-bezier(.76,0,.24,1) forwards;clip-path:none}
+.oxi.lift .w,.oxi.lift .s,.oxi.lift .l{transition:transform .95s cubic-bezier(.76,0,.24,1),opacity .5s;transform:translateY(-40px);opacity:0}
+@keyframes oxgrow{to{clip-path:circle(150vmax at var(--x) var(--y))}}
+@keyframes oxl{to{opacity:1;transform:none;filter:none}}
+@keyframes oxf{to{opacity:1}}
+@keyframes oxbar{to{transform:scaleX(1)}}
+@keyframes oxlift{from{transform:none}to{transform:translateY(-102%)}}
 .oxa-x{position:absolute;left:12px;bottom:calc(92px + var(--sb));z-index:2;height:40px;padding:0 14px 0 6px;border-radius:20px;border:0;background:rgba(255,255,255,.94);box-shadow:0 6px 20px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;font:600 13px/1 "Onest",system-ui,sans-serif;color:#1f2125}
 .oxa-x i{width:30px;height:30px;border-radius:15px;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11px/1 "Prata",Georgia,serif;font-style:normal}
 .ctile{border:0;border-radius:18px;padding:14px;text-align:left;background:var(--ink-grad);color:#fff;box-shadow:var(--ink-hi);display:flex;flex-direction:column;gap:2px;min-height:128px;position:relative;overflow:hidden}
@@ -816,7 +833,7 @@ textarea{min-height:88px;resize:vertical}
   var last=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-last<300&&!ok(e.target)&&!(e.target.closest&&e.target.closest("input,textarea,select,button,a,[role=button],label")))e.preventDefault();last=n},{passive:false});
 })();</script>
 
-<div id="splash" class="splash" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 124 124"><circle class="r1" cx="62" cy="62" r="52"/><circle class="r2" cx="62" cy="62" r="52"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Байер-сервис · Европа</div><div class="sp-bar"><i></i></div></div>
+<div id="splash" class="splash" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 124 124"><circle class="r1" cx="62" cy="62" r="52"/><circle class="r2" cx="62" cy="62" r="52"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Байер-сервис</div><div class="sp-bar"><i></i></div></div>
 <div class="tglogo" aria-hidden="true"><i>TB</i></div>
 <script>window.__spKey="tb_sp";
 /* Telegram: полный экран на телефоне и отступы под кнопки Telegram (закрыть, меню) */
@@ -848,7 +865,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
     <div class="bar"><b>Лента</b></div>
     <div class="scroll">
       <div class="bigtitle">
-        <div><div class="sub" id="dateLine"></div><h1>Лента</h1></div>
+        <div class="feedhead" aria-hidden="true"><div class="sub" id="dateLine" hidden></div></div>
         <div class="topicons"></div>
       </div>
       <div class="sec watch" id="watchSec" hidden><div class="sech"><h2>Мониторинг</h2><button class="more" data-act="watch-lock">Скрыть</button></div><div class="wtiles" id="watchTiles"></div></div>
@@ -856,7 +873,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
       <div class="stories" id="stories"></div>
       <div class="bnr" id="bnr" hidden></div>
       <div class="ship"><div><small id="shipTitle">Ближайшая отправка в Украину</small><b id="shipDate"></b></div><span class="pulse" aria-hidden="true"></span></div>
-      <button class="o-entry press" data-act="tab" data-tab="optix" aria-label="Открыть OPTIX">
+      <button class="o-entry press" data-act="tab" data-tab="optix" aria-label="Открыть OPTIX" hidden>
         <span class="o-entry-art" id="oEntryArt"></span>
         <span class="o-entry-tx"><span class="cap">Наш продукт</span><span class="wordmark">OPTIX</span><span class="o-entry-sub">Солнцезащитные очки под заказ</span>
         <span class="o-entry-br">Gucci · Saint Laurent · Cartier · Miu Miu · Prada</span></span>
@@ -1313,31 +1330,35 @@ const OX_LOCK=`<style>html,*{touch-action:pan-x pan-y}html,body{overscroll-behav
 function optixDoc(){if(!oxDocP)oxDocP=fetch("/optix/",{cache:"no-cache"}).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
   if(!/OPTIX/i.test(t))throw 0;
   t=t.replace(/<script[^>]*telegram-web-app\.js[^>]*><\/script>/i,"");
-  return t.replace(/<head[^>]*>/i,m=>m+`<base href="/optix/"><script>try{window.Telegram=parent.Telegram}catch(e){}<\/script>`+OX_LOCK)}).catch(e=>{oxDocP=null;throw e});return oxDocP}
+  return t.replace(/<head[^>]*>/i,m=>m+`<base href="/optix/"><script>try{window.Telegram=parent.Telegram}catch(e){}<\/script><style>:root{--tg-top:0px!important;--tg-bottom:0px!important}</style>`+OX_LOCK)}).catch(e=>{oxDocP=null;throw e});return oxDocP}
 function openOptixApp(ev){if(OXA)return;
   const w=document.createElement("div");w.className="oxa";w.setAttribute("role","dialog");w.setAttribute("aria-label","OPTIX");
   w.innerHTML=`<iframe title="OPTIX"></iframe>${TGW?"":'<button class="oxa-x" aria-label="Вернуться в Trend Büro"><i>TB</i>Trend Büro</button>'}`;
   OXA=w;const fr=w.querySelector("iframe");let ready=false,shown=false;
   document.body.append(w); // грузится сразу, но невидимо — пока играет синий круг
   const show=()=>{if(shown||!OXA)return;shown=true;requestAnimationFrame(()=>w.classList.add("in"))};
-  fr.addEventListener("load",()=>{ready=true});
+  fr.addEventListener("load",()=>{ready=true;try{const d=fr.contentDocument,bg=getComputedStyle(d.body).backgroundColor;if(bg&&!/rgba\(0, 0, 0, 0\)|transparent/.test(bg))w.style.setProperty("--oxbg",bg)}catch(e){}});
   optixDoc().then(t=>{fr.srcdoc=t}).catch(()=>{fr.src=OPTIX_LINK});
   const x=w.querySelector(".oxa-x");if(x)x.onclick=closeOptixApp;
   try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.impactOccurred("light")}catch(e){}
-  // тёмно-синий круг с надписью OPTIX, пока приложение грузится (не меньше 0,9 с, не больше 4 с)
+  // медленный вход: синий круг растёт от места нажатия → буквы OPTIX проявляются → занавес уезжает вверх
   if(RM.matches){show();return}
-  const C=INTRO.optix,app=$("#app"),r=app.getBoundingClientRect(),cx=ev&&ev.clientX?ev.clientX-r.left:r.width/2,cy=ev&&ev.clientY?ev.clientY-r.top:r.height/2;
-  const el=document.createElement("div");el.className="intro cover";el.setAttribute("aria-hidden","true");
-  el.style.cssText=`--ib:${C.bg};--it:${C.fg};--x:${cx}px;--y:${cy}px;--tc:${C.tc}s;--tr:${C.tr}s;--d:${C.tc*0.55}s;--th:1.2s`;
-  el.innerHTML=`<div class="wm ${C.cls}" style="letter-spacing:.16em">${[...C.word].map((ch,k)=>`<i style="--k:${k}">${esc(ch)}</i>`).join("")}</div><div class="isub">${C.sub}</div><div class="iline"><b></b></div>`;
-  app.append(el);const t0=performance.now();
-  const finish=()=>{show();setTimeout(()=>{el.classList.remove("cover");el.style.clipPath="none";void el.offsetWidth;el.classList.add("reveal");setTimeout(()=>el.remove(),C.tr*1000+80)},120)};
+  const cx=ev&&ev.clientX?ev.clientX:innerWidth/2,cy=ev&&ev.clientY?ev.clientY:innerHeight/2;
+  const el=document.createElement("div");el.className="oxi";el.setAttribute("aria-hidden","true");
+  el.style.setProperty("--x",cx+"px");el.style.setProperty("--y",cy+"px");
+  el.innerHTML=`<div class="w">${[..."OPTIX"].map((ch,k)=>`<i style="--k:${k}">${ch}</i>`).join("")}</div><div class="s">by Trend Büro</div><div class="l"><b></b></div>`;
+  document.body.append(el);const t0=performance.now();
+  try{TGW&&TGW.setHeaderColor&&TGW.setHeaderColor("#12293e")}catch(e){}
   const domReady=()=>{if(ready)return true;try{const d=fr.contentDocument;return !!(d&&d.readyState!=="loading"&&d.body&&d.body.children.length&&(fr.srcdoc||fr.src))}catch(e){return false}};
-  const wait=()=>{const dt=performance.now()-t0;if((domReady()&&dt>900)||dt>4000)finish();else setTimeout(wait,80)};wait();
+  let lifted=false;const lift=()=>{if(lifted)return;lifted=true;show();
+    try{const bg=getComputedStyle(w).getPropertyValue("--oxbg")||"#fbfaf8";TGW&&TGW.setHeaderColor&&TGW.setHeaderColor(bg.trim()||"#fbfaf8")}catch(e){}
+    el.classList.add("lift");setTimeout(()=>el.remove(),1000)};
+  el.addEventListener("click",()=>{if(domReady())lift()});
+  const wait=()=>{const dt=performance.now()-t0;if((domReady()&&dt>2300)||dt>5000)lift();else setTimeout(wait,80)};wait();
 }
-function closeOptixApp(){const w=OXA;if(!w)return;OXA=null;w.classList.remove("in");
+function closeOptixApp(){const w=OXA;if(!w)return;OXA=null;w.classList.add("out");
   const colors=()=>{try{if(TGW){TGW.setHeaderColor&&TGW.setHeaderColor("#ffffff");TGW.setBackgroundColor&&TGW.setBackgroundColor("#ffffff")}}catch(e){}};
-  colors();setTimeout(()=>{w.remove();colors()},360);if(typeof syncBack==="function")syncBack()}
+  colors();setTimeout(()=>{w.remove();colors()},470);if(typeof syncBack==="function")syncBack()}
 /* «Назад» внутри OPTIX: если открыта карточка или шторка — закрываем её (как Esc), иначе выходим в Trend Büro */
 function optixBack(){const fr=OXA&&OXA.querySelector("iframe");let d=null;try{d=fr&&fr.contentDocument}catch(e){}
   const open=d&&[...d.querySelectorAll(".is-open")].filter(n=>n.getClientRects().length);
@@ -1559,7 +1580,7 @@ function renderCatHome(){renderStockBan();
   const oxTile=OPTIX_ON?`<button class="ctile ox press" data-act="optixapp" aria-label="Очки OPTIX — открыть"><span class="t"><small>Очки</small><span class="wordmark">OPTIX</span><span class="br">Cartier · Gucci · Miu Miu · Saint Laurent</span></span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`:"";
   let nTiles=0;
   $("#catGrid").innerHTML=Object.entries(CATS).filter(([k])=>k!=="eyewear").map(([k,v])=>{const l=pool.filter(p=>p.cat===k);if(!l.length)return"";nTiles++;const after=nTiles===4?oxTile:"";const lead=l.slice().sort((a,b)=>b.isNew-a.isNew)[0];
-    return `<button class="ctile press" data-act="catopen" data-cat="${k}" style="--c:${lead.c}"><b>${v}</b><span class="num">${l.length} ${plural(l.length,["товар","товара","товаров"])} · ${new Set(l.map(p=>p.bk)).size} ${plural(new Set(l.map(p=>p.bk)).size,["бренд","бренда","брендов"])}</span><span class="art">${lightShape(lead.shape,lead.c)}</span></button>`+after}).join("")+(nTiles<4?oxTile:"");
+    return `<button class="ctile press" data-act="catopen" data-cat="${k}" style="--c:${lead.c}"><b>${v}</b><span class="num">${l.length} ${plural(l.length,["товар","товара","товаров"])} · ${new Set(l.map(p=>p.bk)).size} ${plural(new Set(l.map(p=>p.bk)).size,["бренд","бренда","брендов"])}</span></button>`+after}).join("")+(nTiles<4?oxTile:"");
   const bset=[...new Set(pool.map(p=>p.bk))];
   const mine=[...follows].filter(bk=>bset.includes(bk));
   $("#myBrands").innerHTML=mine.length?`<div class="sec"><div class="sech"><h2>Мои бренды</h2></div><div class="bgrid">${mine.map(btileHTML).join("")}</div></div>`:"";
@@ -2046,7 +2067,7 @@ function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);
   if(s.optix&&s.optix.url)OPTIX_LINK=s.optix.url;
   $$("[data-wd]").forEach(e=>e.textContent=WD_PL[SHIP_WD]);$$("[data-wd2]").forEach(e=>e.textContent=WD_EACH[SHIP_WD]);
   const an=$("#announce");if(an){an.hidden=!(s.announce&&s.announce.on&&s.announce.text);an.textContent=s.announce?s.announce.text:""}
-  const oe=$(".o-entry");if(oe&&s.optix)oe.hidden=!s.optix.on;if(s.optix)OPTIX_ON=s.optix.on!==false;
+  const oe=$(".o-entry");if(oe)oe.hidden=true;if(s.optix)OPTIX_ON=s.optix.on!==false;
 }
 const brandKey=name=>{const n=String(name||"").trim().toLowerCase();const b=BRANDS.find(x=>x[1].toLowerCase()===n);return b?b[0]:null};
 function runAction(a){if(!a||!a.type||a.type==="none")return;const v=a.value||"";
