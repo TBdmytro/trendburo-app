@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-07-live-v13">
+<meta name="trendburo-build" content="2026-10-07-live-v14">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -703,9 +703,9 @@ textarea{min-height:88px;resize:vertical}
 .ctile.ox{grid-column:1/-1;min-height:118px;background:linear-gradient(135deg,#1b3a55 0%,#12293e 60%,#0d1f30 100%);color:#f1eee8;flex-direction:row;align-items:center;justify-content:space-between;padding:16px 18px}
 .ctile.ox .t{display:flex;flex-direction:column;gap:5px}
 .ctile.ox small{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#9fb2c3;font-weight:600}
-.ctile.ox .wordmark{font-size:25px;letter-spacing:.2em;font-family:"Prata",Georgia,serif;font-weight:400}
+.ctile.ox .wordmark{color:#f1eee8;opacity:1;font-size:25px;letter-spacing:.2em;font-family:"Prata",Georgia,serif;font-weight:400}
 .ctile.ox span.br{font-size:12px;color:#c9d3dc}
-.ctile.ox .art{position:static;width:120px;height:auto;flex:none;opacity:.95}
+.ctile.ox .go{width:22px;height:22px;flex:none;fill:none;stroke:#f1eee8;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
 .oxa{position:fixed;inset:0;z-index:95;background:#12293e;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,visibility 0s .35s}
 .oxa.in{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .35s ease}
 .oxa iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#12293e}
@@ -859,7 +859,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
       <button class="o-entry press" data-act="tab" data-tab="optix" aria-label="Открыть OPTIX">
         <span class="o-entry-art" id="oEntryArt"></span>
         <span class="o-entry-tx"><span class="cap">Наш продукт</span><span class="wordmark">OPTIX</span><span class="o-entry-sub">Солнцезащитные очки под заказ</span>
-        <span class="o-entry-br">Gucci · Saint Laurent · Cartier · Jacques Marie Mage · Miu Miu · Prada</span></span>
+        <span class="o-entry-br">Gucci · Saint Laurent · Cartier · Miu Miu · Prada</span></span>
         <span class="o-entry-go">Открыть<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
       </button>
 
@@ -1556,7 +1556,7 @@ function openIcon(id){const ic=ICONS.find(x=>x.id===id);if(!ic)return;const bn=b
 function renderCatHome(){renderStockBan();
   $$("#hg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
   const pool=P.filter(p=>F.g==="all"||(p.g===F.g||p.g==="u"));
-  const oxTile=OPTIX_ON?`<button class="ctile ox press" data-act="optixapp" aria-label="Очки OPTIX — открыть"><span class="t"><small>Очки</small><span class="wordmark">OPTIX</span><span class="br">Cartier · Gucci · Jacques Marie Mage</span></span><span class="art">${glassesSVG("round","#f1eee8","rgba(159,178,195,.35)")}</span></button>`:"";
+  const oxTile=OPTIX_ON?`<button class="ctile ox press" data-act="optixapp" aria-label="Очки OPTIX — открыть"><span class="t"><small>Очки</small><span class="wordmark">OPTIX</span><span class="br">Cartier · Gucci · Miu Miu · Saint Laurent</span></span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`:"";
   let nTiles=0;
   $("#catGrid").innerHTML=Object.entries(CATS).filter(([k])=>k!=="eyewear").map(([k,v])=>{const l=pool.filter(p=>p.cat===k);if(!l.length)return"";nTiles++;const after=nTiles===4?oxTile:"";const lead=l.slice().sort((a,b)=>b.isNew-a.isNew)[0];
     return `<button class="ctile press" data-act="catopen" data-cat="${k}" style="--c:${lead.c}"><b>${v}</b><span class="num">${l.length} ${plural(l.length,["товар","товара","товаров"])} · ${new Set(l.map(p=>p.bk)).size} ${plural(new Set(l.map(p=>p.bk)).size,["бренд","бренда","брендов"])}</span><span class="art">${lightShape(lead.shape,lead.c)}</span></button>`+after}).join("")+(nTiles<4?oxTile:"");
