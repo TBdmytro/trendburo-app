@@ -451,3 +451,19 @@ test("telegram bot: replies and setup", async () => {
   assert.equal(calls.find(c => c[0] === "setWebhook")[1].secret_token, hookSecret("T"));
   await assert.rejects(() => setupBot("http://x", { token: "T", fetchImpl }));
 });
+
+test("banners: places, audience, stats; site theme", async () => {
+  const { cleanItem, cleanSite, addBannerStats, bannerStats } = await import("../lib/cms.js");
+  const { MemoryStore } = await import("../lib/store.js");
+  const d = cleanItem("banner", { title: "x", places: ["feed_mid", "cat:bags", "bad", "feed_mid"], aud: "m" }).doc;
+  assert.deepEqual(d.places, ["feed_mid", "cat:bags"]); assert.equal(d.aud, "m");
+  assert.deepEqual(cleanItem("banner", { title: "x" }).doc.places, ["feed"]);
+  assert.equal(cleanSite({ theme: { preset: "olive" } }).theme.accent, "#4e6340");
+  assert.equal(cleanSite({ theme: { accent: "#123456", cats: { bags: ["#ffffff", "#000000"], zzz: ["#fff", "#000"] } } }).theme.preset, "custom");
+  assert.deepEqual(Object.keys(cleanSite({ theme: { cats: { bags: ["#ffffff", "#000000"], zzz: ["#ffffff", "#000000"] } } }).theme.cats), ["bags"]);
+  const store = new MemoryStore();
+  await addBannerStats(store, { v: { "cms.banner.abc123def456": 3, "evil": 9 }, c: { "cms.banner.abc123def456": 999 } });
+  await addBannerStats(store, { v: { "cms.banner.abc123def456": 1 } });
+  const s = await bannerStats(store);
+  assert.equal(s.views["cms.banner.abc123def456"], 4); assert.equal(s.clicks["cms.banner.abc123def456"], 50); assert.equal(s.views.evil, undefined);
+});

@@ -4,6 +4,7 @@
  * GET ?client=… — статусы заявок этого клиента (для «Мои заказы»).
  */
 import { getStore } from "../lib/store.js";
+import { addBannerStats } from "../lib/cms.js";
 import { createHash } from "node:crypto";
 
 export const LEAD_KINDS = { order: "Заказ", availability: "Уточнить наличие", concierge: "Консьерж", travel: "Поездка", resale: "Ресейл", request: "Запрос под заказ", optix: "OPTIX" };
@@ -68,6 +69,7 @@ export default async function handler(req, res) {
       return send(res, 200, { leads: list });
     }
     if (req.method !== "POST") return send(res, 405, { error: "Метод не поддерживается" });
+    if (new URL(req.url, "http://x").searchParams.get("a") === "bnstat") { await addBannerStats(store, readBody(req)); return send(res, 200, { ok: true }); }
     const { lead, error } = cleanLead(readBody(req));
     if (error) return send(res, 400, { error });
     // защита от спама: не больше 20 заявок в час с одного устройства

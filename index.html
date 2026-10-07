@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-07-live-v15">
+<meta name="trendburo-build" content="2026-10-07-live-v16">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -55,6 +55,28 @@ html.appin #app{animation:appin .7s cubic-bezier(.22,1,.36,1) both}
 body{margin:0}img{max-width:100%}/* ===== Наполнение из админки ===== */
 .announce{margin:0 18px 14px;padding:11px 14px;border-radius:14px;background:var(--soft);font-size:13.5px;line-height:1.4;color:var(--fg)}
 .bnr{margin:0 0 6px}
+/* компактные баннеры: между подборками, в каталоге, в категории, в корзине, после заказа */
+.cbwrap{padding:0 18px}
+.cb{position:relative;width:100%;display:flex;align-items:center;gap:14px;padding:16px;border:0;border-radius:20px;text-align:left;background:var(--soft,#f2f3f4);color:var(--fg);font:inherit;overflow:hidden}
+.cb.dark{background:var(--ink-grad);color:#fff}
+.cb .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.cb .t b{font-size:16.5px;font-weight:700;line-height:1.22;letter-spacing:-.01em}
+.cb .t span{font-size:13px;line-height:1.35;color:var(--g2,#50545b)}
+.cb.dark .t span{color:rgba(255,255,255,.72)}
+.cb .ph{width:76px;height:76px;flex:none;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.06)}
+.cb .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.cb .go{width:34px;height:34px;flex:none;border-radius:17px;display:grid;place-items:center;background:var(--fg);}
+.cb.dark .go{background:#fff}
+.cb .go svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+.cb.dark .go svg{stroke:var(--fg)}
+.cb.locked{cursor:default}
+.cb.locked .t,.cb.locked .go{opacity:.42}
+.cb .soon{position:absolute;top:10px;right:10px;padding:5px 10px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:#fff;color:var(--fg);box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.cb:not(.dark) .soon{background:var(--fg);color:#fff}
+.cbstack{display:flex;flex-direction:column;gap:10px}
+.cbwrap.after{margin-top:18px}
+.cb.locked .t{padding-right:64px}
+.done .cbcap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 -2px 2px}
 .bnr-track{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 18px;scroll-padding:18px;scrollbar-width:none}
 .bnr-track::-webkit-scrollbar{display:none}
 .bn{flex:0 0 100%;scroll-snap-align:start;position:relative;aspect-ratio:16/10;border-radius:22px;overflow:hidden;border:0;padding:0;text-align:left;background:var(--ink-grad,#2b2d31);color:#fff;display:block}
@@ -701,6 +723,11 @@ textarea{min-height:88px;resize:vertical}
 .itemshead{display:flex;align-items:center;gap:10px;padding:calc(16px + var(--st)) 18px 14px}
 .itemshead h1{font-size:28px;font-weight:700;letter-spacing:-.02em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .catgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-inline:18px}
+.ctile.v2{background:var(--tb);color:var(--ti);box-shadow:none;min-height:108px;justify-content:space-between;gap:10px}
+.ctile.v2 svg.ci{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ctile.v2 b{font-size:16.5px;font-weight:700;color:inherit}
+.ctile.v2 span{color:inherit}
+.ctile.v2 .num{font-size:12.5px;color:inherit;opacity:.72}
 .ctile.ox{grid-column:1/-1;min-height:118px;background:linear-gradient(135deg,#1b3a55 0%,#12293e 60%,#0d1f30 100%);color:#f1eee8;flex-direction:row;align-items:center;justify-content:space-between;padding:16px 18px}
 .ctile.ox .t{display:flex;flex-direction:column;gap:5px}
 .ctile.ox small{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#9fb2c3;font-weight:600}
@@ -913,6 +940,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
         <div id="homeBody">
           <div class="pad" style="margin-top:12px"><div class="seg" role="group" aria-label="Для кого" id="hg"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button></div></div>
           <div class="sec" style="padding-top:16px"><button class="stockban press" data-act="stock-all" id="stockBan"></button></div>
+          <div class="sec cbwrap" id="catBn" hidden></div>
           <div class="sec"><div class="sech"><h2>Категории</h2><button class="more" data-act="allitems">Все товары</button></div><div class="catgrid" id="catGrid"></div></div>
           <div id="myBrands"></div>
           <div class="sec"><div class="sech"><h2>Бренды</h2><button class="more num" data-act="allbrands" id="allBrandsBtn">Все</button></div><div class="bgrid" id="brandGrid"></div></div>
@@ -1445,6 +1473,12 @@ function pinchZoom(box,img,gal){
   },{passive:false});
   box.addEventListener("touchend",e=>{if(e.touches.length===0){if(s<1.05){s=1;tx=ty=0}clamp();set(true);st=null}else if(e.touches.length===1&&s>1.001){st={k:"pan",x:e.touches[0].clientX,y:e.touches[0].clientY,tx,ty}}});
 }
+/* «Похожие»: та же категория, бренд того же или соседнего уровня, цена ±40% (если мало — шире) */
+const TIER_OF=(()=>{const T={1:"hermes chanel therow loropiana goyard brunellocucinelli",2:"louisvuitton lv dior celine loewe bottegaveneta prada saintlaurent ysl gucci miumiu fendi givenchy balenciaga valentino burberry cartier"};const m={};Object.entries(T).forEach(([t,s])=>s.split(" ").forEach(n=>m[n]=+t));return b=>m[String(b||"").toLowerCase().normalize("NFD").replace(/[^a-z]/g,"")]||3})();
+function similarTo(p){const t=TIER_OF(p.brand),pool=P.filter(x=>x.id!==p.id&&x.cat===p.cat);
+  const sc=x=>Math.abs(TIER_OF(x.brand)-t)*0.6+Math.abs(Math.log((x.price||1)/(p.price||1)))+(x.bk===p.bk?0.15:0);
+  let l=pool.filter(x=>Math.abs(TIER_OF(x.brand)-t)<=1&&x.price>=p.price*.6&&x.price<=p.price*1.4);
+  if(l.length<4)l=pool;return l.sort((a,b)=>sc(a)-sc(b)).slice(0,10)}
 function openProduct(id){
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;
   let d=prefs.dest||"ua",size="",ci=0;
@@ -1454,7 +1488,7 @@ function openProduct(id){
   if(st&&st.size)size=st.size;
   if(sizes){const pz=p.cat==="shoes"?prefs.shoe:prefs.cloth;if(pz&&sizes.includes(pz))size=pz}
   const more=p?P.filter(x=>x.bk===p.bk&&x.id!==p.id):[];
-  const like=p?P.filter(x=>x.cat===p.cat&&x.bk!==p.bk&&x.price<p.price*1.6&&x.price>p.price*.5).slice(0,8):RESALE.filter(x=>x.id!==it.id);
+  const like=p?similarTo(p):RESALE.filter(x=>x.id!==it.id);
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
   const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${p&&p.st?'<span class="newp">В наличии</span>':p&&p.isNew?'<span class="newp">Новинка</span>':r?`<span class="newp">${esc(r.cond)}</span>`:""}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl"><img src="${esc(im.src)}" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:18px"></div>
@@ -1573,14 +1607,21 @@ function openIcon(id){const ic=ICONS.find(x=>x.id===id);if(!ic)return;const bn=b
   const ask=()=>orderSheet("Запрос: "+ic.name,`Здравствуйте! Хочу заказать под запрос:\n${bn} — ${ic.name}\nЦвет: ${cws[ci].name}\n${sizes?"Размер: "+(size?(size==="?"?"нужна помощь":size):"—")+"\n":""}Ориентир: от ${eur(price())}${d==="ua"?"":" + доставка"}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]}`);
   s.querySelector("[data-ask]").onclick=ask;s.querySelector("[data-share]").onclick=ask;
   draw()}
+/* Каталог: цвета и иконки плиток (цвета меняются в админке → Витрина → Настройки → Цвета) */
+const CATC={bags:["#efe7dd","#7a5a3a"],clothing:["#e5eaf0","#3e5670"],shoes:["#e8ece4","#4e6340"],accessories:["#f0e6e6","#7a4646"],jewelry:["#eee9f2","#5e4c78"],watches:["#e9e9eb","#45474c"],fragrance:["#f3ece4","#7a5f45"],other:["#ececee","#45474c"],eyewear:["#e3e9ef","#2f4a66"]};
+const CAT_ICON={bags:'<path d="M5 9h14l-1 11H6z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/>',clothing:'<path d="M9 4l3 2 3-2 5 3-2 4-2-1v10H8V10l-2 1-2-4z"/>',shoes:'<path d="M3 15c0-3 1-6 3-6l3 3c2 2 5 2 8 2 2 0 4 1 4 3v1H3z"/>',accessories:'<rect x="3" y="7" width="18" height="11" rx="2"/><path d="M3 11h18"/>',jewelry:'<circle cx="12" cy="14" r="6"/><path d="M9 4h6l-3 4z"/>',watches:'<circle cx="12" cy="12" r="5"/><path d="M9 3h6M9 21h6M12 10v2l1.5 1"/>',fragrance:'<rect x="6" y="9" width="12" height="11" rx="3"/><path d="M10 9V6h4v3M9 4h6"/>',other:'<circle cx="12" cy="12" r="7"/><path d="M12 9v6M9 12h6"/>'};
+function mixHex(a,b,t){const p=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));const A=p(a),B=p(b);return "#"+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,"0")).join("")}
+function applyTheme(t){if(!t)return;try{const a=/^#[0-9a-f]{6}$/i.test(t.accent)?t.accent:"#1f2125",R=document.documentElement.style;
+  if(a!=="#1f2125"){R.setProperty("--ink-grad",`linear-gradient(180deg,${mixHex(a,"#ffffff",.16)} 0%,${a} 52%,${mixHex(a,"#000000",.2)} 100%)`)}
+  Object.entries(t.cats||{}).forEach(([k,v])=>{if(CATC[k]&&Array.isArray(v))CATC[k]=v})}catch(e){}}
 /* Каталог: главный экран */
-function renderCatHome(){renderStockBan();
+function renderCatHome(){renderStockBan();{const bx=$("#catBn"),L=bnFor("catalog");bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}
   $$("#hg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
   const pool=P.filter(p=>F.g==="all"||(p.g===F.g||p.g==="u"));
   const oxTile=OPTIX_ON?`<button class="ctile ox press" data-act="optixapp" aria-label="Очки OPTIX — открыть"><span class="t"><small>Очки</small><span class="wordmark">OPTIX</span><span class="br">Cartier · Gucci · Miu Miu · Saint Laurent</span></span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`:"";
   let nTiles=0;
   $("#catGrid").innerHTML=Object.entries(CATS).filter(([k])=>k!=="eyewear").map(([k,v])=>{const l=pool.filter(p=>p.cat===k);if(!l.length)return"";nTiles++;const after=nTiles===4?oxTile:"";const lead=l.slice().sort((a,b)=>b.isNew-a.isNew)[0];
-    return `<button class="ctile press" data-act="catopen" data-cat="${k}" style="--c:${lead.c}"><b>${v}</b><span class="num">${l.length} ${plural(l.length,["товар","товара","товаров"])} · ${new Set(l.map(p=>p.bk)).size} ${plural(new Set(l.map(p=>p.bk)).size,["бренд","бренда","брендов"])}</span></button>`+after}).join("")+(nTiles<4?oxTile:"");
+    const cc=CATC[k]||CATC.other;return `<button class="ctile v2 press" data-act="catopen" data-cat="${k}" style="--tb:${cc[0]};--ti:${cc[1]}"><svg class="ci" viewBox="0 0 24 24" aria-hidden="true">${CAT_ICON[k]||CAT_ICON.other}</svg><span><b>${v}</b><br><span class="num">${l.length} ${plural(l.length,["вещь","вещи","вещей"])}</span></span></button>`+after}).join("")+(nTiles<4?oxTile:"");
   const bset=[...new Set(pool.map(p=>p.bk))];
   const mine=[...follows].filter(bk=>bset.includes(bk));
   $("#myBrands").innerHTML=mine.length?`<div class="sec"><div class="sech"><h2>Мои бренды</h2></div><div class="bgrid">${mine.map(btileHTML).join("")}</div></div>`:"";
@@ -1598,7 +1639,7 @@ function renderStockBan(){const l=P.filter(p=>p.st&&(F.g==="all"||(p.g===F.g||p.
 function btileHTML(bk){const l=bItems(bk).filter(p=>F.g==="all"||(p.g===F.g||p.g==="u")).sort((a,b)=>b.isNew-a.isNew);
   return `<button class="btile press" data-act="brand" data-bk="${bk}"><b>${esc(bname(bk))}</b><span class="mini3">${l.slice(0,3).map(p=>`<i style="--c:${p.c}">${shapeSVG(p.shape,p.c,"")}</i>`).join("")}</span><span class="num">${l.length} ${plural(l.length,["товар","товара","товаров"])}</span></button>`}
 $("#hg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;F.g=b.dataset.g;renderCatHome();renderCatalog()});
-function showItems(title){$("#catHome").hidden=true;$("#catItems").hidden=false;$("#itemsTitle").textContent=title;$("#catBarT").textContent=title;renderCatalog();$("#t-catalog .scroll").scrollTop=0}
+function showItems(title){$("#catHome").hidden=true;$("#catItems").hidden=false;{let bx=$("#catItemsBn");if(!bx){bx=document.createElement("div");bx.id="catItemsBn";bx.className="cbwrap";bx.style.margin="4px 0 14px";$("#catItems .itemshead").after(bx)}const c=F.cats.size===1?[...F.cats][0]:"",L=c?bnFor("cat:"+c):[];bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}$("#itemsTitle").textContent=title;$("#catBarT").textContent=title;renderCatalog();$("#t-catalog .scroll").scrollTop=0}
 function showCatHome(){$("#catItems").hidden=true;$("#catHome").hidden=false;$("#catBarT").textContent="Каталог";renderCatHome();$("#t-catalog .scroll").scrollTop=0}
 function clearFilters(){F.ids=null;F.stock="";F.cats.clear();F.brands.clear();F.cities.clear();F.onlyNew=F.onlyFav=false;F.sort="new";resetBudgets()}
 
@@ -1766,12 +1807,13 @@ const findItem=id=>P.find(p=>p.id===id);
 function openCart(){let d=prefs.dest||"ua",done=null;
   const s=push("Корзина",`<div id="cartBody"></div>`,{foot:`<div class="foot" id="cartFoot"><div class="pr"><small id="cfl">Итого</small><b class="num" id="cft"></b></div><button class="btn" id="cgo" style="min-width:170px">Оформить заказ</button></div>`});
   const draw=()=>{const box=s.querySelector("#cartBody"),foot=s.querySelector("#cartFoot");
-    if(done){foot.hidden=true;box.innerHTML=`<div class="bigtitle" style="padding-top:12px"><h1>Корзина</h1></div><div class="done"><span class="cap">Заказ ${done.no}</span><h3>Передан менеджеру</h3><p>Отправьте сообщение в Telegram — менеджер подтвердит наличие, размеры и сроки. Статус заказа виден в кабинете.</p><button class="btn sm" data-act="account">Мои заказы</button></div>`;return}
+    if(done){foot.hidden=true;box.innerHTML=`<div class="bigtitle" style="padding-top:12px"><h1>Корзина</h1></div><div class="done"><span class="cap">Заказ ${done.no}</span><h3>Передан менеджеру</h3><p>Отправьте сообщение в Telegram — менеджер подтвердит наличие, размеры и сроки. Статус заказа виден в кабинете.</p><button class="btn sm" data-act="account">Мои заказы</button></div><div class="cbwrap after"><div class="cbstack">${bnFor("after").map(cbHTML).join("")}${AFTER_SOON}</div></div>`;return}
     const items=cart.map(c=>({...c,p:findItem(c.id)})).filter(x=>x.p);
     if(!items.length){foot.hidden=true;box.innerHTML=`<div class="bigtitle" style="padding-top:12px"><h1>Корзина</h1></div><div class="empty"><h3>Корзина пуста</h3><p>Добавляйте вещи из каталога — оформим одним заказом.</p><button class="btn sm" data-act="gocat" style="margin-top:8px">В каталог</button></div>`;return}
     foot.hidden=false;const sum=items.reduce((a,x)=>a+priceFor(x.p,d),0),q=quote(sum,d);
     box.innerHTML=`<div class="bigtitle" style="padding-top:12px"><div><div class="sub num">${items.length} ${plural(items.length,["вещь","вещи","вещей"])}</div><h1>Корзина</h1></div></div>
      <div class="pad">${items.map((x,i)=>`<div class="cartrow"><button class="th" data-act="product" data-id="${x.p.id}" aria-label="${esc(x.p.name)}">${shapeSVG(x.p.shape,x.hex||x.p.c,"")}</button><div class="tx"><span class="b">${esc(x.p.brand)}</span><span class="n">${esc(x.p.name)}</span><span class="z">${[x.p.st?"в наличии · "+x.p.st.city:"",x.color?x.color+(x.ok===false?" (под заказ)":""):"",x.size?(x.size==="?"?"размер подберём":"размер "+x.size):""].filter(Boolean).join(" · ")||CATS[x.p.cat]}</span><span class="p num">${eur(priceFor(x.p,d))}</span></div><button class="rm" data-rm="${i}" aria-label="Убрать">×</button></div>`).join("")}</div>
+     ${bnFor("cart").length?`<div class="cbwrap" style="margin-top:14px"><div class="cbstack">${bnFor("cart").slice(0,2).map(cbHTML).join("")}</div></div>`:""}
      <div class="sec"><div class="sech"><h2>Доставка</h2></div><div class="pad"><div class="seg" role="group" aria-label="Доставка">${[["ua","Украина"],["eu","Европа"],["dxb","Дубай"]].map(([k,v])=>`<button data-d="${k}" aria-pressed="${k===d}">${dIcon(k,15)}${v}</button>`).join("")}</div></div></div>
      <div class="pad" style="margin-top:14px"><div class="group">${rowsHTML(q)}<div class="row tot"><span>Итого</span><span class="num">${eur(q.t)}${d!=="ua"?" +":""}</span></div></div>
      <p class="muted" style="font-size:13px;margin-top:10px">${d==="ua"?"Доставка в Украину уже в цене, отправка — "+nextFriday()+". ":d==="eu"?"Доставка по Европе — по тарифу перевозчика, рассчитает менеджер. ":"Стоимость доставки в Дубай менеджер назовёт до выкупа. "}Менеджер подтвердит наличие и размеры до выкупа.</p></div><div style="height:100px"></div>`;
@@ -2016,7 +2058,7 @@ $("#app").addEventListener("click",e=>{
   else if(a==="oshape"){const k=t.dataset.s;OF.shapes.has(k)?OF.shapes.delete(k):OF.shapes.add(k);OF.face="";renderOptix()}
   else if(a==="oquiz")openQuiz();
   else if(a==="news")openNews(t.dataset.id);
-  else if(a==="cbanner"){const b=CMS.banners[+t.dataset.i];if(b)runAction(b.action)}
+  else if(a==="cbanner"){const b=CMS.banners.find(x=>x.id===t.dataset.bid);if(b){BNS.c[b.id]=(BNS.c[b.id]||0)+1;runAction(b.action)}}
   else if(a==="cstory")openCStory(+t.dataset.i);
   else if(a==="cnews")openCNews(+t.dataset.i);
   else if(a==="crail")openRail(+t.dataset.i);
@@ -2061,7 +2103,7 @@ function applyLayout(feed){if(!Array.isArray(feed))return;
 function applyTexts(s){const T=s.texts||{};$$("[data-t]").forEach(e=>{const k=e.dataset.t;if(!e.dataset.t0)e.dataset.t0=e.textContent;e.textContent=T[k]||e.dataset.t0});
   ["concierge","travel","resale"].forEach(k=>{if(!SVC[k])return;if(T["svc."+k+".cap"])SVC[k].cap=T["svc."+k+".cap"];if(T["svc."+k+".title"])SVC[k].title=T["svc."+k+".title"];if(T["svc."+k+".long"])SVC[k].text=T["svc."+k+".long"]});
   const hid=s.hiddenServices||[];$$("[data-svc]").forEach(e=>hid.includes(e.dataset.svc)?e.setAttribute("data-off",""):e.removeAttribute("data-off"))}
-function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);
+function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);applyTheme(s.theme);
   if(s.contacts&&s.contacts.length){CONTACTS.length=0;CONTACTS.push(...s.contacts)}
   if([0,1,2,3,4,5,6].includes(s.shipWeekday))SHIP_WD=s.shipWeekday;
   if(s.optix&&s.optix.url)OPTIX_LINK=s.optix.url;
@@ -2081,8 +2123,22 @@ function runAction(a){if(!a||!a.type||a.type==="none")return;const v=a.value||""
 const hasAct=a=>a&&a.type&&a.type!=="none";
 
 /* баннеры: карусель вверху Ленты, листаются сами каждые 5 секунд */
-function renderBanners(){const box=$("#bnr");if(!box)return;const L=CMS.banners;clearInterval(renderBanners.t);box.hidden=!L.length;if(!L.length){box.innerHTML="";return}
-  box.innerHTML=`<div class="bnr-track">${L.map((b,i)=>`<button class="bn press ${b.theme==="light"?"light":""} ${b.image?"":"noimg"}" data-act="cbanner" data-i="${i}" aria-label="${esc(b.title||"Баннер")}">${b.image?`<img src="${esc(b.image)}" alt="" ${i?'loading="lazy"':""} decoding="async">`:""}<span class="ov"></span><span class="tx">${b.title?`<b class="h">${esc(b.title)}</b>`:""}${b.subtitle?`<span class="s">${esc(b.subtitle)}</span>`:""}${b.button&&hasAct(b.action)?`<span class="go">${esc(b.button)}</span>`:""}</span></button>`).join("")}</div>${L.length>1?`<div class="bn-dots">${L.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`;
+/* ===== Баннеры: где показывать и кому (настраивается в админке у каждого баннера) ===== */
+const bnAud=b=>!b.aud||b.aud==="all"||F.g==="all"||F.g===b.aud||F.g==="u";
+const bnFor=place=>(LIVE&&CMS&&CMS.banners?CMS.banners:[]).filter(b=>(b.places&&b.places.length?b.places:["feed"]).includes(place)&&bnAud(b));
+const GO_SVG='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+function cbHTML(b){const dark=b.theme!=="light";return `<button class="cb press ${dark?"dark":""}" data-act="cbanner" data-bid="${esc(b.id)}" data-bn="${esc(b.id)}"><span class="t">${b.title?`<b>${esc(b.title)}</b>`:""}${b.subtitle?`<span>${esc(b.subtitle)}</span>`:""}</span>${b.image?`<span class="ph"><img src="${esc(b.image)}" alt="" loading="lazy" decoding="async"></span>`:`<span class="go">${GO_SVG}</span>`}</button>`}
+/* после заказа — две карточки «скоро» (ресейл и канал с новинками), пока закрыты */
+const AFTER_SOON=`<div class="cb dark locked" aria-disabled="true"><span class="soon">Скоро</span><span class="t"><b>Продайте вещь, которую не носите</b><span>Ресейл: оценим и найдём покупателя</span></span></div><div class="cb locked" aria-disabled="true"><span class="soon">Скоро</span><span class="t"><b>Новинки первыми</b><span>Канал-витрина в Telegram</span></span></div>`;
+/* показы (один раз за сессию на баннер) и нажатия — пачкой на сервер */
+const BNS={v:{},c:{},seen:new Set()};
+const bnIO="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const id=e.target.dataset.bn;if(id&&!BNS.seen.has(id)){BNS.seen.add(id);BNS.v[id]=(BNS.v[id]||0)+1}}}),{threshold:.5}):null;
+function bnObserve(){if(!bnIO||!LIVE)return;document.querySelectorAll("[data-bn]:not([data-bno])").forEach(el=>{el.dataset.bno=1;bnIO.observe(el)})}
+function bnFlush(){if(!Object.keys(BNS.v).length&&!Object.keys(BNS.c).length)return;const body=JSON.stringify({v:BNS.v,c:BNS.c});BNS.v={};BNS.c={};try{if(!(navigator.sendBeacon&&navigator.sendBeacon("/api/lead?a=bnstat",body)))fetch("/api/lead?a=bnstat",{method:"POST",body,keepalive:true}).catch(()=>{})}catch(e){}}
+setInterval(bnFlush,15000);document.addEventListener("visibilitychange",()=>{if(document.hidden)bnFlush()});
+{let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;bnObserve()})}).observe(document.body,{childList:true,subtree:true})}
+function renderBanners(){const box=$("#bnr");if(!box)return;const L=bnFor("feed");clearInterval(renderBanners.t);box.hidden=!L.length;if(!L.length){box.innerHTML="";return}
+  box.innerHTML=`<div class="bnr-track">${L.map((b,i)=>`<button class="bn press ${b.theme==="light"?"light":""} ${b.image?"":"noimg"}" data-act="cbanner" data-bid="${esc(b.id)}" data-bn="${esc(b.id)}" aria-label="${esc(b.title||"Баннер")}">${b.image?`<img src="${esc(b.image)}" alt="" ${i?'loading="lazy"':""} decoding="async">`:""}<span class="ov"></span><span class="tx">${b.title?`<b class="h">${esc(b.title)}</b>`:""}${b.subtitle?`<span class="s">${esc(b.subtitle)}</span>`:""}${b.button&&hasAct(b.action)?`<span class="go">${esc(b.button)}</span>`:""}</span></button>`).join("")}</div>${L.length>1?`<div class="bn-dots">${L.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`;
   if(L.length<2)return;
   const tr=box.querySelector(".bnr-track"),dots=[...box.querySelectorAll(".bn-dots i")],step=()=>tr.clientWidth-26;let hold=0;
   tr.addEventListener("scroll",()=>{const k=Math.round(tr.scrollLeft/step());dots.forEach((d,j)=>d.classList.toggle("on",j===k))},{passive:true});
@@ -2130,7 +2186,8 @@ function railItems(r){let l=P.slice();
   return l}
 function renderRails(){const box=$("#cmsRails");if(!box)return;const on=LIVE&&CMS.rails.length>0;
   if(LIVE)["#newRail","#bagRail","#menRail"].forEach(id=>$(id).closest(".sec").hidden=true);
-  box.innerHTML=on?CMS.rails.map((r,i)=>{const all=railItems(r),l=all.slice(0,r.limit||12);return l.length?`<div class="sec ${r.band?"band":""}"><div class="sech"><h2>${esc(r.title)}</h2>${all.length>3?`<button class="more" data-act="crail" data-i="${i}">Все</button>`:""}</div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`:""}).join(""):""}
+  const mids=bnFor("feed_mid");let mi=0;const mid=()=>mi<mids.length?`<div class="sec cbwrap">${cbHTML(mids[mi++])}</div>`:"";
+  box.innerHTML=on?CMS.rails.map((r,i)=>{const all=railItems(r),l=all.slice(0,r.limit||12);return l.length?`<div class="sec ${r.band?"band":""}"><div class="sech"><h2>${esc(r.title)}</h2>${all.length>3?`<button class="more" data-act="crail" data-i="${i}">Все</button>`:""}</div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`+mid():""}).join("")+mids.slice(mi).map(b=>`<div class="sec cbwrap">${cbHTML(b)}</div>`).join(""):""}
 function openRail(i){const r=CMS.rails[i];if(!r)return;clearFilters();
   if(r.rule==="new")F.onlyNew=true;else if(r.rule==="category")F.cats.add(r.value);else if(r.rule==="brand"){const bk=brandKey(r.value);if(bk)F.brands.add(bk)}else if(r.rule==="stock")F.stock="any";else if(r.rule==="manual")F.ids=new Set(r.ids);
   if(r.gender)F.g=r.gender;if(r.maxPrice)Object.keys(F.budgets).forEach(c=>F.budgets[c]=Math.min(F.budgets[c],r.maxPrice));

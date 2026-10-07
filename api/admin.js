@@ -16,7 +16,7 @@ import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSuppli
 import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
 import { readScreen, screensEnabled, ScreenError } from "../lib/screens.js";
 import { setupBot, botToken, publicUrl, tg } from "./bot.js";
-import { listItems, saveItem, deleteItems, reorder, setActive, getSite, saveSite, seedRails, FEED_BLOCKS, TEXTS, KINDS } from "../lib/cms.js";
+import { listItems, saveItem, deleteItems, reorder, setActive, getSite, saveSite, seedRails, FEED_BLOCKS, TEXTS, KINDS, bannerStats, THEME_PRESETS, CAT_COLORS } from "../lib/cms.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
 const slim = j => { if (!j) return j; const { rows, seen, queue, attempts, catRoot, discover, ...rest } = j; return { ...rest, queued: j.queuedCount ?? (queue || []).length, discoverLeft: j.discoverLeft ?? (discover || []).length }; };
@@ -293,13 +293,13 @@ export default async function handler(req, res) {
       case "cmsList": {
         const kind = String(req.query.kind || "");
         if (!KINDS.includes(kind)) return send(res, 400, { error: "Неизвестный тип" });
-        return send(res, 200, { items: await listItems(store, kind) });
+        return send(res, 200, { items: await listItems(store, kind), ...(kind === "banner" ? { stats: await bannerStats(store) } : {}) });
       }
       case "cmsSave": return send(res, 200, { item: await saveItem(store, body.kind, body.item || {}, me.name) });
       case "cmsDelete": return send(res, 200, { deleted: await deleteItems(store, body.ids) });
       case "cmsReorder": return send(res, 200, { ok: await reorder(store, body.kind, body.ids) });
       case "cmsActive": return send(res, 200, { ok: await setActive(store, body.ids, body.active) });
-      case "siteGet": { await seedRails(store, me.name); return send(res, 200, { site: await getSite(store), blocks: FEED_BLOCKS, texts: TEXTS }); }
+      case "siteGet": { await seedRails(store, me.name); return send(res, 200, { site: await getSite(store), blocks: FEED_BLOCKS, texts: TEXTS, presets: THEME_PRESETS, catColors: CAT_COLORS }); }
       case "siteSave": return send(res, 200, { site: await saveSite(store, body.site || {}, me.name) });
       case "brands": {
         const list = await store.list("product", {}, { limit: 5000, fields: "brand" });

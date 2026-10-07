@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-05-admin-v15">
+<meta name="trendburo-build" content="2026-10-07-admin-v16">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -577,6 +577,20 @@ body:has(.sv) .tglogo,body:has(.splash) .tglogo{opacity:0}
   .sheet .sh-h{padding-top:calc(16px + var(--st))}
   .drawer:not(.sheet) .in{padding-top:calc(18px + var(--st))}
 }
+
+.plcs{display:flex;flex-wrap:wrap;gap:8px}
+.plc{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:var(--soft);font-size:13.5px;cursor:pointer;user-select:none;transition:background .15s,color .15s}
+.plc input{margin:0;accent-color:var(--ink)}
+.plc.on{background:var(--ink);color:#fff}
+.plc.on input{accent-color:#fff}
+.tplc{display:flex;flex-wrap:wrap;gap:8px}
+.chipb{border:1px solid var(--line);background:#fff;border-radius:99px;padding:8px 13px;font-size:13px;font-weight:500}
+.chipb:active{background:var(--soft)}
+.cswatch{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:none;padding:0;font-size:11.5px;color:var(--muted)}
+.cswatch i{width:44px;height:44px;border-radius:22px;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.cswatch[aria-pressed=true] i{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink)}
+.ccat{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;font-size:13.5px;font-weight:600}
+.ccat input{width:30px;height:30px;border:0;padding:0;background:none;border-radius:8px}
 </style>
 </head>
 <body>
@@ -1571,7 +1585,7 @@ function sheet(title, bodyHTML, footHTML) {
 const SHOW_TABS = [["banner", "Баннеры"], ["story", "Сторис"], ["news", "Новости"], ["rail", "Подборки"], ["site", "Настройки"]];
 const KIND_ONE = { banner: "баннер", story: "сторис", news: "новость", rail: "подборку" };
 const KIND_HINT = {
-  banner: "Большие карточки вверху «Ленты». Листаются пальцем, меняются сами каждые 5 секунд.",
+  banner: "Баннеры по всему приложению: вверху «Ленты», между подборками, в каталоге и категориях, в корзине, после заказа. У каждого — где, кому и когда показывать.",
   story: "Кружки под заголовком «Ленты». Внутри — слайды с фото, текстом и кнопкой.",
   news: "Блок «Новости» в «Ленте» и в сторис бренда.",
   rail: "Горизонтальные ленты товаров в «Ленте»: новинки, категория, бренд, «в наличии» или ваш список."
@@ -1579,8 +1593,8 @@ const KIND_HINT = {
 async function vShowList(sub) {
   const kind = ["banner", "story", "news", "rail"].includes(sub) ? sub : "banner";
   const tabs = `<button class="back" data-show="feed">${backSvg}Витрина</button>`;
-  let items = (await api("cmsList", { query: { kind } })).items, sel = new Set();
-  const meta = x => kind === "banner" ? [x.subtitle, actionText(x.action)].filter(Boolean).join(" · ")
+  const listRes = await api("cmsList", { query: { kind } }); let items = listRes.items, sel = new Set(); const BST = listRes.stats || { views: {}, clicks: {} };
+  const meta = x => kind === "banner" ? [placesText(x.places), x.aud === "w" ? "женское" : x.aud === "m" ? "мужское" : "", statText(BST, x._id)].filter(Boolean).join(" · ")
     : kind === "story" ? `${x.slides.length} ${plural(x.slides.length, ["слайд", "слайда", "слайдов"])}`
     : kind === "news" ? [x.tag, dt(x.createdAt)].filter(Boolean).join(" · ")
     : ({ new: "Новинки", category: "Категория: " + (CATS[x.value] || x.value), brand: "Бренд: " + x.value, manual: `Свой список: ${x.ids.length}`, stock: "В наличии" }[x.rule] || "") + (x.gender ? (x.gender === "w" ? " · женское" : " · мужское") : "") + (x.maxPrice ? " · до " + eur(x.maxPrice) : "");
@@ -1642,7 +1656,9 @@ async function cmsEditor(kind, item, reload) {
     <label class="f">Подзаголовок<input type="text" data-k="subtitle" value="${esc(x.subtitle || "")}" maxlength="160" placeholder="Выкуп из бутиков Парижа за 7 дней"></label>
     <label class="f">Текст кнопки<input type="text" data-k="button" value="${esc(x.button || "")}" maxlength="30" placeholder="Смотреть"></label>
     ${actionFieldHTML("action", x.action)}
-    <div><div class="f" style="margin-bottom:8px">Текст на фото</div><div class="seg" data-seg="theme">${[["dark", "Белый на тёмном"], ["light", "Тёмный на светлом"]].map(([k, v]) => `<button type="button" data-v="${k}" aria-pressed="${(x.theme || "dark") === k}">${v}</button>`).join("")}</div></div>
+    ${placesHTML(x)}
+    <div><div class="f" style="margin-bottom:8px">Кому показывать</div><div class="seg" data-seg="aud">${[["all", "Всем"], ["w", "Женское"], ["m", "Мужское"]].map(([k, v]) => `<button type="button" data-v="${k}" aria-pressed="${(x.aud || "all") === k}">${v}</button>`).join("")}</div></div>
+    <div><div class="f" style="margin-bottom:8px">Стиль</div><div class="seg" data-seg="theme">${[["dark", "Тёмный"], ["light", "Светлый"]].map(([k, v]) => `<button type="button" data-v="${k}" aria-pressed="${(x.theme || "dark") === k}">${v}</button>`).join("")}</div></div>
     ${datesHTML(x)}`;
   else if (kind === "news") body = `
     ${imgFieldHTML("image", x.image, "Фото")}
@@ -1670,7 +1686,7 @@ async function cmsEditor(kind, item, reload) {
     `<div class="form">${body}</div><datalist id="brandDl"></datalist>`,
     `<button class="btn lg" data-save>Сохранить</button>${item ? `<button class="btn ghost lg" data-copy>Копия</button><button class="btn danger lg" data-del>Удалить</button>` : ""}`);
   const root = d.querySelector(".sh-b");
-  if (kind === "banner") bannerPreview(root.querySelector(".form"));
+  if (kind === "banner") { bannerPreview(root.querySelector(".form")); bannerTemplates(root, item); }
   brandsList().then(bs => { const dl = d.querySelector("#brandDl"); if (dl) dl.innerHTML = bs.map(b => `<option value="${esc(b)}">`).join(""); }).catch(() => {});
   actionFieldBind(root); await actionFieldInit(root);
   root.addEventListener("click", e => { const b = e.target.closest("[data-seg] button"); if (!b) return; b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); if (b.parentElement.dataset.seg === "rule") ruleBox(b.dataset.v); });
@@ -1713,7 +1729,7 @@ async function cmsEditor(kind, item, reload) {
     const v = k => root.querySelector(`[data-k="${k}"]`); const val = k => v(k) ? (v(k).type === "checkbox" ? v(k).checked : v(k).value) : undefined;
     const seg = k => root.querySelector(`[data-seg="${k}"] [aria-pressed="true"]`)?.dataset.v;
     const o = { _id: item?._id, active: val("active"), from: val("from"), to: val("to") };
-    if (kind === "banner") Object.assign(o, { image: imgFieldValue(root, "image"), title: val("title"), subtitle: val("subtitle"), button: val("button"), theme: seg("theme"), action: actionFieldValue(root, "action") });
+    if (kind === "banner") Object.assign(o, { image: imgFieldValue(root, "image"), title: val("title"), subtitle: val("subtitle"), button: val("button"), theme: seg("theme"), action: actionFieldValue(root, "action"), aud: seg("aud"), places: [...root.querySelectorAll("[data-place]:checked")].map(c => c.dataset.place) });
     if (kind === "news") Object.assign(o, { image: imgFieldValue(root, "image"), tag: val("tag"), brand: val("brand"), title: val("title"), text: val("text"), action: actionFieldValue(root, "action") });
     if (kind === "rail") Object.assign(o, { title: val("title"), rule: seg("rule"), value: val("value") || "", gender: val("gender"), maxPrice: val("maxPrice"), limit: val("limit"), band: val("band"), ids: [...root.querySelectorAll("[data-multi] .pchip")].map(c => c.dataset.pid) });
     if (kind === "story") Object.assign(o, { title: val("title"), cover: imgFieldValue(root, "cover"), slides: readSlides() });
@@ -1734,7 +1750,8 @@ async function cmsEditor(kind, item, reload) {
 }
 
 async function vSite(tabs) {
-  const { site } = await api("siteGet");
+  const { site, presets, catColors } = await api("siteGet");
+  let theme = JSON.parse(JSON.stringify(site.theme || { preset: "graphite", accent: "#1f2125", cats: {} }));
   const WD = [[1, "понедельник"], [2, "вторник"], [3, "среда"], [4, "четверг"], [5, "пятница"], [6, "суббота"], [0, "воскресенье"]];
   let contacts = site.contacts.map(c => ({ ...c }));
   const draw = () => {
@@ -1746,10 +1763,16 @@ async function vSite(tabs) {
       <label class="toggle"><input type="checkbox" id="sAnOn" ${site.announce.on ? "checked" : ""}>Показывать</label>
       <label class="f">Текст<input type="text" id="sAn" value="${esc(site.announce.text)}" maxlength="140" placeholder="Например: до 5 октября доставка в Украину бесплатно"></label>
       <h3 style="margin:10px 0 0">Блоки «Ленты»</h3>
-      <label class="toggle"><input type="checkbox" id="sOptix" ${site.optix.on ? "checked" : ""}>Блок OPTIX</label>
+      <label class="toggle"><input type="checkbox" id="sOptix" ${site.optix.on ? "checked" : ""}>Плитка OPTIX в каталоге</label>
       <label class="f">Ссылка OPTIX<input type="text" id="sOptixUrl" value="${esc(site.optix.url)}"></label>
       <label class="toggle"><input type="checkbox" id="sStock" ${site.stockBlock ? "checked" : ""}>Блок «В наличии»</label>
       <label class="toggle"><input type="checkbox" id="sBrandSt" ${site.brandStories ? "checked" : ""}>Кружки брендов, когда своих сторис нет</label>
+      <h3 style="margin:10px 0 0">Цвета приложения</h3>
+      <p class="hint" style="margin:0">Акцент — кнопки, активное меню, тёмные полосы и плашки. Ниже — цвета плиток категорий в каталоге.</p>
+      <div class="row" style="gap:14px">${Object.entries(presets || {}).map(([k, c]) => `<button type="button" class="cswatch" data-preset="${k}" aria-pressed="${theme.preset === k}"><i style="background:${c}"></i>${({ graphite: "Графит", sand: "Песок", olive: "Олива", bordeaux: "Бордо", night: "Ночь" })[k] || k}</button>`).join("")}
+        <label class="cswatch" title="Свой цвет"><input type="color" id="sAccent" value="${esc(theme.accent)}" style="width:44px;height:44px;border:0;padding:0;border-radius:22px;background:none">Свой</label></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">${Object.entries(CATS).filter(([k]) => k !== "eyewear" && catColors && catColors[k]).map(([k, n]) => { const c = (theme.cats && theme.cats[k]) || catColors[k]; return `<div class="ccat" style="background:${c[0]};color:${c[1]}">${n}<span style="display:flex;gap:4px"><input type="color" data-cbg="${k}" value="${c[0]}" title="Фон" aria-label="Фон ${n}"><input type="color" data-cfg="${k}" value="${c[1]}" title="Текст" aria-label="Текст ${n}"></span></div>`; }).join("")}</div>
+      <div><button type="button" class="btn ghost sm" id="sThemeReset">Вернуть стандартные цвета</button></div>
       <h3 style="margin:10px 0 0">Контакты</h3><p class="hint" style="margin:0">Первый контакт — менеджер: на него уходят заказы и вопросы из приложения.</p>
       <div id="sC">${contacts.map((c, i) => `<div class="row cline" data-ci="${i}"><input type="text" data-ck="label" value="${esc(c.label)}" placeholder="Подпись" style="flex:1;min-width:140px"><input type="text" data-ck="handle" value="${esc(c.handle)}" placeholder="@ник" style="flex:1;min-width:110px"><input type="text" data-ck="url" value="${esc(c.url)}" placeholder="https://t.me/…" style="flex:2;min-width:160px"><button class="btn soft sm" data-cdel="${i}" aria-label="Удалить">×</button></div>`).join("")}</div>
       <div><button class="btn ghost sm" id="sCadd">${svg("add")}Контакт</button></div>
@@ -1758,14 +1781,20 @@ async function vSite(tabs) {
   };
   const readC = () => [...document.querySelectorAll(".cline")].map(r => ({ label: r.querySelector('[data-ck="label"]').value, handle: r.querySelector('[data-ck="handle"]').value, url: r.querySelector('[data-ck="url"]').value }));
   draw();
+  $("#main").oninput = e => {
+    const el = e.target; if (el.id === "sAccent") { theme.preset = "custom"; theme.accent = el.value; document.querySelectorAll("[data-preset]").forEach(b => b.setAttribute("aria-pressed", "false")); }
+    const k = el.dataset.cbg || el.dataset.cfg; if (k) { const c = (theme.cats[k] || catColors[k]).slice(); c[el.dataset.cbg ? 0 : 1] = el.value; theme.cats[k] = c; const box = el.closest(".ccat"); box.style.background = c[0]; box.style.color = c[1]; }
+  };
   $("#main").onclick = async e => {
     const t = e.target.closest("button"); if (!t) return;
     if (t.dataset.show) return go("show:" + t.dataset.show);
+    if (t.dataset.preset) { theme.preset = t.dataset.preset; theme.accent = presets[t.dataset.preset]; contacts = readC(); return draw(); }
+    if (t.id === "sThemeReset") { theme = { preset: "graphite", accent: presets.graphite, cats: {} }; contacts = readC(); return draw(); }
     if (t.id === "sCadd") { contacts = readC(); contacts.push({ label: "", handle: "", url: "" }); return draw(); }
     if (t.dataset.cdel) { contacts = readC(); contacts.splice(+t.dataset.cdel, 1); return draw(); }
     if (t.id === "sSave") {
-      const s = { shipWeekday: +$("#sWd").value, announce: { on: $("#sAnOn").checked, text: $("#sAn").value }, optix: { on: $("#sOptix").checked, url: $("#sOptixUrl").value }, stockBlock: $("#sStock").checked, brandStories: $("#sBrandSt").checked, contacts: readC() };
-      try { const r = await api("siteSave", { method: "POST", body: { site: s } }); Object.assign(site, r.site); contacts = r.site.contacts; toast("Сохранено"); draw(); } catch (err) { toast(err.message); }
+      const s = { shipWeekday: +$("#sWd").value, announce: { on: $("#sAnOn").checked, text: $("#sAn").value }, optix: { on: $("#sOptix").checked, url: $("#sOptixUrl").value }, stockBlock: $("#sStock").checked, brandStories: $("#sBrandSt").checked, contacts: readC(), theme };
+      try { const r = await api("siteSave", { method: "POST", body: { site: { ...site, ...s, feed: (site.feed || []).map(b => b.id === "announce" ? { ...b, on: s.announce.on } : b.id === "optix" ? { ...b, on: s.optix.on } : b.id === "stock" ? { ...b, on: s.stockBlock } : b) } } }); Object.assign(site, r.site); contacts = r.site.contacts; toast("Сохранено"); draw(); } catch (err) { toast(err.message); }
     }
   };
 }
@@ -2351,6 +2380,36 @@ async function vFinance(period) {
 }
 
 /* ---------- Баннер: живой предпросмотр в редакторе ---------- */
+/* Баннер: где показывать, заготовки текстов, статистика */
+const PLACES = [["feed", "Лента · вверху"], ["feed_mid", "Лента · между подборками"], ["catalog", "Каталог"], ["cart", "Корзина"], ["after", "После заказа"]];
+function placesText(pl) { const p = pl && pl.length ? pl : ["feed"]; const n = p.map(k => k.startsWith("cat:") ? "«" + (CATS[k.slice(4)] || k.slice(4)) + "»" : (PLACES.find(x => x[0] === k) || [0, k])[1]); return n.length > 2 ? n.slice(0, 2).join(", ") + " и ещё " + (n.length - 2) : n.join(", "); }
+function statText(st, id) { const v = st.views[id] || 0, c = st.clicks[id] || 0; return v || c ? `${v} показ. · ${c} наж.${v ? " · " + Math.round(c / v * 100) + "%" : ""}` : ""; }
+function placesHTML(x) {
+  const on = new Set(x.places && x.places.length ? x.places : ["feed"]);
+  const box = (k, v) => `<label class="plc ${on.has(k) ? "on" : ""}"><input type="checkbox" data-place="${k}" ${on.has(k) ? "checked" : ""}>${v}</label>`;
+  return `<div><div class="f" style="margin-bottom:8px">Где показывать</div><div class="plcs">${PLACES.map(([k, v]) => box(k, v)).join("")}</div>
+    <div class="f" style="margin:12px 0 8px;font-weight:500;color:var(--muted)">В начале категории</div><div class="plcs">${Object.entries(CATS).filter(([k]) => k !== "eyewear").map(([k, v]) => box("cat:" + k, v)).join("")}</div></div>`;
+}
+const BANNER_TPL = [
+  { n: "Новая коллекция", title: "Новая коллекция сезона", subtitle: "Выкупим из бутиков Европы за 7 дней", button: "Смотреть", action: { type: "new", value: "" }, places: ["feed"] },
+  { n: "Отправка в пятницу", title: "Отправка в Украину в пятницу", subtitle: "Оформите заказ до четверга — успеем", button: "В каталог", action: { type: "new", value: "" }, places: ["feed_mid", "cart"] },
+  { n: "В наличии", title: "В наличии — отправим сразу", subtitle: "Вещи уже выкуплены и ждут вас", button: "Смотреть", action: { type: "none", value: "" }, places: ["feed_mid", "catalog"] },
+  { n: "Консьерж", title: "Консьерж в бутике", subtitle: "Выберем вещи вместе с вами по видеосвязи", button: "Узнать", action: { type: "service", value: "concierge" }, places: ["feed_mid"] },
+  { n: "Под заказ", title: "Любая модель под заказ", subtitle: "Нет на витрине? Найдём в бутиках Европы", button: "Написать", action: { type: "service", value: "concierge" }, places: ["catalog", "cat:bags"] },
+  { n: "OPTIX", title: "Очки OPTIX", subtitle: "Cartier, Gucci, Miu Miu — под заказ", button: "Открыть", action: { type: "service", value: "optix" }, places: ["feed_mid"] },
+  { n: "Стилист", title: "Подберём образ", subtitle: "ИИ-стилист соберёт лук под ваш повод", button: "Попробовать", action: { type: "service", value: "stylist" }, places: ["feed_mid"] }
+];
+function bannerTemplates(root, item) {
+  if (item) return;
+  const w = document.createElement("div"); w.innerHTML = `<div class="f" style="margin-bottom:8px">Готовые тексты <span class="hint" style="font-weight:400">— нажмите, затем поправьте под себя</span></div><div class="tplc">${BANNER_TPL.map((t, i) => `<button type="button" class="chipb" data-tpl="${i}">${esc(t.n)}</button>`).join("")}</div>`;
+  root.querySelector(".form .bnpv")?.after(w);
+  w.addEventListener("click", async e => { const b = e.target.closest("[data-tpl]"); if (!b) return; const t = BANNER_TPL[+b.dataset.tpl];
+    ["title", "subtitle", "button"].forEach(k => { const el = root.querySelector(`[data-k="${k}"]`); if (el) el.value = t[k]; });
+    root.querySelectorAll("[data-place]").forEach(c => { c.checked = t.places.includes(c.dataset.place); c.closest(".plc").classList.toggle("on", c.checked); });
+    try { const box = root.querySelector('[data-actf="action"]'); if (box) { box.dataset.type = t.action.type; box.dataset.value = t.action.value; box.querySelector("[data-acttype]").value = t.action.type; await actionFieldDraw(box); } } catch {}
+    root.dispatchEvent(new Event("input", { bubbles: true })); toast("Заготовка подставлена — поправьте текст и добавьте фото"); });
+  root.addEventListener("change", e => { const c = e.target.closest("[data-place]"); if (c) c.closest(".plc").classList.toggle("on", c.checked); });
+}
 function bannerPreview(root) {
   const box = document.createElement("div"); box.className = "bnpv"; box.innerHTML = `<small>Так увидит клиент</small><div class="bn" id="bnPv"></div>`;
   root.prepend(box);
