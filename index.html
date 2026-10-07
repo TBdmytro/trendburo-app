@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-05-live-v12">
+<meta name="trendburo-build" content="2026-10-07-live-v13">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -700,6 +700,17 @@ textarea{min-height:88px;resize:vertical}
 .itemshead{display:flex;align-items:center;gap:10px;padding:calc(16px + var(--st)) 18px 14px}
 .itemshead h1{font-size:28px;font-weight:700;letter-spacing:-.02em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .catgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-inline:18px}
+.ctile.ox{grid-column:1/-1;min-height:118px;background:linear-gradient(135deg,#1b3a55 0%,#12293e 60%,#0d1f30 100%);color:#f1eee8;flex-direction:row;align-items:center;justify-content:space-between;padding:16px 18px}
+.ctile.ox .t{display:flex;flex-direction:column;gap:5px}
+.ctile.ox small{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#9fb2c3;font-weight:600}
+.ctile.ox .wordmark{font-size:25px;letter-spacing:.2em;font-family:"Prata",Georgia,serif;font-weight:400}
+.ctile.ox span.br{font-size:12px;color:#c9d3dc}
+.ctile.ox .art{position:static;width:120px;height:auto;flex:none;opacity:.95}
+.oxa{position:fixed;inset:0;z-index:95;background:#12293e;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,visibility 0s .35s}
+.oxa.in{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .35s ease}
+.oxa iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#12293e}
+.oxa-x{position:absolute;left:12px;bottom:calc(92px + var(--sb));z-index:2;height:40px;padding:0 14px 0 6px;border-radius:20px;border:0;background:rgba(255,255,255,.94);box-shadow:0 6px 20px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;font:600 13px/1 "Onest",system-ui,sans-serif;color:#1f2125}
+.oxa-x i{width:30px;height:30px;border-radius:15px;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11px/1 "Prata",Georgia,serif;font-style:normal}
 .ctile{border:0;border-radius:18px;padding:14px;text-align:left;background:var(--ink-grad);color:#fff;box-shadow:var(--ink-hi);display:flex;flex-direction:column;gap:2px;min-height:128px;position:relative;overflow:hidden}
 .ctile b{font-size:17px;font-weight:600;position:relative}
 .ctile span{font-size:12.5px;color:rgba(255,255,255,.55);position:relative}
@@ -1294,16 +1305,56 @@ function openSheet(title,body,foot){closeSheet(true);
 function closeSheet(instant){if(!sheetEl)return;const s=sheetEl,c=scrimEl;sheetEl=scrimEl=null;window.removeEventListener("pointermove",s._mv);window.removeEventListener("pointerup",s._up);
   if(instant){s.remove();c.remove();return}s.classList.remove("in");c.classList.remove("in");setTimeout(()=>{s.remove();c.remove()},500)}
 
+/* ===== OPTIX внутри приложения: открываем всё приложение OPTIX как есть (тот же дизайн и логика).
+   Его страница приходит с нашего же домена (/optix/ → сайт OPTIX), поэтому она пользуется нашим Telegram:
+   кнопка «написать менеджеру», отступы под кнопки Telegram, данные клиента. Код OPTIX не меняем. ===== */
+let OXA=null,oxDocP=null;
+const OX_LOCK=`<style>html,*{touch-action:pan-x pan-y}html,body{overscroll-behavior:none}</style><script>(function(){var ok=function(t){return t&&t.closest&&t.closest("[data-zoomable]")};["gesturestart","gesturechange"].forEach(function(n){document.addEventListener(n,function(e){if(!ok(e.target))e.preventDefault()},{passive:false})});document.addEventListener("touchmove",function(e){if(e.touches&&e.touches.length>1&&!ok(e.target))e.preventDefault()},{passive:false})})();<\/script>`;
+function optixDoc(){if(!oxDocP)oxDocP=fetch("/optix/",{cache:"no-cache"}).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
+  if(!/OPTIX/i.test(t))throw 0;
+  t=t.replace(/<script[^>]*telegram-web-app\.js[^>]*><\/script>/i,"");
+  return t.replace(/<head[^>]*>/i,m=>m+`<base href="/optix/"><script>try{window.Telegram=parent.Telegram}catch(e){}<\/script>`+OX_LOCK)}).catch(e=>{oxDocP=null;throw e});return oxDocP}
+function openOptixApp(ev){if(OXA)return;
+  const w=document.createElement("div");w.className="oxa";w.setAttribute("role","dialog");w.setAttribute("aria-label","OPTIX");
+  w.innerHTML=`<iframe title="OPTIX"></iframe>${TGW?"":'<button class="oxa-x" aria-label="Вернуться в Trend Büro"><i>TB</i>Trend Büro</button>'}`;
+  OXA=w;const fr=w.querySelector("iframe");let ready=false,shown=false;
+  document.body.append(w); // грузится сразу, но невидимо — пока играет синий круг
+  const show=()=>{if(shown||!OXA)return;shown=true;requestAnimationFrame(()=>w.classList.add("in"))};
+  fr.addEventListener("load",()=>{ready=true});
+  optixDoc().then(t=>{fr.srcdoc=t}).catch(()=>{fr.src=OPTIX_LINK});
+  const x=w.querySelector(".oxa-x");if(x)x.onclick=closeOptixApp;
+  try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.impactOccurred("light")}catch(e){}
+  // тёмно-синий круг с надписью OPTIX, пока приложение грузится (не меньше 0,9 с, не больше 4 с)
+  if(RM.matches){show();return}
+  const C=INTRO.optix,app=$("#app"),r=app.getBoundingClientRect(),cx=ev&&ev.clientX?ev.clientX-r.left:r.width/2,cy=ev&&ev.clientY?ev.clientY-r.top:r.height/2;
+  const el=document.createElement("div");el.className="intro cover";el.setAttribute("aria-hidden","true");
+  el.style.cssText=`--ib:${C.bg};--it:${C.fg};--x:${cx}px;--y:${cy}px;--tc:${C.tc}s;--tr:${C.tr}s;--d:${C.tc*0.55}s;--th:1.2s`;
+  el.innerHTML=`<div class="wm ${C.cls}" style="letter-spacing:.16em">${[...C.word].map((ch,k)=>`<i style="--k:${k}">${esc(ch)}</i>`).join("")}</div><div class="isub">${C.sub}</div><div class="iline"><b></b></div>`;
+  app.append(el);const t0=performance.now();
+  const finish=()=>{show();setTimeout(()=>{el.classList.remove("cover");el.style.clipPath="none";void el.offsetWidth;el.classList.add("reveal");setTimeout(()=>el.remove(),C.tr*1000+80)},120)};
+  const domReady=()=>{if(ready)return true;try{const d=fr.contentDocument;return !!(d&&d.readyState!=="loading"&&d.body&&d.body.children.length&&(fr.srcdoc||fr.src))}catch(e){return false}};
+  const wait=()=>{const dt=performance.now()-t0;if((domReady()&&dt>900)||dt>4000)finish();else setTimeout(wait,80)};wait();
+}
+function closeOptixApp(){const w=OXA;if(!w)return;OXA=null;w.classList.remove("in");
+  const colors=()=>{try{if(TGW){TGW.setHeaderColor&&TGW.setHeaderColor("#ffffff");TGW.setBackgroundColor&&TGW.setBackgroundColor("#ffffff")}}catch(e){}};
+  colors();setTimeout(()=>{w.remove();colors()},360);if(typeof syncBack==="function")syncBack()}
+/* «Назад» внутри OPTIX: если открыта карточка или шторка — закрываем её (как Esc), иначе выходим в Trend Büro */
+function optixBack(){const fr=OXA&&OXA.querySelector("iframe");let d=null;try{d=fr&&fr.contentDocument}catch(e){}
+  const open=d&&[...d.querySelectorAll(".is-open")].filter(n=>n.getClientRects().length);
+  if(open&&open.length){try{d.dispatchEvent(new d.defaultView.KeyboardEvent("keydown",{key:"Escape",bubbles:true}))}catch(e){}
+    setTimeout(()=>{const still=[...d.querySelectorAll(".is-open")].filter(n=>n.getClientRects().length).length;if(still>=open.length)closeOptixApp()},250)}
+  else closeOptixApp()}
 /* ===== Кнопка «Назад» Telegram: закрывает верхний слой ===== */
 const TGW=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData?Telegram.WebApp:null;
 function backLayer(){
+  if(OXA){optixBack();return true}
   const z=document.querySelector(".zv [data-zx]");if(z)return z.click(),true;
   const x=document.querySelector(".sv [data-x]");if(x)return x.click(),true;
   if(sheetEl)return closeSheet(),true;
   if(stack.length)return pop(),true;
   if($("#app").classList.contains("in-optix"))return tab(lastMain||"feed"),true;
   return false}
-function syncBack(){if(!TGW||!TGW.BackButton)return;requestAnimationFrame(()=>{const need=!!(document.querySelector(".zv,.sv")||sheetEl||stack.length||$("#app").classList.contains("in-optix"));try{need?TGW.BackButton.show():TGW.BackButton.hide()}catch(e){}})}
+function syncBack(){if(!TGW||!TGW.BackButton)return;requestAnimationFrame(()=>{const need=!!(OXA||document.querySelector(".zv,.sv")||sheetEl||stack.length||$("#app").classList.contains("in-optix"));try{need?TGW.BackButton.show():TGW.BackButton.hide()}catch(e){}})}
 if(TGW&&TGW.BackButton){try{TGW.BackButton.onClick(()=>{backLayer();setTimeout(syncBack,60)})}catch(e){}
   new MutationObserver(syncBack).observe(document.getElementById("app")||document.body,{childList:true,attributes:true,attributeFilter:["class"]});
   new MutationObserver(syncBack).observe(document.body,{childList:true})}
@@ -1505,8 +1556,10 @@ function openIcon(id){const ic=ICONS.find(x=>x.id===id);if(!ic)return;const bn=b
 function renderCatHome(){renderStockBan();
   $$("#hg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
   const pool=P.filter(p=>F.g==="all"||(p.g===F.g||p.g==="u"));
-  $("#catGrid").innerHTML=Object.entries(CATS).map(([k,v])=>{const l=pool.filter(p=>p.cat===k);if(!l.length)return"";const lead=l.slice().sort((a,b)=>b.isNew-a.isNew)[0];
-    return `<button class="ctile press" data-act="catopen" data-cat="${k}" style="--c:${lead.c}"><b>${v}</b><span class="num">${l.length} ${plural(l.length,["товар","товара","товаров"])} · ${new Set(l.map(p=>p.bk)).size} ${plural(new Set(l.map(p=>p.bk)).size,["бренд","бренда","брендов"])}</span><span class="art">${lightShape(lead.shape,lead.c)}</span></button>`}).join("");
+  const oxTile=OPTIX_ON?`<button class="ctile ox press" data-act="optixapp" aria-label="Очки OPTIX — открыть"><span class="t"><small>Очки</small><span class="wordmark">OPTIX</span><span class="br">Cartier · Gucci · Jacques Marie Mage</span></span><span class="art">${glassesSVG("round","#f1eee8","rgba(159,178,195,.35)")}</span></button>`:"";
+  let nTiles=0;
+  $("#catGrid").innerHTML=Object.entries(CATS).filter(([k])=>k!=="eyewear").map(([k,v])=>{const l=pool.filter(p=>p.cat===k);if(!l.length)return"";nTiles++;const after=nTiles===4?oxTile:"";const lead=l.slice().sort((a,b)=>b.isNew-a.isNew)[0];
+    return `<button class="ctile press" data-act="catopen" data-cat="${k}" style="--c:${lead.c}"><b>${v}</b><span class="num">${l.length} ${plural(l.length,["товар","товара","товаров"])} · ${new Set(l.map(p=>p.bk)).size} ${plural(new Set(l.map(p=>p.bk)).size,["бренд","бренда","брендов"])}</span><span class="art">${lightShape(lead.shape,lead.c)}</span></button>`+after}).join("")+(nTiles<4?oxTile:"");
   const bset=[...new Set(pool.map(p=>p.bk))];
   const mine=[...follows].filter(bk=>bset.includes(bk));
   $("#myBrands").innerHTML=mine.length?`<div class="sec"><div class="sech"><h2>Мои бренды</h2></div><div class="bgrid">${mine.map(btileHTML).join("")}</div></div>`:"";
@@ -1960,6 +2013,7 @@ $("#app").addEventListener("click",e=>{
   else if(a==="cathome")showCatHome();
   else if(a==="askany")orderSheet("Запрос менеджеру",`Здравствуйте! Ищу: ${$("#uq").value.trim()}\nЦвет / размер: \nБюджет: \nДоставка: Украина`);
   else if(a==="tab")goTab(t.dataset.tab,e);
+  else if(a==="optixapp")openOptixApp(e);
   else if(a==="svc"){closeSheet(true);openService(t.dataset.s,!!t.dataset.sell)}
   else if(a==="filters")filtersSheet();
   else if(a==="cat"){const c=t.dataset.cat;F.cats.has(c)?F.cats.delete(c):F.cats.add(c);renderCatalog()}
@@ -1972,7 +2026,7 @@ $("#app").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.ta
 
 /* ===== Наполнение из админки: баннеры, сторис, новости, подборки, контакты ===== */
 let CMS={banners:[],stories:[],news:[],rails:[],site:null};
-let SHIP_WD=5,OPTIX_LINK="https://trendburoglasses.vercel.app/";
+let SHIP_WD=5,OPTIX_LINK="https://trendburoglasses.vercel.app/",OPTIX_ON=true;
 const WD_PL=["по воскресеньям","по понедельникам","по вторникам","по средам","по четвергам","по пятницам","по субботам"];
 const WD_EACH=["каждое воскресенье","каждый понедельник","каждый вторник","каждую среду","каждый четверг","каждую пятницу","каждую субботу"];
 let FEED_TITLE={};
@@ -1992,7 +2046,7 @@ function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);
   if(s.optix&&s.optix.url)OPTIX_LINK=s.optix.url;
   $$("[data-wd]").forEach(e=>e.textContent=WD_PL[SHIP_WD]);$$("[data-wd2]").forEach(e=>e.textContent=WD_EACH[SHIP_WD]);
   const an=$("#announce");if(an){an.hidden=!(s.announce&&s.announce.on&&s.announce.text);an.textContent=s.announce?s.announce.text:""}
-  const oe=$(".o-entry");if(oe&&s.optix)oe.hidden=!s.optix.on;
+  const oe=$(".o-entry");if(oe&&s.optix)oe.hidden=!s.optix.on;if(s.optix)OPTIX_ON=s.optix.on!==false;
 }
 const brandKey=name=>{const n=String(name||"").trim().toLowerCase();const b=BRANDS.find(x=>x[1].toLowerCase()===n);return b?b[0]:null};
 function runAction(a){if(!a||!a.type||a.type==="none")return;const v=a.value||"";
@@ -2001,7 +2055,7 @@ function runAction(a){if(!a||!a.type||a.type==="none")return;const v=a.value||""
   else if(a.type==="brand"){const bk=brandKey(v);if(bk)openBrand(bk);else toast("Товаров "+v+" пока нет на витрине")}
   else if(a.type==="category"){clearFilters();F.cats.add(v);tab("catalog");showItems(CATS[v]||"Каталог")}
   else if(a.type==="new"){clearFilters();F.onlyNew=true;tab("catalog");showItems("Новинки")}
-  else if(a.type==="service"){if(v==="optix")openExternal(OPTIX_LINK);else if(v==="stylist")tab("stylist");else openService(v)}
+  else if(a.type==="service"){if(v==="optix")openOptixApp();else if(v==="stylist")tab("stylist");else openService(v)}
   else if(a.type==="url")openExternal(v)}
 const hasAct=a=>a&&a.type&&a.type!=="none";
 
@@ -2094,7 +2148,7 @@ function init(){
   renderTopIcons();
   renderFeed();renderFeedFollow();renderCatalog();renderCatHome();renderOptix();
   $("#oEntryArt").innerHTML=glassesSVG("cat","#e9e4da","#4f6a82");
-  if(LIVE){const oe=$(".o-entry");oe.removeAttribute("data-act");oe.addEventListener("click",()=>{const tg=window.Telegram&&window.Telegram.WebApp;if(tg&&tg.initData)tg.openLink(OPTIX_LINK);else window.open(OPTIX_LINK,"_blank","noopener")})}
+  if(LIVE){const oe=$(".o-entry");oe.removeAttribute("data-act");oe.addEventListener("click",e=>openOptixApp(e))}
   else document.body.insertAdjacentHTML("beforeend",'<div class="demo-badge">ДЕМО-ДАННЫЕ</div>');
   if(LIVE){$("#feedNote").hidden=true;applySite(CMS.site);renderBanners()}
   if(LIVE&&!P.length)$("#t-feed .ship").insertAdjacentHTML("afterend",'<div class="live-empty">Каталог наполняется — новые поступления появятся здесь. Ищете конкретную вещь? Напишите менеджеру, найдём.</div>');

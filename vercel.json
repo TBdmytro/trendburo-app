@@ -45,5 +45,15 @@
   ],
   "regions": [
     "fra1"
+  ],
+  "rewrites": [
+    {
+      "source": "/optix",
+      "destination": "https://trendburoglasses.vercel.app/"
+    },
+    {
+      "source": "/optix/:path*",
+      "destination": "https://trendburoglasses.vercel.app/:path*"
+    }
   ]
 }

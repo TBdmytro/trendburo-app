@@ -50,6 +50,12 @@ http.createServer(async (req, res) => {
     const mod = await import(new URL(routes[u.pathname], import.meta.url));
     return mod.default(req, res);
   }
+  // как rewrite в vercel.json: /optix/ отдаёт приложение OPTIX (локально — из папки OPTIX_DIR)
+  if (u.pathname === "/optix" || u.pathname.startsWith("/optix/")) {
+    const rest = u.pathname.replace(/^\/optix\/?/, "") || "index.html";
+    try { const b = await readFile(join(process.env.OPTIX_DIR || join(root, "../trendburoglasses"), rest)); res.setHeader("Content-Type", TYPES[extname(rest)] || "application/octet-stream"); return res.end(b); }
+    catch { res.statusCode = 404; return res.end("not found"); }
+  }
   const file = u.pathname === "/" ? "/index.html" : u.pathname;
   try { const b = await readFile(join(root, file)); res.setHeader("Content-Type", TYPES[extname(file)] || "application/octet-stream"); res.end(b); }
   catch { res.statusCode = 404; res.end("not found"); }
