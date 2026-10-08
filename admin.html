@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-07-admin-v16">
+<meta name="trendburo-build" content="2026-10-09-admin-v17">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,7 +79,7 @@ svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-widt
 .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
 .pill.run .dot{animation:bl 1.2s infinite}
 @keyframes bl{50%{opacity:.25}}
-input[type=text],input[type=password],input[type=number],input[type=search],select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
+input[type=text],input[type=password],input[type=number],input[type=search],input[type=date],input[type=datetime-local],select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
 input:focus,select:focus,textarea:focus{outline:0;border-color:#b9bbc1;box-shadow:0 0 0 3px rgba(28,29,32,.06)}
 textarea{min-height:120px;resize:vertical;font-size:13px;line-height:1.55}
 label.f{display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--g2);font-weight:500}
@@ -344,7 +344,7 @@ pre.msg{white-space:pre-wrap;font:13px/1.5 var(--f);background:#fff;border:1px s
   .actbar{bottom:calc(72px + var(--sb));flex-wrap:wrap}
   .toast{bottom:calc(84px + var(--sb))}
   body:has(.actbar) .toast{bottom:calc(150px + var(--sb))}
-  input[type=text],input[type=password],input[type=number],input[type=search],input[type=date],select,textarea{font-size:16px}
+  input[type=text],input[type=password],input[type=number],input[type=search],input[type=date],input[type=datetime-local],select,textarea{font-size:16px}
   .drawer .in{width:100%;padding:18px 14px calc(30px + var(--sb))}
   .sheet .in{padding:0}
   .sh-b{padding:16px 14px}
@@ -381,7 +381,7 @@ body{background:#fff;font-size:14.5px}
 .btn.sm{border-radius:11px;padding:8px 12px}
 .btn.lg{border-radius:16px;padding:15px 22px}
 .btn.soft{background:var(--soft)}.btn.ghost{border-color:var(--line)}
-input[type=text],input[type=password],input[type=number],input[type=search],input[type=date],select,textarea{border-radius:14px;border-color:var(--line);min-height:46px}
+input[type=text],input[type=password],input[type=number],input[type=search],input[type=date],input[type=datetime-local],select,textarea{border-radius:14px;border-color:var(--line);min-height:46px}
 textarea{min-height:110px}
 .seg{border-radius:14px;padding:3px;background:var(--soft)}
 .seg button{border-radius:11px;padding:9px 14px}
@@ -591,6 +591,7 @@ body:has(.sv) .tglogo,body:has(.splash) .tglogo{opacity:0}
 .cswatch[aria-pressed=true] i{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink)}
 .ccat{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;font-size:13.5px;font-weight:600}
 .ccat input{width:30px;height:30px;border:0;padding:0;background:none;border-radius:8px}
+.badgebox{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:14px;background:var(--soft, #f4f5f6)}
 </style>
 </head>
 <body>
@@ -1305,7 +1306,16 @@ async function editor(id, reload) {
       <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:200px">Своя цена для Украины, €<input type="number" id="ePin" min="0" step="5" value="${esc(o.pinnedPrice || "")}" placeholder="По правилам: ${esc(p.pricing?.ua ?? "—")}"></label>
       <label class="toggle" style="flex:1;min-width:200px;padding-bottom:10px"><input type="checkbox" id="eHide" ${o.hidden ? "checked" : ""}>Скрыть с витрины</label></div>
       <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:150px">Для кого<select id="eG"><option value="">${esc({ w: "Женское", m: "Мужское", u: "Унисекс" }[p.gender] || "как на сайте")}</option><option value="w" ${o.gender === "w" ? "selected" : ""}>Женское</option><option value="m" ${o.gender === "m" ? "selected" : ""}>Мужское</option><option value="u" ${o.gender === "u" ? "selected" : ""}>Унисекс</option></select></label>
-      <label class="f" style="flex:1;min-width:150px">Метка «Новинка»<select id="eNew"><option value="">Авто: 14 дней после публикации</option><option value="on" ${o.isNew === "on" ? "selected" : ""}>Показывать</option><option value="off" ${o.isNew === "off" ? "selected" : ""}>Не показывать</option></select></label></div>
+      <span style="flex:1;min-width:150px"></span></div>
+      <div class="badgebox">
+        <div class="row" style="align-items:flex-end"><label class="toggle" style="flex:1;min-width:150px;padding-bottom:10px"><input type="checkbox" id="eNew" ${o.isNew === "on" ? "checked" : ""}>Метка «Новинка»</label>
+        <label class="f" style="flex:1;min-width:150px">Показывать до<input type="date" id="eNewTo" value="${esc(o.newUntil || "")}"></label></div>
+        <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:120px">Скидка, %<input type="number" id="eSale" min="0" max="90" step="1" value="${esc(o.sale?.pct || "")}" placeholder="нет"></label>
+        <label class="f" style="flex:1;min-width:180px">Скидка до<input type="datetime-local" id="eSaleTo" value="${esc(o.sale?.until || "")}"></label></div>
+        <p class="hint" style="margin:0">Клиент видит плашку «−${esc(o.sale?.pct || "N")}%» и старую цену зачёркнутой. Таймера у клиента нет: в указанный день скидка закончится сама. Пустая дата — скидка до отмены.</p>
+      </div>
+      <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:150px">Размер изделия<input type="text" id="eDims" maxlength="48" value="${esc(o.dims || "")}" placeholder="50 × 29 × 23 см"></label>
+      <label class="f" style="flex:1;min-width:150px">Материал<input type="text" id="eMat" maxlength="48" value="${esc(o.material || "")}" placeholder="Канва и кожа"></label></div>
       <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:150px">В наличии у нас<select id="eSt"><option value="">Нет, под заказ</option><option value="ua" ${(o.stock || p.stock)?.loc === "ua" ? "selected" : ""}>Лежит в Украине</option><option value="eu" ${(o.stock || p.stock)?.loc === "eu" ? "selected" : ""}>Лежит в Европе</option></select></label>
       <label class="f" style="flex:1;min-width:120px">Город<input type="text" id="eStCity" value="${esc((o.stock || p.stock)?.city || "")}" placeholder="Киев"></label><label class="f" style="flex:1;min-width:100px">Размер<input type="text" id="eStSize" value="${esc((o.stock || p.stock)?.size || "")}"></label></div>
       ${sizes.length || colors.length ? `<div class="hint">${colors.length ? "Цвета: " + esc(colors.join(", ")) : ""}${colors.length && sizes.length ? " · " : ""}${sizes.length ? "Размеры: " + esc(sizes.join(", ")) : ""}</div>` : ""}
@@ -1314,14 +1324,14 @@ async function editor(id, reload) {
       <div class="row"><button class="btn" data-save>Сохранить</button>${p.manual ? `<button class="btn ghost" data-editcard>Изменить фото, цену, размеры</button>` : ""}
         ${p.status === "published" ? `<button class="btn ghost" data-st="draft">Снять с витрины</button>` : `<button class="btn ghost" data-st="published">Опубликовать</button>`}<span class="sp"></span><button class="btn danger" data-delp>Удалить товар</button></div>
     </div>
-    <div class="sec"><h2>На витрине</h2><div class="card pad hint">${storefront ? `Показывается как «${esc(storefront.title)}» · ${eur(storefront.price.ua)} Украина · ${eur(storefront.price.eu)} Европа/Дубай · наличие: ${esc(AV[storefront.availability]?.[0] || storefront.availability)}` : "Не показывается: черновик, скрыт или нет цены"}</div></div>
+    <div class="sec"><h2>На витрине</h2><div class="card pad hint">${storefront ? `Показывается как «${esc(storefront.title)}» · ${eur(storefront.price.ua)} Украина${storefront.sale ? ` (скидка −${storefront.sale}%, было ${eur(storefront.oldPrice.ua)})` : ""} · ${eur(storefront.price.eu)} Европа/Дубай · наличие: ${esc(AV[storefront.availability]?.[0] || storefront.availability)}` : "Не показывается: черновик, скрыт или нет цены"}</div></div>
     <div class="sec"><h2>Предложения</h2><div class="card tw"><table><thead><tr><th>Источник</th><th>Цена бутика</th><th>Закупка</th><th>Наличие</th><th>Проверено</th></tr></thead><tbody>
     ${(p.offers || []).map(of => `<tr><td>${esc(srcName(of.sourceId))}${p.pricing?.offerKey === of._key ? ' <span class="pill ok">основное</span>' : ""}${p.pricing?.conflict ? ` <button class="btn soft sm" data-primary="${esc(of._key)}">выбрать</button>` : ""}<div class="hint">${esc(of.region || "—")} · ${esc(of.currency || "—")}</div>${(of.errors || []).length ? `<div class="err hint">${esc(of.errors[of.errors.length - 1].text)}</div>` : ""}</td>
       <td class="num">${eur(of.boutique)}</td><td class="num">${eur(of.purchase)}</td>
       <td>${Object.values(of.availability || {}).slice(0, 8).map(a => `<span class="pill ${AV[a.status]?.[1] || ""}">${AV[a.status]?.[0] || a.status}</span>`).join(" ")}</td><td>${dt(of.checkedAt)}</td></tr>`).join("")}
     </tbody></table></div>
     ${p.pricing ? `<p class="hint">Правило ${esc(p.pricing.rule || "—")}${p.pricing.spread !== null && p.pricing.spread !== undefined ? " · разница с закупкой " + eur(p.pricing.spread) : ""}</p>` : ""}</div>
-    <div class="sec"><h2>История</h2><div class="card pad hist">${(p.history || []).slice().reverse().map(h => `<div>${dt(h.at)} · <b>${esc(h.by)}</b> · ${esc(h.action)}${h.field ? " «" + esc({ title: "название", category: "категория", pinnedPrice: "цена", hidden: "скрыт", gender: "для кого", isNew: "новинка", stock: "в наличии", cover: "обложка", imageOrder: "порядок фото", primaryOffer: "основное предложение" }[h.field] || h.field) + "»" + (["imageOrder", "cover"].includes(h.field) ? " изменено" : ": " + esc(JSON.stringify(h.from)) + " → " + esc(JSON.stringify(h.to))) : ""}${h.to && !h.field ? " → " + esc(h.to) : ""}</div>`).join("") || "—"}</div></div></div>`;
+    <div class="sec"><h2>История</h2><div class="card pad hist">${(p.history || []).slice().reverse().map(h => `<div>${dt(h.at)} · <b>${esc(h.by)}</b> · ${esc(h.action)}${h.field ? " «" + esc({ title: "название", category: "категория", pinnedPrice: "цена", hidden: "скрыт", gender: "для кого", isNew: "новинка", newUntil: "новинка до", sale: "скидка", dims: "размер изделия", material: "материал", stock: "в наличии", cover: "обложка", imageOrder: "порядок фото", primaryOffer: "основное предложение" }[h.field] || h.field) + "»" + (["imageOrder", "cover"].includes(h.field) ? " изменено" : ": " + esc(JSON.stringify(h.from)) + " → " + esc(JSON.stringify(h.to))) : ""}${h.to && !h.field ? " → " + esc(h.to) : ""}</div>`).join("") || "—"}</div></div></div>`;
   };
   draw();
   d.onclick = async e => {
@@ -1341,7 +1351,9 @@ async function editor(id, reload) {
     if (b.dataset.st) { await api("status", { method: "POST", body: { ids: [id], status: b.dataset.st } }); toast(b.dataset.st === "published" ? "Опубликовано — на витрине через ~10 секунд" : "Снято с витрины"); close(); reload(); return; }
     if ("save" in b.dataset) {
       const changes = { title: $("#eTitle").value.trim() || null, category: $("#eCat").value || null, pinnedPrice: Number($("#ePin").value) || null, hidden: $("#eHide").checked || null,
-        gender: $("#eG").value || null, isNew: $("#eNew").value || null, stock: $("#eSt").value ? { loc: $("#eSt").value, city: $("#eStCity").value.trim(), size: $("#eStSize").value.trim() } : (p.stock ? { loc: "" } : null) };
+        gender: $("#eG").value || null, isNew: $("#eNew").checked ? "on" : null, newUntil: $("#eNew").checked ? ($("#eNewTo").value || null) : null,
+        sale: Number($("#eSale").value) > 0 ? { pct: Number($("#eSale").value), until: $("#eSaleTo").value || null } : null,
+        dims: $("#eDims").value.trim() || null, material: $("#eMat").value.trim() || null, stock: $("#eSt").value ? { loc: $("#eSt").value, city: $("#eStCity").value.trim(), size: $("#eStSize").value.trim() } : (p.stock ? { loc: "" } : null) };
       if (cover !== cover0) changes.cover = cover;
       if (JSON.stringify(order) !== order0) changes.imageOrder = order;
       try { await api("productSave", { method: "POST", body: { id, changes } }); toast("Сохранено"); close(); reload(); } catch (err) { toast(err.message); }
@@ -1698,7 +1710,7 @@ async function cmsEditor(kind, item, reload) {
     else if (rule === "manual") {
       let cur = []; if (x.ids?.length) { try { const m = (await api("productPick", { query: { ids: x.ids.join(",") }, silent: true })).products; cur = x.ids.map(i => m.find(p => p._id === i)).filter(Boolean); } catch {} }
       rb.innerHTML = `<div class="f">Товары в ленте <span class="hint" style="font-weight:400">в этом порядке</span></div><div class="ppick" data-ppick data-multi><div class="pchips">${cur.map(pickChip).join("")}</div><input type="search" data-pq placeholder="Добавить товар: бренд или название"><div class="ppick-res"></div></div>`;
-    } else rb.innerHTML = `<p class="hint" style="margin:0">${rule === "new" ? "Товары, опубликованные за последние 14 дней (или отмеченные «Новинка»)." : "Товары с отметкой «В наличии» — уже выкуплены и лежат в Украине или Европе."}</p>`;
+    } else rb.innerHTML = `<p class="hint" style="margin:0">${rule === "new" ? "Товары с меткой «Новинка» (ставится в карточке товара)." : "Товары с отметкой «В наличии» — уже выкуплены и лежат в Украине или Европе."}</p>`;
   };
   if (kind === "rail") ruleBox(x.rule || "new");
   // сторис: слайды

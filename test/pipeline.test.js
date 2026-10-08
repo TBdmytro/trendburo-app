@@ -467,3 +467,24 @@ test("banners: places, audience, stats; site theme", async () => {
   const s = await bannerStats(store);
   assert.equal(s.views["cms.banner.abc123def456"], 4); assert.equal(s.clicks["cms.banner.abc123def456"], 50); assert.equal(s.views.evil, undefined);
 });
+
+test("скидка и «Новинка» со сроком: заканчиваются сами, размер и материал попадают на витрину", () => {
+  const base = { _id: "p1", status: "published", brand: "Louis Vuitton", title: "Keepall 50", category: "bags", pricing: { ua: 2860, eu: 2700, dxb: 2700 }, offers: [], variants: [], images: [] };
+  const now = Date.parse("2026-10-10T12:00:00Z");
+  const p = { ...base, overrides: { sale: { pct: 10, until: "2026-10-17" }, isNew: "on", newUntil: "2026-10-12", dims: "50 × 29 × 23 см", material: "Канва и кожа" } };
+  const sf = toStorefront(p, now);
+  assert.equal(sf.price.ua, 2574); assert.equal(sf.oldPrice.ua, 2860); assert.equal(sf.sale, 10);
+  assert.equal(sf.isNew, true); assert.equal(sf.dims, "50 × 29 × 23 см"); assert.equal(sf.material, "Канва и кожа");
+  const later = toStorefront(p, Date.parse("2026-10-18T12:00:00Z"));
+  assert.equal(later.price.ua, 2860); assert.equal(later.oldPrice, undefined); assert.equal(later.isNew, false);
+  assert.equal(toStorefront({ ...base, overrides: {} }, now).isNew, false); // без метки — не новинка
+});
+
+test("правки скидки чистятся: процент 1–90, лишнее отбрасывается", async () => {
+  const { cleanOverride } = await import("../lib/publish.js");
+  assert.deepEqual(cleanOverride("sale", { pct: "15", until: "2026-10-20T18:00" }), { pct: 15, until: "2026-10-20T18:00" });
+  assert.equal(cleanOverride("sale", { pct: 0 }), null);
+  assert.equal(cleanOverride("sale", { pct: 95 }), null);
+  assert.deepEqual(cleanOverride("sale", { pct: 10, until: "завтра" }), { pct: 10, until: null });
+  assert.equal(cleanOverride("dims", "  50 ×   29 см "), "50 × 29 см");
+});
