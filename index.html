@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-09-live-v18">
+<meta name="trendburo-build" content="2026-10-09-live-v19">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -1071,14 +1071,9 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
           <div><div class="cap" data-t="svc.concierge.cap">Консьерж</div><h3 data-t="svc.concierge.title">Задачи в Европе</h3></div>
           <p data-t="svc.concierge.text">Редкие модели, лист ожидания, подарки, видеошопинг из бутика</p>
           <span class="gl"><svg viewBox="0 0 100 100"><path d="M18 70h64M26 70a24 24 0 0 1 48 0M50 42v-6M44 36h12"/></svg></span></button>
-        <div class="svc-2">
-          <button class="svc-card press" style="--sc:var(--c-travel)" data-act="svc" data-s="travel" data-svc="travel">
+        <button class="svc-card press" style="--sc:var(--c-travel)" data-act="svc" data-s="travel" data-svc="travel">
             <div><div class="cap" data-t="svc.travel.cap">Путешествия</div><h3 data-t="svc.travel.title">Поездки</h3></div><p data-t="svc.travel.text">Отели, столики, шопинг с байером</p>
             <span class="gl"><svg viewBox="0 0 100 100"><path d="M15 60l70-25-18 40-14-12-12 14V60z"/></svg></span></button>
-          <button class="svc-card press locked" style="--sc:var(--c-resale)" data-act="soon" data-s="resale" data-svc="resale" aria-disabled="true"><span class="soon">Скоро</span>
-            <div><div class="cap" data-t="svc.resale.cap">Ресейл</div><h3 data-t="svc.resale.title">Вещи с историей</h3></div><p data-t="svc.resale.text">Проверяем и ведём сделку</p>
-            <span class="gl"><svg viewBox="0 0 100 100"><path d="M24 40h52l-5 42H29zM38 40v-8a12 12 0 0 1 24 0v8"/></svg></span></button>
-        </div>
         <button class="svc-card press locked" style="--sc:var(--c-stylist)" data-act="soon" data-s="stylist" data-svc="stylist" aria-disabled="true"><span class="soon">Скоро</span>
           <div><div class="cap" data-t="svc.stylist.cap">AI-стилист</div><h3 data-t="svc.stylist.title">Образ из витрины</h3></div>
           <p data-t="svc.stylist.text">Повод, стиль и бюджет — подбор за минуту</p>
@@ -2297,8 +2292,8 @@ const bnAud=b=>!b.aud||b.aud==="all"||F.g==="all"||F.g===b.aud||F.g==="u";
 const bnFor=place=>(LIVE&&CMS&&CMS.banners?CMS.banners:[]).filter(b=>(b.places&&b.places.length?b.places:["feed"]).includes(place)&&bnAud(b));
 const GO_SVG='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
 function cbHTML(b){const dark=b.theme!=="light";return `<button class="cb press ${dark?"dark":""}" data-act="cbanner" data-bid="${esc(b.id)}" data-bn="${esc(b.id)}"><span class="t">${b.title?`<b>${esc(b.title)}</b>`:""}${b.subtitle?`<span>${esc(b.subtitle)}</span>`:""}</span>${b.image?`<span class="ph"><img src="${esc(b.image)}" alt="" loading="lazy" decoding="async"></span>`:`<span class="go">${GO_SVG}</span>`}</button>`}
-/* после заказа — две карточки «скоро» (ресейл и канал с новинками), пока закрыты */
-const AFTER_SOON=`<div class="cb dark locked" aria-disabled="true"><span class="soon">Скоро</span><span class="t"><b>Продайте вещь, которую не носите</b><span>Ресейл: оценим и найдём покупателя</span></span></div><div class="cb locked" aria-disabled="true"><span class="soon">Скоро</span><span class="t"><b>Новинки первыми</b><span>Канал-витрина в Telegram</span></span></div>`;
+/* после заказа — карточка «скоро»: канал с новинками, пока закрыт */
+const AFTER_SOON=`<div class="cb locked" aria-disabled="true"><span class="soon">Скоро</span><span class="t"><b>Новинки первыми</b><span>Канал-витрина в Telegram</span></span></div>`;
 /* показы (один раз за сессию на баннер) и нажатия — пачкой на сервер */
 const BNS={v:{},c:{},seen:new Set()};
 const bnIO="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const id=e.target.dataset.bn;if(id&&!BNS.seen.has(id)){BNS.seen.add(id);BNS.v[id]=(BNS.v[id]||0)+1}}}),{threshold:.5}):null;
