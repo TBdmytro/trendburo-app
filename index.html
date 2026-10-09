@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-09-live-v17">
+<meta name="trendburo-build" content="2026-10-09-live-v18">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -572,6 +572,16 @@ textarea{min-height:88px;resize:vertical}
 .svc-list{display:flex;flex-direction:column;gap:12px;padding-inline:18px}
 .svc-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .svc-2 .svc-card{min-height:150px}
+.svc-card .soon{position:absolute;top:14px;right:14px;padding:5px 10px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:#fff;color:var(--fg);z-index:2}
+.svc-card.locked>div,.svc-card.locked>p{opacity:.55}
+#t-stylist[data-soon] .chat{display:none}
+#t-stylist:not([data-soon]) .soonscr{display:none}
+.soonscr{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:24px 32px calc(120px + var(--sb))}
+.soonic{width:72px;height:72px;border-radius:24px;background:var(--c-stylist);display:grid;place-items:center;margin-bottom:6px}
+.soonic svg{width:34px;height:34px;fill:#fff}
+.soonlb{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border-radius:99px;background:var(--fg);color:#fff}
+.soonscr h2{font-size:24px;letter-spacing:-.02em}.soonscr p{color:var(--g2);font-size:15px;line-height:1.5;max-width:300px}
+
 .svc-hero{padding:calc(64px + var(--st)) 18px 26px;background:var(--sc);color:#fff;display:flex;flex-direction:column;gap:8px}
 .svc-hero .cap{color:rgba(255,255,255,.65)}
 .svc-hero h2{font-size:28px;font-weight:700}
@@ -1065,11 +1075,11 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
           <button class="svc-card press" style="--sc:var(--c-travel)" data-act="svc" data-s="travel" data-svc="travel">
             <div><div class="cap" data-t="svc.travel.cap">Путешествия</div><h3 data-t="svc.travel.title">Поездки</h3></div><p data-t="svc.travel.text">Отели, столики, шопинг с байером</p>
             <span class="gl"><svg viewBox="0 0 100 100"><path d="M15 60l70-25-18 40-14-12-12 14V60z"/></svg></span></button>
-          <button class="svc-card press" style="--sc:var(--c-resale)" data-act="svc" data-s="resale" data-svc="resale">
+          <button class="svc-card press locked" style="--sc:var(--c-resale)" data-act="soon" data-s="resale" data-svc="resale" aria-disabled="true"><span class="soon">Скоро</span>
             <div><div class="cap" data-t="svc.resale.cap">Ресейл</div><h3 data-t="svc.resale.title">Вещи с историей</h3></div><p data-t="svc.resale.text">Проверяем и ведём сделку</p>
             <span class="gl"><svg viewBox="0 0 100 100"><path d="M24 40h52l-5 42H29zM38 40v-8a12 12 0 0 1 24 0v8"/></svg></span></button>
         </div>
-        <button class="svc-card press" style="--sc:var(--c-stylist)" data-act="tab" data-tab="stylist" data-svc="stylist">
+        <button class="svc-card press locked" style="--sc:var(--c-stylist)" data-act="soon" data-s="stylist" data-svc="stylist" aria-disabled="true"><span class="soon">Скоро</span>
           <div><div class="cap" data-t="svc.stylist.cap">AI-стилист</div><h3 data-t="svc.stylist.title">Образ из витрины</h3></div>
           <p data-t="svc.stylist.text">Повод, стиль и бюджет — подбор за минуту</p>
           <span class="gl"><svg viewBox="0 0 100 100"><path d="M50 15l7 20 20 7-20 7-7 20-7-20-20-7 20-7z"/></svg></span></button>
@@ -1148,8 +1158,9 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
   </div>
 
   <!-- STYLIST -->
-  <div class="screen tab" id="t-stylist">
+  <div class="screen tab" id="t-stylist" data-soon>
     <div class="bar show" style="justify-content:center"><b>Стилист</b></div>
+    <div class="soonscr"><span class="soonic"><svg viewBox="0 0 24 24"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg></span><span class="soonlb">Скоро</span><h2>AI-стилист</h2><p>Расскажете повод, стиль и бюджет — и он соберёт образ из нашей витрины. Запускаем совсем скоро.</p><button class="btn sm" data-act="tab" data-tab="catalog">Пока — в каталог</button></div>
     <div class="chat">
       <div class="msgs" id="msgs" aria-live="polite">
         <div class="bub ai">Здравствуйте. Расскажите, куда собираетесь и какой бюджет — соберу образ из витрины.</div>
@@ -1894,7 +1905,8 @@ const SVC={
  travel:{accent:"var(--c-travel)",cap:"Путешествия",title:"Поездки по Европе",text:"Соберём поездку целиком: где жить, где ужинать, куда пойти за покупками вместе с нашим байером.",
   items:[["Отели","Проверенные адреса в центре",'<path d="M3 20V8l9-4 9 4v12M9 20v-6h6v6"/>'],["Рестораны","Бронь столиков заранее",'<path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8M17 3c-2 0-3 3-3 6s1 4 3 4v8"/>'],["Шопинг с байером","Милан, Париж, Мюнхен, Вена",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],["Трансферы","Аэропорт и водитель на день",'<path d="M5 16v-5l2-5h10l2 5v5M5 16h14M7 19v-3M17 19v-3"/>'],["Дубай","Отели, шопинг, доставка покупок",'<path d="M12 3v18M8 21V9l4-6 4 6v12"/>']]}
 };
-function openService(k,sell){
+const SOON=new Set(["stylist","resale"]);
+function openService(k,sell){if(SOON.has(k)){toast((k==="stylist"?"AI-стилист":"Ресейл")+" — скоро запустим");return}
   if(k==="resale")return openResale(sell);
   const S=SVC[k];
   const form=k==="concierge"?`
@@ -2234,6 +2246,7 @@ $("#app").addEventListener("click",e=>{
   else if(a==="tab")goTab(t.dataset.tab,e);
   else if(a==="optixapp")openOptixApp(e);
   else if(a==="svc"){closeSheet(true);openService(t.dataset.s,!!t.dataset.sell)}
+  else if(a==="soon"){toast((t.dataset.s==="stylist"?"AI-стилист":"Ресейл")+" — скоро запустим");hap&&hap("light")}
   else if(a==="filters")filtersSheet();
   else if(a==="cat"){const c=t.dataset.cat;F.cats.has(c)?F.cats.delete(c):F.cats.add(c);renderCatalog()}
   else if(a==="unaf"){AF[+t.dataset.i][1]();renderCatalog()}
