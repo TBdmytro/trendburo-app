@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-10-live-v27">
+<meta name="trendburo-build" content="2026-10-10-live-v28">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -516,9 +516,20 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .dlv-line{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:12px;margin-top:14px;font-size:13.5px;color:rgba(255,255,255,.6)}
 .dlv-pill{font-weight:700;font-size:13px;padding:5px 11px;border-radius:99px;white-space:nowrap;background:rgba(255,255,255,.1);color:#fff}
 .dlv-pill.ok{background:rgba(127,209,164,.16);color:#7fd1a4}
-.tk{position:relative;background:#f5f4f0;color:#1f2125;border-radius:16px;overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,.35);
-  -webkit-mask:radial-gradient(circle 10px at 0 84px,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 10px at 100% 84px,#0000 98%,#000) right/51% 100% no-repeat;
-  mask:radial-gradient(circle 10px at 0 84px,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 10px at 100% 84px,#0000 98%,#000) right/51% 100% no-repeat}
+.tkw{display:flex;filter:drop-shadow(0 10px 22px rgba(0,0,0,.35))}
+.tk{position:relative;background:#f5f4f0;color:#1f2125;overflow:hidden}
+.tk-main{flex:1;min-width:0;border-radius:16px 4px 4px 16px;padding:15px 16px 16px;
+  -webkit-mask:radial-gradient(circle 10px at 100% 0,#0000 98%,#000) top/100% 51% no-repeat,radial-gradient(circle 10px at 100% 100%,#0000 98%,#000) bottom/100% 51% no-repeat;
+  mask:radial-gradient(circle 10px at 100% 0,#0000 98%,#000) top/100% 51% no-repeat,radial-gradient(circle 10px at 100% 100%,#0000 98%,#000) bottom/100% 51% no-repeat}
+.tk-stub{width:100px;flex:none;box-sizing:border-box;border-radius:4px 16px 16px 4px;padding:15px 10px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;border-left:1.5px dashed #c4c5c8;transform-origin:0 0;
+  -webkit-mask:radial-gradient(circle 10px at 0 0,#0000 98%,#000) top/100% 51% no-repeat,radial-gradient(circle 10px at 0 100%,#0000 98%,#000) bottom/100% 51% no-repeat;
+  mask:radial-gradient(circle 10px at 0 0,#0000 98%,#000) top/100% 51% no-repeat,radial-gradient(circle 10px at 0 100%,#0000 98%,#000) bottom/100% 51% no-repeat}
+.tk-stub.tear{animation:tktear .75s var(--ease)}
+@keyframes tktear{35%{transform:translate(6px,4px) rotate(5deg)}100%{transform:none}}
+.tk-stub .tk-k{margin:0}.tk-stub small{font-size:11.5px;color:#6b6f76;white-space:nowrap}
+.tk-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.tk-from{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:27px;line-height:38px}
+.tk-row+.tk-row{margin-top:9px}
 .tk-sh{position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.9) 50%,transparent 62%);transform:translateX(-130%);mix-blend-mode:soft-light}
 .tk-sh.go{animation:tksh .9s ease-out}
 @keyframes tksh{to{transform:translateX(130%)}}
@@ -530,7 +541,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .tk-code span{display:inline-block;min-width:.62em;text-align:center}
 .tk-code span.f{animation:tkf .09s linear}
 @keyframes tkf{from{transform:rotateX(80deg);opacity:.4}to{transform:none;opacity:1}}
-.tk-rt{flex:1;position:relative;height:28px;margin-bottom:16px}
+.tk-rt{flex:1;position:relative;height:28px}
 .tk-dash{position:absolute;left:0;top:50%;width:var(--w,100%);border-top:1.5px dashed #b6b8bc;transition:width .7s var(--ease)}
 .tk-veh{position:absolute;top:50%;left:var(--p,50%);transform:translate(-50%,-50%) rotate(var(--r,0deg));display:grid;background:#f5f4f0;padding:0 4px;transition:left .6s var(--ease),transform .6s var(--ease),opacity .2s}
 .tk-veh.fast{transition:left .3s ease-in,transform .3s ease-in,opacity .3s}.tk-veh.none{transition:none}
@@ -1615,13 +1626,11 @@ function dlvHTML(k){const Z=DLZ(),z=Z[k];return `<section class="dlv" aria-label
       <div class="dlv-more"><div><div class="dlv-steps"><div class="dlv-st"><i><svg viewBox="0 0 24 24">${I_BAG}</svg></i>Выкуп<br>в бутике</div><div class="dlv-st on"><i data-v>${z.free?svgVan():svgPlane()}</i><span data-sd>Отправка<br>${z.st}</span></div><div class="dlv-st"><i><svg viewBox="0 0 24 24">${I_HOME}</svg></i>У вас<br>дома</div></div></div></div>
       <div class="dlv-line"><span data-to>${z.to}</span><span class="dlv-pill ${z.free?"ok":""}" data-pl>${z.free?"бесплатно":"+ доставка"}</span></div>
     </div>
-    <div class="dlv-face dlv-back" aria-hidden="true"><div class="tk"><span class="tk-sh"></span>
-      <div class="tk-top"><div class="tk-pt"><span class="tk-logo">TB</span><small>Trend Büro</small></div>
-        <div class="tk-rt"><span class="tk-dash"></span><span class="tk-veh">${z.free?svgVan("#1f2125"):svgPlane("#1f2125")}</span></div>
-        <div class="tk-pt end"><span class="tk-code">${[...z.code].map(c=>"<span>"+c+"</span>").join("")}</span><small data-nm>${z.name}</small></div></div>
-      <div class="tk-bot"><div><span class="tk-k">Отправка</span><span class="tk-roll" data-days><span>${esc(z.days)}</span></span></div>
-        <div class="r"><span class="tk-k">Доставка</span><span class="tk-roll" data-cost>${z.free?'<span class="tk-free">бесплатно</span>':"<span>+ доставка</span>"}</span></div></div>
-      <div class="tk-ex">${tkExplain(k)}</div></div></div>
+    <div class="dlv-face dlv-back" aria-hidden="true"><div class="tkw"><div class="tk tk-main"><span class="tk-sh"></span>
+      <div class="tk-hd"><span class="tk-from">EU</span><div class="tk-rt"><span class="tk-dash"></span><span class="tk-veh">${z.free?svgVan("#1f2125"):svgPlane("#1f2125")}</span></div></div>
+      <div class="tk-row"><span class="tk-k">Отправка</span><span class="tk-roll" data-days><span>${esc(z.days)}</span></span></div>
+      <div class="tk-row"><span class="tk-k">Доставка</span><span class="tk-roll" data-cost>${z.free?'<span class="tk-free">бесплатно</span>':"<span>+ доставка</span>"}</span></div></div>
+      <div class="tk tk-stub"><span class="tk-k">Куда</span><span class="tk-code">${[...z.code].map(c=>"<span>"+c+"</span>").join("")}</span><small data-nm>${z.name}</small></div></div></div>
   </div></div>
   <div class="dlv-more dlv-fbw"><div><button class="dlv-fb" type="button" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4.5h-4.5"/></svg><span>Как работает доставка</span></button></div></div></section>`}
 function dlvMount(root,k,onChange){
@@ -1644,9 +1653,9 @@ function dlvMount(root,k,onChange){
     root.querySelectorAll("[data-dz]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.dz===k)));
     $q("[data-v]").innerHTML=z.free?svgVan():svgPlane();$q("[data-sd]").innerHTML="Отправка<br>"+z.st;$q("[data-to]").textContent=z.to;
     const pl=$q("[data-pl]");pl.className="dlv-pill"+(z.free?" ok":"");pl.textContent=z.free?"бесплатно":"+ доставка";
-    $q("[data-nm]").textContent=z.name;const ex=$q(".tk-ex");
-    if(back){drive(z,false);setTimeout(()=>flap(z.code),RMo()?0:180);setTimeout(()=>{roll($q("[data-days]"),"<span>"+esc(z.days)+"</span>");roll($q("[data-cost]"),z.free?'<span class="tk-free">бесплатно</span>':"<span>+ доставка</span>");ex.style.opacity="0";setTimeout(()=>{ex.innerHTML=tkExplain(k);ex.style.opacity="1"},RMo()?0:220)},RMo()?0:260);if(!RMo())setTimeout(()=>restart(sh,"go"),330)}
-    else{setCode(z.code);veh.innerHTML=z.free?svgVan("#1f2125"):svgPlane("#1f2125");$q("[data-days]").innerHTML="<span>"+esc(z.days)+"</span>";$q("[data-cost]").innerHTML=z.free?'<span class="tk-free">бесплатно</span>':"<span>+ доставка</span>";ex.innerHTML=tkExplain(k)}
+    $q("[data-nm]").textContent=z.name;
+    if(back){drive(z,false);setTimeout(()=>flap(z.code),RMo()?0:180);setTimeout(()=>{roll($q("[data-days]"),"<span>"+esc(z.days)+"</span>");roll($q("[data-cost]"),z.free?'<span class="tk-free">бесплатно</span>':"<span>+ доставка</span>")},RMo()?0:260);if(!RMo()){restart($q(".tk-stub"),"tear");setTimeout(()=>restart(sh,"go"),330)}}
+    else{setCode(z.code);veh.innerHTML=z.free?svgVan("#1f2125"):svgPlane("#1f2125");$q("[data-days]").innerHTML="<span>"+esc(z.days)+"</span>";$q("[data-cost]").innerHTML=z.free?'<span class="tk-free">бесплатно</span>':"<span>+ доставка</span>"}
     onChange(k)};
   root.querySelectorAll("[data-dz]").forEach(b=>b.onclick=()=>setK(b.dataset.dz));
   fb.onclick=()=>{back=!back;inn.classList.toggle("on",back);fb.setAttribute("aria-pressed",String(back));fb.querySelector("span").textContent=back?"Назад":"Как работает доставка";
