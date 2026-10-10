@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-10-live-v20">
+<meta name="trendburo-build" content="2026-10-10-live-v21">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -999,7 +999,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
       <div class="announce" id="announce" hidden></div>
       <div class="stories" id="stories"></div>
       <div class="bnr" id="bnr" hidden></div>
-      <div class="ship"><div><small id="shipTitle">Ближайшая отправка в Украину</small><b id="shipDate"></b></div><span class="pulse" aria-hidden="true"></span></div>
+      <div class="ship"><div><small id="shipTitle">Отправки в Украину</small><b id="shipDate"></b></div><span class="pulse" aria-hidden="true"></span></div>
       <button class="o-entry press" data-act="tab" data-tab="optix" aria-label="Открыть OPTIX" hidden>
         <span class="o-entry-art" id="oEntryArt"></span>
         <span class="o-entry-tx"><span class="cap">Наш продукт</span><span class="wordmark">OPTIX</span><span class="o-entry-sub">Солнцезащитные очки под заказ</span>
@@ -1084,13 +1084,13 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
         <div class="steps4">
           <div><b data-t="how.1.t">Выбор</b><span data-t="how.1.d">В приложении, сторис или на сайте бренда</span></div>
           <div><b data-t="how.2.t">Сообщение</b><span data-t="how.2.d">Менеджеру в Telegram или в Direct</span></div>
-          <div><b data-t="how.3.t">Выкуп</b><span data-t="how.3.d">Германия, Париж, Милан, Вена, онлайн</span></div>
-          <div><b data-t="how.4.t">Доставка</b><span>Украина <span data-wd>по пятницам</span>, Европа и Дубай</span></div>
+          <div><b data-t="how.3.t">Выкуп</b><span data-t="how.3.d">Бутики Европы и онлайн</span></div>
+          <div><b data-t="how.4.t">Доставка</b><span>Украина — <span data-wd>дважды в неделю</span>, Европа и Дубай</span></div>
         </div></div>
       <div class="sec"><div class="sech"><h2 data-t="price.title">Цена и доставка</h2></div>
         <div class="cells">
           <div class="cell"><div><span data-t="price.1.t">Цена в приложении</span><small data-t="price.1.d">Уже включает выкуп, упаковку и комплимент к заказу</small></div></div>
-          <div class="cell"><div><span data-t="price.2.t">Доставка в Украину</span><small>Уже включена в цену, посылка <span data-wd2>каждую пятницу</span></small></div></div>
+          <div class="cell"><div><span data-t="price.2.t">Доставка в Украину</span><small>Бесплатно, отправка <span data-wd2>дважды в неделю</span></small></div></div>
           <div class="cell"><div><span data-t="price.3.t">Доставка по Европе</span><small data-t="price.3.d">По тарифу перевозчика</small></div></div>
           <div class="cell"><div data-t="price.4.t">Дубай</div><span class="v" data-t="price.4.v">по запросу</span></div>
         </div></div>
@@ -1349,14 +1349,14 @@ function toggleFav(id){const isO=id[0]==="o",S=isO?ofavs:favs;S.has(id)?S.delete
 
 function pcHTML(p,i=0){const r=p.id[0]==="r";return `<button class="pc press" data-act="product" data-id="${p.id}" style="--c:${p.c};--i:${i}">
   <div class="art s-${p.shape}">${p.sale?`<span class="salb">−${p.sale}%</span>`:p.st?`<span class="stk"><span class="gdot"></span>В наличии</span>`:p.isNew?'<span class="newb">Новинка</span>':r?`<span class="newb">${esc(p.cond)}</span>`:""}<span class="fav" role="button" tabindex="0" data-fav="${p.id}" aria-label="В избранное" aria-pressed="${favs.has(p.id)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span>${shapeSVG(p.shape,p.c)}</div>
-  <div class="m"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span><span class="pr"><span class="p num">${eur(r?p.price:priceFor(p,prefs.dest||"ua"))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[prefs.dest||"ua"]??p.oldPrices.ua)}</s>`:""}</span><span class="ct">${r?"проверено":p.st?p.st.city:CITIES[p.city]}</span></span></div></button>`}
+  <div class="m"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span><span class="pr"><span class="p num">${eur(r?p.price:priceFor(p,prefs.dest||"ua"))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[prefs.dest||"ua"]??p.oldPrices.ua)}</s>`:""}</span><span class="ct">${r?"проверено":p.st?p.st.city:""}</span></span></div></button>`}
 
 /* ===== Лента ===== */
 let seen=new Set(store.get("tb_seen",[]));
 const STORY_BRANDS=["chanel","hermes","lv","dior","prada","bv","therow","loewe","alaia","lp","cartier"];
 function renderFeed(){
   $("#dateLine").textContent=new Date().toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long"});
-  $("#shipDate").textContent=nextFriday();
+  $("#shipDate").textContent=SHIPF().replace(/^./,c=>c.toUpperCase())+" · бесплатно";
   const bst=!LIVE||!CMS.site||CMS.site.brandStories;
   $("#stories").innerHTML=cStoriesHTML()+(bst?STORY_BRANDS:[]).map(k=>{const n=BRANDS.find(b=>b[0]===k)[1];return `<button class="story press ${seen.has(k)?"seen":""}" data-act="story" data-bk="${k}"><span class="ring"><span>${initials(n)}</span></span><small>${esc(n)}</small></button>`}).join("");
   if(LIVE)renderCNews();else{
@@ -1525,7 +1525,7 @@ function popAll(){while(stack.length){const s=stack.pop();s.remove()}$$(".behind
 
 /* ===== Товар ===== */
 function quote(base,d){const rows=[["Стоимость",base]];let t=base;
-  if(d==="ua")rows.push(["Доставка в Украину","включена"]);
+  if(d==="ua")rows.push(["Доставка в Украину","бесплатно"]);
   if(d==="eu")rows.push(["Доставка по Европе","по тарифу"]);
   if(d==="dxb")rows.push(["Доставка в Дубай","по запросу"]);return{rows,t}}
 const rowsHTML=q=>q.rows.map(r=>`<div class="row"><span>${r[0]}</span><span class="num">${typeof r[1]==="number"?eur(r[1]):r[1]}</span></div>`).join("");
@@ -1570,7 +1570,7 @@ function pinchZoom(box,img,gal){
   box.addEventListener("touchend",e=>{if(e.touches.length===0){if(s<1.05){s=1;tx=ty=0}clamp();set(true);st=null}else if(e.touches.length===1&&s>1.001){st={k:"pan",x:e.touches[0].clientX,y:e.touches[0].clientY,tx,ty}}});
 }
 /* ===== Доставка в карточке: лицевая сторона — три шага, оборот — билет с объяснением ===== */
-let TX={};const tx=(k,d)=>TX[k]||d;
+let TX={};const tx=(k,d)=>TX[k]||d;const SHIPF=()=>tx("dl.ua.days","дважды в неделю");
 const RMo=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
 const hap=t=>{try{const h=TGW&&TGW.HapticFeedback;if(h){t?h.impactOccurred(t):h.selectionChanged()}}catch(e){}};
 const PLANE_R='<path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" transform="rotate(90 12 12)"/>';
@@ -1704,7 +1704,7 @@ function orderSheet(title,msg,meta){meta=meta||{kind:kindFor(title)};
 function openNews(id){const n=NEWS.find(x=>x.id===id),p=P.find(x=>x.id===n.pid),bn=BRANDS.find(b=>b[0]===n.bk)[1];
   const more=P.filter(x=>x.bk===n.bk&&x.id!==p.id);
   push(bn,`<div class="hero-art" style="--c:${p.c}">${shapeSVG(p.shape,p.c,"")}</div><div class="pbody"><div><span class="cap">${esc(bn)} · ${n.tag} · ${n.when}</span><h2 style="margin-top:6px">${esc(n.title)}</h2></div><p style="font-size:16px;color:var(--g2)">${esc(n.text)}</p>
-   <div class="group" style="flex-direction:row;align-items:center;gap:12px"><div style="flex:1;min-width:0"><b style="font-weight:600">${esc(p.name)}</b><div class="muted num" style="font-size:13.5px">${eur(p.price)} · ${CITIES[p.city]}</div></div><button class="btn sm" data-act="product" data-id="${p.id}">Смотреть</button></div></div>
+   <div class="group" style="flex-direction:row;align-items:center;gap:12px"><div style="flex:1;min-width:0"><b style="font-weight:600">${esc(p.name)}</b><div class="muted num" style="font-size:13.5px">${eur(p.price)}</div></div><button class="btn sm" data-act="product" data-id="${p.id}">Смотреть</button></div></div>
    ${more.length?`<div class="sec"><div class="sech"><h2>Ещё ${esc(bn)}</h2></div><div class="hrail">${more.map(pcHTML).join("")}</div></div>`:""}`,{clear:true})}
 /* ===== Бренды ===== */
 const bname=bk=>BRANDS.find(b=>b[0]===bk)[1];
@@ -1759,7 +1759,7 @@ function openIcon(id){const ic=ICONS.find(x=>x.id===id);if(!ic)return;const bn=b
     <div class="seg dark" role="group" aria-label="Доставка">${[["ua","Украина"],["eu","Европа"],["dxb","Дубай"]].map(([k,v])=>`<button data-d="${k}" aria-pressed="${k===d}">${dIcon(k,15)}${v}</button>`).join("")}</div>
     <div class="trust">
       <div><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="8.5"/></svg><span>${ic.wait?"Продаётся через лист ожидания бутика — менеджер расскажет, как получить и сколько ждать":"Нет в витрине — найдём в бутиках Европы или закажем на сайте бренда"}</span></div>
-      <div>${d==="ua"?`<svg viewBox="0 0 24 24" style="stroke-linecap:round">${I_VAN}</svg>`:`<svg viewBox="0 0 24 24" style="fill:#fff;stroke:none">${I_PLANE}</svg>`}<span>${d==="ua"?"Отправка в Украину — "+WD_PL[SHIP_WD]:d==="eu"?"Доставка по Европе — по тарифу перевозчика":"Доставка в Дубай — стоимость назовёт менеджер"}</span></div>
+      <div>${d==="ua"?`<svg viewBox="0 0 24 24" style="stroke-linecap:round">${I_VAN}</svg>`:`<svg viewBox="0 0 24 24" style="fill:#fff;stroke:none">${I_PLANE}</svg>`}<span>${d==="ua"?"Отправка в Украину — "+SHIPF():d==="eu"?"Доставка по Европе — по тарифу перевозчика":"Доставка в Дубай — стоимость назовёт менеджер"}</span></div>
       <div><svg viewBox="0 0 24 24"><path d="M4 12h16M12 4v16" style="display:none"/><path d="M5 7h14M5 12h14M5 17h9"/></svg><span>Цена — ориентир, точную назовёт менеджер</span></div>
     </div>`;
     s.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{d=b.dataset.d;draw()});
@@ -1847,7 +1847,7 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
   const cats=[...new Set(all.map(p=>p.cat))],gs=[...new Set(all.map(p=>p.g))];
   const s=push(bn,`<div class="bhero" style="--c:${lead.c}"><span class="gl">${lightShape(lead.shape,lead.c)}</span>
      <span class="cap">${BRAND_META[bk]||""}</span><h1>${esc(bn)}</h1>
-     <div class="meta num"><span>${all.length} ${plural(all.length,["товар","товара","товаров"])}</span><span>от ${eur(Math.min(...all.map(p=>p.price)))}</span>${all.some(p=>p.isNew)?`<span>${all.filter(p=>p.isNew).length} новинки</span>`:""}<span>Выкуп: ${[...new Set(all.map(p=>CITIES[p.city]))].join(", ")}</span>${ICONS.some(ic=>ic.bk===bk)?`<span>${ICONS.filter(ic=>ic.bk===bk).length} моделей под заказ</span>`:""}</div>
+     <div class="meta num"><span>${all.length} ${plural(all.length,["товар","товара","товаров"])}</span><span>от ${eur(Math.min(...all.map(p=>p.price)))}</span>${all.some(p=>p.isNew)?`<span>${all.filter(p=>p.isNew).length} новинки</span>`:""}${ICONS.some(ic=>ic.bk===bk)?`<span>${ICONS.filter(ic=>ic.bk===bk).length} моделей под заказ</span>`:""}</div>
      <div class="acts"><button class="btn sm follow" data-follow aria-pressed="${follows.has(bk)}">${follows.has(bk)?"Вы следите":"Следить"}</button><button class="btn sm soft" data-req>Найти модель</button></div></div>
    ${ICONS.some(ic=>ic.bk===bk)?`<div class="sec"><div class="sech"><h2>Культовые модели</h2><span class="muted" style="font-size:13px">под заказ</span></div><div class="hrail">${ICONS.filter(ic=>ic.bk===bk).map(icHTML).join("")}</div></div>`:""}
    <div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>В витрине сейчас</h2></div></div>
@@ -1875,7 +1875,7 @@ function openStory(bk){
   const order=STORY_BRANDS.slice(STORY_BRANDS.indexOf(bk));let bi=0,i=0,timer=null;
   sv=document.createElement("div");sv.className="sv";sv.setAttribute("role","dialog");$("#app").append(sv);
   const slides=k=>{const bn=BRANDS.find(b=>b[0]===k)[1];const nw=NEWS.filter(n=>n.bk===k).map(n=>({p:P.find(x=>x.id===n.pid),cap:n.tag,title:n.title,text:n.text}));
-    const items=P.filter(p=>p.bk===k).sort((a,b)=>b.isNew-a.isNew).slice(0,3).map(p=>({p,cap:p.isNew?"Новинка":CATS[p.cat],title:p.name,text:eur(p.price)+" · выкуп: "+CITIES[p.city]}));return{bn,list:[...nw,...items].slice(0,4)}};
+    const items=P.filter(p=>p.bk===k).sort((a,b)=>b.isNew-a.isNew).slice(0,3).map(p=>({p,cap:p.isNew?"Новинка":CATS[p.cat],title:p.name,text:eur(p.price)}));return{bn,list:[...nw,...items].slice(0,4)}};
   const show=()=>{const k=order[bi],S=slides(k),sl=S.list[i];seen.add(k);store.set("tb_seen",[...seen]);
     sv.innerHTML=`<div class="bars">${S.list.map((_,j)=>`<i class="${j<i?"done":j===i?"run":""}"><b></b></i>`).join("")}</div>
     <div class="hd"><span class="av">${initials(S.bn)}</span><b>${esc(S.bn)}</b><small>${esc(sl.cap)}</small><button aria-label="Закрыть" data-x>×</button></div>
@@ -1979,7 +1979,7 @@ function openCart(){let d=prefs.dest||"ua",done=null;
      ${bnFor("cart").length?`<div class="cbwrap" style="margin-top:14px"><div class="cbstack">${bnFor("cart").slice(0,2).map(cbHTML).join("")}</div></div>`:""}
      <div class="sec"><div class="sech"><h2>Доставка</h2></div><div class="pad"><div class="seg" role="group" aria-label="Доставка">${[["ua","Украина"],["eu","Европа"],["dxb","Дубай"]].map(([k,v])=>`<button data-d="${k}" aria-pressed="${k===d}">${dIcon(k,15)}${v}</button>`).join("")}</div></div></div>
      <div class="pad" style="margin-top:14px"><div class="group">${rowsHTML(q)}<div class="row tot"><span>Итого</span><span class="num">${eur(q.t)}${d!=="ua"?" +":""}</span></div></div>
-     <p class="muted" style="font-size:13px;margin-top:10px">${d==="ua"?"Доставка в Украину уже в цене, отправка — "+nextFriday()+". ":d==="eu"?"Доставка по Европе — по тарифу перевозчика, рассчитает менеджер. ":"Стоимость доставки в Дубай менеджер назовёт до выкупа. "}Менеджер подтвердит наличие и размеры до выкупа.</p></div><div style="height:100px"></div>`;
+     <p class="muted" style="font-size:13px;margin-top:10px">${d==="ua"?"Доставка в Украину бесплатно, отправка "+SHIPF()+" — точную дату менеджер укажет в заказе. ":d==="eu"?"Доставка по Европе — по тарифу перевозчика, рассчитает менеджер. ":"Стоимость доставки в Дубай менеджер назовёт до выкупа. "}Менеджер подтвердит наличие и размеры до выкупа.</p></div><div style="height:100px"></div>`;
     s.querySelector("#cft").textContent=eur(q.t)+(d!=="ua"?" +":"");
     box.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{d=b.dataset.d;draw()});
     box.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{const it=items[+b.dataset.rm];cart=cart.filter(c=>!(c.id===it.id&&c.size===it.size&&(c.color||"")===(it.color||"")));store.set("tb_cart",cart);updateCounts();draw()});
@@ -2138,7 +2138,7 @@ const SUGG=["Ужин в Милане","Капсула на неделю в Па
 $("#sugg").innerHTML=SUGG.map(s=>`<button type="button" class="chip" data-s="${s}">${s}</button>`).join("");
 $("#sugg").addEventListener("click",e=>{const b=e.target.closest("[data-s]");if(b){$("#chatIn").value=b.dataset.s;$("#composer").requestSubmit()}});
 function rules(){const g=$("#stG").value;const cat=P.filter(p=>p.g===g).map(p=>`${p.id}|${p.brand}|${p.name}|${CATS[p.cat]}|${p.price}€`).join("\n");
-  return `Ты — личный стилист байер-сервиса Trend Büro (выкуп люксовых вещей в Европе, доставка в Украину ${WD_PL[SHIP_WD]}). Отвечай по-русски, спокойно и по делу, без восклицаний и громких слов.
+  return `Ты — личный стилист байер-сервиса Trend Büro (выкуп люксовых вещей в Европе, доставка в Украину ${SHIPF()}). Отвечай по-русски, спокойно и по делу, без восклицаний и громких слов.
 Клиент: ${g==="w"?"женщина":"мужчина"}; стиль: ${$("#stStyle").value}; бюджет на образ: ${+$("#stBudget").value||0} €.
 Собирай образ из витрины ниже. Каждую вещь из витрины обозначай кодом в квадратных скобках, например [p5]. Уложись в бюджет и назови итоговую сумму. Если в витрине чего-то нет (платье, брюки), посоветуй, что поискать, и предложи заказать через менеджера. Не выдумывай наличие и цены вне витрины. До 150 слов, без markdown.
 Витрина (код|бренд|модель|категория|цена):
@@ -2271,7 +2271,7 @@ function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);applyTheme(
   if(s.contacts&&s.contacts.length){CONTACTS.length=0;CONTACTS.push(...s.contacts)}
   if([0,1,2,3,4,5,6].includes(s.shipWeekday))SHIP_WD=s.shipWeekday;
   if(s.optix&&s.optix.url)OPTIX_LINK=s.optix.url;
-  $$("[data-wd]").forEach(e=>e.textContent=WD_PL[SHIP_WD]);$$("[data-wd2]").forEach(e=>e.textContent=WD_EACH[SHIP_WD]);
+  $$("[data-wd],[data-wd2]").forEach(e=>e.textContent=SHIPF());
   const an=$("#announce");if(an){an.hidden=!(s.announce&&s.announce.on&&s.announce.text);an.textContent=s.announce?s.announce.text:""}
   const oe=$(".o-entry");if(oe)oe.hidden=true;if(s.optix)OPTIX_ON=s.optix.on!==false;
 }

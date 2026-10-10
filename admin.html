@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-09-admin-v17">
+<meta name="trendburo-build" content="2026-10-10-admin-v18">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1770,7 +1770,7 @@ async function vSite(tabs) {
     $("#main").innerHTML = head("Витрина", "Общие настройки приложения") + tabs + `
     <div class="card pad form" style="max-width:760px">
       <h3 style="margin:0">Отправка в Украину</h3>
-      <label class="f">День отправки<select id="sWd">${WD.map(([k, v]) => `<option value="${k}" ${site.shipWeekday === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+      <p class="hint" style="margin:0">Как часто отправка в Украину — в разделе «Тексты» → «Доставка в карточке». Дату отправки конкретного заказа менеджер ставит в самом заказе.</p>
       <h3 style="margin:10px 0 0">Объявление вверху «Ленты»</h3>
       <label class="toggle"><input type="checkbox" id="sAnOn" ${site.announce.on ? "checked" : ""}>Показывать</label>
       <label class="f">Текст<input type="text" id="sAn" value="${esc(site.announce.text)}" maxlength="140" placeholder="Например: до 5 октября доставка в Украину бесплатно"></label>
@@ -1805,7 +1805,7 @@ async function vSite(tabs) {
     if (t.id === "sCadd") { contacts = readC(); contacts.push({ label: "", handle: "", url: "" }); return draw(); }
     if (t.dataset.cdel) { contacts = readC(); contacts.splice(+t.dataset.cdel, 1); return draw(); }
     if (t.id === "sSave") {
-      const s = { shipWeekday: +$("#sWd").value, announce: { on: $("#sAnOn").checked, text: $("#sAn").value }, optix: { on: $("#sOptix").checked, url: $("#sOptixUrl").value }, stockBlock: $("#sStock").checked, brandStories: $("#sBrandSt").checked, contacts: readC(), theme };
+      const s = { shipWeekday: site.shipWeekday, announce: { on: $("#sAnOn").checked, text: $("#sAn").value }, optix: { on: $("#sOptix").checked, url: $("#sOptixUrl").value }, stockBlock: $("#sStock").checked, brandStories: $("#sBrandSt").checked, contacts: readC(), theme };
       try { const r = await api("siteSave", { method: "POST", body: { site: { ...site, ...s, feed: (site.feed || []).map(b => b.id === "announce" ? { ...b, on: s.announce.on } : b.id === "optix" ? { ...b, on: s.optix.on } : b.id === "stock" ? { ...b, on: s.stockBlock } : b) } } }); Object.assign(site, r.site); contacts = r.site.contacts; toast("Сохранено"); draw(); } catch (err) { toast(err.message); }
     }
   };
@@ -2167,7 +2167,7 @@ async function vShow(sub) {
     announce: site.announce.text ? `«${site.announce.text}»` : "текст не задан — нажмите, чтобы написать",
     stories: stories.length ? `${act(stories)} из ${stories.length} показываются${site.brandStories ? " · + кружки брендов" : ""}` : site.brandStories ? "своих нет — показываются кружки брендов" : "пока нет",
     banners: banners.length ? `${act(banners)} из ${banners.length} показываются` : "пока нет — добавьте первый",
-    ship: `«${site.feed.find(b => b.id === "ship").title}» · ${WD_RU[site.shipWeekday]}`,
+    ship: `«${site.feed.find(b => b.id === "ship").title}»`,
     optix: site.optix.url.replace("https://", ""),
     stock: "считается само из товаров с отметкой «в наличии»",
     news: news.length ? `«${site.feed.find(b => b.id === "news").title}» · ${act(news)} из ${news.length}` : "пока нет",
@@ -2192,7 +2192,7 @@ async function vShow(sub) {
     const titleField = b.title !== undefined ? `<label class="f">Заголовок блока на витрине<input type="text" id="bTitle" value="${esc(b.title)}" maxlength="60"></label>` : "";
     let body = "", after = null;
     if (id === "announce") body = `<label class="f">Текст объявления<textarea id="bText" maxlength="140" style="min-height:90px" placeholder="Например: до 10 октября доставка в Украину бесплатно">${esc(site.announce.text)}</textarea></label>`;
-    else if (id === "ship") body = titleField + `<label class="f">День отправки в Украину<select id="bWd">${[1, 2, 3, 4, 5, 6, 0].map(k => `<option value="${k}" ${site.shipWeekday === k ? "selected" : ""}>${WD_RU[k]}</option>`).join("")}</select></label><p class="hint" style="margin:0">День меняется во всех текстах витрины, где написано «по пятницам».</p>`;
+    else if (id === "ship") body = titleField + `<p class="hint" style="margin:0">Показывает «дважды в неделю · бесплатно». Частоту меняйте в «Тексты» → «Доставка в карточке».</p>`;
     else if (id === "optix") body = `<label class="f">Ссылка на OPTIX<input type="text" id="bUrl" value="${esc(site.optix.url)}"></label>`;
     else if (id === "news" || id === "follow") body = titleField;
     const d = sheet(NAME[id], `<div class="form">${body}<label class="toggle"><input type="checkbox" id="bOn" ${b.on ? "checked" : ""}>Показывать на витрине</label>
