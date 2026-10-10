@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-10-live-v25">
+<meta name="trendburo-build" content="2026-10-10-live-v26">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -391,6 +391,8 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero.ph .pv-gal img{display:block;width:100%;height:100%;max-height:none;object-fit:cover;object-position:50% 50%;box-sizing:border-box;padding:0;mix-blend-mode:normal;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
 .pv-hero.ph .pv-dots{bottom:46px;left:50%;right:auto;transform:translateX(-50%);padding:6px 9px;border-radius:99px;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .navbar.clear .round{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.intg .navbar.clear [data-back]{visibility:hidden}
+.navbar.clear .dotn{box-shadow:0 0 0 2px #fff}
 .pv-hero.ph .newp{left:18px;transform:none;top:calc(var(--st) + 60px);z-index:2}
 .pv-hero.ph .pv-n{position:absolute;right:18px;top:calc(var(--st) + 60px);z-index:2;font-size:11px;font-weight:600;background:rgba(255,255,255,.9);padding:4px 9px;border-radius:99px;color:var(--fg)}
 .zv{position:fixed;inset:0;z-index:90;background:#fff;display:flex;flex-direction:column;opacity:0;transition:opacity .25s}
@@ -441,7 +443,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .foot.dark .fv[aria-pressed="true"] svg{fill:#fff}
 .foot.dark .btn{flex:1;background:#fff;color:var(--fg);box-shadow:none}
 .accent .foot.dark .btn{background:#fff;color:var(--fg)}
-.foot.dark.glass{background:linear-gradient(180deg,rgba(24,25,28,0) 0,rgba(24,25,28,.86) 42%);border-top:0}
+.foot.dark.glass{background:linear-gradient(180deg,rgba(28,30,33,0) 0,rgba(28,30,33,.94) 24%);border-top:0}
 .foot.dark.glass .btn{background:rgba(255,255,255,.75);color:var(--fg);-webkit-backdrop-filter:blur(28px) saturate(1.6);backdrop-filter:blur(28px) saturate(1.6);box-shadow:0 10px 28px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.7);transition:transform .2s,background .3s}
 .foot.dark.glass .fv{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
 .foot.dark.glass .btn .bl{display:inline-block;transition:opacity .2s,transform .25s}
