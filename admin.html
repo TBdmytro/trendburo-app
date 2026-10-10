@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-10-admin-v18">
+<meta name="trendburo-build" content="2026-10-10-admin-v19">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -592,6 +592,13 @@ body:has(.sv) .tglogo,body:has(.splash) .tglogo{opacity:0}
 .ccat{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;font-size:13.5px;font-weight:600}
 .ccat input{width:30px;height:30px;border:0;padding:0;background:none;border-radius:8px}
 .badgebox{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:14px;background:var(--soft, #f4f5f6)}
+.fcols{display:flex;flex-direction:column;gap:10px}
+.fcol{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fcol input{flex:1;min-width:160px;max-width:260px}
+.fcimgs{display:flex;gap:6px;flex-wrap:wrap}
+.fcimgs button{width:46px;height:46px;border-radius:10px;border:2px solid transparent;padding:0;overflow:hidden;background:var(--soft)}
+.fcimgs button[aria-pressed="true"]{border-color:var(--fg)}
+.fcimgs img{width:100%;height:100%;object-fit:cover}
 </style>
 </head>
 <body>
@@ -947,10 +954,15 @@ function readPrefill() {
 const BRAND_LIST = ["Louis Vuitton", "Dior", "Gucci", "Hermès", "Chanel", "Prada", "Miu Miu", "Bottega Veneta", "Saint Laurent", "Celine", "Loewe", "The Row", "Balenciaga", "Fendi", "Valentino", "Cartier", "Loro Piana", "Brunello Cucinelli"];
 const SIZE_PRESETS = { clothing: ["XS", "S", "M", "L", "XL"], shoes: ["35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45"], jewelry: ["15", "16", "17", "18"] };
 async function vAdd(editId) {
-  const F = { id: null, brand: "", title: "", category: "bags", gender: "w", boutique: "", sizes: [], color: "", availability: "online", images: [], url: "", status: "published", stock: { loc: "", city: "", size: "" } };
+  const F = { id: null, brand: "", title: "", category: "bags", gender: "w", boutique: "", sizes: [], color: "", colors: [], availability: "online", images: [], url: "", status: "published", stock: { loc: "", city: "", size: "" } };
   if (editId) {
     const { product: p } = await api("product", { query: { id: editId } });
     Object.assign(F, { id: p._id, brand: p.brand, title: p.title, category: p.category, gender: p.gender, boutique: p.offers?.[0]?.boutique || "", sizes: p.sizes || [], color: (p.colors || [])[0] || "", availability: Object.values(p.offers?.[0]?.availability || {})[0]?.status || "online", images: (p.images || []).map(i => i.url), url: p.sourceUrl || "", stock: { loc: p.stock?.loc || "", city: p.stock?.city || "", size: p.stock?.size || "" } });
+  }
+  if (editId && !F.colors.length) {
+    const { product: p0 } = await api("product", { query: { id: editId } });
+    const m = new Map(); (p0.variants || []).forEach(v => { if (v.color && !m.has(v.color)) m.set(v.color, v.images?.[0]?.url || ""); });
+    if (m.size > 1) F.colors = [...m].map(([name, image]) => ({ name, image }));
   }
   const pre = !editId && readPrefill();
   if (pre) Object.assign(F, pre);
@@ -975,7 +987,9 @@ async function vAdd(editId) {
         <div style="flex:2;min-width:240px" class="hint" id="fCalc">Наша цена появится здесь</div></div>
       <div><h3 style="margin-bottom:10px">Размеры <span class="hint" style="font-weight:400">если есть</span></h3><div class="chips" id="fSizes"></div>
         <div class="row" style="margin-top:10px"><input type="text" id="fSizeIn" placeholder="Свой размер, например 38.5" style="max-width:240px"><button class="btn ghost sm" id="fSizeAdd">Добавить</button></div></div>
-      <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:180px">Цвет<input type="text" id="fColor" value="${esc(F.color)}" placeholder="Monogram, Black…"></label>
+      <div><h3 style="margin-bottom:4px">Цвета</h3><p class="hint" style="margin:0 0 10px">Один цвет — просто впишите название. Несколько — добавьте каждый и нажмите на его фото: клиент выберет цвет, и галерея перелистнётся на это фото.</p>
+        <div id="fColors" class="fcols"></div><button class="btn ghost sm" id="fColAdd" style="margin-top:8px">+ Добавить цвет</button></div>
+      <div class="row" style="align-items:flex-end">
         <label class="f" style="flex:2;min-width:240px">Ссылка на товар у бренда <span class="hint" style="font-weight:400">для менеджера, клиенту не видна</span><input type="text" id="fUrl" value="${esc(F.url)}" placeholder="https://…"></label></div>
       <div><h3 style="margin-bottom:10px">Наличие</h3><div class="seg" id="fAv">${[["online", "Можно заказать"], ["boutique", "Уточнить наличие"], ["out", "Нет в наличии"]].map(([k, v]) => `<button data-fav="${k}" aria-pressed="${F.availability === k}">${v}</button>`).join("")}</div></div>
       <div><h3 style="margin-bottom:4px">Уже выкуплено, лежит у нас</h3><p class="hint" style="margin:0 0 10px">Товар попадёт в блок «В наличии» с быстрой доставкой</p><div class="seg" id="fSt">${[["", "Нет"], ["ua", "В Украине"], ["eu", "В Европе"]].map(([k, v]) => `<button data-fst="${k}" aria-pressed="${F.stock.loc === k}">${v}</button>`).join("")}</div>
@@ -991,7 +1005,9 @@ async function vAdd(editId) {
       if (u) return `<div class="slot has">${i === 0 ? '<span class="tag">обложка</span>' : ""}<img src="${esc(u)}" alt=""><div class="ctl">${i ? `<button data-left="${i}" aria-label="Левее">←</button>` : ""}<button data-rm="${i}" aria-label="Убрать">×</button></div></div>`;
       return `<div class="slot" data-pick>${busy && i === F.images.length ? '<span class="spin"></span>Загружаем…' : `${svg("img")}<span>${i === 0 ? "Главное фото" : "Фото " + (i + 1)}</span>`}</div>`;
     }).join("");
+    if (typeof drawColorsSafe === "function" && $("#fColors")) drawColorsSafe();
   };
+  const drawColorsSafe = () => { try { drawColors(); } catch {} };
   const drawSizes = () => {
     const preset = SIZE_PRESETS[F.category] || [];
     const all = [...new Set([...preset, ...F.sizes])];
@@ -1023,10 +1039,18 @@ async function vAdd(editId) {
       busy--; drawSlots(); drawPrev();
     }
   };
-  drawSlots(); drawSizes(); drawPrev(); calc();
+  if (!F.colors.length) F.colors = [{ name: F.color || "", image: F.images[0] || "" }];
+  const drawColors = () => {
+    $("#fColors").innerHTML = F.colors.map((c, i) => `<div class="fcol"><input type="text" data-cn="${i}" value="${esc(c.name)}" placeholder="${i ? "Ещё цвет, напр. Ebène" : "Monogram, Black…"}">
+      ${F.colors.length > 1 ? `<div class="fcimgs">${F.images.length ? F.images.map(u => `<button type="button" data-cimg="${i}" data-u="${esc(u)}" aria-pressed="${c.image === u}" aria-label="Фото цвета"><img src="${esc(u)}" alt=""></button>`).join("") : '<span class="hint">сначала загрузите фото</span>'}</div><button type="button" class="btn soft sm" data-crm="${i}" aria-label="Убрать цвет">×</button>` : ""}</div>`).join("");
+  };
+  drawSlots(); drawSizes(); drawColors(); drawPrev(); calc();
   if ($("#bmk")) { $("#bmk").href = BOOKMARKLET; $("#bmk").onclick = e => { e.preventDefault(); toast("Перетащите кнопку на панель закладок браузера"); }; }
   const main = $("#main");
   main.onclick = e => {
+    { const b = e.target.closest("[data-cimg],[data-crm],#fColAdd");
+      if (b) { if (b.id === "fColAdd") { if (F.colors[0] && !F.colors[0].image) F.colors[0].image = F.images[0] || ""; } if (b.id === "fColAdd") F.colors.push({ name: "", image: F.images[Math.min(F.colors.length, F.images.length - 1)] || "" }); else if (b.dataset.crm) F.colors.splice(+b.dataset.crm, 1); else F.colors[+b.dataset.cimg].image = b.dataset.u;
+        drawColors(); if (b.id === "fColAdd") $(`[data-cn="${F.colors.length - 1}"]`)?.focus(); return; } }
     const t = e.target.closest("[data-pick],[data-rm],[data-left],[data-fcat],[data-fg],[data-fav],[data-fst],[data-fsz],[data-shot],button"); if (!t) return;
     if ("pick" in t.dataset) return $("#fpick").click();
     if (t.dataset.rm) { F.images.splice(+t.dataset.rm, 1); shot = 0; drawSlots(); return drawPrev(); }
@@ -1043,7 +1067,7 @@ async function vAdd(editId) {
   };
   main.oninput = e => {
     const id = e.target.id;
-    if (id === "fBrand") F.brand = e.target.value; else if (id === "fTitle") F.title = e.target.value; else if (id === "fColor") F.color = e.target.value; else if (id === "fUrl") F.url = e.target.value; else if (id === "fStCity") F.stock.city = e.target.value; else if (id === "fStSize") F.stock.size = e.target.value;
+    if (id === "fBrand") F.brand = e.target.value; else if (id === "fTitle") F.title = e.target.value; else if (e.target.dataset.cn !== undefined) F.colors[+e.target.dataset.cn].name = e.target.value; else if (id === "fUrl") F.url = e.target.value; else if (id === "fStCity") F.stock.city = e.target.value; else if (id === "fStSize") F.stock.size = e.target.value;
     else if (id === "fPrice") { F.boutique = e.target.value; calc(); }
     if (["fBrand", "fTitle"].includes(id)) drawPrev();
   };
@@ -1057,7 +1081,8 @@ async function vAdd(editId) {
     if (busy) return toast("Подождите, фото ещё загружаются");
     const t = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
     try {
-      const { product } = await api("manualSave", { method: "POST", body: { ...F, status, boutique: Number(F.boutique) } });
+      const cl = F.colors.filter(c => c.name.trim()); F.color = cl[0]?.name.trim() || "";
+      const { product } = await api("manualSave", { method: "POST", body: { ...F, colors: cl.length > 1 ? cl : [], status, boutique: Number(F.boutique) } });
       toast(status === "draft" ? "Сохранено в черновик" : `На витрине: ${product.title} · ${eur(product.pricing?.ua)}`);
       if (editId) go("products"); else vAdd();
     } catch (err) { $("#fErr").textContent = err.message; btn.disabled = false; btn.textContent = t; }

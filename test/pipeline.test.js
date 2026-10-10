@@ -488,3 +488,17 @@ test("правки скидки чистятся: процент 1–90, лиш�
   assert.deepEqual(cleanOverride("sale", { pct: 10, until: "завтра" }), { pct: 10, until: null });
   assert.equal(cleanOverride("dims", "  50 ×   29 см "), "50 × 29 см");
 });
+
+test("ручной товар с несколькими цветами: у каждого цвета своё фото, витрина знает номер фото", async () => {
+  const { saveManualProduct } = await import("../lib/manual.js");
+  const store = new MemoryStore();
+  const imgs = ["https://cdn.sanity.io/a.jpg", "https://cdn.sanity.io/b.jpg", "https://cdn.sanity.io/c.jpg"];
+  const p = await saveManualProduct(store, { brand: "Louis Vuitton", title: "Mini Bastille", category: "bags", boutique: 1500, images: imgs,
+    colors: [{ name: "Black", image: imgs[0] }, { name: "Ebène", image: imgs[2] }] });
+  assert.deepEqual(p.colors, ["Black", "Ebène"]);
+  const sf = toStorefront({ ...p, status: "published" });
+  assert.equal(sf.colors.length, 2);
+  assert.equal(sf.colors[1].name, "Ebène"); assert.equal(sf.colors[1].idx, 2);
+  const one = await saveManualProduct(store, { brand: "Dior", title: "Saddle", category: "bags", boutique: 3000, images: imgs, color: "Blue" });
+  assert.deepEqual(one.colors, ["Blue"]);
+});

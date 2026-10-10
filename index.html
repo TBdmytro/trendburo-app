@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-10-live-v22">
+<meta name="trendburo-build" content="2026-10-10-live-v24">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -189,6 +189,7 @@ button{cursor:pointer}
 .navbar.clear.solid{background:var(--glass);border-color:var(--line)}
 .pushed .scroll{padding-top:calc(52px + var(--st))}
 .pushed .scroll.under{padding-top:0}
+.pushed .scroll.under:has(>.pv-hero.ph){background:linear-gradient(180deg,transparent 60%,#1f2125 60%)}
 
 /* press feedback */
 .press{transition:transform .25s var(--ease)}
@@ -382,12 +383,14 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero .v svg{width:100%;height:auto}
 .pv-hero .v.swap{opacity:0;transform:scale(.96)}
 .pv-hero .newp{position:absolute;top:calc(64px + var(--st));left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;padding:5px 10px;border-radius:99px}
-.pv-panel{position:relative;margin-top:-34px;border-radius:30px 30px 0 0;background:var(--ink-grad);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -12px 30px rgba(20,22,25,.12);padding:10px 20px 120px;display:flex;flex-direction:column;gap:18px;min-height:460px;animation:panelUp .7s var(--ease) .1s both}
+.pv-panel{position:relative;margin-top:-34px;border-radius:30px 30px 0 0;background:var(--ink-grad);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -12px 30px rgba(20,22,25,.12);padding:10px 20px 120px;display:flex;flex-direction:column;gap:18px;min-height:max(460px,calc(100vh - 120px));animation:panelUp .7s var(--ease) .1s both}
 /* карточка товара с реальными фото: фото целиком, панель начинается под ним */
-.pv-hero.ph{--ph:min(116vw,54vh,max(260px,calc(100vh - var(--st) - var(--sb) - 300px)));height:calc(var(--st) + 52px + var(--ph) + 64px);display:block}
-.pv-hero.ph .pv-gal .sl{padding:calc(var(--st) + 52px) 16px 64px}
-.pv-hero.ph .pv-gal img{width:100%;height:var(--ph);max-height:none;object-fit:contain;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
-.pv-hero.ph .pv-dots{bottom:46px}
+.pv-hero.ph{--top:calc(var(--st) + 48px);height:max(380px,calc(100vh - var(--sb) - 358px));display:block;background:var(--phbg,#f3f3f3);transition:background .3s}
+.intg .pv-hero.ph{--top:calc(var(--st) + 8px)}
+.pv-hero.ph .pv-gal .sl{padding:var(--top) 0 42px;display:block;background:var(--slbg,var(--phbg,#f3f3f3))}
+.pv-hero.ph .pv-gal img{display:block;width:100%;height:100%;max-height:none;object-fit:contain;box-sizing:border-box;padding:0 3%;mix-blend-mode:normal;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
+.pv-hero.ph .pv-dots{bottom:46px;left:50%;right:auto;transform:translateX(-50%);padding:6px 9px;border-radius:99px;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.navbar.clear .round{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .pv-hero.ph .newp{left:18px;transform:none;top:calc(var(--st) + 60px);z-index:2}
 .pv-hero.ph .pv-n{position:absolute;right:18px;top:calc(var(--st) + 60px);z-index:2;font-size:11px;font-weight:600;background:rgba(255,255,255,.9);padding:4px 9px;border-radius:99px;color:var(--fg)}
 .zv{position:fixed;inset:0;z-index:90;background:#fff;display:flex;flex-direction:column;opacity:0;transition:opacity .25s}
@@ -438,9 +441,17 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .foot.dark .fv[aria-pressed="true"] svg{fill:#fff}
 .foot.dark .btn{flex:1;background:#fff;color:var(--fg);box-shadow:none}
 .accent .foot.dark .btn{background:#fff;color:var(--fg)}
+.foot.dark.glass{background:linear-gradient(180deg,rgba(24,25,28,0) 0,rgba(24,25,28,.86) 42%);border-top:0}
+.foot.dark.glass .btn{background:rgba(255,255,255,.75);color:var(--fg);-webkit-backdrop-filter:blur(28px) saturate(1.6);backdrop-filter:blur(28px) saturate(1.6);box-shadow:0 10px 28px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.7);transition:transform .2s,background .3s}
+.foot.dark.glass .fv{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.foot.dark.glass .btn .bl{display:inline-block;transition:opacity .2s,transform .25s}
+.foot.dark.glass .btn.swap .bl{opacity:0;transform:translateY(6px)}
+.foot.dark.glass .btn.added{animation:addpop .55s var(--ease)}
+@keyframes addpop{25%{transform:scale(.95)}60%{transform:scale(1.03)}100%{transform:none}}
+.dotn.bump{animation:addpop .55s var(--ease)}
 /* ===== Карточка товара: плашки, старая цена, размер и материал ===== */
 .pv-bdg{position:absolute;left:18px;top:calc(64px + var(--st));z-index:2;display:flex;gap:6px}
-.pv-hero.ph .pv-bdg{top:calc(var(--st) + 60px)}
+.pv-hero.ph .pv-bdg{top:calc(var(--st) + 58px);left:auto;right:16px;flex-direction:column;align-items:flex-end}
 .pv-bdg span{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:var(--fg);padding:5px 10px;border-radius:99px}
 .pv-bdg .sale,.pc .salb{background:#b3261e;color:#fff;letter-spacing:.02em}
 .pv-bdg .sale{font-size:12.5px;padding:4px 10px}
@@ -469,8 +480,18 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .hw-sh>span:last-child{font-size:12.5px;color:var(--muted)}
 /* ===== Доставка: лицевая сторона (три шага) и оборот (билет) ===== */
 .dlv{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:14px}
-.dlv-top{display:flex;justify-content:flex-end;margin-bottom:-4px}
-.dlv-fb{display:flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:7px 11px}
+.dlv-more{display:grid;grid-template-rows:1fr;transition:grid-template-rows .65s var(--ease),opacity .45s}
+.dlv-more>div{overflow:hidden;min-height:0}
+.dlv:not(.open) .dlv-more{grid-template-rows:0fr;opacity:0}
+.dlv:not(.open) .dlv-line{margin-top:0}
+.dlv:not(.open){cursor:pointer}
+.dlv.open .dlv-st i{animation:dlpop .55s var(--ease) backwards}
+.dlv.open .dlv-st:nth-child(1) i{animation-delay:.18s}.dlv.open .dlv-st:nth-child(2) i{animation-delay:.3s}.dlv.open .dlv-st:nth-child(3) i{animation-delay:.42s}
+.dlv.open .dlv-steps::before{animation:dlline .7s .15s var(--ease) backwards;transform-origin:left}
+@keyframes dlpop{from{transform:scale(.4);opacity:0}}
+@keyframes dlline{from{transform:scaleX(0)}}
+.dlv-fbw button{margin-top:2px}
+.dlv-fb{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;font:inherit;font-size:13.5px;font-weight:600;color:#fff;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px}
 .dlv-fb svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .6s var(--ease)}
 .dlv-fb[aria-pressed="true"] svg{transform:rotate(-180deg)}
 .dlv-seg{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:4px;border-radius:16px;background:rgba(255,255,255,.08)}
@@ -1490,7 +1511,7 @@ function optixBack(){const fr=OXA&&OXA.querySelector("iframe");let d=null;try{d=
     setTimeout(()=>{const still=[...d.querySelectorAll(".is-open")].filter(n=>n.getClientRects().length).length;if(still>=open.length)closeOptixApp()},250)}
   else closeOptixApp()}
 /* ===== Кнопка «Назад» Telegram: закрывает верхний слой ===== */
-const TGW=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData?Telegram.WebApp:null;
+const TGW=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData?Telegram.WebApp:null;if(TGW)document.documentElement.classList.add("intg");
 function backLayer(){
   if(OXA){optixBack();return true}
   const z=document.querySelector(".zv [data-zx]");if(z)return z.click(),true;
@@ -1533,7 +1554,7 @@ const SIZES={shoes:{w:["35","36","37","38","39","40","41"],m:["40","41","42","43
 const TONES=[["Noir","#1f1f1f"],["Gold","#a0522d"],["Craie","#dccfbb"],["Etoupe","#8d7c6b"],["Bleu","#5b6b7a"],["Rouge","#a3172d"],["Vert","#3b5a3a"],["Rose","#c98f9c"],["Argent","#8e9297"]];
 const hex2=h=>{h=h.replace("#","");return[0,2,4].map(i=>parseInt(h.substr(i,2),16))};
 function colorways(it){
-  if(it.live)return it.colors&&it.colors.length>1?it.colors.map(c=>({name:c.name,c:c.image?"img:"+c.image:it.c,ok:c.available!==false})):[{name:"",c:it.c,ok:true}];
+  if(it.live)return it.colors&&it.colors.length>1?it.colors.map(c=>({name:c.name,c:c.image?"img:"+c.image:it.c,ok:c.available!==false,idx:c.idx})):[{name:"",c:it.c,ok:true}];
   const own=hex2(it.c);let best=0,bd=1e9;TONES.forEach((t,i)=>{const c=hex2(t[1]),d=c.reduce((a,v,k)=>a+(v-own[k])**2,0);if(d<bd){bd=d;best=i}});
   let h=0;for(const ch of it.id)h=(h*31+ch.charCodeAt(0))>>>0;
   const out=[{name:TONES[best][0],c:it.c,ok:true}];const n=it.id[0]==="r"?0:2+(h%2);
@@ -1586,11 +1607,10 @@ function tkExplain(k){
   return `<div class="tk-note">${esc(tx("dl.ua.note","Выкупаем в бутиках Европы и регулярно отправляем в Украину. Точный маршрут и дату отправки менеджер укажет в вашем заказе."))}</div>`
     +`<div class="tk-np">${svgVan("#1f2125")}<span>${esc(tx("dl.ua.np","Новая почта по Украине — 1–3 дня"))}</span></div>`}
 function dlvHTML(k){const Z=DLZ(),z=Z[k];return `<section class="dlv" aria-label="Доставка">
-  <div class="dlv-top"><button class="dlv-fb" type="button" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4.5h-4.5"/></svg><span>Как работает</span></button></div>
   <div class="dlv-seg" role="group" aria-label="Страна доставки" style="--i:${Object.keys(Z).indexOf(k)}"><span class="th"></span>${Object.entries(Z).map(([kk,v])=>`<button type="button" data-dz="${kk}" aria-pressed="${kk===k}">${v.free?svgVan():svgPlane()}${v.btn}</button>`).join("")}</div>
   <div class="dlv-flip"><div class="dlv-in">
     <div class="dlv-face dlv-front">
-      <div class="dlv-steps"><div class="dlv-st"><i><svg viewBox="0 0 24 24">${I_BAG}</svg></i>Выкуп<br>в бутике</div><div class="dlv-st on"><i data-v>${z.free?svgVan():svgPlane()}</i><span data-sd>Отправка<br>${z.st}</span></div><div class="dlv-st"><i><svg viewBox="0 0 24 24">${I_HOME}</svg></i>У вас<br>дома</div></div>
+      <div class="dlv-more"><div><div class="dlv-steps"><div class="dlv-st"><i><svg viewBox="0 0 24 24">${I_BAG}</svg></i>Выкуп<br>в бутике</div><div class="dlv-st on"><i data-v>${z.free?svgVan():svgPlane()}</i><span data-sd>Отправка<br>${z.st}</span></div><div class="dlv-st"><i><svg viewBox="0 0 24 24">${I_HOME}</svg></i>У вас<br>дома</div></div></div></div>
       <div class="dlv-line"><span data-to>${z.to}</span><span class="dlv-pill ${z.free?"ok":""}" data-pl>${z.free?"бесплатно":"+ доставка"}</span></div>
     </div>
     <div class="dlv-face dlv-back" aria-hidden="true"><div class="tk"><span class="tk-sh"></span>
@@ -1600,7 +1620,8 @@ function dlvHTML(k){const Z=DLZ(),z=Z[k];return `<section class="dlv" aria-label
       <div class="tk-bot"><div><span class="tk-k">Отправка</span><span class="tk-roll" data-days><span>${esc(z.days)}</span></span></div>
         <div class="r"><span class="tk-k">Доставка</span><span class="tk-roll" data-cost>${z.free?'<span class="tk-free">бесплатно</span>':"<span>+ доставка</span>"}</span></div></div>
       <div class="tk-ex">${tkExplain(k)}</div></div></div>
-  </div></div></section>`}
+  </div></div>
+  <div class="dlv-more dlv-fbw"><div><button class="dlv-fb" type="button" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4.5h-4.5"/></svg><span>Как работает доставка</span></button></div></div></section>`}
 function dlvMount(root,k,onChange){
   const $q=s=>root.querySelector(s),inn=$q(".dlv-in"),fb=$q(".dlv-fb"),veh=$q(".tk-veh"),dash=$q(".tk-dash"),code=$q(".tk-code"),sh=$q(".tk-sh");let back=false;
   const fit=()=>{inn.style.height=$q(back?".dlv-back":".dlv-front").offsetHeight+"px"};fit();
@@ -1626,7 +1647,7 @@ function dlvMount(root,k,onChange){
     else{setCode(z.code);veh.innerHTML=z.free?svgVan("#1f2125"):svgPlane("#1f2125");$q("[data-days]").innerHTML="<span>"+esc(z.days)+"</span>";$q("[data-cost]").innerHTML=z.free?'<span class="tk-free">бесплатно</span>':"<span>+ доставка</span>";ex.innerHTML=tkExplain(k)}
     onChange(k)};
   root.querySelectorAll("[data-dz]").forEach(b=>b.onclick=()=>setK(b.dataset.dz));
-  fb.onclick=()=>{back=!back;inn.classList.toggle("on",back);fb.setAttribute("aria-pressed",String(back));fb.querySelector("span").textContent=back?"Назад":"Как работает";
+  fb.onclick=()=>{back=!back;inn.classList.toggle("on",back);fb.setAttribute("aria-pressed",String(back));fb.querySelector("span").textContent=back?"Назад":"Как работает доставка";
     $q(".dlv-back").setAttribute("aria-hidden",String(!back));$q(".dlv-front").setAttribute("aria-hidden",String(back));fit();hap("light");if(back)intro()};
 }
 function howSheet(){const r=(t,d,ic)=>`<div class="hw-r"><span class="hw-i"><svg viewBox="0 0 24 24">${ic}</svg></span><span><b>${esc(t)}</b><small>${d}</small></span></div>`;
@@ -1636,6 +1657,9 @@ function howSheet(){const r=(t,d,ic)=>`<div class="hw-r"><span class="hw-i"><svg
     ${r(tx("ch.5.t","Оплата"),esc(tx("ch.5.d","Менеджер подтверждает наличие и размер, после этого — оплата удобным способом.")),INF)}</div>`)}
 /* «Похожие»: та же категория, бренд того же или соседнего уровня, цена ±40% (если мало — шире) */
 const TIER_OF=(()=>{const T={1:"hermes chanel therow loropiana goyard brunellocucinelli",2:"louisvuitton lv dior celine loewe bottegaveneta prada saintlaurent ysl gucci miumiu fendi givenchy balenciaga valentino burberry cartier"};const m={};Object.entries(T).forEach(([t,s])=>s.split(" ").forEach(n=>m[n]=+t));return b=>m[String(b||"").toLowerCase().normalize("NFD").replace(/[^a-z]/g,"")]||3})();
+function edgeColor(im){try{const w=24,h=24,c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data,px=[];for(let i=0;i<w;i++){px.push(i*4,((h-1)*w+i)*4)}for(let j=0;j<h;j++){px.push(j*w*4,(j*w+w-1)*4)}
+  let r=0,g=0,b=0;px.forEach(k=>{r+=d[k];g+=d[k+1];b+=d[k+2]});const n=px.length;return `rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`}catch(e){return ""}}
 function similarTo(p){const t=TIER_OF(p.brand),pool=P.filter(x=>x.id!==p.id&&x.cat===p.cat);
   const sc=x=>Math.abs(TIER_OF(x.brand)-t)*0.6+Math.abs(Math.log((x.price||1)/(p.price||1)))+(x.bk===p.bk?0.15:0);
   let l=pool.filter(x=>Math.abs(TIER_OF(x.brand)-t)<=1&&x.price>=p.price*.6&&x.price<=p.price*1.4);
@@ -1652,16 +1676,18 @@ function openProduct(id){
   const showDl=!r&&!(st&&st.loc==="ua");
   const btnLabel=()=>r?"Купить":"В корзину · "+eur(priceFor(it,d));
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
-  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl"><img src="${esc(im.src)}" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
+  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl"><img src="${esc(im.src)}"${im.big?` srcset="${esc(im.src)} 1000w, ${esc(im.big)} 1600w" sizes="100vw"`:""} crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:18px"></div>
    ${showDl?`<div id="pvd"></div>`:""}
    ${r?"":`<button class="pv-how press" type="button" data-how><span class="ic"><svg viewBox="0 0 24 24">${IC.shield}</svg></span><span><b>Как мы работаем</b><small>Поиск, выкуп, проверка, отправка</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`}
    ${like.length?`<div class="ondark"><div class="sech"><h2>${r?"Ещё в ресейле":"Похожие"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div></div>`:""}
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
-    foot:`<div class="foot dark"><button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order>${btnLabel()}</button></div>`});
+    foot:`<div class="foot dark glass"><button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
   {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/g.clientWidth);dots.forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true});
     const sc=s.querySelector(".scroll"),ims=[...g.querySelectorAll("img")];let raf=0;
     sc.addEventListener("scroll",()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;const y=Math.max(0,Math.min(sc.scrollTop,500));ims.forEach(im=>im.style.transform=y?`translateY(${y*.35}px) scale(${1-y/2400})`:"")})},{passive:true});
+    // фон под фото = цвет краёв снимка, чтобы фото смотрелось на весь экран без рамок
+    const hero=s.querySelector(".pv-hero");ims.forEach((im,i)=>{const go=()=>{const c=edgeColor(im);if(!c)return;im.parentNode.style.setProperty("--slbg",c);if(i===0)hero.style.setProperty("--phbg",c)};im.complete?go():im.addEventListener("load",go,{once:true})});
     g.addEventListener("click",e=>{const im=e.target.closest("img[data-zi]");if(im)zoomView(p.imgs.slice(0,8),+im.dataset.zi,it.brand+" "+it.name)})}}
   const oldP=()=>p&&p.sale&&p.oldPrices?(p.oldPrices[d]??p.oldPrices.ua):0;
   const draw=()=>{const cw=cws[ci];
@@ -1677,19 +1703,31 @@ function openProduct(id){
     ${st&&st.loc==="ua"?`<div class="pv-note">Уже в Украине — отправим Новой почтой за 1–3 дня</div>`:!st&&p&&p.live&&!p.orderable?`<div class="pv-note">Наличие и размер менеджер подтвердит после заказа</div>`:""}
     ${r?`<div class="trust"><div><svg viewBox="0 0 24 24">${IC.shield}</svg><span>Проверяем подлинность, сделку ведём сами</span></div></div>`:""}`;
     s.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=size===b.dataset.sz?"":b.dataset.sz;draw()});
-    s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;const v=s.querySelector("#pvv");if(v){v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180)}resetBtn();draw()});
+    s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;{const g=s.querySelector("#pvg"),ix=cws[ci].idx;if(g&&ix>=0)g.scrollTo({left:ix*g.clientWidth,behavior:"smooth"})}const v=s.querySelector("#pvv");if(v){v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180)}resetBtn();draw()});
   };
   const ob=s.querySelector("[data-order]"),fb=s.querySelector("[data-favp]");
-  const resetBtn=()=>{if(!r){delete ob.dataset.added;ob.textContent=btnLabel()}};
+  const setLbl=t=>{const l=ob.querySelector(".bl");if(!l){ob.textContent=t;return}ob.classList.add("swap");setTimeout(()=>{l.textContent=t;ob.classList.remove("swap")},180)};
+  const resetBtn=()=>{if(!r){delete ob.dataset.added;setLbl(btnLabel())}};
   fb.onclick=()=>{toggleFav(it.id);fb.setAttribute("aria-pressed",favs.has(it.id))};
   draw();
-  if(showDl){const box=s.querySelector("#pvd");box.innerHTML=dlvHTML(d);dlvMount(box,d,k=>{d=k;prefs.dest=k;store.set("tb_prefs",prefs);draw();if(!ob.dataset.added)ob.textContent=btnLabel()})}
+  if(showDl){const box=s.querySelector("#pvd");box.innerHTML=dlvHTML(d);
+    {const dl=box.querySelector(".dlv"),sc=s.querySelector(".scroll"),open=()=>{if(dl.classList.contains("open"))return;dl.classList.add("open");sc.removeEventListener("scroll",onSc)},onSc=()=>{if(sc.scrollTop>24)open()};
+     sc.addEventListener("scroll",onSc,{passive:true});dl.addEventListener("click",open)}dlvMount(box,d,k=>{d=k;prefs.dest=k;store.set("tb_prefs",prefs);draw();if(!ob.dataset.added)setLbl(btnLabel())})}
   {const hb=s.querySelector("[data-how]");if(hb)hb.onclick=howSheet}
+  // высота фото: первый экран заканчивается ровно на блоке доставки (с цветами плашка выше — фото чуть ниже)
+  {const hero=s.querySelector(".pv-hero.ph"),pan=s.querySelector(".pv-panel"),ft=s.querySelector(".foot"),sc=s.querySelector(".scroll");
+   const fit=()=>{if(!hero||!pan||!ft||sc.scrollTop>4)return;const end=s.querySelector(".dlv")||s.querySelector("#pvb");
+     const pt=pan.getBoundingClientRect().top,eb=end.getBoundingClientRect().bottom,ftop=ft.getBoundingClientRect().top;
+     const top0=sc.getBoundingClientRect().top,h=(ftop-top0)-12-(eb-pt)+34,mx=innerHeight*.74;hero.style.height=Math.round(Math.max(300,Math.min(mx,h)))+"px"};
+   requestAnimationFrame(()=>requestAnimationFrame(fit));addEventListener("resize",fit,{passive:true})}
   ob.onclick=()=>{
     if(sizes&&!size){toast("Выберите размер или «Не знаю»");s.querySelector(".dsz").scrollIntoView({behavior:"smooth",block:"center"});return}
     const cw=cws[ci];
     // наличие менеджер уточняет после заказа — в карточке всегда «В корзину»
-    if(!r){if(ob.dataset.added){openCart();return}addToCart(it.id,size,cws.length>1?cw.name:"",cw.ok,cw.c);if(st)toast("Один экземпляр — менеджер закрепит его за вами");ob.dataset.added="1";ob.textContent="Оформить";return}
+    if(!r){if(ob.dataset.added){openCart();return}addToCart(it.id,size,cws.length>1?cw.name:"",cw.ok,cw.c,true);if(st)toast("Один экземпляр — менеджер закрепит его за вами");ob.dataset.added="1";ob.classList.remove("added");void ob.offsetWidth;ob.classList.add("added");setLbl("✓ Добавлено в корзину");
+      try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.notificationOccurred("success")}catch(e){}
+      s.querySelectorAll('[data-cnt="cart"]').forEach(n=>{n.classList.remove("bump");void n.offsetWidth;n.classList.add("bump")});
+      setTimeout(()=>{if(ob.dataset.added)setLbl("Оформить заказ ›")},1300);return}
     orderSheet("Покупка из ресейла",`Здравствуйте! Хочу купить из ресейла Trend Büro:\n${it.brand} — ${it.name}\nСостояние: ${r.cond}\nЦена: ${eur(it.price)}\nКод: ${it.id.toUpperCase()}`)};
 }
 function orderSheet(title,msg,meta){meta=meta||{kind:kindFor(title)};
@@ -1960,8 +1998,8 @@ function renderTopIcons(){$$(".topicons").forEach(el=>el.innerHTML=`<button clas
 function updateCounts(){$$("[data-cnt=fav]").forEach(d=>{d.textContent=favs.size;d.dataset.n=favs.size});$$("[data-cnt=cart]").forEach(d=>{d.textContent=cart.length;d.dataset.n=cart.length})}
 function bumpCart(){$$("[data-act=cart]").forEach(b=>{b.classList.remove("bump");void b.offsetWidth;b.classList.add("bump")})}
 const cartBtnHTML=()=>`<button class="round" data-act="cart" aria-label="Корзина"><svg viewBox="0 0 24 24">${I_BAG}</svg><span class="dotn num" data-cnt="cart" data-n="${cart.length}">${cart.length}</span></button>`;
-function addToCart(id,size,color="",ok=true,hex=""){if(cart.some(c=>c.id===id&&c.size===size&&(c.color||"")===color)){toast("Уже в корзине");return false}
-  cart.push({id,size,color,ok,hex});store.set("tb_cart",cart);updateCounts();bumpCart();toast("Добавлено в корзину");return true}
+function addToCart(id,size,color="",ok=true,hex="",quiet=false){if(cart.some(c=>c.id===id&&c.size===size&&(c.color||"")===color)){toast("Уже в корзине");return false}
+  cart.push({id,size,color,ok,hex});store.set("tb_cart",cart);updateCounts();bumpCart();if(!quiet)toast("Добавлено в корзину");return true}
 function renderFavs(){const el=$("#favGrid");if(!el)return;const l=P.filter(p=>favs.has(p.id)).concat(RESALE.filter(r=>favs.has(r.id)));
   el.innerHTML=l.length?`<div class="grid2">${l.map(pcHTML).join("")}</div>`:`<div class="empty"><h3>Пока пусто</h3><p>Нажмите на сердце на товаре — он появится здесь.</p><button class="btn sm" data-act="gocat" style="margin-top:8px">В каталог</button></div>`}
 function openFavs(){push("Избранное",`<div class="bigtitle" style="padding-top:12px"><div><div class="sub num" id="favSub"></div><h1>Избранное</h1></div></div><div id="favGrid"></div>`,{right:cartBtnHTML()});
