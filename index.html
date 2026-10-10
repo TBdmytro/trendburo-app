@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-10-live-v26">
+<meta name="trendburo-build" content="2026-10-10-live-v27">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -1108,12 +1108,12 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
           <div><b data-t="how.1.t">Выбор</b><span data-t="how.1.d">В приложении, сторис или на сайте бренда</span></div>
           <div><b data-t="how.2.t">Сообщение</b><span data-t="how.2.d">Менеджеру в Telegram или в Direct</span></div>
           <div><b data-t="how.3.t">Выкуп</b><span data-t="how.3.d">Бутики Европы и онлайн</span></div>
-          <div><b data-t="how.4.t">Доставка</b><span>Украина — <span data-wd>дважды в неделю</span>, Европа и Дубай</span></div>
+          <div><b data-t="how.4.t">Доставка</b><span>Украина — <span data-wd>каждую субботу</span>, Европа и Дубай</span></div>
         </div></div>
       <div class="sec"><div class="sech"><h2 data-t="price.title">Цена и доставка</h2></div>
         <div class="cells">
           <div class="cell"><div><span data-t="price.1.t">Цена в приложении</span><small data-t="price.1.d">Уже включает выкуп, упаковку и комплимент к заказу</small></div></div>
-          <div class="cell"><div><span data-t="price.2.t">Доставка в Украину</span><small>Бесплатно, отправка <span data-wd2>дважды в неделю</span></small></div></div>
+          <div class="cell"><div><span data-t="price.2.t">Доставка в Украину</span><small>Бесплатно, отправка <span data-wd2>каждую субботу</span></small></div></div>
           <div class="cell"><div><span data-t="price.3.t">Доставка по Европе</span><small data-t="price.3.d">По тарифу перевозчика</small></div></div>
           <div class="cell"><div data-t="price.4.t">Дубай</div><span class="v" data-t="price.4.v">по запросу</span></div>
         </div></div>
@@ -1593,7 +1593,7 @@ function pinchZoom(box,img,gal){
   box.addEventListener("touchend",e=>{if(e.touches.length===0){if(s<1.05){s=1;tx=ty=0}clamp();set(true);st=null}else if(e.touches.length===1&&s>1.001){st={k:"pan",x:e.touches[0].clientX,y:e.touches[0].clientY,tx,ty}}});
 }
 /* ===== Доставка в карточке: лицевая сторона — три шага, оборот — билет с объяснением ===== */
-let TX={};const tx=(k,d)=>TX[k]||d;const SHIPF=()=>tx("dl.ua.days","дважды в неделю");
+let TX={};const tx=(k,d)=>TX[k]||d;const SHIPF=()=>tx("dl.ua.days","каждую субботу");
 const RMo=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
 const hap=t=>{try{const h=TGW&&TGW.HapticFeedback;if(h){t?h.impactOccurred(t):h.selectionChanged()}}catch(e){}};
 const PLANE_R='<path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" transform="rotate(90 12 12)"/>';
@@ -1601,7 +1601,7 @@ const svgPlane=(c="currentColor")=>`<svg viewBox="0 0 24 24" class="fill" style=
 const svgVan=(c="currentColor")=>`<svg viewBox="0 0 24 24" style="fill:none;stroke:${c};stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round">${I_VAN}</svg>`;
 const I_HOME='<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>';
 function DLZ(){const eu=tx("dl.eu.days","пн – пт");return{
-  ua:{btn:"Украина",code:"UA",name:"Украина",to:"Доставка в Украину",st:"в Украину",days:tx("dl.ua.days","дважды в неделю"),free:true},
+  ua:{btn:"Украина",code:"UA",name:"Украина",to:"Доставка в Украину",st:"в Украину",days:tx("dl.ua.days","каждую субботу"),free:true},
   eu:{btn:"Европа",code:"EU",name:"Европа",to:"Доставка в Европу",st:"в Европу",days:eu},
   dxb:{btn:"Дубай",code:"DXB",name:"Дубай",to:"Доставка в Дубай",st:"в Дубай",days:eu}}}
 function tkExplain(k){
@@ -1655,7 +1655,7 @@ function dlvMount(root,k,onChange){
 function howSheet(){const r=(t,d,ic)=>`<div class="hw-r"><span class="hw-i"><svg viewBox="0 0 24 24">${ic}</svg></span><span><b>${esc(t)}</b><small>${d}</small></span></div>`;
   const S='<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',SH='<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/>',INF='<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>';
   openSheet("Как мы работаем",`<div class="hw">${r(tx("ch.1.t","Ищем по вашему запросу"),esc(tx("ch.1.d","Находим нужную модель, размер и цвет.")),S)}${r(tx("ch.2.t","Выкупаем в Европе"),esc(tx("ch.2.d","Покупаем вещи лично в бутиках Европы.")),I_BAG)}${r(tx("ch.3.t","Проверка и упаковка"),esc(tx("ch.3.d","Проверяем и бережно упаковываем ваш заказ.")),SH)}
-    ${r("Отправка",`<span class="hw-sh"><span><b>Украина</b><em class="ok">бесплатно</em></span><span>${esc(tx("dl.ua.days","дважды в неделю"))} · ${esc(tx("dl.ua.np","Новая почта по Украине — 1–3 дня"))}</span></span><span class="hw-sh"><span><b>Европа и Дубай</b><em>+ доставка</em></span><span>${esc(tx("dl.eu.days","пн – пт"))} · сумму уточнит менеджер</span></span>`,I_VAN)}
+    ${r("Отправка",`<span class="hw-sh"><span><b>Украина</b><em class="ok">бесплатно</em></span><span>${esc(tx("dl.ua.days","каждую субботу"))} · ${esc(tx("dl.ua.np","Новая почта по Украине — 1–3 дня"))}</span></span><span class="hw-sh"><span><b>Европа и Дубай</b><em>+ доставка</em></span><span>${esc(tx("dl.eu.days","пн – пт"))} · сумму уточнит менеджер</span></span>`,I_VAN)}
     ${r(tx("ch.5.t","Оплата"),esc(tx("ch.5.d","Менеджер подтверждает наличие и размер, после этого — оплата удобным способом.")),INF)}</div>`)}
 /* «Похожие»: та же категория, бренд того же или соседнего уровня, цена ±40% (если мало — шире) */
 const TIER_OF=(()=>{const T={1:"hermes chanel therow loropiana goyard brunellocucinelli",2:"louisvuitton lv dior celine loewe bottegaveneta prada saintlaurent ysl gucci miumiu fendi givenchy balenciaga valentino burberry cartier"};const m={};Object.entries(T).forEach(([t,s])=>s.split(" ").forEach(n=>m[n]=+t));return b=>m[String(b||"").toLowerCase().normalize("NFD").replace(/[^a-z]/g,"")]||3})();

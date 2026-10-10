@@ -2217,7 +2217,7 @@ async function vShow(sub) {
     const titleField = b.title !== undefined ? `<label class="f">Заголовок блока на витрине<input type="text" id="bTitle" value="${esc(b.title)}" maxlength="60"></label>` : "";
     let body = "", after = null;
     if (id === "announce") body = `<label class="f">Текст объявления<textarea id="bText" maxlength="140" style="min-height:90px" placeholder="Например: до 10 октября доставка в Украину бесплатно">${esc(site.announce.text)}</textarea></label>`;
-    else if (id === "ship") body = titleField + `<p class="hint" style="margin:0">Показывает «дважды в неделю · бесплатно». Частоту меняйте в «Тексты» → «Доставка в карточке».</p>`;
+    else if (id === "ship") body = titleField + `<p class="hint" style="margin:0">Показывает «каждую субботу · бесплатно». Частоту меняйте в «Тексты» → «Доставка в карточке».</p>`;
     else if (id === "optix") body = `<label class="f">Ссылка на OPTIX<input type="text" id="bUrl" value="${esc(site.optix.url)}"></label>`;
     else if (id === "news" || id === "follow") body = titleField;
     const d = sheet(NAME[id], `<div class="form">${body}<label class="toggle"><input type="checkbox" id="bOn" ${b.on ? "checked" : ""}>Показывать на витрине</label>
