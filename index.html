@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-09-live-v19">
+<meta name="trendburo-build" content="2026-10-10-live-v20">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -524,6 +524,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .tk-r:first-child{border-top:0;padding-top:0}
 .tk-r b{display:block;font-size:13.5px;color:#1f2125}.tk-r small{font-size:12px}
 .tk-r .np{font-size:12.5px;font-weight:600;color:#1f2125;text-align:right}
+.tk-note{color:#4d5058}
 .tk-np{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;border-radius:10px;background:#ecebe6;color:#1f2125;font-size:12.5px;font-weight:600}
 .tk-np svg{width:16px;height:16px;fill:none;stroke:#1f2125;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
 @media (prefers-reduced-motion:reduce){.dlv *,.dlv-in{animation:none!important;transition:none!important}}
@@ -1577,20 +1578,19 @@ const svgPlane=(c="currentColor")=>`<svg viewBox="0 0 24 24" class="fill" style=
 const svgVan=(c="currentColor")=>`<svg viewBox="0 0 24 24" style="fill:none;stroke:${c};stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round">${I_VAN}</svg>`;
 const I_HOME='<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>';
 function DLZ(){const eu=tx("dl.eu.days","пн – пт");return{
-  ua:{btn:"Украина",code:"UA",name:"Украина",to:"Доставка в Украину",days:tx("dl.ua.days","пн · сб"),free:true},
-  eu:{btn:"Европа",code:"EU",name:"Европа",to:"Доставка в Европу",days:eu},
-  dxb:{btn:"Дубай",code:"DXB",name:"Дубай",to:"Доставка в Дубай",days:eu}}}
+  ua:{btn:"Украина",code:"UA",name:"Украина",to:"Доставка в Украину",st:"в Украину",days:tx("dl.ua.days","дважды в неделю"),free:true},
+  eu:{btn:"Европа",code:"EU",name:"Европа",to:"Доставка в Европу",st:"в Европу",days:eu},
+  dxb:{btn:"Дубай",code:"DXB",name:"Дубай",to:"Доставка в Дубай",st:"в Дубай",days:eu}}}
 function tkExplain(k){
   if(k!=="ua")return esc(tx("dl.eu.note","Доставка по чеку перевозчика или уже в цене — уточните у менеджера."));
-  const rows=[tx("dl.ua.r1","Милан|пн|Новая почта во вт"),tx("dl.ua.r2","Германия|сб|Новая почта в вс–пн")].map(r=>r.split("|").map(x=>x.trim())).filter(r=>r[0]);
-  return rows.map(([c,dep,np])=>`<div class="tk-r"><span><b>${esc(c)}</b><small>водитель выезжает ${esc(dep||"")}</small></span><span class="np">${esc(np||"")}</span></div>`).join("")
+  return `<div class="tk-note">${esc(tx("dl.ua.note","Выкупаем в бутиках Европы и регулярно отправляем в Украину. Точный маршрут и дату отправки менеджер укажет в вашем заказе."))}</div>`
     +`<div class="tk-np">${svgVan("#1f2125")}<span>${esc(tx("dl.ua.np","Новая почта по Украине — 1–3 дня"))}</span></div>`}
 function dlvHTML(k){const Z=DLZ(),z=Z[k];return `<section class="dlv" aria-label="Доставка">
   <div class="dlv-top"><button class="dlv-fb" type="button" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4.5h-4.5"/></svg><span>Как работает</span></button></div>
   <div class="dlv-seg" role="group" aria-label="Страна доставки" style="--i:${Object.keys(Z).indexOf(k)}"><span class="th"></span>${Object.entries(Z).map(([kk,v])=>`<button type="button" data-dz="${kk}" aria-pressed="${kk===k}">${v.free?svgVan():svgPlane()}${v.btn}</button>`).join("")}</div>
   <div class="dlv-flip"><div class="dlv-in">
     <div class="dlv-face dlv-front">
-      <div class="dlv-steps"><div class="dlv-st"><i><svg viewBox="0 0 24 24">${I_BAG}</svg></i>Выкуп<br>в бутике</div><div class="dlv-st on"><i data-v>${z.free?svgVan():svgPlane()}</i><span data-sd>Отправка<br>${esc(z.days)}</span></div><div class="dlv-st"><i><svg viewBox="0 0 24 24">${I_HOME}</svg></i>У вас<br>дома</div></div>
+      <div class="dlv-steps"><div class="dlv-st"><i><svg viewBox="0 0 24 24">${I_BAG}</svg></i>Выкуп<br>в бутике</div><div class="dlv-st on"><i data-v>${z.free?svgVan():svgPlane()}</i><span data-sd>Отправка<br>${z.st}</span></div><div class="dlv-st"><i><svg viewBox="0 0 24 24">${I_HOME}</svg></i>У вас<br>дома</div></div>
       <div class="dlv-line"><span data-to>${z.to}</span><span class="dlv-pill ${z.free?"ok":""}" data-pl>${z.free?"бесплатно":"+ доставка"}</span></div>
     </div>
     <div class="dlv-face dlv-back" aria-hidden="true"><div class="tk"><span class="tk-sh"></span>
@@ -1619,7 +1619,7 @@ function dlvMount(root,k,onChange){
   const setK=nk=>{if(nk===k)return;k=nk;const z=DLZ()[k];hap();
     $q(".dlv-seg").style.setProperty("--i",Object.keys(DLZ()).indexOf(k));
     root.querySelectorAll("[data-dz]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.dz===k)));
-    $q("[data-v]").innerHTML=z.free?svgVan():svgPlane();$q("[data-sd]").innerHTML="Отправка<br>"+esc(z.days);$q("[data-to]").textContent=z.to;
+    $q("[data-v]").innerHTML=z.free?svgVan():svgPlane();$q("[data-sd]").innerHTML="Отправка<br>"+z.st;$q("[data-to]").textContent=z.to;
     const pl=$q("[data-pl]");pl.className="dlv-pill"+(z.free?" ok":"");pl.textContent=z.free?"бесплатно":"+ доставка";
     $q("[data-nm]").textContent=z.name;const ex=$q(".tk-ex");
     if(back){drive(z,false);setTimeout(()=>flap(z.code),RMo()?0:180);setTimeout(()=>{roll($q("[data-days]"),"<span>"+esc(z.days)+"</span>");roll($q("[data-cost]"),z.free?'<span class="tk-free">бесплатно</span>':"<span>+ доставка</span>");ex.style.opacity="0";setTimeout(()=>{ex.innerHTML=tkExplain(k);ex.style.opacity="1"},RMo()?0:220)},RMo()?0:260);if(!RMo())setTimeout(()=>restart(sh,"go"),330)}
@@ -1632,7 +1632,7 @@ function dlvMount(root,k,onChange){
 function howSheet(){const r=(t,d,ic)=>`<div class="hw-r"><span class="hw-i"><svg viewBox="0 0 24 24">${ic}</svg></span><span><b>${esc(t)}</b><small>${d}</small></span></div>`;
   const S='<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',SH='<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/>',INF='<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>';
   openSheet("Как мы работаем",`<div class="hw">${r(tx("ch.1.t","Ищем по вашему запросу"),esc(tx("ch.1.d","Находим нужную модель, размер и цвет.")),S)}${r(tx("ch.2.t","Выкупаем в Европе"),esc(tx("ch.2.d","Покупаем вещи лично в бутиках Европы.")),I_BAG)}${r(tx("ch.3.t","Проверка и упаковка"),esc(tx("ch.3.d","Проверяем и бережно упаковываем ваш заказ.")),SH)}
-    ${r("Отправка",`<span class="hw-sh"><span><b>Украина</b><em class="ok">бесплатно</em></span><span>${esc(tx("dl.ua.days","пн · сб"))} · ${esc(tx("dl.ua.np","Новая почта по Украине — 1–3 дня"))}</span></span><span class="hw-sh"><span><b>Европа и Дубай</b><em>+ доставка</em></span><span>${esc(tx("dl.eu.days","пн – пт"))} · сумму уточнит менеджер</span></span>`,I_VAN)}
+    ${r("Отправка",`<span class="hw-sh"><span><b>Украина</b><em class="ok">бесплатно</em></span><span>${esc(tx("dl.ua.days","дважды в неделю"))} · ${esc(tx("dl.ua.np","Новая почта по Украине — 1–3 дня"))}</span></span><span class="hw-sh"><span><b>Европа и Дубай</b><em>+ доставка</em></span><span>${esc(tx("dl.eu.days","пн – пт"))} · сумму уточнит менеджер</span></span>`,I_VAN)}
     ${r(tx("ch.5.t","Оплата"),esc(tx("ch.5.d","Менеджер подтверждает наличие и размер, после этого — оплата удобным способом.")),INF)}</div>`)}
 /* «Похожие»: та же категория, бренд того же или соседнего уровня, цена ±40% (если мало — шире) */
 const TIER_OF=(()=>{const T={1:"hermes chanel therow loropiana goyard brunellocucinelli",2:"louisvuitton lv dior celine loewe bottegaveneta prada saintlaurent ysl gucci miumiu fendi givenchy balenciaga valentino burberry cartier"};const m={};Object.entries(T).forEach(([t,s])=>s.split(" ").forEach(n=>m[n]=+t));return b=>m[String(b||"").toLowerCase().normalize("NFD").replace(/[^a-z]/g,"")]||3})();
