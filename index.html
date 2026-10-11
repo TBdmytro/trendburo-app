@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-11-live-v30">
+<meta name="trendburo-build" content="2026-10-11-live-v31">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -711,9 +711,9 @@ textarea{min-height:88px;resize:vertical}
 .sv2.paused .bz,.sv2.paused .hz,.sv2.paused .pn{opacity:0}
 .sv2 .sl{position:absolute;inset:0}
 .sv2 .sl.nw{opacity:0;transition:opacity .18s ease-out}.sv2 .sl.nw.on{opacity:1}
-.sv2 .st{position:absolute;inset:0;background:var(--phbg,#f3f3f3);display:grid;place-items:center;overflow:hidden}
+.sv2 .st{position:absolute;inset:0;background:var(--phbg,#f3f3f3);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:calc(64px + var(--st)) 0 calc(196px + var(--sb));box-sizing:border-box}
 .sv2 .st::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(130px + var(--st));background:linear-gradient(rgba(0,0,0,.42),transparent);z-index:1}
-.sv2 .st img{width:94%;max-height:58%;object-fit:contain;margin-top:-14vh;animation:svkb 7s linear both}
+.sv2 .st img{width:100%;height:100%;object-fit:contain;animation:svkb 7s linear both}
 @keyframes svkb{from{transform:scale(1.045)}to{transform:none}}
 .sv2 .st img.sw{animation:svsw .35s var(--ease) both}@keyframes svsw{from{opacity:0;transform:scale(.97)}}
 .sv2 .bg{position:absolute;top:calc(74px + var(--st));right:14px;z-index:3;font-size:12px;font-weight:800;padding:6px 10px;border-radius:99px;background:#1f2125;color:#fff}
@@ -736,7 +736,7 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .tp{position:absolute;top:calc(70px + var(--st));bottom:200px;width:34%;z-index:3;border:0;background:none}.sv2 .tp.l{left:0}.sv2 .tp.r{right:0}
 .sv2 .du{position:absolute;inset:0;display:grid;grid-template-rows:1fr 1fr;gap:6px;padding:calc(72px + var(--st)) 10px calc(10px + var(--sb));background:#17181b}
 .sv2 .dc{position:relative;border:0;border-radius:22px;background:#f3f3f3;display:grid;place-items:center;overflow:hidden;transition:transform .45s cubic-bezier(.34,1.56,.64,1),filter .3s;font:inherit;padding:0}
-.sv2 .dc img{width:74%;max-height:68%;object-fit:contain;margin-bottom:22px}
+.sv2 .dc img{position:absolute;inset:0 0 44px;width:100%;height:calc(100% - 44px);object-fit:contain}
 .sv2 .dc .lb{position:absolute;left:12px;right:12px;bottom:10px;text-align:left;color:#1f2125}
 .sv2 .dc .lb b{display:block;font-size:14px}.sv2 .dc .lb span{font-size:12.5px;color:#6b6f76}
 .sv2 .dc .hv{position:absolute;top:10px;right:12px;font-size:13px;font-weight:700;background:#1f2125;color:#fff;border-radius:99px;padding:5px 10px;opacity:0;transform:scale(.6);transition:opacity .3s,transform .4s cubic-bezier(.34,1.56,.64,1)}
@@ -750,6 +750,18 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .in2 h2{font-size:34px;margin:6px 0;letter-spacing:-.02em}
 .sv2 .in2 p{opacity:.7;margin:0;font-size:15px}
 @media (prefers-reduced-motion:reduce){.sv2 *,.sv2{animation:none!important;transition:none!important}}
+
+/* чат с менеджером: слева над меню; в Telegram открывает чат, приложение остаётся свёрнутым */
+.mchat{position:absolute;left:14px;bottom:calc(84px + var(--sb));z-index:19;display:flex;align-items:center;gap:8px;height:46px;padding:0 15px 0 12px;border-radius:23px;background:linear-gradient(160deg,rgba(52,55,61,.94),rgba(27,28,31,.94));color:#fff;text-decoration:none;font-size:14px;font-weight:600;box-shadow:0 8px 22px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);transition:transform .45s var(--ease),opacity .25s,padding .4s var(--ease),gap .4s var(--ease)}
+.mchat svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.mchat span{max-width:90px;overflow:hidden;white-space:nowrap;transition:max-width .4s var(--ease),opacity .3s}
+.mchat.mini{padding:0 12px;gap:0}.mchat.mini span{max-width:0;opacity:0}
+.mchat:active{transform:scale(.94)}
+.tabbar.hide+.mchat,#app.in-optix .mchat{transform:translateY(180%);opacity:0;pointer-events:none}
+/* горизонтальные ленты: листаются только вбок, сами вверх-вниз не двигаются */
+.bnr-track,.stories,.hrail,.chips,.gal,.pv-gal,.zv .zg,.cw,.st-prefs,.o-brands,.tops{overflow-y:hidden;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+.xlock{overflow-y:hidden!important}
+.ylock{overflow-x:hidden!important}
 /* story viewer */
 .sv{position:absolute;inset:0;z-index:60;background:#17181b;color:#fff;display:flex;flex-direction:column;transform:translateY(100%) scale(.96);opacity:0;transition:transform .5s var(--ease),opacity .3s}
 .sv.in{transform:none;opacity:1}
@@ -1169,11 +1181,11 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
       <div class="bigtitle"><h1>Сервисы</h1><div class="topicons"></div></div>
       <div class="svc-list">
         <button class="svc-card press" style="--sc:var(--c-concierge)" data-act="svc" data-s="concierge" data-svc="concierge">
-          <div><div class="cap" data-t="svc.concierge.cap">Консьерж</div><h3 data-t="svc.concierge.title">Задачи в Европе</h3></div>
-          <p data-t="svc.concierge.text">Редкие модели, лист ожидания, подарки, видеошопинг из бутика</p>
+          <div><div class="cap" data-t="svc.concierge.cap">Консьерж</div><h3 data-t="svc.concierge.title">Личные задачи</h3></div>
+          <p data-t="svc.concierge.text">Редкие модели, покупки с доставкой в отель, шопинг с байером</p>
           <span class="gl"><svg viewBox="0 0 100 100"><path d="M18 70h64M26 70a24 24 0 0 1 48 0M50 42v-6M44 36h12"/></svg></span></button>
         <button class="svc-card press" style="--sc:var(--c-travel)" data-act="svc" data-s="travel" data-svc="travel">
-            <div><div class="cap" data-t="svc.travel.cap">Путешествия</div><h3 data-t="svc.travel.title">Поездки</h3></div><p data-t="svc.travel.text">Отели, столики, шопинг с байером</p>
+            <div><div class="cap" data-t="svc.travel.cap">Путешествия</div><h3 data-t="svc.travel.title">Поездки под ключ</h3></div><p data-t="svc.travel.text">Отели, перелёты, джеты, трансферы, рестораны, охрана</p>
             <span class="gl"><svg viewBox="0 0 100 100"><path d="M15 60l70-25-18 40-14-12-12 14V60z"/></svg></span></button>
         <button class="svc-card press locked" style="--sc:var(--c-stylist)" data-act="soon" data-s="stylist" data-svc="stylist" aria-disabled="true"><span class="soon">Скоро</span>
           <div><div class="cap" data-t="svc.stylist.cap">AI-стилист</div><h3 data-t="svc.stylist.title">Образ из витрины</h3></div>
@@ -1280,6 +1292,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
     <button data-tab="services"><svg viewBox="0 0 24 24"><path d="M4 17h16M6 17a6 6 0 0 1 12 0M12 9V7M10 7h4"/></svg>Сервисы</button>
     <button data-tab="stylist"><svg viewBox="0 0 24 24"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>Стилист</button>
   </nav>
+  <a class="mchat" id="mchat" href="https://t.me/trendburo_manager" target="_blank" rel="noopener" aria-label="Написать менеджеру в Telegram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-11 6.6L4.5 19.5l1.4-4.2A7.5 7.5 0 1 1 20 11.5z"/><path d="M9 10.5h6M9 13.5h4"/></svg><span>Менеджер</span></a>
   <div class="toast" id="toast" role="status"></div>
 </div>
 
@@ -2013,11 +2026,14 @@ function openStory(bk){
 /* ===== Истории из каталога: рубрики собираются сами, каждый день новый набор, просмотренное уходит в конец ===== */
 let AUTO=[];
 const SVSEEN=(()=>{const o=store.get("tb_svseen",{}),cut=Date.now()-14*864e5;Object.keys(o).forEach(k=>{if(o[k]<cut)delete o[k]});return o})();
-const svSeen=id=>SVSEEN[id]&&SVSEEN[id]>Date.now()-7*864e5;
+const svDay0=()=>{const d=new Date();d.setHours(0,0,0,0);return +d};
+// видел раньше (за прошлые 7 дней, но не сегодня) — уходит в конец; сегодняшний набор весь день один и тот же
+const svSeen=id=>SVSEEN[id]&&SVSEEN[id]<svDay0()&&SVSEEN[id]>Date.now()-7*864e5;
+const svToday=id=>SVSEEN[id]&&SVSEEN[id]>=svDay0();
 const svMark=id=>{SVSEEN[id]=Date.now();store.set("tb_svseen",SVSEEN)};
 const daySeed=()=>+new Date().toISOString().slice(0,10).replace(/-/g,"");
 function svShuffle(a,salt){let x=(daySeed()+salt*7919)%2147483647||1;const r=()=>(x=(x*16807)%2147483647)/2147483647;return a.map(v=>[r(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1])}
-const svFresh=(list,salt,n=5)=>{const a=svShuffle(list,salt);return [...a.filter(p=>!svSeen(p.id)),...a.filter(p=>svSeen(p.id))].slice(0,n)};
+const svFresh=(list,salt,n=10)=>{const a=svShuffle(list,salt);return [...a.filter(p=>!svSeen(p.id)),...a.filter(p=>svSeen(p.id))].slice(0,n)};
 const svImg=(p,j=0)=>p.imgs&&p.imgs[j]?p.imgs[j]:null;
 function buildAuto(){
   const W=P.filter(p=>svImg(p)),d=prefs.dest||"ua",pr=p=>priceFor(p,d);if(W.length<2)return[];
@@ -2025,14 +2041,14 @@ function buildAuto(){
   const add=(o,pool)=>{if(pool.length>=(o.min||1)){salt++;const s=salt;R.push({...o,pool,build:o.build||(()=>{const l=svFresh(pool,s);return (o.intro&&pool.length>=4?[{t:"in",ps:svShuffle(pool,s+1).slice(0,4)}]:[]).concat(l.map(p=>({t:"p",p})))})})}};
   add({k:"new",name:"Новинки",tag:"NEW",intro:{k:"Только что",h:"Новинки",d:"Новое в каталоге"}},W.filter(p=>p.isNew));
   add({k:"sale",name:"Скидки",tag:"−%"},W.filter(p=>p.sale));
-  {const pool=W;if(pool.length>=4){salt++;const s=salt;R.push({k:"duel",name:"Это или это",tag:"VS",pool,build:()=>{const a=svFresh(pool,s,6);const o=[];for(let i=0;i+1<a.length&&o.length<3;i+=2)o.push({t:"du",a:a[i],b:a[i+1]});return o}})}}
+  {const pool=W;if(pool.length>=4){salt++;const s=salt;R.push({k:"duel",name:"Это или это",pool,build:()=>{const a=svFresh(pool,s,8);const o=[];for(let i=0;i+1<a.length&&o.length<4;i+=2)o.push({t:"du",a:a[i],b:a[i+1]});return o}})}}
   add({k:"colors",name:"В цветах",build:null},W.filter(p=>(p.colors||[]).filter(c=>c.idx>=0||c.image).length>=2));
   if(R.length&&R[R.length-1].k==="colors"){const r=R[R.length-1],s=salt;r.build=()=>svFresh(r.pool,s).map(p=>({t:"c",p}))}
   const TH=[["До 2 000 €",p=>pr(p)<=2000],["Для него",p=>p.g==="m"],["Для неё",p=>p.g==="w"],["Сумки",p=>p.cat==="bags"],["Обувь",p=>p.cat==="shoes"],["Аксессуары",p=>p.cat==="accessories"],["Украшения",p=>p.cat==="jewelry"],["Одежда",p=>p.cat==="clothing"],["До 1 000 €",p=>pr(p)<=1000]].map(([n,f])=>[n,W.filter(f)]).filter(t=>t[1].length>=3&&t[1].length<W.length);
   if(TH.length){const t=TH[daySeed()%TH.length];add({k:"day:"+t[0],name:t[0],intro:{k:"Подборка дня",h:t[0],d:"Каждый день новая тема"}},t[1])}
   const cnt={};W.forEach(p=>cnt[p.bk]=(cnt[p.bk]||0)+1);
   Object.keys(cnt).filter(k=>cnt[k]>=2).sort((a,b)=>cnt[b]-cnt[a]).slice(0,8).forEach(k=>{const pool=W.filter(p=>p.bk===k);add({k:"b:"+k,name:pool[0].brand,brand:k},pool)});
-  R.forEach(r=>{const c=svFresh(r.pool,1,1)[0]||r.pool[0];r.cover=svImg(c).thumb;r.seen=r.pool.every(p=>svSeen(p.id))});
+  R.forEach(r=>{const c=svFresh(r.pool,1,1)[0]||r.pool[0];r.cover=svImg(c).thumb;r.seen=r.build().every(s=>s.t==="in"||(s.p?svToday(s.p.id):s.t==="du"?svToday(s.a.id)&&svToday(s.b.id):true))});
   return R}
 const SVIC={new:'<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1-5.1-1.9 5.1-1.9z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
   sale:'<path d="M3.5 12.6V4.5a1 1 0 0 1 1-1h8.1l8 8a1.4 1.4 0 0 1 0 2l-6.6 6.6a1.4 1.4 0 0 1-2 0z"/><circle class="f" cx="8.2" cy="8.2" r="1.5"/>',
@@ -2052,7 +2068,7 @@ function openAuto(ri){
   const pre=s=>{const u=s&&srcOf(s);if(u){const m=new Image();m.src=u;if(s.t==="du"){const m2=new Image();m2.src=svImg(s.b).src}}};
   const slideH=(R,s)=>{
     if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
-    if(s.t==="du")return `<div class="du">${[s.a,s.b].map((p,j)=>`<button class="dc" data-v="${j}"><img src="${esc(svImg(p).src)}" alt="${esc(p.brand+" "+p.name)}" decoding="async"><span class="hv">♥ в избранном</span><span class="lb"><b>${esc(p.brand)}</b><span>${esc(p.name)} · ${eur(priceFor(p,d))}</span></span></button>`).join("")}<span class="vs">VS</span></div>`;
+    if(s.t==="du")return `<div class="du">${[s.a,s.b].map((p,j)=>`<button class="dc" data-v="${j}"><img src="${esc(svImg(p).src)}" alt="${esc(p.brand+" "+p.name)}" decoding="async"><span class="lb"><b>${esc(p.brand)}</b><span>${esc(p.name)} · ${eur(priceFor(p,d))}</span></span></button>`).join("")}</div>`;
     const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
     return `<div class="st"><img crossorigin="anonymous" src="${esc(srcOf(s))}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>
       ${p.sale?`<span class="bg s">−${p.sale}%</span>`:p.isNew?`<span class="bg">Новинка</span>`:""}
@@ -2069,7 +2085,7 @@ function openAuto(ri){
   const slideNode=(R,s)=>{const n=document.createElement("div");n.className="sl";n.innerHTML=slideH(R,s);
     const im=n.querySelector(".st img");if(im){const bgc=()=>{const c=edgeColor(im);if(c)n.querySelector(".st").style.setProperty("--phbg",c)};im.complete&&im.naturalWidth?bgc():im.addEventListener("load",bgc,{once:true})}return n};
   const mark=s=>{if(s.p)svMark(s.p.id);if(s.t==="du"){svMark(s.a.id);svMark(s.b.id)}};
-  const enter=()=>{const s=list[i];mark(s);el=0;cb.querySelector(".hz small").textContent=s.t==="du"?"выберите":"сегодня";
+  const enter=()=>{const s=list[i];mark(s);el=0;cb.querySelector(".hz small").textContent="сегодня";
     cb.querySelector(".tp.l").hidden=cb.querySelector(".tp.r").hidden=s.t==="du";
     cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1])};
   // смена слайда внутри рубрики: как в Instagram — сразу, без мигания (новое фото уже загружено заранее)
@@ -2083,11 +2099,10 @@ function openAuto(ri){
     cb.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const cs=s.p.colors.filter(c=>c.idx>=0||c.image),c=cs[+b.dataset.c],im=cb.querySelector(".st img");
       im.src=c.idx>=0&&svImg(s.p,c.idx)?svImg(s.p,c.idx).src:c.image;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");
       cb.querySelectorAll("[data-c]").forEach(x=>x.classList.toggle("on",x===b));el=Math.min(el,DUR*.3);hap()});
-    if(s.t==="du"){const du=cb.querySelector(".du");cb.querySelectorAll(".dc").forEach(b=>b.onclick=()=>{if(du.classList.contains("vt"))return;
-      const p=+b.dataset.v?s.b:s.a;du.classList.add("vt");b.classList.add("pk");if(!favs.has(p.id))toggleFav(p.id);hap("medium");el=DUR-1500})}};
+    if(s.t==="du")cb.querySelectorAll(".dc").forEach(b=>b.onclick=()=>{const id=(+b.dataset.v?s.b:s.a).id;close(true);openProduct(id)})};
   const bindFace=f=>{f.querySelector("[data-x]").onclick=()=>close();f.querySelector(".tp.l").onclick=()=>prev();f.querySelector(".tp.r").onclick=()=>next()};
   cb=face(AUTO[r],list,0);bindFace(cb);cw.append(cb);enter();
-  const tick=n=>{if(dead)return;if(!paused&&!busy)el+=n-t0;t0=n;const s=list[i],dur=s&&s.t==="du"&&!cb.querySelector(".vt")?DUR*2:DUR;
+  const tick=n=>{if(dead)return;if(!paused&&!busy)el+=n-t0;t0=n;const s=list[i],dur=s&&s.t==="du"?DUR*1.4:DUR;
     const b=cb.querySelectorAll(".bz b")[i];if(b)b.style.width=Math.min(100,el/dur*100)+"%";if(el>=dur&&!busy)next();raf=requestAnimationFrame(tick)};
   // куб: соседняя рубрика встаёт на боковую грань, поворот идёт за пальцем
   const neighbor=dir=>{const nr=r+dir;if(nr<0||nr>=AUTO.length)return null;if(nb&&nb.dir===dir)return nb;if(nb)nb.f.remove();
@@ -2113,13 +2128,27 @@ function openAuto(ri){
   host.addEventListener("pointerdown",()=>{delete host.dataset.mv},true);host.addEventListener("pointermove",()=>{if(mode)host.dataset.mv=1},true);
   requestAnimationFrame(()=>requestAnimationFrame(()=>host.classList.add("in")));raf=requestAnimationFrame(tick)}
 
+
+/* ===== Чат с менеджером и «замок оси» для горизонтальных лент ===== */
+(function(){const a=document.getElementById("mchat");if(!a)return;
+  const upd=()=>{const m=CONTACTS.find(c=>/менеджер/i.test(c.label)&&/^https:\/\/t\.me\//.test(c.url))||CONTACTS.find(c=>/^https:\/\/t\.me\//.test(c.url));if(m)a.href=m.url};upd();window.__updChat=upd;
+  setTimeout(()=>a.classList.add("mini"),3500);
+  a.addEventListener("click",()=>{try{hap("light")}catch(e){}});
+  // жест начался вбок — страница не едет вверх-вниз; начался вертикально — лента не дёргается вбок
+  const SEL=".bnr-track,.stories,.hrail,.chips,.gal,.pv-gal,.cw,.st-prefs,.o-brands,.tops";let rail=null,sx=0,sy=0,lock="",page=null;
+  document.addEventListener("touchstart",e=>{rail=e.target.closest&&e.target.closest(SEL);if(!rail)return;const t=e.touches[0];sx=t.clientX;sy=t.clientY;lock="";page=rail.parentElement&&rail.parentElement.closest(".scroll,.pushed .scroll,[data-scroll]")},{passive:true});
+  document.addEventListener("touchmove",e=>{if(!rail||lock)return;const t=e.touches[0],dx=Math.abs(t.clientX-sx),dy=Math.abs(t.clientY-sy);if(dx<6&&dy<6)return;
+    lock=dx>dy?"x":"y";if(lock==="x"&&page)page.classList.add("xlock");if(lock==="y")rail.classList.add("ylock")},{passive:true});
+  const end=()=>{if(page)page.classList.remove("xlock");if(rail)rail.classList.remove("ylock");rail=null;page=null;lock=""};
+  document.addEventListener("touchend",end,{passive:true});document.addEventListener("touchcancel",end,{passive:true});
+})();
 /* ===== Сервисы ===== */
 const I=d=>`<svg viewBox="0 0 24 24">${d}</svg>`;
 const SVC={
- concierge:{accent:"var(--c-concierge)",cap:"Консьерж",title:"Задачи в Европе",text:"То, что не помещается в каталог. Сообщите задачу — менеджер вернётся с вариантами и сроками.",
-  items:[["Редкие модели","Hermès, Chanel, лимитированные выпуски",'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>'],["Лист ожидания","Очередь в бутике и связь с консультантом",'<path d="M6 4h12v16H6zM9 9h6M9 13h6M9 17h3"/>'],["Подарки","Подбор, упаковка, открытка, доставка к дате",'<path d="M4 10h16v10H4zM3 7h18v3H3zM12 7v13"/>'],["Видеошопинг","Показываем вещь вживую из бутика",'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>'],["Tax free и обмен","Документы, возвраты, другой размер",'<path d="M5 12h14M13 6l6 6-6 6"/>']]},
- travel:{accent:"var(--c-travel)",cap:"Путешествия",title:"Поездки по Европе",text:"Соберём поездку целиком: где жить, где ужинать, куда пойти за покупками вместе с нашим байером.",
-  items:[["Отели","Проверенные адреса в центре",'<path d="M3 20V8l9-4 9 4v12M9 20v-6h6v6"/>'],["Рестораны","Бронь столиков заранее",'<path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8M17 3c-2 0-3 3-3 6s1 4 3 4v8"/>'],["Шопинг с байером","Милан, Париж, Мюнхен, Вена",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],["Трансферы","Аэропорт и водитель на день",'<path d="M5 16v-5l2-5h10l2 5v5M5 16h14M7 19v-3M17 19v-3"/>'],["Дубай","Отели, шопинг, доставка покупок",'<path d="M12 3v18M8 21V9l4-6 4 6v12"/>']]}
+ concierge:{accent:"var(--c-concierge)",cap:"Консьерж",title:"Личные задачи в Европе",text:"То, что не помещается в каталог. Опишите задачу — менеджер вернётся с вариантами, сроками и стоимостью.",
+  items:[["Редкие модели","Hermès, Chanel, лимитированные выпуски, лист ожидания",'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>'],["Покупки с доставкой в отель","Выкупим в бутике и привезём туда, где вы остановились",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],["Шопинг с байером","Милан, Париж, Мюнхен, Вена — вместе в бутиках",'<circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 11a3 3 0 1 0 0-6M17.5 19a5 5 0 0 0-3-4.6"/>'],["Видеошопинг","Показываем вещь вживую из бутика",'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>'],["Подарки","Подбор, упаковка, открытка, доставка к дате",'<path d="M4 10h16v10H4zM3 7h18v3H3zM12 7v13"/>'],["Tax free и обмен","Документы, возвраты, другой размер",'<path d="M5 12h14M13 6l6 6-6 6"/>']]},
+ travel:{accent:"var(--c-travel)",cap:"Путешествия",title:"Поездки под ключ",text:"Отели, перелёты, джеты, трансферы, рестораны и охрана — соберём поездку целиком и будем на связи всё время.",
+  items:[["Отели","Бронь проверенных адресов, апгрейд и поздний выезд",'<path d="M3 20V8l9-4 9 4v12M9 20v-6h6v6"/>'],["Авиабилеты","Бизнес и первый класс, лучшие стыковки",'<path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/>'],["Частные джеты","Аренда джета и джет-трансферы между городами",'<path d="M2 15l9-2 4-7h2l-2 7 5-1 1.5-2H23l-1.5 4.5L15 16l2 6h-2l-4-5-9 1z"/>'],["Трансферы","Аэропорт, водитель на день, вертолёт",'<path d="M5 16v-5l2-5h10l2 5v5M5 16h14M7 19v-3M17 19v-3"/>'],["Рестораны","Столики в местах, куда сложно попасть",'<path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8M17 3c-2 0-3 3-3 6s1 4 3 4v8"/>'],["Экскурсии и события","Частные гиды, показы, концерты, яхты",'<path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 16l-5.3 3 1.3-5.9-4.5-4 6-.6z"/>'],["Охрана в поездке","Личная охрана и водитель-телохранитель",'<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/>'],["Покупки в ваш отель","Байер выкупит и привезёт заказ к вам в номер",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>']]}
 };
 const SOON=new Set(["stylist","resale"]);
 function openService(k,sell){if(SOON.has(k)){toast((k==="stylist"?"AI-стилист":"Ресейл")+" — скоро запустим");return}
@@ -2127,13 +2156,13 @@ function openService(k,sell){if(SOON.has(k)){toast((k==="stylist"?"AI-стили
   const S=SVC[k];
   const form=k==="concierge"?`
     <div class="field"><label for="f1">Услуга</label><select id="f1">${S.items.map(x=>`<option>${x[0]}</option>`).join("")}</select></div>
-    <div class="field"><label for="f2">Задача</label><textarea id="f2">Hermès Picotin 18, Gold, золотая фурнитура. Готов ждать до двух месяцев.</textarea></div>
-    <div class="frow"><div class="field"><label for="f3">Город получения</label><input type="text" id="f3" value="Киев"></div><div class="field"><label for="f4">Желательно к</label><input type="date" id="f4"></div></div>`:`
-    <div class="frow"><div class="field"><label for="f1">Куда</label><select id="f1"><option>Милан</option><option>Париж</option><option>Вена</option><option>Мюнхен</option><option>Лазурный берег</option><option>Дубай</option></select></div><div class="field"><label for="f5">Гостей</label><input type="number" id="f5" value="2" min="1"></div></div>
+    <div class="field"><label for="f2">Задача</label><textarea id="f2" placeholder="Например: Hermès Picotin 18, Gold, золотая фурнитура — готов ждать до двух месяцев"></textarea></div>
+    <div class="frow"><div class="field"><label for="f3">Город получения</label><input type="text" id="f3" placeholder="Киев, или ваш отель"></div><div class="field"><label for="f4">Желательно к</label><input type="date" id="f4"></div></div>`:`
+    <div class="frow"><div class="field"><label for="f1">Куда</label><input type="text" id="f1" list="cities" placeholder="Милан, Париж, Дубай…"><datalist id="cities"><option>Милан</option><option>Париж</option><option>Лондон</option><option>Вена</option><option>Мюнхен</option><option>Лазурный берег</option><option>Куршевель</option><option>Дубай</option><option>Мальдивы</option></datalist></div><div class="field"><label for="f5">Гостей</label><input type="number" id="f5" value="2" min="1"></div></div>
     <div class="frow"><div class="field"><label for="f3">Заезд</label><input type="date" id="f3"></div><div class="field"><label for="f4">Выезд</label><input type="date" id="f4"></div></div>
-    <div class="field"><span class="fl">Включить</span><div class="chips wrap" id="needs">${["Отель","Рестораны","Шопинг с байером","Трансфер","События"].map((n,i)=>`<button type="button" class="chip" data-need aria-pressed="${i<3}">${n}</button>`).join("")}</div></div>
+    <div class="field"><span class="fl">Включить</span><div class="chips wrap" id="needs">${["Отель","Авиабилеты","Частный джет","Трансфер","Рестораны","Экскурсии","Охрана","Шопинг с байером","Покупки в отель"].map((n,i)=>`<button type="button" class="chip" data-need aria-pressed="${i<1}">${n}</button>`).join("")}</div></div>
     <div class="field"><label for="f6">Бюджет, €</label><input type="number" id="f6" value="6000" step="500"></div>
-    <div class="field"><label for="f2">Пожелания</label><textarea id="f2">Отель в центре, один ужин в ресторане со звездой, полдня шопинга с байером.</textarea></div>`;
+    <div class="field"><label for="f2">Пожелания</label><textarea id="f2" placeholder="Например: отель в центре, ужин в ресторане со звездой, трансфер из аэропорта"></textarea></div>`;
   const s=push(S.cap,`<div class="svc-hero"><span class="cap">${S.cap}</span><h2>${S.title}</h2><p>${S.text}</p></div>
    <div class="items" style="margin-top:6px">${S.items.map(x=>`<div class="item"><span class="ic">${I(x[2])}</span><div><b>${x[0]}</b><span>${x[1]}</span></div></div>`).join("")}</div>
    <div class="sec"><div class="sech"><h2>Запрос</h2></div><form class="form" id="sf">${form}<button class="btn block" type="submit">Подготовить сообщение</button></form></div>`,{clear:true,accent:S.accent});
@@ -2490,7 +2519,7 @@ function applyTexts(s){const T=s.texts||{};TX=T;$$("[data-t]").forEach(e=>{const
   ["concierge","travel","resale"].forEach(k=>{if(!SVC[k])return;if(T["svc."+k+".cap"])SVC[k].cap=T["svc."+k+".cap"];if(T["svc."+k+".title"])SVC[k].title=T["svc."+k+".title"];if(T["svc."+k+".long"])SVC[k].text=T["svc."+k+".long"]});
   const hid=s.hiddenServices||[];$$("[data-svc]").forEach(e=>hid.includes(e.dataset.svc)?e.setAttribute("data-off",""):e.removeAttribute("data-off"))}
 function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);applyTheme(s.theme);
-  if(s.contacts&&s.contacts.length){CONTACTS.length=0;CONTACTS.push(...s.contacts)}
+  if(s.contacts&&s.contacts.length){CONTACTS.length=0;CONTACTS.push(...s.contacts);window.__updChat&&window.__updChat()}
   if([0,1,2,3,4,5,6].includes(s.shipWeekday))SHIP_WD=s.shipWeekday;
   if(s.optix&&s.optix.url)OPTIX_LINK=s.optix.url;
   $$("[data-wd],[data-wd2]").forEach(e=>e.textContent=SHIPF());
