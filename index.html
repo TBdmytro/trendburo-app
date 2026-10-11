@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-11-live-v33">
+<meta name="trendburo-build" content="2026-10-11-live-v34">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -237,7 +237,7 @@ button{cursor:pointer}
 .pc .art.s-flat svg.sh,.pc .art.s-loafer svg.sh,.pc .art.s-sneaker svg.sh,.pc .art.s-sandal svg.sh,.pc .art.s-belt svg.sh{width:86%;height:86%}
 .pc:hover .art svg.sh{transform:scale(1.05) translateY(-2px)}
 .pc .newb{position:absolute;left:12px;top:12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg)}
-.pc .fav{position:absolute;z-index:2;right:4px;top:4px;width:40px;height:40px;border:0;background:none;display:grid;place-items:center}
+.pc .fav{position:absolute;z-index:2;right:6px;top:10px;width:40px;height:40px;border:0;background:none;display:grid;place-items:center}
 .pc .fav svg{width:18px;height:18px;stroke:var(--fg);fill:none;stroke-width:1.5;transition:transform .35s var(--ease)}
 .pc .fav[aria-pressed="true"] svg{fill:var(--fg);transform:scale(1.12)}
 .pc .m{display:flex;flex-direction:column;gap:2px;padding-inline:2px;min-width:0}
@@ -340,7 +340,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 /* real photos */
 .shimg{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply;display:block}
 .pc .art img.shimg{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;padding:0;box-sizing:border-box;object-fit:contain;mix-blend-mode:normal}
-.pc .art:has(img.shimg){background:#fff}
+.pc .art:has(img.shimg){background:var(--tbg,#f3f3f3);transition:background .3s}
 .pv-hero .v img.shimg{width:100%;height:auto;max-height:330px}
 .pv-hero .v:has(img.shimg){mix-blend-mode:multiply}
 .cw .t img.shimg{width:86%;height:86%}
@@ -386,7 +386,8 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-panel{position:relative;margin-top:-34px;border-radius:30px 30px 0 0;background:var(--ink-grad);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -12px 30px rgba(20,22,25,.12);padding:10px 20px 120px;display:flex;flex-direction:column;gap:18px;min-height:max(460px,calc(100vh - 120px));animation:panelUp .7s var(--ease) .1s both}
 /* карточка товара с реальными фото: фото целиком, панель начинается под ним */
 .pv-hero.ph{--top:calc(var(--st) + 48px);height:max(380px,calc(100vh - var(--sb) - 358px));display:block;background:var(--phbg,#f3f3f3);transition:background .3s}
-.intg .pv-hero.ph{--top:var(--st)}
+.intg .pv-hero.ph{--top:0px}
+.intg .navbar.clear{padding-top:calc(var(--st) + 14px);height:calc(66px + var(--st))}
 .pv-hero.ph .pv-gal .sl{padding:var(--top) 0 0;display:block;background:var(--slbg,var(--phbg,#f3f3f3))}
 .pv-hero.ph .pv-gal img{display:block;width:100%;height:100%;max-height:none;object-fit:cover;object-position:50% 50%;box-sizing:border-box;padding:0;mix-blend-mode:normal;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
 .pv-hero.ph .pv-dots{bottom:46px;left:50%;right:auto;transform:translateX(-50%);padding:6px 9px;border-radius:99px;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
@@ -1477,7 +1478,7 @@ const initials=n=>n.replace(/&.*$/,"").split(/\s+/).filter(Boolean).slice(0,2).m
 /* ===== Силуэты ===== */
 let _gid=0;
 function shapeSVG(s,c,cls="sh"){
-  if(String(c).startsWith("img:")||String(s).startsWith("img:")){const u=(String(c).startsWith("img:")?c:s).slice(4);return `<img class="${cls} shimg" src="${esc(u)}" alt="" loading="lazy" decoding="async">`}
+  if(String(c).startsWith("img:")||String(s).startsWith("img:")){const u=(String(c).startsWith("img:")?c:s).slice(4);return `<img class="${cls} shimg" src="${esc(u)}" alt="" loading="lazy" decoding="async"${/^https:\/\/cdn\.sanity\.io\//.test(u)?' crossorigin="anonymous"':""}>`}
   const g="g"+(++_gid);
   const dk=`color-mix(in oklab,${c} 62%,#000)`, lt=`color-mix(in oklab,${c} 70%,#fff)`;
   const st=`stroke="${dk}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"`, fl=`fill="url(#${g})"`;
@@ -2203,6 +2204,9 @@ function openAuto(ri){
   const end=()=>{if(page)page.classList.remove("xlock");if(rail)rail.classList.remove("ylock");rail=null;page=null;lock=""};
   document.addEventListener("touchend",end,{passive:true});document.addEventListener("touchcancel",end,{passive:true});
 })();
+
+/* плитки товаров: фон под фото = цвет краёв фото, без белых полос */
+document.addEventListener("load",e=>{const im=e.target;if(!(im instanceof HTMLImageElement)||!im.classList.contains("shimg"))return;const a=im.closest(".pc .art,.cartrow .th,.ordc .oth");if(!a)return;const c=edgeColor(im);if(c)a.style.setProperty("--tbg",c)},true);
 /* ===== Сервисы ===== */
 const I=d=>`<svg viewBox="0 0 24 24">${d}</svg>`;
 const SVC={
