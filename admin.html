@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-11-admin-v20">
+<meta name="trendburo-build" content="2026-10-11-admin-v21">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -764,7 +764,7 @@ function go(v) {
   $("#main").innerHTML = `<div class="empty"><span class="spin"></span></div>`; $("#main").onclick = $("#main").oninput = $("#main").onchange = null; $(".actbar")?.remove();
   document.querySelectorAll(".drawer").forEach(x => x.remove()); tgBack.stack = [];
   window.scrollTo(0, 0); navSync();
-  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, screens: vScreens, finance: vFinance, more: vMore, bot: vBot }[k] || vHome2;
+  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, customers: vCustomers, screens: vScreens, finance: vFinance, more: vMore, bot: vBot }[k] || vHome2;
   fn(v.split(":")[1]).catch(e => { $("#main").innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(e.message)}</div></div>`; });
 }
 async function getSources(force) { if (!sources || force) sources = (await api("sources")).sources; return sources; }
@@ -2078,6 +2078,7 @@ window.addEventListener("beforeunload", e => { if (SCR.running) { e.preventDefau
    ===================================================================== */
 Object.assign(IC, {
   orders: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  users: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 11.2a3 3 0 1 0 0-6M17.5 19a5 5 0 0 0-2.6-4.4"/>',
   show: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
   finance: '<path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/>',
   link: '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>',
@@ -2091,7 +2092,7 @@ Object.assign(IC, {
   out: '<path d="M14 4h5v16h-5"/><path d="M10 16l4-4-4-4M14 12H4"/>'
 });
 const NAV_MAIN = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"]];
-const NAV_MORE = [["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
+const NAV_MORE = [["customers", "Клиенты", "users", "кто заходил, доставка, история заказов"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
 const chevSvg = '<svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
 const backSvg = '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>';
 const isMainView = v => { const [k, s] = v.split(":"); return ["home", "products", "leads", "more"].includes(k) || (k === "show" && (!s || s === "feed")); };
@@ -2399,6 +2400,29 @@ function orderSheet(l, reload) {
 }
 
 /* ---------- Финансы ---------- */
+
+/* Клиенты: зашли через Telegram в мини-апп */
+async function vCustomers(q) {
+  const { customers } = await api("customers");
+  const NPT = { branch: "отделение", locker: "почтомат", courier: "курьер" };
+  const dlv = p => p ? [p.city, p.npType === "courier" ? p.address : p.npPoint ? NPT[p.npType] + " №" + p.npPoint : ""].filter(Boolean).join(", ") : "";
+  const draw = f => {
+    const l = customers.filter(c => !f || [c.tg?.name, c.tg?.username, c.profile?.name, c.profile?.phone].join(" ").toLowerCase().includes(f.toLowerCase()));
+    $("#cList").innerHTML = l.length ? l.map(c => `<div class="orow" data-cu="${esc(c.id)}"><div class="tx"><b>${esc(c.profile?.name || c.tg?.name || "Клиент")}${c.tg?.username ? ` <span class="hint">@${esc(c.tg.username)}</span>` : ""}</b>
+      <span>${[c.profile?.phone, dlv(c.profile), c.orders ? c.orders + " " + plural(c.orders, ["заказ", "заказа", "заказов"]) : "без заказов", c.spent ? eur(c.spent) : ""].filter(Boolean).map(esc).join(" · ")}</span></div><span class="hint">${dt(c.lastSeen)}</span></div>`).join("") : `<div class="hint" style="padding:20px 0">Клиентов пока нет — они появятся, когда войдут в мини-апп через Telegram.</div>`;
+  };
+  $("#main").innerHTML = `<div class="vh"><h1>Клиенты</h1><span class="hint">${customers.length}</span></div>
+    <input type="text" id="cFind" placeholder="Имя, @username или телефон" style="margin:10px 0 14px"><div id="cList"></div>`;
+  draw(q || ""); $("#cFind").oninput = e => draw(e.target.value);
+  $("#cList").onclick = e => { const r = e.target.closest("[data-cu]"); if (!r) return; const c = customers.find(x => x.id === r.dataset.cu), p = c.profile || {};
+    sheet(p.name || c.tg?.name || "Клиент", `<div class="form">
+      <div class="client"><span class="av">${esc(((c.tg?.name || "?")[0] || "?").toUpperCase())}</span><div class="tx"><b>${esc(c.tg?.name || "")}</b><span>${c.tg?.username ? "@" + esc(c.tg.username) + " · " : ""}с ${dt(c.createdAt)}</span></div>
+        ${c.tg?.username ? `<a href="https://t.me/${esc(c.tg.username)}" target="_blank" rel="noopener" aria-label="Написать в Telegram"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4z"/></svg></a>` : ""}</div>
+      <div class="oitem"><div class="tx"><b>Доставка</b><span>${esc([p.name, p.phone].filter(Boolean).join(", ")) || "не заполнено"}<br>${esc(dlv(p))}${p.comment ? "<br>" + esc(p.comment) : ""}</span></div></div>
+      <div class="oitem"><div class="tx"><b>Заказы</b><span>${c.orders} · оплачено ${eur(c.spent)}${c.requests ? " · заявок " + c.requests : ""}</span></div></div>
+      ${c.leads.map(l => `<div class="oitem"><div class="tx"><b>${esc(LEAD_KIND[l.kind] || "Заявка")} ${esc(l.number)}</b><span>${dt(l.createdAt)} · ${esc(ORD_ST[l.status] || l.status)}${l.items?.[0] ? " · " + esc(l.items[0].brand + " " + l.items[0].title) : ""}</span></div>${l.total ? `<b class="num">${eur(l.total)}</b>` : ""}</div>`).join("")}</div>`, "");
+  };
+}
 async function vFinance(period) {
   const per = ["week", "month", "quarter", "year"].includes(period) ? period : "month";
   const f = await api("finance", { query: { period: per } });

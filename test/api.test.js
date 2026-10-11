@@ -124,6 +124,8 @@ test("кабинет: профиль, доставка, заказ с маршр
   const o = (await call(me, { method: "POST", body: { initData: "dev:555:Анна" } })).body.orders.find(x => x.number === r.body.number);
   assert.equal(o.status, "shipping"); assert.equal(o.route.buyCity, "Париж"); assert.equal(o.route.shipDate, "2026-10-17");
   assert.equal(o.note, undefined); // заметки менеджера клиенту не видны
+  const cl = (await call(handler, { query: { a: "customers" }, headers: H })).body.customers.find(c => c.tg.id === 555);
+  assert.equal(cl.profile.npPoint, "26814"); assert.equal(cl.orders, 1);
   const other = (await call(me, { method: "POST", body: { initData: "dev:556:Чужой" } })).body.orders;
   assert.equal(other.length, 0);
   delete process.env.DEV_AUTH;

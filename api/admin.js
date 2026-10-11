@@ -272,6 +272,13 @@ export default async function handler(req, res) {
         l.updatedAt = now; l.manager = me.name;
         return send(res, 200, { lead: await store.put(l) });
       }
+      case "customers": {
+        // клиенты из Telegram: профиль доставки, сколько заказов и на какую сумму, когда заходили
+        const [cs, ls] = await Promise.all([store.list("customer", {}, { order: "lastSeen desc", limit: 1000 }), store.list("lead", {}, { limit: 5000, fields: "_id, tgId, number, kind, status, total, createdAt, items[]{brand, title}" })]);
+        const by = {}; ls.forEach(l => { if (l.tgId) (by[l.tgId] = by[l.tgId] || []).push(l); });
+        return send(res, 200, { customers: cs.map(c => { const o = (by[c.tg?.id] || []).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)), paid = o.filter(l => l.kind === "order" && ["paid", "bought", "shipping", "np", "delivered"].includes(l.status));
+          return { id: c._id, tg: c.tg, profile: c.profile, createdAt: c.createdAt, lastSeen: c.lastSeen, orders: o.filter(l => l.kind === "order").length, requests: o.filter(l => l.kind !== "order").length, spent: paid.reduce((a, l) => a + (l.total || 0), 0), leads: o.slice(0, 30) }; }) });
+      }
       case "finance": {
         const days = { week: 7, month: 31, quarter: 92, year: 366 }[req.query.period] || 31;
         const since = new Date(Date.now() - days * 864e5).toISOString();
