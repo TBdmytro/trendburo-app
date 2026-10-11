@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-11-live-v29">
+<meta name="trendburo-build" content="2026-10-11-live-v30">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -685,48 +685,53 @@ textarea{min-height:88px;resize:vertical}
 .aioff{font-size:12.5px;color:var(--wait);padding:0 4px}
 
 
-/* ===== Истории из каталога (sv2): реальное фото на студийном фоне, рубрики, жесты ===== */
-.story .ring em{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-style:normal;font-size:9.5px;font-weight:800;background:var(--fg);color:var(--bg);border-radius:6px;padding:1px 5px;line-height:1.3}
-.story .ring{position:relative}
-.story .ring img.ph{object-fit:cover;background:#f3f3f3;transform:scale(1.25)}
-.story .ring:has(img.ph){overflow:hidden}
-.sv2{position:absolute;inset:0;z-index:60;background:#0c0d0f;perspective:1100px;opacity:0;transform:scale(.92);transition:opacity .25s,transform .4s var(--ease);touch-action:none;overflow:hidden}
+/* ===== Истории из каталога (sv2): реальное фото, плавный «куб» за пальцем, мгновенная смена слайдов ===== */
+.story .ring.au{position:relative;padding:2.5px;background:conic-gradient(from 210deg,#1f2125,#c9a46a 35%,#1f2125 70%,#8d7a5a,#1f2125)}
+.story.seen .ring.au{background:var(--line)}
+.story .ring.au>span,.story .ring.au>img{width:100%;height:100%;border-radius:50%;border:2.5px solid var(--bg);box-sizing:border-box;display:grid;place-items:center}
+.story .ring.au>span.ic{background:linear-gradient(145deg,#41444b,#1b1c1f);color:#f4efe4}
+.story .ring.au>span.ic svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.story .ring.au>span.ic svg .f{fill:currentColor;stroke:none}
+.story .ring.au>img{object-fit:contain;background:#f3f3f3;padding:7px}
+.sv2{position:absolute;inset:0;z-index:60;background:#000;opacity:0;transform:scale(.92);transition:opacity .25s,transform .4s var(--ease),border-radius .3s;touch-action:none;overflow:hidden;perspective:1200px}
 .sv2.in{opacity:1;transform:none}.sv2.drag{transition:none}
-.sv2 .cb{position:absolute;inset:0;backface-visibility:hidden;background:#17181b;overflow:hidden}
-.sv2 .cb.oL{animation:svoL .55s var(--ease) forwards;transform-origin:0 50%}.sv2 .cb.iL{animation:sviL .55s var(--ease) forwards;transform-origin:100% 50%}
-.sv2 .cb.oR{animation:svoR .55s var(--ease) forwards;transform-origin:100% 50%}.sv2 .cb.iR{animation:sviR .55s var(--ease) forwards;transform-origin:0 50%}
-@keyframes svoL{to{transform:translateX(-100%) rotateY(-80deg);filter:brightness(.4)}}@keyframes sviL{from{transform:translateX(100%) rotateY(80deg);filter:brightness(.4)}to{transform:none}}
-@keyframes svoR{to{transform:translateX(100%) rotateY(80deg);filter:brightness(.4)}}@keyframes sviR{from{transform:translateX(-100%) rotateY(-80deg);filter:brightness(.4)}to{transform:none}}
-.sv2 .bz{position:absolute;left:0;right:0;top:0;z-index:5;display:flex;gap:4px;padding:calc(10px + var(--st)) 10px 0;transition:opacity .2s}
+.sv2 .cbx{position:absolute;inset:0;transform-style:preserve-3d;transform:translateZ(calc(var(--w)/-2)) rotateY(var(--a,0deg))}
+.sv2 .cbx.anim{transition:transform .42s cubic-bezier(.25,.8,.3,1)}
+.sv2 .cb{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#17181b;overflow:hidden;transform:rotateY(var(--fa,0deg)) translateZ(calc(var(--w)/2))}
+.sv2 .cb::after{content:"";position:absolute;inset:0;background:#000;opacity:var(--dim,0);pointer-events:none;z-index:9}
+.sv2 .bz{position:absolute;left:0;right:0;top:0;z-index:6;display:flex;gap:4px;padding:calc(10px + var(--st)) 10px 0;transition:opacity .2s}
 .sv2 .bz i{flex:1;height:2.5px;border-radius:2px;background:rgba(255,255,255,.32);overflow:hidden}
 .sv2 .bz b{display:block;height:100%;width:0;background:#fff}
-.sv2 .hz{position:absolute;left:0;right:0;top:calc(18px + var(--st));z-index:5;display:flex;align-items:center;gap:9px;padding:6px 12px;color:#fff;transition:opacity .2s}
-.sv2 .hz .av{width:32px;height:32px;border-radius:50%;overflow:hidden;background:#f3f3f3;border:1.5px solid rgba(255,255,255,.75);flex:none;display:grid;place-items:center;color:#1f2125;font-size:11px;font-weight:800}
-.sv2 .hz .av img{width:100%;height:100%;object-fit:cover;transform:scale(1.25)}
+.sv2 .hz{position:absolute;left:0;right:0;top:calc(18px + var(--st));z-index:6;display:flex;align-items:center;gap:9px;padding:6px 12px;color:#fff;transition:opacity .2s}
+.sv2 .hz .av{width:32px;height:32px;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#41444b,#1b1c1f);border:1.5px solid rgba(255,255,255,.75);flex:none;display:grid;place-items:center;color:#f4efe4}
+.sv2 .hz .av img{width:100%;height:100%;object-fit:contain;background:#f3f3f3;padding:3px;box-sizing:border-box}
+.sv2 .hz .av svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.sv2 .hz .av svg .f{fill:currentColor;stroke:none}
 .sv2 .hz b{font-size:14px}.sv2 .hz small{font-size:12.5px;opacity:.65}
 .sv2 .hz button{margin-left:auto;background:none;border:0;color:#fff;font-size:26px;line-height:1;padding:4px 8px}
 .sv2.paused .bz,.sv2.paused .hz,.sv2.paused .pn{opacity:0}
-.sv2 .st{position:absolute;inset:0;background:var(--phbg,#f3f3f3);display:grid;place-items:center;overflow:hidden;transition:background .4s}
+.sv2 .sl{position:absolute;inset:0}
+.sv2 .sl.nw{opacity:0;transition:opacity .18s ease-out}.sv2 .sl.nw.on{opacity:1}
+.sv2 .st{position:absolute;inset:0;background:var(--phbg,#f3f3f3);display:grid;place-items:center;overflow:hidden}
 .sv2 .st::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(130px + var(--st));background:linear-gradient(rgba(0,0,0,.42),transparent);z-index:1}
-.sv2 .st img{width:94%;max-height:58%;object-fit:contain;margin-top:-14vh;animation:svkb 6s ease-out both}
-@keyframes svkb{from{transform:scale(1.1) translateY(14px);opacity:0}12%{opacity:1}to{transform:none}}
-.sv2 .st img.sw{animation:svsw .45s var(--ease) both}@keyframes svsw{from{transform:translateX(30px) scale(.94);opacity:0}}
-.sv2 .bg{position:absolute;top:calc(74px + var(--st));right:14px;z-index:3;font-size:12px;font-weight:800;padding:6px 10px;border-radius:99px;background:#1f2125;color:#fff;animation:svpop .5s .3s var(--spring,cubic-bezier(.34,1.56,.64,1)) both}
-.sv2 .bg.s{background:#c8343c}@keyframes svpop{from{transform:scale(.4);opacity:0}}
-.sv2 .pn{position:absolute;left:10px;right:10px;bottom:calc(10px + var(--sb));z-index:4;padding:14px;border-radius:22px;background:rgba(28,30,33,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#fff;animation:svrise .5s .15s var(--ease) both;transition:opacity .2s}
-@keyframes svrise{from{transform:translateY(24px);opacity:0}}
+.sv2 .st img{width:94%;max-height:58%;object-fit:contain;margin-top:-14vh;animation:svkb 7s linear both}
+@keyframes svkb{from{transform:scale(1.045)}to{transform:none}}
+.sv2 .st img.sw{animation:svsw .35s var(--ease) both}@keyframes svsw{from{opacity:0;transform:scale(.97)}}
+.sv2 .bg{position:absolute;top:calc(74px + var(--st));right:14px;z-index:3;font-size:12px;font-weight:800;padding:6px 10px;border-radius:99px;background:#1f2125;color:#fff}
+.sv2 .bg.s{background:#c8343c}
+.sv2 .pn{position:absolute;left:10px;right:10px;bottom:calc(10px + var(--sb));z-index:4;padding:14px;border-radius:22px;background:rgba(28,30,33,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#fff;transition:opacity .2s}
+.sv2.first .pn{animation:svrise .45s .1s var(--ease) both}
+@keyframes svrise{from{transform:translateY(20px);opacity:0}}
 .sv2 .pn .br{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;font-weight:700}
 .sv2 .pn .nm{font-size:20px;font-weight:700;margin:3px 0 8px;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sv2 .pn .row{display:flex;align-items:baseline;gap:10px}
 .sv2 .pn .pr{font-size:19px;font-weight:800;color:#fff}.sv2 .pn s{opacity:.5;font-size:14px;margin-left:6px;font-weight:600}
-.sv2 .pn .un{font-size:12px;color:#ffb3b7;margin-left:auto}
 .sv2 .pn .ac{display:flex;gap:8px;margin-top:12px}
 .sv2 .pn .ac button{height:46px;border-radius:14px;border:0;font:inherit;font-size:15px;font-weight:700}
 .sv2 .pn .go{flex:1;background:#fff;color:#1f2125}
 .sv2 .pn .fv{width:46px;flex:none;background:rgba(255,255,255,.12);color:#fff;font-size:19px}.sv2 .pn .fv.on{color:#ff6b74}
 .sv2 .pn .up{text-align:center;font-size:11.5px;opacity:.45;margin-top:8px}
 .sv2 .dt{display:flex;gap:10px;margin:0 0 10px}
-.sv2 .dt button{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:#f3f3f3 50%/260% no-repeat;transition:transform .3s cubic-bezier(.34,1.56,.64,1),border-color .2s}
+.sv2 .dt button{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:#f3f3f3 50%/contain no-repeat;transition:transform .3s cubic-bezier(.34,1.56,.64,1),border-color .2s}
 .sv2 .dt button.on{border-color:#fff;transform:scale(1.15)}
 .sv2 .tp{position:absolute;top:calc(70px + var(--st));bottom:200px;width:34%;z-index:3;border:0;background:none}.sv2 .tp.l{left:0}.sv2 .tp.r{right:0}
 .sv2 .du{position:absolute;inset:0;display:grid;grid-template-rows:1fr 1fr;gap:6px;padding:calc(72px + var(--st)) 10px calc(10px + var(--sb));background:#17181b}
@@ -740,10 +745,9 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .vs{position:absolute;left:50%;top:calc(50% + (62px + var(--st) - var(--sb))/2);transform:translate(-50%,-50%);z-index:2;width:46px;height:46px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;border:3px solid #17181b;pointer-events:none}
 .sv2 .in2{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:22px 20px calc(40px + var(--sb));color:#fff;background:radial-gradient(80% 60% at 70% 30%,#3a3c42,#17181b)}
 .sv2 .in2 .gr{position:absolute;top:calc(80px + var(--st));left:20px;right:20px;bottom:220px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.sv2 .in2 .gr div{border-radius:18px;background:#f3f3f3 center/84% no-repeat;animation:svrise .6s var(--ease) both}
-.sv2 .in2 .gr div:nth-child(2){animation-delay:.08s}.sv2 .in2 .gr div:nth-child(3){animation-delay:.16s}.sv2 .in2 .gr div:nth-child(4){animation-delay:.24s}
+.sv2 .in2 .gr div{border-radius:18px;background:#f3f3f3 center/84% no-repeat}
 .sv2 .in2 .k{font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.6;font-weight:700}
-.sv2 .in2 h2{font-size:34px;margin:6px 0;letter-spacing:-.02em;animation:svrise .5s .2s var(--ease) both}
+.sv2 .in2 h2{font-size:34px;margin:6px 0;letter-spacing:-.02em}
 .sv2 .in2 p{opacity:.7;margin:0;font-size:15px}
 @media (prefers-reduced-motion:reduce){.sv2 *,.sv2{animation:none!important;transition:none!important}}
 /* story viewer */
@@ -2030,37 +2034,50 @@ function buildAuto(){
   Object.keys(cnt).filter(k=>cnt[k]>=2).sort((a,b)=>cnt[b]-cnt[a]).slice(0,8).forEach(k=>{const pool=W.filter(p=>p.bk===k);add({k:"b:"+k,name:pool[0].brand,brand:k},pool)});
   R.forEach(r=>{const c=svFresh(r.pool,1,1)[0]||r.pool[0];r.cover=svImg(c).thumb;r.seen=r.pool.every(p=>svSeen(p.id))});
   return R}
-function autoRingsHTML(){AUTO=buildAuto();return AUTO.map((r,i)=>`<button class="story press ${r.seen?"seen":""}" data-act="astory" data-i="${i}"><span class="ring"><img class="ph" src="${esc(r.cover)}" alt="" loading="lazy" decoding="async">${r.tag?`<em>${esc(r.tag)}</em>`:""}</span><small>${esc(r.name)}</small></button>`).join("")}
+const SVIC={new:'<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1-5.1-1.9 5.1-1.9z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
+  sale:'<path d="M3.5 12.6V4.5a1 1 0 0 1 1-1h8.1l8 8a1.4 1.4 0 0 1 0 2l-6.6 6.6a1.4 1.4 0 0 1-2 0z"/><circle class="f" cx="8.2" cy="8.2" r="1.5"/>',
+  duel:'<rect x="3.5" y="5" width="7.5" height="10" rx="2"/><rect x="13" y="9" width="7.5" height="10" rx="2"/>',
+  colors:'<circle cx="9" cy="9" r="4.5"/><circle cx="15" cy="9" r="4.5"/><circle cx="12" cy="14.5" r="4.5"/>',
+  day:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/><path class="f" d="M12 12.4l.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1-1.5-1.5 2.1-.3z"/>'};
+const svIco=r=>{const k=r.k.startsWith("day:")?"day":SVIC[r.k]?r.k:null;return k?`<svg viewBox="0 0 24 24" aria-hidden="true">${SVIC[k]}</svg>`:null};
+function autoRingsHTML(){AUTO=buildAuto();return AUTO.map((r,i)=>{const ic=svIco(r);return `<button class="story press ${r.seen?"seen":""}" data-act="astory" data-i="${i}"><span class="ring au">${ic?`<span class="ic">${ic}</span>`:`<img src="${esc(r.cover)}" alt="" loading="lazy" decoding="async">`}</span><small>${esc(r.name)}</small></button>`}).join("")}
 function openAuto(ri){
   if(!AUTO[ri])return;document.querySelectorAll(".sv2,.sv").forEach(e=>e.remove());
-  const host=document.createElement("div");host.className="sv2";host.setAttribute("role","dialog");host.setAttribute("aria-label","Истории");$("#app").append(host);
-  let r=ri,list=AUTO[r].build(),i=0,t0=performance.now(),el=0,raf=0,paused=false,cb=null,lock=false,dead=false;const d=prefs.dest||"ua",DUR=5500;
+  const host=document.createElement("div");host.className="sv2 first";host.setAttribute("role","dialog");host.setAttribute("aria-label","Истории");$("#app").append(host);
+  const cw=document.createElement("div");cw.className="cbx";host.append(cw);
+  const setW=()=>host.style.setProperty("--w",host.offsetWidth+"px");setW();
+  const d=prefs.dest||"ua",DUR=5500;let r=ri,list=AUTO[r].build(),i=0,t0=performance.now(),el=0,raf=0,paused=false,cb=null,busy=false,dead=false,nb=null;
   const priceH=p=>`${eur(priceFor(p,d))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[d]??p.oldPrices.ua)}</s>`:""}`;
-  const fvB=p=>`<button class="fv ${favs.has(p.id)?"on":""}" data-f aria-label="В избранное">${favs.has(p.id)?"♥":"♡"}</button>`;
-  const slideH=s=>{
-    if(s.t==="in"){const R=AUTO[r],I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
+  const srcOf=s=>s.t==="p"||s.t==="c"?(()=>{const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;return cs?(cs[0].idx>=0&&svImg(p,cs[0].idx)?svImg(p,cs[0].idx).src:cs[0].image):svImg(p).src})():s.t==="du"?svImg(s.a).src:null;
+  const pre=s=>{const u=s&&srcOf(s);if(u){const m=new Image();m.src=u;if(s.t==="du"){const m2=new Image();m2.src=svImg(s.b).src}}};
+  const slideH=(R,s)=>{
+    if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
     if(s.t==="du")return `<div class="du">${[s.a,s.b].map((p,j)=>`<button class="dc" data-v="${j}"><img src="${esc(svImg(p).src)}" alt="${esc(p.brand+" "+p.name)}" decoding="async"><span class="hv">♥ в избранном</span><span class="lb"><b>${esc(p.brand)}</b><span>${esc(p.name)} · ${eur(priceFor(p,d))}</span></span></button>`).join("")}<span class="vs">VS</span></div>`;
-    const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null,src=cs?(cs[0].idx>=0&&svImg(p,cs[0].idx)?svImg(p,cs[0].idx).src:cs[0].image):svImg(p).src;
-    return `<div class="st"><img crossorigin="anonymous" src="${esc(src)}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>
+    const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
+    return `<div class="st"><img crossorigin="anonymous" src="${esc(srcOf(s))}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>
       ${p.sale?`<span class="bg s">−${p.sale}%</span>`:p.isNew?`<span class="bg">Новинка</span>`:""}
       <div class="pn"><div class="br">${esc(p.brand)}</div><div class="nm">${esc(p.name)}</div>
         ${cs?`<div class="dt">${cs.map((c,j)=>`<button data-c="${j}" class="${j?"":"on"}" aria-label="${esc(c.name)}" style="background-image:url('${esc(c.idx>=0&&svImg(p,c.idx)?svImg(p,c.idx).thumb:c.image)}')"></button>`).join("")}</div>`:""}
         <div class="row"><span class="pr num">${priceH(p)}</span></div>
-        <div class="ac">${fvB(p)}<button class="go" data-go>Смотреть</button></div><div class="up">⌃ свайп вверх — открыть</div></div>`};
-  const render=dir=>{
-    const s=list[i];if(!s)return close();if(s.p)svMark(s.p.id);if(s.t==="du"){svMark(s.a.id);svMark(s.b.id)}if(s.t==="in")s.ps.forEach(p=>0);
-    const R=AUTO[r],n=document.createElement("div");n.className="cb";
-    n.innerHTML=`<div class="bz">${list.map((_,j)=>`<i><b style="width:${j<i?100:0}%"></b></i>`).join("")}</div>
-      <div class="hz"><span class="av"><img src="${esc(R.cover)}" alt=""></span><b>${esc(R.name)}</b><small>${s.t==="du"?"выберите":"сегодня"}</small><button data-x aria-label="Закрыть">×</button></div>
-      ${slideH(s)}${s.t==="du"?"":`<button class="tp l" aria-label="Назад"></button><button class="tp r" aria-label="Далее"></button>`}`;
-    if(dir&&cb&&!RMo()){const o=cb;o.classList.add(dir>0?"oL":"oR");n.classList.add(dir>0?"iL":"iR");lock=true;setTimeout(()=>{o.remove();n.classList.remove("iL","iR");lock=false},560)}else if(cb)cb.remove();
-    host.append(n);cb=n;wire(s);el=0;
-    if(R.brand){const b=n.querySelector(".hz b");b.style.cursor="pointer";b.onclick=()=>{close();openBrand(R.brand)}}
-    const im=n.querySelector(".st img");if(im){const bgc=()=>{const c=edgeColor(im);if(c)n.querySelector(".st").style.setProperty("--phbg",c)};im.complete&&im.naturalWidth?bgc():im.addEventListener("load",bgc,{once:true})}
-    const nx=list[i+1];if(nx){const u=nx.p?svImg(nx.p).src:nx.a?svImg(nx.a).src:null;if(u){const pre=new Image();pre.src=u}}};
+        <div class="ac"><button class="fv ${favs.has(p.id)?"on":""}" data-f aria-label="В избранное">${favs.has(p.id)?"♥":"♡"}</button><button class="go" data-go>Смотреть</button></div><div class="up">⌃ свайп вверх — открыть</div></div>`};
+  // грань куба: шапка и полоски общие для рубрики, слайд внутри меняется без перестройки
+  const face=(R,L,k)=>{const f=document.createElement("div");f.className="cb";const ic=svIco(R);
+    f.innerHTML=`<div class="bz">${L.map((_,j)=>`<i><b style="width:${j<k?100:0}%"></b></i>`).join("")}</div>
+      <div class="hz"><span class="av">${ic||`<img src="${esc(R.cover)}" alt="">`}</span><b>${esc(R.name)}</b><small></small><button data-x aria-label="Закрыть">×</button></div>
+      <button class="tp l" aria-label="Назад"></button><button class="tp r" aria-label="Далее"></button>`;
+    f.appendChild(slideNode(R,L[k]));return f};
+  const slideNode=(R,s)=>{const n=document.createElement("div");n.className="sl";n.innerHTML=slideH(R,s);
+    const im=n.querySelector(".st img");if(im){const bgc=()=>{const c=edgeColor(im);if(c)n.querySelector(".st").style.setProperty("--phbg",c)};im.complete&&im.naturalWidth?bgc():im.addEventListener("load",bgc,{once:true})}return n};
+  const mark=s=>{if(s.p)svMark(s.p.id);if(s.t==="du"){svMark(s.a.id);svMark(s.b.id)}};
+  const enter=()=>{const s=list[i];mark(s);el=0;cb.querySelector(".hz small").textContent=s.t==="du"?"выберите":"сегодня";
+    cb.querySelector(".tp.l").hidden=cb.querySelector(".tp.r").hidden=s.t==="du";
+    cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1])};
+  // смена слайда внутри рубрики: как в Instagram — сразу, без мигания (новое фото уже загружено заранее)
+  const goSlide=k=>{const s=list[k];i=k;const old=cb.querySelector(".sl"),n=slideNode(AUTO[r],s);n.classList.add("nw");old.after(n);
+    const show=()=>{n.classList.add("on");setTimeout(()=>{old.remove();n.classList.remove("nw","on")},200)};
+    const im=n.querySelector(".st img,.dc img");if(im&&!(im.complete&&im.naturalWidth)){let done=false;const go=()=>{if(!done){done=true;show()}};im.addEventListener("load",go,{once:true});im.addEventListener("error",go,{once:true});setTimeout(go,600)}else requestAnimationFrame(show);
+    host.classList.remove("first");enter()};
   const wire=s=>{
-    cb.querySelector("[data-x]").onclick=close;
-    const l=cb.querySelector(".tp.l"),rr=cb.querySelector(".tp.r");if(l){l.onclick=prev;rr.onclick=next}
     const f=cb.querySelector("[data-f]");if(f)f.onclick=()=>{toggleFav(s.p.id);const on=favs.has(s.p.id);f.textContent=on?"♥":"♡";f.classList.toggle("on",on);hap("light")};
     const g=cb.querySelector("[data-go]");if(g)g.onclick=()=>{const id=s.p.id;close(true);openProduct(id)};
     cb.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const cs=s.p.colors.filter(c=>c.idx>=0||c.image),c=cs[+b.dataset.c],im=cb.querySelector(".st img");
@@ -2068,24 +2085,34 @@ function openAuto(ri){
       cb.querySelectorAll("[data-c]").forEach(x=>x.classList.toggle("on",x===b));el=Math.min(el,DUR*.3);hap()});
     if(s.t==="du"){const du=cb.querySelector(".du");cb.querySelectorAll(".dc").forEach(b=>b.onclick=()=>{if(du.classList.contains("vt"))return;
       const p=+b.dataset.v?s.b:s.a;du.classList.add("vt");b.classList.add("pk");if(!favs.has(p.id))toggleFav(p.id);hap("medium");el=DUR-1500})}};
-  const tick=n=>{if(dead)return;if(!paused&&!lock)el+=n-t0;t0=n;const dur=list[i]&&list[i].t==="du"&&!cb.querySelector(".vt")?DUR*2:DUR;
-    const b=cb&&cb.querySelectorAll(".bz b")[i];if(b)b.style.width=Math.min(100,el/dur*100)+"%";if(el>=dur)next();raf=requestAnimationFrame(tick)};
-  const next=()=>{if(lock)return;if(i<list.length-1){i++;render()}else nextR(1)};
-  const prev=()=>{if(lock)return;if(i>0){i--;render()}else nextR(-1)};
-  const nextR=dir=>{const nr=r+dir;if(nr<0){el=0;return}if(nr>=AUTO.length)return close();r=nr;list=AUTO[r].build();i=0;if(!list.length)return close();hap("light");render(dir)};
+  const bindFace=f=>{f.querySelector("[data-x]").onclick=()=>close();f.querySelector(".tp.l").onclick=()=>prev();f.querySelector(".tp.r").onclick=()=>next()};
+  cb=face(AUTO[r],list,0);bindFace(cb);cw.append(cb);enter();
+  const tick=n=>{if(dead)return;if(!paused&&!busy)el+=n-t0;t0=n;const s=list[i],dur=s&&s.t==="du"&&!cb.querySelector(".vt")?DUR*2:DUR;
+    const b=cb.querySelectorAll(".bz b")[i];if(b)b.style.width=Math.min(100,el/dur*100)+"%";if(el>=dur&&!busy)next();raf=requestAnimationFrame(tick)};
+  // куб: соседняя рубрика встаёт на боковую грань, поворот идёт за пальцем
+  const neighbor=dir=>{const nr=r+dir;if(nr<0||nr>=AUTO.length)return null;if(nb&&nb.dir===dir)return nb;if(nb)nb.f.remove();
+    const L=AUTO[nr].build();if(!L.length)return null;const f=face(AUTO[nr],L,0);f.style.setProperty("--fa",(dir*90)+"deg");cw.append(f);nb={dir,r:nr,L,f};return nb};
+  const setA=(a,anim)=>{cw.classList.toggle("anim",!!anim);cw.style.setProperty("--a",a+"deg");const k=Math.min(1,Math.abs(a)/90);cb.style.setProperty("--dim",(k*.5).toFixed(3));if(nb)nb.f.style.setProperty("--dim",((1-k)*.5).toFixed(3))};
+  const commit=dir=>{const N=neighbor(dir);if(!N){setA(0,true);if(dir>0&&r>=AUTO.length-1)close();return}busy=true;hap("light");setA(-dir*90,true);
+    setTimeout(()=>{if(dead)return;cb.remove();cb=N.f;nb=null;cb.style.setProperty("--fa","0deg");cb.style.setProperty("--dim","0");setA(0,false);r=N.r;list=N.L;i=0;bindFace(cb);host.classList.remove("first");enter();busy=false},430)};
+  const next=()=>{if(busy)return;if(i<list.length-1)goSlide(i+1);else commit(1)};
+  const prev=()=>{if(busy)return;if(i>0)goSlide(i-1);else if(r>0)commit(-1);else el=0};
   function close(quick){if(dead)return;dead=true;cancelAnimationFrame(raf);if(quick===true)host.remove();else{host.classList.remove("in");setTimeout(()=>host.remove(),320)}renderFeed()}
-  let sx=0,sy=0,st=0,hold=0,moved=false;
-  host.addEventListener("pointerdown",e=>{if(e.target.closest("button:not(.tp)"))return;sx=e.clientX;sy=e.clientY;st=1;moved=false;hold=setTimeout(()=>{paused=true;host.classList.add("paused")},220)});
-  host.addEventListener("pointermove",e=>{if(!st)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>10||Math.abs(dy)>10){moved=true;clearTimeout(hold)}
-    if(dy>0&&Math.abs(dy)>Math.abs(dx)){host.classList.add("drag");host.style.transform=`translateY(${dy*.6}px) scale(${1-dy/2000})`;host.style.borderRadius="24px"}});
-  const up=e=>{if(!st)return;st=0;clearTimeout(hold);const dx=e.clientX-sx,dy=e.clientY-sy;host.classList.remove("drag","paused");host.style.transform="";host.style.borderRadius="";paused=false;
-    if(!moved)return;
-    if(dy>110&&Math.abs(dy)>Math.abs(dx))return close();
-    const s=list[i];if(dy<-70&&Math.abs(dy)>Math.abs(dx)&&s&&s.p){const id=s.p.id;close(true);return openProduct(id)}
-    if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy))nextR(dx<0?1:-1)};
+  let sx=0,sy=0,st=0,hold=0,mode="",W=1;
+  host.addEventListener("pointerdown",e=>{if(busy||e.target.closest("button:not(.tp)"))return;sx=e.clientX;sy=e.clientY;st=1;mode="";W=host.offsetWidth;setW();hold=setTimeout(()=>{paused=true;host.classList.add("paused")},200)});
+  host.addEventListener("pointermove",e=>{if(!st)return;const dx=e.clientX-sx,dy=e.clientY-sy;
+    if(!mode&&(Math.abs(dx)>8||Math.abs(dy)>8)){clearTimeout(hold);mode=Math.abs(dx)>Math.abs(dy)?"x":dy>0?"down":"up";paused=true}
+    if(mode==="x"){const dir=dx<0?1:-1,N=neighbor(dir);let a=dx/W*90;if(!N)a=a/4;setA(Math.max(-90,Math.min(90,a)),false)}
+    else if(mode==="down"){host.classList.add("drag");host.style.transform=`translateY(${Math.max(0,dy)*.7}px) scale(${1-Math.max(0,dy)/1600})`;host.style.borderRadius="26px"}});
+  const up=e=>{if(!st)return;st=0;clearTimeout(hold);const dx=e.clientX-sx,dy=e.clientY-sy,m=mode;mode="";host.classList.remove("paused");paused=false;
+    if(m==="down"){host.classList.remove("drag");if(dy>110)return close();host.style.transform="";host.style.borderRadius="";return}
+    if(m==="up"){const s=list[i];if(dy<-70&&s&&s.p){const id=s.p.id;close(true);openProduct(id)}return}
+    if(m==="x"){if(Math.abs(dx)>W*.22)commit(dx<0?1:-1);else{setA(0,true);setTimeout(()=>{if(nb&&!busy){nb.f.remove();nb=null}},440)}}};
   host.addEventListener("pointerup",up);host.addEventListener("pointercancel",up);
-  host.addEventListener("click",e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false}},true);
-  render();requestAnimationFrame(()=>requestAnimationFrame(()=>host.classList.add("in")));raf=requestAnimationFrame(tick)}
+  host.addEventListener("click",e=>{if(e.target.closest(".tp")&&host.dataset.mv){e.stopPropagation();e.preventDefault()}},true);
+  host.addEventListener("pointerdown",()=>{delete host.dataset.mv},true);host.addEventListener("pointermove",()=>{if(mode)host.dataset.mv=1},true);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>host.classList.add("in")));raf=requestAnimationFrame(tick)}
+
 /* ===== Сервисы ===== */
 const I=d=>`<svg viewBox="0 0 24 24">${d}</svg>`;
 const SVC={
