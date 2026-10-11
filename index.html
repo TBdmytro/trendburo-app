@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-11-live-v35">
+<meta name="trendburo-build" content="2026-10-11-live-v36">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -781,6 +781,8 @@ textarea{min-height:88px;resize:vertical}
 .gt-go svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
 .gt-go.busy{opacity:.7}
 .gt-skip{border:0;background:none;color:var(--g2);font:inherit;font-size:14px;text-decoration:underline;padding:4px}
+.gt-pvbox{font-size:12.5px;color:var(--g2);line-height:1.45;background:var(--soft);border-radius:14px;padding:12px}.gt-pvbox b{color:var(--fg);display:block;margin-bottom:4px}
+.gt-note a{color:var(--fg)}
 .gt-note{font-size:12.5px;color:var(--g2);line-height:1.45;text-align:center}
 img.acc-av{object-fit:cover}
 .round.me{padding:0;overflow:hidden}.round.me img,.round.me .ini{width:100%;height:100%;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:linear-gradient(150deg,#3c3f45,#141518);color:#fff;font-size:13px;font-weight:700}
@@ -2259,6 +2261,16 @@ function openAuto(ri){
 
 /* плитки товаров: фон под фото = цвет краёв фото, без белых полос */
 document.addEventListener("load",e=>{const im=e.target;if(!(im instanceof HTMLImageElement)||!im.classList.contains("shimg"))return;const a=im.closest(".pc .art,.cartrow .th,.ordc .oth");if(!a)return;const c=edgeColor(im);if(c)a.style.setProperty("--tbg",c)},true);
+
+/* ===== Конфиденциальность ===== */
+function openPrivacy(){const h=(t,b)=>`<div class="sec"><div class="sech"><h2>${t}</h2></div><div class="pad" style="font-size:15px;line-height:1.55;color:var(--g2)">${b}</div></div>`;
+  push("Конфиденциальность",`<div class="bigtitle" style="padding-top:12px"><h1>Ваши данные</h1></div>
+   ${h("Что мы получаем","Когда вы входите через Telegram, мы видим имя, username и фото профиля — пароль не нужен. Телефон, город и отделение Новой почты вы указываете сами, чтобы мы могли отправить заказ.")}
+   ${h("Зачем","Только чтобы оформить и доставить заказ: менеджер подтверждает наличие, пишет вам в Telegram и отправляет посылку. Мы не продаём и не передаём ваши данные для рекламы.")}
+   ${h("Кто видит","Ваш менеджер Trend Büro и служба доставки — в объёме, нужном для отправки (получатель, телефон, адрес или отделение).")}
+   ${h("Где хранится","На защищённом сервере. Избранное, корзина и размеры — ещё и в памяти вашего телефона.")}
+   ${h("Как удалить","Напишите менеджеру — удалим профиль и данные доставки. История уже выполненных заказов может храниться для учёта.")}
+   <div class="pad" style="margin-top:12px"><a class="btn block soft" href="${esc((CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]).url)}" target="_blank" rel="noopener">Написать менеджеру</a></div><div style="height:30px"></div>`,{clear:true})}
 /* ===== Сервисы ===== */
 const I=d=>`<svg viewBox="0 0 24 24">${d}</svg>`;
 const SVC={
@@ -2370,8 +2382,9 @@ function authGate(){const b=authBody();if(!b||!LIVE)return;
    <div class="gt-card"><span class="gt-k">Вход через Telegram</span>
      <div class="gt-u">${avatarHTML({photo:u.photo_url,name},"gt-av")}<div><b>${esc(name)}</b>${u.username?`<small>@${esc(u.username)}</small>`:""}</div><svg class="gt-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
      <button class="btn block gt-go" type="button"><svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><path d="M9 13l8-6"/></svg>Войти как ${esc(String(name).split(" ")[0])}</button>
-     <p class="gt-note">Без пароля: Telegram подтвердит, что это вы. Мы видим только имя и username. Телефон и адрес доставки добавите сами в профиле — их увидит только ваш менеджер.</p></div>`;
+     <p class="gt-note">Без пароля: Telegram подтвердит, что это вы. Мы видим только имя и username. Телефон и адрес доставки добавите сами в профиле — их увидит только ваш менеджер. <a href="#" class="gt-pv">Подробнее</a></p></div>`;
   $("#app").append(g);requestAnimationFrame(()=>requestAnimationFrame(()=>g.classList.add("in")));
+  g.querySelector(".gt-pv").onclick=e=>{e.preventDefault();const r=document.createElement("div");r.className="gt-pvbox";r.innerHTML=`<b>Ваши данные</b><p>Мы видим только имя, username и фото из Telegram. Телефон и адрес вы указываете сами — они нужны только для доставки, их видит ваш менеджер. Не продаём и не передаём для рекламы. Удалить профиль — по запросу менеджеру.</p>`;e.currentTarget.closest(".gt-card").append(r);e.currentTarget.remove()};
   g.querySelector(".gt-go").onclick=async e=>{const btn=e.currentTarget;btn.disabled=true;btn.classList.add("busy");hap("medium");
     const r=await loadMe();if(!r){btn.disabled=false;btn.classList.remove("busy");toast("Не получилось войти — попробуйте ещё раз");
       if(!g.querySelector(".gt-skip")){const k=document.createElement("button");k.type="button";k.className="gt-skip";k.textContent="Продолжить без входа";k.onclick=()=>{g.classList.add("out");setTimeout(()=>g.remove(),520)};g.querySelector(".gt-card").append(k)}return}
@@ -2496,9 +2509,9 @@ function openAccount(){
      </div></div>
     <div class="sec" id="accBrands"><div class="sech"><h2>Мои бренды</h2><button class="more" data-act="allbrands">Все бренды</button></div>
      ${fb.length?`<div class="chips wrap pad">${fb.map(bk=>`<button class="chip" data-act="brand" data-bk="${bk}">${esc(bname(bk))}</button>`).join("")}</div>`:`<p class="muted pad" style="font-size:14px">Нажмите «Следить» на странице бренда — его новинки появятся в Ленте.</p>`}</div>
-    <div class="sec"><div class="sech"><h2>Связь</h2></div><div class="cells" style="padding:0 16px"><div class="clist">${contactsHTML()}</div></div></div>
+    <div class="sec"><div class="sech"><h2>Связь</h2></div><div class="cells" style="padding:0 16px"><div class="clist">${contactsHTML()}<a class="crow" href="#" data-priv><span>Конфиденциальность</span><b>как мы храним данные ›</b></a></div></div></div>
     <div style="height:30px"></div>`;
-    wireDeliveryForm(box);
+    wireDeliveryForm(box);box.querySelector("[data-priv]").onclick=e=>{e.preventDefault();openPrivacy()};
     box.querySelector("[data-dsave]").onclick=async e=>{const v=readDeliveryForm(box),b=e.currentTarget;b.disabled=true;await saveDelivery(v).catch(()=>{});b.disabled=false;toast("Данные доставки сохранены")};
     box.querySelectorAll("[data-oi]").forEach(b=>b.onclick=()=>openOrder(ords[+b.dataset.oi]));
     const save=()=>{prefs={shoe:box.querySelector("#pShoe").value,cloth:box.querySelector("#pCloth").value,dest:box.querySelector("#pDest").value};store.set("tb_prefs",prefs);toast("Сохранено")};
