@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-11-admin-v21">
+<meta name="trendburo-build" content="2026-10-11-admin-v22">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1974,16 +1974,18 @@ async function cropToB64(file, box) {
   ox.drawImage(wc, iso.x0, iso.y0, cw, chh, (out.width - cw * s2) / 2, (out.height - chh * s2) / 2, cw * s2, chh * s2);
   return toB64(out);
 }
-const SCR = { queue: [], groups: new Map(), running: false, enabled: null, last: 0 };
+const SCR = { queue: [], groups: new Map(), running: false, enabled: null, last: 0, one: false, oneKey: null, lastKey: null, pending: [] };
 const scrKey = r => (r.brand + "|" + r.title).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9а-я|]+/g, "");
 async function vScreens() {
   if (SCR.enabled === null) SCR.enabled = (await api("screenStatus")).enabled;
   const draw = () => {
     const q = SCR.queue, done = q.filter(i => i.state === "done").length, bad = q.filter(i => i.state === "err" || i.state === "skip").length, left = q.filter(i => i.state === "wait" || i.state === "read").length;
     const groups = [...SCR.groups.values()].filter(g => !g.saved);
-    $("#main").innerHTML = head("Со скриншотов", "Скриншоты страниц товаров → готовые карточки. Каждый скриншот — один товар; несколько скриншотов одного товара склеятся в одну карточку с галереей.",
+    $("#main").innerHTML = head("Со скриншотов", "Скриншоты страниц товаров и готовые фото → карточки. Робот читает бренд, название и цену со скриншотов, а уже обрезанные фото без текста кладёт в галерею как есть.",
       `<button class="btn" id="scPick" ${SCR.enabled ? "" : "disabled"}>${svg("img")}Выбрать скриншоты</button>`) + `
       ${SCR.enabled ? "" : `<div class="note-box warn">${svg("warn")}<div><b>Распознавание не подключено.</b> Добавьте в Vercel переменную <b>GEMINI_API_KEY</b> (ключ с aistudio.google.com) и сделайте Redeploy.</div></div>`}
+      <div class="seg" style="margin:0 0 14px">${[[false, "Каждый товар отдельно"], [true, "Все выбранные — один товар"]].map(([v, n]) => `<button type="button" data-scone="${v ? 1 : 0}" aria-pressed="${SCR.one === v}">${n}</button>`).join("")}</div>
+      <p class="hint" style="margin:-6px 0 14px">${SCR.one ? "Выберите 1–2 скриншота с информацией и обрезанные фото одного товара — получится одна карточка: данные со скриншотов, в галерее ваши фото." : "Скриншоты одного товара склеятся сами. Обрезанные фото без текста прикрепятся к товару со скриншота рядом с ними."}</p>
       <input type="file" id="scFile" accept="image/*" multiple hidden>
       ${q.length ? `<div class="card pad" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
         <div class="row"><b>Скриншоты: ${done} готово${bad ? ` · ${bad} пропущено` : ""}${left ? ` · ${left} в очереди` : ""}</b><span class="sp"></span>${left ? `<span class="hint">${SCR.running ? '<span class="spin"></span> читаю…' : ""}</span>` : `<button class="btn ghost sm" id="scClear">Очистить список</button>`}</div>
@@ -2008,6 +2010,7 @@ async function vScreens() {
       ${g.err ? `<div class="err hint">${esc(g.err)}</div>` : ""}
     </div></article>`;
   const addFiles = files => {
+    if (SCR.one) SCR.oneKey = null; // каждый новый выбор в режиме «один товар» — новая карточка
     for (const f of files) { if (!/^image\//.test(f.type) && !/\.(png|jpe?g|webp|heic)$/i.test(f.name)) continue; SCR.queue.push({ file: f, name: f.name, state: "wait" }); }
     draw(); run();
   };
@@ -2027,12 +2030,19 @@ async function vScreens() {
             if (r.status === 429) { await new Promise(res => setTimeout(res, (j.retryAfter || 40) * 1000)); continue; }
             if (!r.ok) { it.state = "err"; it.msg = j.error || "ошибка"; break; }
             const rd = j.item;
-            if (!rd.isProduct || (!rd.title && !rd.brand)) { it.state = "skip"; it.msg = "не похоже на страницу товара"; break; }
+            const isPhoto = rd.kind === "photo";
+            if (!rd.isProduct || (!isPhoto && !rd.title && !rd.brand)) { it.state = "skip"; it.msg = "не похоже на товар"; break; }
             let url = null;
-            if (rd.box) { const b64 = await cropToB64(it.file, rd.box); url = (await api("imageUpload", { method: "POST", body: { data: b64 }, silent: true })).url; }
-            const key = scrKey(rd) || "x" + Math.random();
-            const g = SCR.groups.get(key) || { key, brand: rd.brand, title: rd.title, price: rd.price, currency: rd.currency, currencyKnown: rd.currencyKnown, priceEur: rd.priceEur, color: rd.color, sizes: [], sku: rd.sku, category: rd.category, gender: rd.gender, images: [], count: 0, checked: true };
-            if (url && g.images.length < 8) g.images.push(url);
+            // готовое фото — целиком; скриншот страницы — вырезаем фото по рамке
+            if (isPhoto) url = (await api("imageUpload", { method: "POST", body: { data: await fileToJpegB64(it.file, 1600) }, silent: true })).url;
+            else if (rd.box) { const b64 = await cropToB64(it.file, rd.box); url = (await api("imageUpload", { method: "POST", body: { data: b64 }, silent: true })).url; }
+            const key = SCR.one ? (SCR.oneKey = SCR.oneKey || "one" + Date.now()) : isPhoto ? SCR.lastKey : (scrKey(rd) || "x" + Math.random());
+            if (!key) { if (url) SCR.pending.push(url); it.state = "done"; break; }
+            const g = SCR.groups.get(key) || { key, brand: "", title: "", price: null, currency: "EUR", currencyKnown: true, priceEur: null, color: "", sizes: [], sku: "", category: "other", gender: "u", images: [], photos: [], crops: [], count: 0, checked: true };
+            if (!isPhoto) { for (const k of ["brand", "title", "color", "sku"]) if (!g[k] && rd[k]) g[k] = rd[k]; if (g.category === "other" && rd.category) g.category = rd.category; if (!g.price && rd.price) { g.price = rd.price; g.currency = rd.currency; g.currencyKnown = rd.currencyKnown; } if (g.gender === "u" && rd.gender) g.gender = rd.gender; }
+            if (url) (isPhoto ? g.photos : g.crops).push(url);
+            if (!SCR.one && !isPhoto) { SCR.lastKey = key; if (SCR.pending.length) { g.photos.push(...SCR.pending); SCR.pending = []; } }
+            g.images = (g.photos.length ? g.photos : g.crops).slice(0, 12);
             g.sizes = [...new Set([...g.sizes, ...rd.sizes])]; g.count++; if (!g.priceEur && rd.priceEur) { g.priceEur = rd.priceEur; g.price = rd.price; g.currency = rd.currency; }
             SCR.groups.set(key, g); it.state = "done"; break;
           } catch (e) { it.state = "err"; it.msg = e.message; break; }
@@ -2058,9 +2068,10 @@ async function vScreens() {
   $("#main").onclick = async e => {
     const t = e.target.closest("button,input"); if (!t) return;
     if (t.id === "scPick") return $("#scFile").click();
-    if (t.id === "scClear") { SCR.queue = []; return draw(); }
+    if (t.id === "scClear") { SCR.queue = []; SCR.oneKey = null; SCR.lastKey = null; SCR.pending = []; return draw(); }
     if (t.id === "scDraft" || t.id === "scPub") return save(t.id === "scDraft" ? "draft" : "published");
-    if (t.dataset.rmimg) { const g = SCR.groups.get(t.closest("[data-g]").dataset.g); g.images.splice(+t.dataset.rmimg, 1); return draw(); }
+    if (t.dataset.rmimg) { const g = SCR.groups.get(t.closest("[data-g]").dataset.g), u = g.images[+t.dataset.rmimg]; g.images.splice(+t.dataset.rmimg, 1); g.photos = (g.photos || []).filter(x => x !== u); g.crops = (g.crops || []).filter(x => x !== u); return draw(); }
+    if (t.dataset.scone !== undefined) { SCR.one = t.dataset.scone === "1"; SCR.oneKey = null; SCR.lastKey = null; return draw(); }
   };
   $("#main").onchange = e => {
     if (e.target.id === "scFile") { addFiles([...e.target.files]); e.target.value = ""; return; }
