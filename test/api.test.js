@@ -85,7 +85,7 @@ test("заявки: витрина отправляет, клиент видит
   const lead = (await import("../api/lead.js")).default;
   const client = "abcdef0123456789abcd";
   let r = await call(lead, { method: "POST", body: { kind: "order", client, number: "TB-12345", message: "Заказ", items: [{ id: "product.x", brand: "LV", title: "Neverfull", price: 2420 }], total: 2420, dest: "ua" } });
-  assert.equal(r.status, 200); assert.equal(r.body.number, "TB-12345");
+  assert.equal(r.status, 200); assert.equal(r.body.number, "TB-1001"); // номер выдаёт сервер, по порядку
   assert.equal((await call(lead, { method: "POST", body: { kind: "order" } })).status, 400);
   const ck = await adminCookie(); const H = { cookie: ck, "x-tb": "1" };
   const list = (await call(handler, { query: { a: "leads" }, headers: H })).body;
@@ -95,4 +95,36 @@ test("заявки: витрина отправляет, клиент видит
   assert.equal(mine.leads[0].status, "bought");
   const other = await new Promise(resolve => { const res = { statusCode: 200, setHeader() {}, end(b) { resolve(JSON.parse(b)); } }; lead({ method: "GET", url: "/api/lead?client=zzzzzzzzzzzzzzzzzzzz" }, res); });
   assert.equal(other.leads.length, 0);
+});
+
+test("вход через Telegram: подпись initData проверяется, подделка не проходит", async () => {
+  const { createHmac } = await import("node:crypto");
+  const { verifyInitData } = await import("../lib/tgauth.js");
+  const token = "123:abc", user = JSON.stringify({ id: 777, first_name: "Дмитрий", username: "dima" }), auth = String(Math.floor(Date.now() / 1000));
+  const check = `auth_date=${auth}\nuser=${user}`;
+  const hash = createHmac("sha256", createHmac("sha256", "WebAppData").update(token).digest()).update(check).digest("hex");
+  const init = new URLSearchParams({ user, auth_date: auth, hash }).toString();
+  assert.equal(verifyInitData(init, token).id, 777);
+  assert.equal(verifyInitData(init.replace("777", "778"), token), null);
+  assert.equal(verifyInitData(init, "999:zzz"), null);
+  assert.equal(verifyInitData("dev:1:Тест", token), null); // тестовый вход выключен без DEV_AUTH
+});
+
+test("кабинет: профиль, доставка, заказ с маршрутом от менеджера; без подписи — 401", async () => {
+  process.env.DEV_AUTH = "1";
+  const me = (await import("../api/me.js")).default, lead = (await import("../api/lead.js")).default;
+  assert.equal((await call(me, { method: "POST", body: {} })).status, 401);
+  let r = await call(me, { method: "POST", body: { initData: "dev:555:Анна", a: "save", profile: { name: "Анна Ковальчук", phone: "+380 67 123 45 67", city: "Киев", npType: "locker", npPoint: "26814" } } });
+  assert.equal(r.status, 200); assert.equal(r.body.profile.phone, "+380671234567"); assert.equal(r.body.profile.npType, "locker");
+  r = await call(lead, { method: "POST", body: { kind: "order", client: "zzzz0123456789abcdef", initData: "dev:555:Анна", message: "Заказ", items: [{ id: "product.nope", brand: "LV", title: "X", price: 1 }], dest: "ua", delivery: { name: "Анна", phone: "+380671234567", city: "Киев", npPoint: "1" } } });
+  assert.equal(r.status, 200); assert.match(r.body.number, /^TB-10\d\d$/);
+  const ck = await adminCookie(); const H = { cookie: ck, "x-tb": "1" };
+  const id = (await call(handler, { query: { a: "leads" }, headers: H })).body.leads.find(l => l.number === r.body.number)._id;
+  await call(handler, { method: "POST", query: { a: "leadSave" }, body: { id, status: "shipping", buyCity: "Париж", buyDate: "2026-10-12", shipDate: "2026-10-17", npDate: "2026-10-19", notify: false }, headers: H });
+  const o = (await call(me, { method: "POST", body: { initData: "dev:555:Анна" } })).body.orders.find(x => x.number === r.body.number);
+  assert.equal(o.status, "shipping"); assert.equal(o.route.buyCity, "Париж"); assert.equal(o.route.shipDate, "2026-10-17");
+  assert.equal(o.note, undefined); // заметки менеджера клиенту не видны
+  const other = (await call(me, { method: "POST", body: { initData: "dev:556:Чужой" } })).body.orders;
+  assert.equal(other.length, 0);
+  delete process.env.DEV_AUTH;
 });

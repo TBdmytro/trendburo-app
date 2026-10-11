@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-10-admin-v19">
+<meta name="trendburo-build" content="2026-10-11-admin-v20">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -424,6 +424,7 @@ textarea{min-height:110px}
 .tile{padding:16px 18px;border-radius:20px;background:var(--soft);display:flex;flex-direction:column;gap:6px;border:0;text-align:left;color:var(--fg);text-decoration:none;cursor:pointer}
 .tile span{font-size:13px;color:var(--muted)}.tile b{font-size:32px;font-weight:700;letter-spacing:-.03em;line-height:1}
 .tile.dark{background:var(--ink);color:#fff}.tile.dark span{color:#c4c6ca}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .row2{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--line);border-radius:20px;background:#fff;text-decoration:none;color:var(--fg);cursor:pointer;width:100%;text-align:left}
 .row2 .ic{width:40px;height:40px;border-radius:12px;background:var(--soft);display:grid;place-items:center;flex:none}
 .row2 .tx{flex:1;min-width:0;display:flex;flex-direction:column}.row2 .tx b{font-size:15px}.row2 .tx span{font-size:12.5px;color:var(--muted)}
@@ -476,10 +477,10 @@ textarea{min-height:110px}
 .orow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .orow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.orow .tx b{font-size:14.5px}.orow .tx span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .st{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--soft);white-space:nowrap}
-.st.new{background:var(--err);color:#fff}.st.work{background:var(--soft2)}.st.paid,.st.bought,.st.shipping{background:var(--ink);color:#fff}.st.delivered{background:var(--ok-bg);color:var(--ok)}
-.stages{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.st.new{background:var(--err);color:#fff}.st.work{background:var(--soft2)}.st.paid,.st.bought,.st.shipping,.st.np{background:var(--ink);color:#fff}.st.delivered{background:var(--ok-bg);color:var(--ok)}
+.stages{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
 .stages i{height:5px;border-radius:3px;background:var(--line)}.stages i.on{background:var(--ink)}
-.stlab{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;font-size:10.5px;color:var(--muted);margin-top:4px}.stlab b{color:var(--fg)}
+.stlab{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;font-size:10.5px;color:var(--muted);margin-top:4px}.stlab b{color:var(--fg)}
 .client{display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;background:var(--soft)}
 .client .av{width:44px;height:44px;border-radius:22px;background:#fff;display:grid;place-items:center;font-weight:700;flex:none}
 .client .tx{flex:1;min-width:0;display:flex;flex-direction:column}.client .tx span{font-size:12.5px;color:var(--muted)}
@@ -1840,7 +1841,7 @@ async function vSite(tabs) {
    Заявки
    ===================================================================== */
 const LEAD_KIND = { order: "Заказ", availability: "Уточнить наличие", concierge: "Консьерж", travel: "Поездка", resale: "Ресейл", request: "Запрос", optix: "OPTIX" };
-const LEAD_ST = { new: ["Новая", "err"], work: ["В работе", "warn"], bought: ["Выкуплено", "dark"], shipping: ["В пути", "dark"], delivered: ["Доставлено", "ok"], cancelled: ["Отменена", ""] };
+const LEAD_ST = { new: ["Новая", "err"], work: ["В работе", "warn"], bought: ["Выкуплено", "dark"], shipping: ["В пути", "dark"], np: ["Новая почта", "dark"], delivered: ["Доставлено", "ok"], cancelled: ["Отменена", ""] };
 function updateLeadBadge(n) { const c = $("#leadCnt"); if (c) { c.hidden = !n; c.textContent = n; } const m = $("#mLeadCnt"); if (m) { m.hidden = !n; m.textContent = n; } }
 /* =====================================================================
    Телефон и Telegram: нижнее меню, кнопка «Назад» Telegram
@@ -2341,9 +2342,9 @@ async function vProducts2(pre) {
 }
 
 /* ---------- Заказы ---------- */
-const ORD_FLOW = ["new", "work", "paid", "bought", "shipping", "delivered"];
-const ORD_ST = { new: "Новая", work: "Принят", paid: "Оплачен", bought: "Выкуплен", shipping: "В пути", delivered: "Доставлен", cancelled: "Отменён" };
-const ORD_NEXT = { new: "Принять заказ", work: "Отметить «Оплачен»", paid: "Отметить «Выкуплен»", bought: "Отправить — «В пути»", shipping: "Отметить «Доставлен»" };
+const ORD_FLOW = ["new", "work", "paid", "bought", "shipping", "np", "delivered"];
+const ORD_ST = { new: "Новая", work: "Принят", paid: "Оплачен", bought: "Выкуплен", shipping: "В пути", np: "Новая почта", delivered: "Доставлен", cancelled: "Отменён" };
+const ORD_NEXT = { new: "Принять заказ", work: "Отметить «Оплачен»", paid: "Отметить «Выкуплен»", bought: "Отправить — «В пути»", shipping: "Передан в Новую почту", np: "Отметить «Доставлен»" };
 async function vOrders(st) {
   const status = ORD_ST[st] ? st : "";
   const { leads, fresh } = await api("leads", { query: status ? { status } : {} });
@@ -2369,7 +2370,12 @@ function orderSheet(l, reload) {
     ${l.items?.length ? `<div>${l.items.map(it => `<div class="oitem"><div class="tx"><b>${esc(it.brand)} ${esc(it.title)}</b><span>${[it.size && "размер " + it.size, it.color].filter(Boolean).map(esc).join(" · ") || "&nbsp;"}</span></div><b class="num">${it.price ? eur(it.price) : ""}</b></div>`).join("")}
       ${l.total ? `<div class="oitem"><div class="tx"><b>Итого</b></div><b class="num">${eur(l.total)}</b></div>` : ""}</div>` : ""}
     <details><summary class="hint" style="cursor:pointer">Сообщение клиента</summary><pre class="msg" style="margin-top:8px">${esc(l.message || "—")}</pre></details>
-    <label class="f">Трек-номер<input type="text" id="oTrack" value="${esc(l.track || "")}" placeholder="появится у клиента на этапе «В пути»"></label>
+    ${l.kind === "order" ? `<div><div class="f" style="margin-bottom:8px">Маршрут для клиента</div><div class="hint" style="margin:-4px 0 8px">Клиент видит это в «Мои заказы»: где выкупили и когда что отправится.</div>
+      <div class="fg2"><label class="f">Город выкупа<input type="text" id="oBuyCity" list="oCities" value="${esc(l.buyCity || "")}" placeholder="Париж"></label><label class="f">Дата выкупа<input type="date" id="oBuyDate" value="${esc(l.buyDate || "")}"></label></div>
+      <datalist id="oCities">${["Париж", "Милан", "Мюнхен", "Вена", "Берлин", "Лондон", "Рим", "Мадрид", "Дубай"].map(c => `<option>${c}</option>`).join("")}</datalist>
+      ${(l.dest || "ua") === "ua" ? `<div class="fg2"><label class="f">Отправка в Украину<input type="date" id="oShipDate" value="${esc(l.shipDate || "")}"></label><label class="f">Передача в Новую почту<input type="date" id="oNpDate" value="${esc(l.npDate || "")}"></label></div>` : `<label class="f">Дата отправки<input type="date" id="oShipDate" value="${esc(l.shipDate || "")}"></label>`}</div>` : ""}
+    ${l.delivery ? `<div class="oitem"><div class="tx"><b>Доставка: ${esc(l.delivery.name || "")}${l.delivery.phone ? " · " + esc(l.delivery.phone) : ""}</b><span>${esc([l.delivery.city, { branch: "отделение", locker: "почтомат", courier: "курьер" }[l.delivery.npType], l.delivery.npPoint, l.delivery.address].filter(Boolean).join(", "))}${l.delivery.comment ? " · " + esc(l.delivery.comment) : ""}</span></div></div>` : ""}
+    <label class="f">${(l.dest || "ua") === "ua" ? "ТТН Новой почты" : "Трек-номер"}<input type="text" id="oTrack" value="${esc(l.track || "")}" placeholder="клиент увидит его в заказе"></label>
     <label class="f">Заметка для себя<textarea id="oNote" style="min-height:70px">${esc(l.note || "")}</textarea></label>
     <label class="toggle"><input type="checkbox" id="oNotify" ${l.tg?.id ? "checked" : "disabled"}>${l.tg?.id ? "Сообщать клиенту в Telegram при смене этапа" : "Клиент без Telegram — бот не сможет написать"}</label>
     <div><div class="f" style="margin-bottom:8px">Изменить этап вручную</div><div class="fchips" style="flex-wrap:wrap">${Object.entries(ORD_ST).map(([k, v]) => `<button type="button" class="fchip ${l.status === k ? "on" : ""}" data-setst="${k}">${v}</button>`).join("")}</div></div>
@@ -2377,7 +2383,8 @@ function orderSheet(l, reload) {
     `${next ? `<button class="btn lg" data-next="${next}">${ORD_NEXT[l.status]}</button>` : ""}<button class="btn ${next ? "ghost" : ""} lg" data-osave>Сохранить</button>`);
   const send = async status => {
     try {
-      const r = await api("leadSave", { method: "POST", body: { id: l._id, status, note: d.querySelector("#oNote").value, track: d.querySelector("#oTrack").value, notify: d.querySelector("#oNotify").checked } });
+      const v = id => { const e = d.querySelector(id); return e ? e.value : undefined; };
+      const r = await api("leadSave", { method: "POST", body: { id: l._id, status, note: v("#oNote"), track: v("#oTrack"), buyCity: v("#oBuyCity"), buyDate: v("#oBuyDate"), shipDate: v("#oShipDate"), npDate: v("#oNpDate"), notify: d.querySelector("#oNotify").checked } });
       toast(status && status !== l.status ? `${ORD_ST[status]}${r.lead.clientNotified ? " · клиенту отправлено сообщение" : ""}` : "Сохранено"); d.close(); reload();
     } catch (err) { toast(err.message); }
   };

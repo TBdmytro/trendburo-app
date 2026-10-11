@@ -51,7 +51,7 @@ export default async function handler(req, res) {
           store.count("lead", { status: "new" })
         ]);
         const [orders, cms, srcs] = await Promise.all([
-          store.list("lead", { kind: "order", status: ["work", "paid", "bought", "shipping"] }, { limit: 500, fields: "status" }),
+          store.list("lead", { kind: "order", status: ["work", "paid", "bought", "shipping", "np"] }, { limit: 500, fields: "status" }),
           store.list("cms", { active: true }, { limit: 400, fields: "_id, kind, title, to" }),
           store.list("sourceSettings", {}, { limit: 200, fields: "sourceId, custom, check, lastSync" })
         ]);
@@ -266,6 +266,8 @@ export default async function handler(req, res) {
         const changed = body.status && LEAD_STATUS.includes(body.status) && l.history?.[l.history.length - 1]?.at === now;
         if (body.note !== undefined) l.note = String(body.note).slice(0, 2000);
         if (body.track !== undefined) l.track = String(body.track).replace(/[^\w\- ]/g, "").slice(0, 40);
+        // маршрут заказа для клиента: где выкупили, когда отправка в Украину, когда Новая почта
+        for (const k of ["buyCity", "buyDate", "shipDate", "npDate"]) if (body[k] !== undefined) l[k] = String(body[k]).replace(/\s+/g, " ").trim().slice(0, 40);
         if (changed && body.notify !== false) l.clientNotified = await notifyClient(l, l.status);
         l.updatedAt = now; l.manager = me.name;
         return send(res, 200, { lead: await store.put(l) });
@@ -275,7 +277,7 @@ export default async function handler(req, res) {
         const since = new Date(Date.now() - days * 864e5).toISOString();
         const all = (await store.list("lead", { kind: "order" }, { order: "createdAt desc", limit: 5000, fields: "createdAt, status, total, dest, items[]{brand, price}" })).filter(l => l.status !== "cancelled");
         const inPeriod = all.filter(l => l.createdAt >= since);
-        const done = inPeriod.filter(l => ["paid", "bought", "shipping", "delivered"].includes(l.status));
+        const done = inPeriod.filter(l => ["paid", "bought", "shipping", "np", "delivered"].includes(l.status));
         const mk = mergeConfig(pricingCfg).official.markup;
         const margin = l => (l.total || 0) - (l.total || 0) / (1 + (l.dest === "ua" || !l.dest ? mk.ua : l.dest === "eu" ? mk.eu : mk.dxb));
         const sum = (a, f) => Math.round(a.reduce((s, x) => s + (f(x) || 0), 0));
@@ -285,7 +287,7 @@ export default async function handler(req, res) {
         const series = Array.from({ length: buckets }, (_, k) => sum(done.filter(l => { const t = Date.parse(l.createdAt); return t >= start + k * step && t < start + (k + 1) * step; }), l => l.total));
         return send(res, 200, {
           revenue: sum(done, l => l.total), margin: sum(done, margin), orders: done.length, avg: done.length ? Math.round(sum(done, l => l.total) / done.length) : 0, series,
-          pipeline: { awaiting: sum(all.filter(l => ["new", "work"].includes(l.status)), l => l.total), paid: sum(all.filter(l => l.status === "paid"), l => l.total), moving: sum(all.filter(l => ["bought", "shipping"].includes(l.status)), l => l.total) },
+          pipeline: { awaiting: sum(all.filter(l => ["new", "work"].includes(l.status)), l => l.total), paid: sum(all.filter(l => l.status === "paid"), l => l.total), moving: sum(all.filter(l => ["bought", "shipping", "np"].includes(l.status)), l => l.total) },
           brands: Object.entries(byBrand).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([brand, total]) => ({ brand, total: Math.round(total) }))
         });
       }

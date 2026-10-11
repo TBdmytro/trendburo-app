@@ -6,22 +6,25 @@
 import { getStore } from "../lib/store.js";
 import { addBannerStats } from "../lib/cms.js";
 import { createHash } from "node:crypto";
+import { userFrom } from "../lib/tgauth.js";
+import { nextOrderNo, verifyItems, cleanProfile, touchCustomer } from "../lib/customers.js";
 
 export const LEAD_KINDS = { order: "Заказ", availability: "Уточнить наличие", concierge: "Консьерж", travel: "Поездка", resale: "Ресейл", request: "Запрос под заказ", optix: "OPTIX" };
-export const LEAD_STATUS = ["new", "work", "paid", "bought", "shipping", "delivered", "cancelled"];
+export const LEAD_STATUS = ["new", "work", "paid", "bought", "shipping", "np", "delivered", "cancelled"];
 /** Что бот пишет клиенту при смене статуса заказа. */
 export const CLIENT_TEXT = {
   work: n => `Заказ ${n} принят менеджером. Скоро напишем по деталям.`,
   paid: n => `Оплата по заказу ${n} получена, спасибо! Выкупаем.`,
-  bought: n => `Заказ ${n} выкуплен в бутике. Готовим к отправке.`,
-  shipping: (n, track) => `Заказ ${n} в пути.${track ? " Трек-номер: " + track : ""}`,
+  bought: (n, l) => `Заказ ${n} выкуплен${l?.buyCity ? " (" + l.buyCity + ")" : " в бутике"}. Готовим к отправке.`,
+  shipping: (n, l) => l?.dest && l.dest !== "ua" ? `Заказ ${n} отправлен.${l?.track ? " Трек-номер: " + l.track : ""}` : `Заказ ${n} едет в Украину.${l?.npDate ? " Передадим в Новую почту: " + l.npDate + "." : ""}`,
+  np: (n, l) => `Заказ ${n} передан в Новую почту.${l?.track ? " ТТН: " + l.track : ""}`,
   delivered: n => `Заказ ${n} доставлен. Спасибо, что выбрали Trend Büro!`,
   cancelled: n => `Заказ ${n} отменён. Если это ошибка — напишите менеджеру.`
 };
 /** Сообщение клиенту в Telegram от бота (если клиент открывал мини-апп из бота и токен задан). */
 export async function notifyClient(lead, status) {
   const token = process.env.TELEGRAM_BOT_TOKEN, chat = lead.tg?.id;
-  const text = CLIENT_TEXT[status]?.(lead.number, lead.track);
+  const text = CLIENT_TEXT[status]?.(lead.number, lead);
   if (!token || !chat || !text) return false;
   try {
     const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat, text }) });
@@ -70,8 +73,18 @@ export default async function handler(req, res) {
     }
     if (req.method !== "POST") return send(res, 405, { error: "Метод не поддерживается" });
     if (new URL(req.url, "http://x").searchParams.get("a") === "bnstat") { await addBannerStats(store, readBody(req)); return send(res, 200, { ok: true }); }
-    const { lead, error } = cleanLead(readBody(req));
+    const body = readBody(req);
+    const { lead, error } = cleanLead(body);
     if (error) return send(res, 400, { error });
+    // клиент подтверждён подписью Telegram — только тогда бот может писать ему и заказ попадает в кабинет
+    const user = userFrom(body);
+    if (user) { lead.tg = { id: user.id, username: user.username, name: user.name }; lead.tgId = user.id; await touchCustomer(store, user).catch(() => {}); }
+    else if (lead.tg) lead.tg = { ...lead.tg, id: null };
+    if (body.delivery) lead.delivery = cleanProfile(body.delivery);
+    if (lead.kind === "order") {
+      lead.number = await nextOrderNo(store);
+      if (lead.items.length) { const v = await verifyItems(store, lead.items, lead.dest || "ua"); lead.items = v.items; if (v.total) lead.total = v.total; }
+    }
     // защита от спама: не больше 20 заявок в час с одного устройства
     const recent = await store.list("lead", { client: lead.client }, { order: "createdAt desc", limit: 20, fields: "createdAt" });
     if (recent.length >= 20 && Date.now() - Date.parse(recent[19].createdAt) < 3600e3) return send(res, 429, { error: "Слишком много заявок, попробуйте позже" });
