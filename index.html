@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-11-live-v36">
+<meta name="trendburo-build" content="2026-10-12-live-v37">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -875,7 +875,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 @keyframes olvld{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
 .olv-nx{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:20px;border:1.5px dashed var(--line)}
 .olv-nx .ic{background:var(--soft);color:#a3a5aa}
-.olv-done{position:relative;border-radius:26px;padding:22px 18px;text-align:center;background:var(--ink-grad);color:#fff;animation:olvin .7s var(--spring)}
+.olv-done{position:relative;border-radius:26px;padding:22px 18px;text-align:center;background:linear-gradient(150deg,#2e8b57,#1d5c3b);color:#fff;box-shadow:0 16px 34px rgba(46,139,87,.35);animation:olvin .7s var(--spring)}
 .olv-done .wm{font-family:Prata,Georgia,serif;letter-spacing:.14em;font-size:13px;opacity:.6}.olv-done b{display:block;font-size:24px;margin:8px 0 4px}.olv-done p{opacity:.7;font-size:14px}
 @media (prefers-reduced-motion:reduce){.olv *{animation:none!important;transition:none!important}}
 /* story viewer */
@@ -2409,9 +2409,9 @@ function orderRowHTML(o,i){const{S,cur}=orderSteps(o);const p=o.items&&o.items[0
     <span class="obar">${S.map((_,j)=>`<i class="${j<=cur?"on":""}"></i>`).join("")}</span></span><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}
 /* ===== Экран заказа «Live»: цветной маршрут с кометой, вспышки на городах, стопка пройденных этапов ===== */
 const OST={new:["#4a4d54","#c9ccd2",'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'],work:["#6b6f76","#dfe1e5",'<path d="M5 12.5l4.5 4.5L19 7.5"/>'],
-  paid:["#2f5b4e","#7fd1a4",'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>'],bought:["#7a3a3d","#f0a3a8",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],
+  paid:["#a07f45","#f0d79e",'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>'],bought:["#7a3a3d","#f0a3a8",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],
   shipping:["#35577a","#8fc1f2",'<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/>'],
-  np:["#5c5670","#c6b8f5",'<path d="M3.5 8.5L12 4l8.5 4.5v7L12 20l-8.5-4.5z"/><path d="M3.5 8.5L12 13l8.5-4.5M12 13v7"/>'],delivered:["#a07f45","#f0d79e",'<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>']};
+  np:["#5c5670","#c6b8f5",'<path d="M3.5 8.5L12 4l8.5 4.5v7L12 20l-8.5-4.5z"/><path d="M3.5 8.5L12 13l8.5-4.5M12 13v7"/>'],delivered:["#2e8b57","#8be3b0",'<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>']};
 function orderDays(o){if(o.status==="delivered")return 0;const R=o.route||{},base=R.npDate?[R.npDate,2]:R.shipDate?[R.shipDate,(o.dest||"ua")==="ua"?4:3]:null;if(!base)return null;
   const d=Math.ceil((Date.parse(base[0]+"T12:00")+base[1]*864e5-Date.now())/864e5);return d>0?d:1}
 function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.route||{},cancelled=o.status==="cancelled";
@@ -2425,12 +2425,12 @@ function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.ro
     <div class="olv-tt"><small>${fmtD(o.createdAt)} · ${ua?"доставка в Украину":DEST_NAME[o.dest]}</small><h1>Мой заказ</h1></div>
     <div class="olv-live"><div class="olv-l1"><span class="olv-th">${p0?shapeSVG(p0.shape,p0.c,""):""}</span><div class="olv-tx"><span class="olv-chip"><i></i>${cancelled?"Отменён":esc(LEAD_ST2[z.k]||"")}</span><h2>${cancelled?"Заказ отменён":esc(z.t)}</h2></div>
       <div class="olv-cd"><div class="n num">${cancelled?"—":days===0?"✓":days?days:`${cur+1}/${S.length}`}</div><small>${cancelled?"":days===0?"доставлено":days?(days===1?"день до вас":days<5?"дня до вас":"дней до вас"):"этап"}</small></div></div>
-      <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#7a3a3d"/><stop offset=".4" stop-color="#35577a"/><stop offset=".75" stop-color="#5c5670"/><stop offset="1" stop-color="#d9b97a"/></linearGradient></defs>
+      <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#7a3a3d"/><stop offset=".4" stop-color="#35577a"/><stop offset=".75" stop-color="#5c5670"/><stop offset="1" stop-color="#3fb57a"/></linearGradient></defs>
         <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g>
         <g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g class="cmi" transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${(o.status==="delivered"?OST.delivered:pos>0?OST.shipping:OST.bought)[2]}</g></g></svg></div></div>
     <div class="olv-st">
       ${dn.length?`<div class="olv-stack" data-n="${dn.length} ${plural(dn.length,["этап пройден","этапа пройдено","этапов пройдено"])}">${dn.map(x=>`<div class="s" style="--c:${(OST[x.k]||OST.new)[0]}"><span class="ic"><svg viewBox="0 0 24 24">${(OST[x.k]||OST.new)[2]}</svg></span><div><b>${esc(x.t)}</b><small>${esc(x.d||"")}</small></div><span class="ok">✓</span></div>`).join("")}</div>`:""}
-      ${cancelled?`<div class="olv-done"><b>Заказ отменён</b><p>Если это ошибка — напишите менеджеру.</p></div>`:o.status==="delivered"?`<div class="olv-done"><span class="wm">TREND BÜRO</span><b>Заказ у вас</b><p>Спасибо, что выбрали нас. Носите с удовольствием.</p></div>`
+      ${cancelled?`<div class="olv-done" style="background:var(--ink-grad);box-shadow:none"><b>Заказ отменён</b><p>Если это ошибка — напишите менеджеру.</p></div>`:o.status==="delivered"?`<div class="olv-done"><span class="wm">TREND BÜRO</span><b>Заказ у вас</b><p>Спасибо, что выбрали нас. Носите с удовольствием.</p></div>`
         :`<div class="olv-cur" style="--c:${col[0]}"><span class="ic"><svg viewBox="0 0 24 24">${col[2]}</svg></span><span class="k">Сейчас${z.d?" · "+esc(z.d):""}</span><b>${esc(z.t)}</b><p>${esc({new:"Менеджер проверит наличие и размер и напишет вам в Telegram.",work:"Наличие подтверждено — менеджер пришлёт реквизиты для оплаты.",paid:"Спасибо! Выкупаем вашу вещь в бутике.",bought:"Проверили и бережно упаковали — готовим к отправке.",shipping:ua?"Посылка едет в Украину.":"Посылка в пути.",np:"Посылка в Новой почте — можно отслеживать по ТТН."}[z.k]||"")}</p><div class="bar"><i></i></div></div>`}
       ${nx.map(x=>`<div class="olv-nx"><span class="ic"><svg viewBox="0 0 24 24">${(OST[x.k]||OST.new)[2]}</svg></span><div><b>${esc(x.t)}</b>${x.d?`<small>ожидается ${esc(x.d)}</small>`:""}</div></div>`).join("")}
     </div>
