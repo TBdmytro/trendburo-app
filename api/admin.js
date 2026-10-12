@@ -267,7 +267,8 @@ export default async function handler(req, res) {
         if (body.note !== undefined) l.note = String(body.note).slice(0, 2000);
         if (body.track !== undefined) l.track = String(body.track).replace(/[^\w\- ]/g, "").slice(0, 40);
         // маршрут заказа для клиента: где выкупили, когда отправка в Украину, когда Новая почта
-        for (const k of ["buyCity", "buyDate", "shipDate", "npDate"]) if (body[k] !== undefined) l[k] = String(body[k]).replace(/\s+/g, " ").trim().slice(0, 40);
+        if (body.buyMode !== undefined) l.buyMode = body.buyMode === "online" ? "online" : "boutique";
+        for (const k of ["buyCity", "buyDate", "shipDate", "npDate", "uaCity"]) if (body[k] !== undefined) l[k] = String(body[k]).replace(/\s+/g, " ").trim().slice(0, 40);
         if (changed && body.notify !== false) l.clientNotified = await notifyClient(l, l.status);
         l.updatedAt = now; l.manager = me.name;
         return send(res, 200, { lead: await store.put(l) });

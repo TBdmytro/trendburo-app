@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-11-admin-v22">
+<meta name="trendburo-build" content="2026-10-12-admin-v23">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2383,9 +2383,10 @@ function orderSheet(l, reload) {
       ${l.total ? `<div class="oitem"><div class="tx"><b>Итого</b></div><b class="num">${eur(l.total)}</b></div>` : ""}</div>` : ""}
     <details><summary class="hint" style="cursor:pointer">Сообщение клиента</summary><pre class="msg" style="margin-top:8px">${esc(l.message || "—")}</pre></details>
     ${l.kind === "order" ? `<div><div class="f" style="margin-bottom:8px">Маршрут для клиента</div><div class="hint" style="margin:-4px 0 8px">Клиент видит это в «Мои заказы»: где выкупили и когда что отправится.</div>
-      <div class="fg2"><label class="f">Город выкупа<input type="text" id="oBuyCity" list="oCities" value="${esc(l.buyCity || "")}" placeholder="Париж"></label><label class="f">Дата выкупа<input type="date" id="oBuyDate" value="${esc(l.buyDate || "")}"></label></div>
+      <div class="fchips" style="margin-bottom:10px">${[["boutique", "Выкуп в бутике"], ["online", "Заказ на сайте бренда"]].map(([k, v]) => `<button type="button" class="fchip ${(l.buyMode || "boutique") === k ? "on" : ""}" data-bm="${k}">${v}</button>`).join("")}</div>
+      <div class="fg2"><label class="f" id="oBuyCityL">${l.buyMode === "online" ? "Куда пришёл (наш город)" : "Город выкупа"}<input type="text" id="oBuyCity" list="oCities" value="${esc(l.buyCity || "")}" placeholder="${l.buyMode === "online" ? "Дюссельдорф" : "Париж"}"></label><label class="f">Дата выкупа<input type="date" id="oBuyDate" value="${esc(l.buyDate || "")}"></label></div>
       <datalist id="oCities">${["Париж", "Милан", "Мюнхен", "Вена", "Берлин", "Лондон", "Рим", "Мадрид", "Дубай"].map(c => `<option>${c}</option>`).join("")}</datalist>
-      ${(l.dest || "ua") === "ua" ? `<div class="fg2"><label class="f">Отправка в Украину<input type="date" id="oShipDate" value="${esc(l.shipDate || "")}"></label><label class="f">Передача в Новую почту<input type="date" id="oNpDate" value="${esc(l.npDate || "")}"></label></div>` : `<label class="f">Дата отправки<input type="date" id="oShipDate" value="${esc(l.shipDate || "")}"></label>`}</div>` : ""}
+      ${(l.dest || "ua") === "ua" ? `<label class="f">Город в Украине, откуда водитель отправит Новой почтой<input type="text" id="oUaCity" value="${esc(l.uaCity || "")}" placeholder="Ивано-Франковск"></label><div class="fg2"><label class="f">Отправка в Украину<input type="date" id="oShipDate" value="${esc(l.shipDate || "")}"></label><label class="f">Передача в Новую почту<input type="date" id="oNpDate" value="${esc(l.npDate || "")}"></label></div>` : `<label class="f">Дата отправки<input type="date" id="oShipDate" value="${esc(l.shipDate || "")}"></label>`}</div>` : ""}
     ${l.delivery ? `<div class="oitem"><div class="tx"><b>Доставка: ${esc(l.delivery.name || "")}${l.delivery.phone ? " · " + esc(l.delivery.phone) : ""}</b><span>${esc([l.delivery.city, { branch: "отделение", locker: "почтомат", courier: "курьер" }[l.delivery.npType], l.delivery.npPoint, l.delivery.address].filter(Boolean).join(", "))}${l.delivery.comment ? " · " + esc(l.delivery.comment) : ""}</span></div></div>` : ""}
     <label class="f">${(l.dest || "ua") === "ua" ? "ТТН Новой почты" : "Трек-номер"}<input type="text" id="oTrack" value="${esc(l.track || "")}" placeholder="клиент увидит его в заказе"></label>
     <label class="f">Заметка для себя<textarea id="oNote" style="min-height:70px">${esc(l.note || "")}</textarea></label>
@@ -2396,11 +2397,12 @@ function orderSheet(l, reload) {
   const send = async status => {
     try {
       const v = id => { const e = d.querySelector(id); return e ? e.value : undefined; };
-      const r = await api("leadSave", { method: "POST", body: { id: l._id, status, note: v("#oNote"), track: v("#oTrack"), buyCity: v("#oBuyCity"), buyDate: v("#oBuyDate"), shipDate: v("#oShipDate"), npDate: v("#oNpDate"), notify: d.querySelector("#oNotify").checked } });
+      const r = await api("leadSave", { method: "POST", body: { id: l._id, status, note: v("#oNote"), track: v("#oTrack"), buyMode: (d.querySelector("[data-bm].on") || {}).dataset?.bm, buyCity: v("#oBuyCity"), buyDate: v("#oBuyDate"), uaCity: v("#oUaCity"), shipDate: v("#oShipDate"), npDate: v("#oNpDate"), notify: d.querySelector("#oNotify").checked } });
       toast(status && status !== l.status ? `${ORD_ST[status]}${r.lead.clientNotified ? " · клиенту отправлено сообщение" : ""}` : "Сохранено"); d.close(); reload();
     } catch (err) { toast(err.message); }
   };
   d.querySelector(".sh-b").onclick = async e => {
+    const bm = e.target.closest("[data-bm]"); if (bm) { d.querySelectorAll("[data-bm]").forEach(x => x.classList.toggle("on", x === bm)); const on = bm.dataset.bm === "online", lb = d.querySelector("#oBuyCityL"); lb.firstChild.textContent = on ? "Куда пришёл (наш город)" : "Город выкупа"; d.querySelector("#oBuyCity").placeholder = on ? "Дюссельдорф" : "Париж"; return; }
     const s = e.target.closest("[data-setst]"); if (s) return send(s.dataset.setst);
     if (e.target.closest("[data-odel]")) {
       if (!(await confirmBox("Удалить заявку?", "Клиент перестанет видеть её статус в «Кабинете»."))) return;

@@ -15,7 +15,7 @@ export const LEAD_STATUS = ["new", "work", "paid", "bought", "shipping", "np", "
 export const CLIENT_TEXT = {
   work: n => `Заказ ${n} принят менеджером. Скоро напишем по деталям.`,
   paid: n => `Оплата по заказу ${n} получена, спасибо! Выкупаем.`,
-  bought: (n, l) => `Заказ ${n} выкуплен${l?.buyCity ? " (" + l.buyCity + ")" : " в бутике"}. Готовим к отправке.`,
+  bought: (n, l) => l?.buyMode === "online" ? `Заказ ${n} пришёл к нам${l?.buyCity ? " в " + l.buyCity : ""}. Готовим к отправке в Украину.` : `Заказ ${n} выкуплен${l?.buyCity ? " (" + l.buyCity + ")" : " в бутике"}. Готовим к отправке.`,
   shipping: (n, l) => l?.dest && l.dest !== "ua" ? `Заказ ${n} отправлен.${l?.track ? " Трек-номер: " + l.track : ""}` : `Заказ ${n} едет в Украину.${l?.npDate ? " Передадим в Новую почту: " + l.npDate + "." : ""}`,
   np: (n, l) => `Заказ ${n} передан в Новую почту.${l?.track ? " ТТН: " + l.track : ""}`,
   delivered: n => `Заказ ${n} доставлен. Спасибо, что выбрали Trend Büro!`,

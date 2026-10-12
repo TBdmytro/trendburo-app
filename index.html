@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-12-live-v37">
+<meta name="trendburo-build" content="2026-10-12-live-v38">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -829,7 +829,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 /* ===== Экран заказа «Live» ===== */
 .olv-tt{padding:6px 18px 12px}.olv-tt small{font-size:12px;color:var(--g2)}.olv-tt h1{font-size:30px;letter-spacing:-.02em;margin-top:2px}
 .olv-live{position:relative;margin:0 12px;border-radius:30px;background:var(--ink-grad);color:#fff;padding:16px 16px 12px;overflow:hidden;box-shadow:0 18px 40px rgba(29,31,34,.28),inset 0 1px 0 rgba(255,255,255,.12)}
-.olv-live::before{content:"";position:absolute;right:-60px;top:-90px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,var(--acc) 0%,transparent 65%);opacity:.6;filter:blur(10px)}
+.olv-live::before{content:"";position:absolute;right:-60px;top:-90px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,var(--acc) 0%,transparent 65%);opacity:.85;filter:blur(10px)}
 .olv-l1{position:relative;display:flex;align-items:center;gap:12px}
 .olv-th{width:56px;height:56px;border-radius:18px;background:var(--tbg,#f3f3f3);display:grid;place-items:center;overflow:hidden;flex:none;box-shadow:0 6px 14px rgba(0,0,0,.25)}
 .olv-th img{width:94%!important;height:94%!important;object-fit:contain}
@@ -844,28 +844,32 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .olv-route{position:relative;height:96px;margin:10px -4px 0}
 .olv-route svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .olv .rb{fill:none;stroke:rgba(255,255,255,.12);stroke-width:6;stroke-linecap:round}
-.olv .rf{fill:none;stroke:url(#olvg);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1.5s var(--ease);filter:drop-shadow(0 0 6px rgba(255,255,255,.25))}
+.olv .rf{fill:none;stroke:url(#olvg);stroke-width:6;stroke-linecap:round;filter:drop-shadow(0 0 6px rgba(255,255,255,.25))}
 .olv .nd circle.o{fill:#2a2c30;stroke:rgba(255,255,255,.25);stroke-width:2;transition:fill .4s,stroke .4s}
 .olv .nd.on circle.o{fill:var(--c);stroke:#fff}
 .olv .nd .rp{fill:none;stroke:var(--c);stroke-width:2;opacity:0}
 .olv .nd.pop .rp{animation:olvrp .9s ease-out}
 @keyframes olvrp{from{r:7;opacity:1}to{r:26;opacity:0}}
 .olv .nd text{fill:rgba(255,255,255,.5);font-size:10.5px;font-weight:600;font-family:var(--f)}.olv .nd.on text{fill:#fff}
-.olv .cm{transition:transform 1.5s var(--ease)}.olv .cm .glow{fill:var(--acc2);opacity:.45;filter:blur(6px)}.olv .cm .body{fill:#fff}
+.olv .cm{will-change:transform}.olv .cm .glow{fill:var(--acc2);opacity:.45;filter:blur(6px)}.olv .cm .body{fill:#fff}
+.olv-lbl{display:grid;gap:8px;margin:-14px 2px 0}
+.olv-lbl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.5);transition:color .4s;text-align:center}
+.olv-lbl span.a0{text-align:left}.olv-lbl span.a1{text-align:right}
+.olv-lbl span.on{color:#fff}
 .olv-spark{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;animation:olvsp .9s var(--ease) forwards}
 @keyframes olvsp{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
 .olv-st{padding:16px 12px 6px;display:flex;flex-direction:column;gap:10px}
 .olv .ic{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;flex:none;background:var(--c);color:#fff}
 .olv .ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.olv-stack{position:relative;height:66px;cursor:pointer}
-.olv-stack .s{position:absolute;left:0;right:0;top:0;height:58px;border-radius:20px;background:var(--soft);display:flex;align-items:center;gap:12px;padding:0 14px;transition:transform .5s var(--spring),opacity .4s}
+.olv-stack{position:relative;height:66px;cursor:pointer;margin-top:8px}
+.olv-stack .s{position:absolute;left:0;right:0;top:0;min-height:58px;border-radius:20px;background:var(--soft);display:flex;align-items:center;gap:12px;padding:0 14px;transition:transform .5s var(--spring),opacity .4s}
 .olv-stack .s:nth-child(1){z-index:3}.olv-stack .s:nth-child(2){transform:translateY(5px) scale(.96);opacity:.7;z-index:2}.olv-stack .s:nth-child(3){transform:translateY(10px) scale(.92);opacity:.4;z-index:1}.olv-stack .s:nth-child(n+4){opacity:0}
-.olv-stack::after{content:attr(data-n);position:absolute;right:14px;top:-8px;z-index:4;font-size:11px;font-weight:700;background:var(--fg);color:var(--bg);border-radius:99px;padding:2px 8px}
+.olv-stack::after{content:attr(data-n);position:absolute;right:14px;top:-15px;z-index:4;font-size:11px;font-weight:700;background:var(--fg);color:var(--bg);border-radius:99px;padding:2px 8px}
 .olv-stack.open{height:auto}.olv-stack.open .s{position:relative;transform:none;opacity:1;margin-bottom:8px}.olv-stack.open::after{display:none}
 .olv-stack b,.olv-cur b,.olv-nx b{font-size:14.5px;display:block}.olv-stack small,.olv-nx small{font-size:12px;color:var(--g2)}
 .olv-stack .ok{margin-left:auto;font-size:12px;color:var(--g2);font-weight:600}
-.olv-cur{position:relative;border-radius:26px;padding:18px;color:#fff;background:linear-gradient(150deg,var(--c),color-mix(in oklab,var(--c) 55%,#141518));overflow:hidden;box-shadow:0 16px 34px color-mix(in oklab,var(--c) 40%,transparent);animation:olvin .7s var(--spring)}
-@keyframes olvin{from{transform:translateY(24px) scale(.94);opacity:0}}
+.olv-cur{position:relative;border-radius:26px;padding:18px;color:#fff;background:linear-gradient(150deg,color-mix(in oklab,var(--c) 88%,#fff),var(--c) 45%,color-mix(in oklab,var(--c) 70%,#141518));overflow:hidden;box-shadow:0 16px 34px color-mix(in oklab,var(--c) 40%,transparent);animation:olvin .9s cubic-bezier(.22,1.2,.36,1) both}
+@keyframes olvin{from{transform:translateY(28px) scale(.95);opacity:0}}
 .olv-cur::after{content:"";position:absolute;right:-30px;bottom:-30px;width:140px;height:140px;border-radius:50%;border:22px solid rgba(255,255,255,.08)}
 .olv-cur .ic{width:46px;height:46px;border-radius:15px;background:rgba(255,255,255,.16)}.olv-cur .ic svg{width:24px;height:24px}
 .olv-cur .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.7;font-weight:700;margin-top:12px;display:block}
@@ -875,7 +879,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 @keyframes olvld{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
 .olv-nx{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:20px;border:1.5px dashed var(--line)}
 .olv-nx .ic{background:var(--soft);color:#a3a5aa}
-.olv-done{position:relative;border-radius:26px;padding:22px 18px;text-align:center;background:linear-gradient(150deg,#2e8b57,#1d5c3b);color:#fff;box-shadow:0 16px 34px rgba(46,139,87,.35);animation:olvin .7s var(--spring)}
+.olv-done{position:relative;border-radius:26px;padding:22px 18px;text-align:center;background:linear-gradient(150deg,#26b06a,#147044);color:#fff;box-shadow:0 16px 34px rgba(31,157,92,.4);animation:olvin .9s cubic-bezier(.22,1.2,.36,1) both}
 .olv-done .wm{font-family:Prata,Georgia,serif;letter-spacing:.14em;font-size:13px;opacity:.6}.olv-done b{display:block;font-size:24px;margin:8px 0 4px}.olv-done p{opacity:.7;font-size:14px}
 @media (prefers-reduced-motion:reduce){.olv *{animation:none!important;transition:none!important}}
 /* story viewer */
@@ -2395,12 +2399,12 @@ const fmtD=s=>s?new Date(String(s).length===10?s+"T12:00":s).toLocaleDateString(
 const DEST_NAME={ua:"Украина",eu:"Европа",dxb:"Дубай"};
 function orderSteps(o){const ua=(o.dest||"ua")==="ua",R=o.route||{},at=k=>{const h=(o.history||[]).filter(x=>x.status===k).pop();return h?h.at:""};
   const S=[{k:"new",t:"Заказ оформлен",d:fmtD(o.createdAt)},{k:"work",t:"Менеджер подтвердил наличие",d:fmtD(at("work"))},{k:"paid",t:"Оплачен",d:fmtD(at("paid"))},
-    {k:"bought",t:"Выкуплен"+(R.buyCity?" · "+R.buyCity:" в бутике"),d:fmtD(R.buyDate||at("bought"))},
-    ua?{k:"shipping",t:"Едет в Украину",d:R.shipDate?"отправка "+fmtD(R.shipDate):fmtD(at("shipping"))}:{k:"shipping",t:"Отправлен в "+(o.dest==="dxb"?"Дубай":"Европу"),d:R.shipDate?fmtD(R.shipDate):fmtD(at("shipping"))},
-    ...(ua?[{k:"np",t:"Новая почта",d:(R.npDate?fmtD(R.npDate):fmtD(at("np")))+(R.track?" · ТТН "+R.track:"")}]:[]),
+    {k:"bought",t:R.buyMode==="online"?"Заказан на сайте бренда"+(R.buyCity?" · "+R.buyCity:""):"Выкуплен в бутике"+(R.buyCity?" · "+R.buyCity:""),d:fmtD(R.buyDate||at("bought"))},
+    ua?{k:"shipping",t:"Едет в Украину"+(R.uaCity?" · "+R.uaCity:""),d:R.shipDate?"отправка "+fmtD(R.shipDate):fmtD(at("shipping"))}:{k:"shipping",t:"Отправлен в "+(o.dest==="dxb"?"Дубай":"Европу"),d:R.shipDate?fmtD(R.shipDate):fmtD(at("shipping"))},
+    ...(ua?[{k:"np",t:"Новая почта"+(R.uaCity?" · из "+R.uaCity:""),d:(R.npDate?fmtD(R.npDate):fmtD(at("np")))+(R.track?" · ТТН "+R.track:"")}]:[]),
     {k:"delivered",t:"Получен",d:fmtD(at("delivered"))}];
   const order=S.map(s=>s.k),cur=o.status==="cancelled"?-1:Math.max(0,order.indexOf(o.status));return{S,cur}}
-function routeNodes(o){const ua=(o.dest||"ua")==="ua",c=(o.route&&o.route.buyCity)||"Европа";return ua?[c,"Украина","Новая почта","Вы"]:[c,DEST_NAME[o.dest]||"Доставка","Вы"]}
+function routeNodes(o){const ua=(o.dest||"ua")==="ua",c=(o.route&&o.route.buyCity)||"Европа",u=(o.route&&o.route.uaCity)||"Украина";return ua?[c,u,"Новая почта","Вы"]:[c,DEST_NAME[o.dest]||"Доставка","Вы"]}
 function routePos(o){const ua=(o.dest||"ua")==="ua",st=o.status;
   if(ua)return{new:0,work:0,paid:0,bought:0,shipping:.5,np:2,delivered:3}[st]??0;return{new:0,work:0,paid:0,bought:0,shipping:.5,delivered:2}[st]??0}
 const LEAD_ST2={new:"Оформлен",work:"Подтверждён",paid:"Оплачен",bought:"Выкуплен",shipping:"В пути",np:"Новая почта",delivered:"Получен",cancelled:"Отменён"};
@@ -2408,10 +2412,10 @@ function orderRowHTML(o,i){const{S,cur}=orderSteps(o);const p=o.items&&o.items[0
   return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):"<i></i>"}</span><span class="otx"><b>${esc(o.number)}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
     <span class="obar">${S.map((_,j)=>`<i class="${j<=cur?"on":""}"></i>`).join("")}</span></span><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}
 /* ===== Экран заказа «Live»: цветной маршрут с кометой, вспышки на городах, стопка пройденных этапов ===== */
-const OST={new:["#4a4d54","#c9ccd2",'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'],work:["#6b6f76","#dfe1e5",'<path d="M5 12.5l4.5 4.5L19 7.5"/>'],
-  paid:["#a07f45","#f0d79e",'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>'],bought:["#7a3a3d","#f0a3a8",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],
-  shipping:["#35577a","#8fc1f2",'<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/>'],
-  np:["#5c5670","#c6b8f5",'<path d="M3.5 8.5L12 4l8.5 4.5v7L12 20l-8.5-4.5z"/><path d="M3.5 8.5L12 13l8.5-4.5M12 13v7"/>'],delivered:["#2e8b57","#8be3b0",'<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>']};
+const OST={new:["#5b6474","#cfd6e2",'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'],work:["#4f6bd8","#b3c2ff",'<path d="M5 12.5l4.5 4.5L19 7.5"/>'],
+  paid:["#c8902e","#ffd98a",'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>'],bought:["#b23a48","#ffa3ae",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],
+  shipping:["#2f7fd1","#a6d4ff",'<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/>'],
+  np:["#7b5cd6","#cdbbff",'<path d="M3.5 8.5L12 4l8.5 4.5v7L12 20l-8.5-4.5z"/><path d="M3.5 8.5L12 13l8.5-4.5M12 13v7"/>'],delivered:["#1f9d5c","#86f0b6",'<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>']};
 function orderDays(o){if(o.status==="delivered")return 0;const R=o.route||{},base=R.npDate?[R.npDate,2]:R.shipDate?[R.shipDate,(o.dest||"ua")==="ua"?4:3]:null;if(!base)return null;
   const d=Math.ceil((Date.parse(base[0]+"T12:00")+base[1]*864e5-Date.now())/864e5);return d>0?d:1}
 function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.route||{},cancelled=o.status==="cancelled";
@@ -2423,11 +2427,11 @@ function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.ro
   const dn=S.slice(0,Math.max(0,cur)).reverse(),nx=cancelled?[]:S.slice(cur+1);
   const s=push("Заказ "+o.number,`<div class="olv" style="--acc:${col[0]};--acc2:${col[1]}">
     <div class="olv-tt"><small>${fmtD(o.createdAt)} · ${ua?"доставка в Украину":DEST_NAME[o.dest]}</small><h1>Мой заказ</h1></div>
-    <div class="olv-live"><div class="olv-l1"><span class="olv-th">${p0?shapeSVG(p0.shape,p0.c,""):""}</span><div class="olv-tx"><span class="olv-chip"><i></i>${cancelled?"Отменён":esc(LEAD_ST2[z.k]||"")}</span><h2>${cancelled?"Заказ отменён":esc(z.t)}</h2></div>
+    <div class="olv-live"><div class="olv-l1"><span class="olv-th">${p0?shapeSVG(p0.shape,p0.c,""):""}</span><div class="olv-tx"><span class="olv-chip"><i></i>${cancelled?"Отменён":esc(LEAD_ST2[z.k]||"")}</span><h2>${cancelled?"Заказ отменён":esc(z.t.split(" · ")[0])}</h2></div>
       <div class="olv-cd"><div class="n num">${cancelled?"—":days===0?"✓":days?days:`${cur+1}/${S.length}`}</div><small>${cancelled?"":days===0?"доставлено":days?(days===1?"день до вас":days<5?"дня до вас":"дней до вас"):"этап"}</small></div></div>
-      <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#7a3a3d"/><stop offset=".4" stop-color="#35577a"/><stop offset=".75" stop-color="#5c5670"/><stop offset="1" stop-color="#3fb57a"/></linearGradient></defs>
+      <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#e0566a"/><stop offset=".38" stop-color="#3d93ea"/><stop offset=".72" stop-color="#9677f0"/><stop offset="1" stop-color="#2fc77a"/></linearGradient></defs>
         <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g>
-        <g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g class="cmi" transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${(o.status==="delivered"?OST.delivered:pos>0?OST.shipping:OST.bought)[2]}</g></g></svg></div></div>
+        <g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g class="cmi" transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${(o.status==="delivered"?OST.delivered:pos>0?OST.shipping:OST.bought)[2]}</g></g></svg></div><div class="olv-lbl"></div></div>
     <div class="olv-st">
       ${dn.length?`<div class="olv-stack" data-n="${dn.length} ${plural(dn.length,["этап пройден","этапа пройдено","этапов пройдено"])}">${dn.map(x=>`<div class="s" style="--c:${(OST[x.k]||OST.new)[0]}"><span class="ic"><svg viewBox="0 0 24 24">${(OST[x.k]||OST.new)[2]}</svg></span><div><b>${esc(x.t)}</b><small>${esc(x.d||"")}</small></div><span class="ok">✓</span></div>`).join("")}</div>`:""}
       ${cancelled?`<div class="olv-done" style="background:var(--ink-grad);box-shadow:none"><b>Заказ отменён</b><p>Если это ошибка — напишите менеджеру.</p></div>`:o.status==="delivered"?`<div class="olv-done"><span class="wm">TREND BÜRO</span><b>Заказ у вас</b><p>Спасибо, что выбрали нас. Носите с удовольствием.</p></div>`
@@ -2439,15 +2443,20 @@ function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.ro
       ${o.total?`<div class="group" style="margin-top:12px"><div class="row tot"><span>Итого</span><span class="num">${eur(o.total)}</span></div></div>`:""}</div></div>
     <div class="pad" style="margin-top:16px"><a class="btn block soft" href="${esc((CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]).url)}" target="_blank" rel="noopener">Написать менеджеру о заказе</a></div><div style="height:30px"></div></div>`);
   const live=s.querySelector(".olv-live"),rf=s.querySelector(".rf"),L=rf.getTotalLength(),cm=s.querySelector(".cm");
-  s.querySelector(".nds").innerHTML=N.map((n,i)=>{const p=rf.getPointAtLength(L*NF[i]);return `<g class="nd" style="--c:${nodeCol(i)}"><circle class="rp" cx="${p.x}" cy="${p.y}" r="7"/><circle class="o" cx="${p.x}" cy="${p.y}" r="7"/><text x="${p.x}" y="${p.y+(i%2?-16:24)}" text-anchor="${i===0?"start":i===last?"end":"middle"}">${esc(n)}</text></g>`}).join("");
+  s.querySelector(".nds").innerHTML=N.map((n,i)=>{const p=rf.getPointAtLength(L*NF[i]);return `<g class="nd" style="--c:${nodeCol(i)}"><circle class="rp" cx="${p.x}" cy="${p.y}" r="7"/><circle class="o" cx="${p.x}" cy="${p.y}" r="7"/></g>`}).join("");
+  s.querySelector(".olv-lbl").innerHTML=N.map((n,i)=>{const p=rf.getPointAtLength(L*NF[i]);return `<span class="${i===0?"a0":i===last?"a1":""}">${esc(n)}</span>`}).join("");s.querySelector(".olv-lbl").style.gridTemplateColumns="minmax(0,1fr) ".repeat(N.length-1)+"auto";
   const setPos=f=>{rf.style.strokeDashoffset=L*(1-f);const p=rf.getPointAtLength(L*f);cm.style.transform=`translate(${p.x}px,${p.y}px)`};
   const nodes=[...s.querySelectorAll(".nd")],reached=f=>NF.map((nf,i)=>f>=nf-1e-3&&(i>0||["bought","shipping","np","delivered"].includes(o.status)));
-  rf.style.strokeDasharray=L;rf.style.transition="none";cm.style.transition="none";setPos(fromPos);reached(fromPos).forEach((on,i)=>nodes[i].classList.toggle("on",on));void rf.getBoundingClientRect();
+  rf.style.strokeDasharray=L;setPos(fromPos);reached(fromPos).forEach((on,i)=>{nodes[i].classList.toggle("on",on);const l=s.querySelectorAll(".olv-lbl span")[i];if(l)l.classList.toggle("on",on)});
   const sparks=(x,y,c)=>{const box=s.querySelector(".olv-route").getBoundingClientRect(),hb=live.getBoundingClientRect(),k=box.width/354;
-    for(let j=0;j<14;j++){const e=document.createElement("i");e.className="olv-spark";const a=Math.random()*6.283,r=20+Math.random()*34;
-      e.style.cssText=`left:${box.left-hb.left+x*k-3}px;top:${box.top-hb.top+y*(box.height/96)-3}px;background:${[c,"#fff",col[1]][j%3]};--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r}px`;live.append(e);setTimeout(()=>e.remove(),950)}};
-  setTimeout(()=>{rf.style.transition="";cm.style.transition="";setPos(pos);const was=reached(fromPos),now=reached(pos);
-    now.forEach((on,i)=>{if(!on)return;const late=was[i]?0:(NF[i]-fromPos)/Math.max(.01,pos-fromPos)*1300;setTimeout(()=>{nodes[i].classList.add("on");if(!was[i]||fromPos===pos&&i===now.lastIndexOf(true)){nodes[i].classList.remove("pop");void nodes[i].getBoundingClientRect();nodes[i].classList.add("pop");const q=rf.getPointAtLength(L*NF[i]);sparks(q.x,q.y,nodeCol(i));hap("light")}},late+150)})},250);
+    for(let j=0;j<16;j++){const e=document.createElement("i");e.className="olv-spark";const a=Math.random()*6.283,r=22+Math.random()*36;
+      e.style.cssText=`left:${box.left-hb.left+x*k-3}px;top:${box.top-hb.top+y*(box.height/96)-3}px;background:${[c,"#fff",col[1]][j%3]};--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r}px`;live.append(e);setTimeout(()=>e.remove(),1100)}};
+  // комета едет ровно по кривой: плавный разгон и торможение, линия рисуется вместе с ней
+  const was=reached(fromPos),fired=was.slice(),ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,D=RMo()?0:Math.max(900,2200*Math.abs(pos-fromPos)+600);
+  const lbls=()=>[...s.querySelectorAll(".olv-lbl span")];const pop=i=>{nodes[i].classList.add("on");lbls()[i]&&lbls()[i].classList.add("on");nodes[i].classList.remove("pop");void nodes[i].getBoundingClientRect();nodes[i].classList.add("pop");const q=rf.getPointAtLength(L*NF[i]);sparks(q.x,q.y,nodeCol(i));hap("light")};
+  setTimeout(()=>{const t0=performance.now();const step=n=>{if(!s.isConnected)return;const k=D?Math.min(1,(n-t0)/D):1,f=fromPos+(pos-fromPos)*ease(k);setPos(f);
+      reached(f).forEach((on,i)=>{if(on&&!fired[i]){fired[i]=true;pop(i)}});
+      if(k<1)requestAnimationFrame(step);else if(fromPos===pos){const li=reached(pos).lastIndexOf(true);if(li>=0)pop(li)}};requestAnimationFrame(step)},350);
   const st=s.querySelector(".olv-stack");if(st)st.onclick=()=>st.classList.toggle("open");
   const c=s.querySelector("[data-cpt]");if(c)c.onclick=()=>copy(R.track)}
 
