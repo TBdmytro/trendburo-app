@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-12-live-v39">
+<meta name="trendburo-build" content="2026-10-12-live-v40">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -2409,7 +2409,7 @@ function routePos(o){const ua=(o.dest||"ua")==="ua",st=o.status;
   if(ua)return{new:0,work:0,paid:0,bought:0,shipping:.5,np:2,delivered:3}[st]??0;return{new:0,work:0,paid:0,bought:0,shipping:.5,delivered:2}[st]??0}
 const LEAD_ST2={new:"Оформлен",work:"Подтверждён",paid:"Оплачен",bought:"Выкуплен",shipping:"В пути",np:"Новая почта",delivered:"Получен",cancelled:"Отменён"};
 function orderRowHTML(o,i){const{S,cur}=orderSteps(o);const p=o.items&&o.items[0]&&findItem(o.items[0].id);
-  return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):"<i></i>"}</span><span class="otx"><b>${esc(o.number)}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
+  return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):"<i></i>"}</span><span class="otx"><b>Заказ № ${esc(String(o.number).replace(/^TB-/,""))}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
     <span class="obar">${S.map((_,j)=>`<i class="${j<=cur?"on":""}"></i>`).join("")}</span></span><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}
 /* ===== Экран заказа «Live»: цветной маршрут с кометой, вспышки на городах, стопка пройденных этапов ===== */
 const OST={new:["#5b6474","#cfd6e2",'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'],work:["#4f6bd8","#b3c2ff",'<path d="M5 12.5l4.5 4.5L19 7.5"/>'],
@@ -2425,7 +2425,7 @@ function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.ro
   const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
   const nodeCol=i=>{const k=ua?["bought","shipping","np","delivered"][i]:["bought","shipping","delivered"][i];return OST[k][0]};
   const dn=S.slice(0,Math.max(0,cur)).reverse(),nx=cancelled?[]:S.slice(cur+1);
-  const s=push("Заказ "+o.number,`<div class="olv" style="--acc:${col[0]};--acc2:${col[1]}">
+  const s=push("Заказ № "+String(o.number).replace(/^TB-/,""),`<div class="olv" style="--acc:${col[0]};--acc2:${col[1]}">
     <div class="olv-tt"><small>${fmtD(o.createdAt)} · ${ua?"доставка в Украину":DEST_NAME[o.dest]}</small><h1>Мой заказ</h1></div>
     <div class="olv-live"><div class="olv-l1"><span class="olv-th">${p0?shapeSVG(p0.shape,p0.c,""):""}</span><div class="olv-tx"><span class="olv-chip"><i></i>${cancelled?"Отменён":esc(LEAD_ST2[z.k]||"")}</span><h2>${cancelled?"Заказ отменён":esc(z.t.split(" · ")[0])}</h2></div>
       ${(()=>{if(cancelled)return"";if(o.status==="delivered")return `<div class="olv-cd"><small>получен</small><div class="n">✓</div></div>`;const e=orderEta(o);return e?`<div class="olv-cd"><small>ждём у вас</small><div class="n num">${esc(e.date)}</div><small>${e.days===1?"завтра":"через "+e.days+" "+plural(e.days,["день","дня","дней"])}</small></div>`:""})()}</div>
