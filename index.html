@@ -867,6 +867,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .olv-stack::after{content:attr(data-n);position:absolute;right:14px;top:-15px;z-index:4;font-size:11px;font-weight:700;background:var(--fg);color:var(--bg);border-radius:99px;padding:2px 8px}
 .olv-stack.open{height:auto}.olv-stack.open .s{position:relative;transform:none;opacity:1;margin-bottom:8px}.olv-stack.open::after{display:none}
 .olv-stack b,.olv-cur b,.olv-nx b{font-size:14.5px;display:block}.olv-stack small,.olv-nx small{font-size:12px;color:var(--g2)}
+.olv-stack .s>div{min-width:0;flex:1}.olv-stack .s b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:96px}.olv-stack.open .s b{padding-right:0;white-space:normal}
 .olv-stack .ok{margin-left:auto;font-size:12px;color:var(--g2);font-weight:600}
 .olv-cur{position:relative;border-radius:26px;padding:18px;color:#fff;background:linear-gradient(150deg,color-mix(in oklab,var(--c) 88%,#fff),var(--c) 45%,color-mix(in oklab,var(--c) 70%,#141518));overflow:hidden;box-shadow:0 16px 34px color-mix(in oklab,var(--c) 40%,transparent);animation:olvin .9s cubic-bezier(.22,1.2,.36,1) both}
 @keyframes olvin{from{transform:translateY(28px) scale(.95);opacity:0}}
