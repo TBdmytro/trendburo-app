@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-12-live-v38">
+<meta name="trendburo-build" content="2026-10-12-live-v39">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -838,9 +838,9 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .olv-chip i{width:6px;height:6px;border-radius:50%;background:var(--acc2);animation:olvpl 1.8s infinite}
 @keyframes olvpl{0%{box-shadow:0 0 0 0 var(--acc2)}70%,100%{box-shadow:0 0 0 7px transparent}}
 .olv-l1 h2{font-size:19px;margin-top:6px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.olv-cd{text-align:right;flex:none}.olv-cd .n{font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.1;animation:olvroll .7s cubic-bezier(.34,1.56,.64,1) .3s both}
+.olv-cd{text-align:right;flex:none}.olv-cd .n{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.15;white-space:nowrap;animation:olvroll .7s cubic-bezier(.34,1.56,.64,1) .3s both}
 @keyframes olvroll{from{transform:translateY(60%);opacity:0}}
-.olv-cd small{font-size:11.5px;color:rgba(255,255,255,.55)}
+.olv-cd small{display:block;font-size:11px;color:rgba(255,255,255,.6)}
 .olv-route{position:relative;height:96px;margin:10px -4px 0}
 .olv-route svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .olv .rb{fill:none;stroke:rgba(255,255,255,.12);stroke-width:6;stroke-linecap:round}
@@ -2416,11 +2416,11 @@ const OST={new:["#5b6474","#cfd6e2",'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><pa
   paid:["#c8902e","#ffd98a",'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>'],bought:["#b23a48","#ffa3ae",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],
   shipping:["#2f7fd1","#a6d4ff",'<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/>'],
   np:["#7b5cd6","#cdbbff",'<path d="M3.5 8.5L12 4l8.5 4.5v7L12 20l-8.5-4.5z"/><path d="M3.5 8.5L12 13l8.5-4.5M12 13v7"/>'],delivered:["#1f9d5c","#86f0b6",'<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>']};
-function orderDays(o){if(o.status==="delivered")return 0;const R=o.route||{},base=R.npDate?[R.npDate,2]:R.shipDate?[R.shipDate,(o.dest||"ua")==="ua"?4:3]:null;if(!base)return null;
-  const d=Math.ceil((Date.parse(base[0]+"T12:00")+base[1]*864e5-Date.now())/864e5);return d>0?d:1}
+function orderEta(o){const R=o.route||{},ua=(o.dest||"ua")==="ua",base=R.npDate?[R.npDate,2]:R.shipDate?[R.shipDate,ua?4:3]:null;if(!base)return null;
+  const t=Date.parse(base[0]+"T12:00")+base[1]*864e5,d=Math.ceil((t-Date.now())/864e5);return{date:new Date(t).toLocaleDateString("ru-RU",{day:"numeric",month:"short"}).replace(".",""),days:Math.max(1,d)}}
 function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.route||{},cancelled=o.status==="cancelled";
   const N=routeNodes(o),last=N.length-1,NF=N.map((_,i)=>i/last),pos=routePos(o)/last;
-  const z=S[Math.max(0,cur)],col=OST[z.k]||OST.new,days=orderDays(o),p0=findItem(o.items&&o.items[0]&&o.items[0].id);
+  const z=S[Math.max(0,cur)],col=OST[z.k]||OST.new,p0=findItem(o.items&&o.items[0]&&o.items[0].id);
   const KEY="tb_ordseen",seenMap=store.get(KEY,{}),fromPos=seenMap[o.number]!==undefined?Math.min(seenMap[o.number],pos):0;seenMap[o.number]=pos;store.set(KEY,seenMap);
   const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
   const nodeCol=i=>{const k=ua?["bought","shipping","np","delivered"][i]:["bought","shipping","delivered"][i];return OST[k][0]};
@@ -2428,7 +2428,7 @@ function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.ro
   const s=push("Заказ "+o.number,`<div class="olv" style="--acc:${col[0]};--acc2:${col[1]}">
     <div class="olv-tt"><small>${fmtD(o.createdAt)} · ${ua?"доставка в Украину":DEST_NAME[o.dest]}</small><h1>Мой заказ</h1></div>
     <div class="olv-live"><div class="olv-l1"><span class="olv-th">${p0?shapeSVG(p0.shape,p0.c,""):""}</span><div class="olv-tx"><span class="olv-chip"><i></i>${cancelled?"Отменён":esc(LEAD_ST2[z.k]||"")}</span><h2>${cancelled?"Заказ отменён":esc(z.t.split(" · ")[0])}</h2></div>
-      <div class="olv-cd"><div class="n num">${cancelled?"—":days===0?"✓":days?days:`${cur+1}/${S.length}`}</div><small>${cancelled?"":days===0?"доставлено":days?(days===1?"день до вас":days<5?"дня до вас":"дней до вас"):"этап"}</small></div></div>
+      ${(()=>{if(cancelled)return"";if(o.status==="delivered")return `<div class="olv-cd"><small>получен</small><div class="n">✓</div></div>`;const e=orderEta(o);return e?`<div class="olv-cd"><small>ждём у вас</small><div class="n num">${esc(e.date)}</div><small>${e.days===1?"завтра":"через "+e.days+" "+plural(e.days,["день","дня","дней"])}</small></div>`:""})()}</div>
       <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#e0566a"/><stop offset=".38" stop-color="#3d93ea"/><stop offset=".72" stop-color="#9677f0"/><stop offset="1" stop-color="#2fc77a"/></linearGradient></defs>
         <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g>
         <g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g class="cmi" transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${(o.status==="delivered"?OST.delivered:pos>0?OST.shipping:OST.bought)[2]}</g></g></svg></div><div class="olv-lbl"></div></div>
