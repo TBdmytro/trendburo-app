@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v37">
+<meta name="trendburo-build" content="2026-10-13-admin-v38">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2487,7 +2487,7 @@ async function vProducts2(pre) {
     if (!s) { h.innerHTML = ""; return; }
     h.innerHTML = `<div class="hub"><div class="hub-top"><span class="av">${esc((s.name || "?")[0])}</span><div class="tx"><b>${esc(s.name)}</b><span>${esc((s.home || "").replace("https://", ""))} · ${s.collections?.length ? "разделы: " + esc(s.collections.map(secName).join(", ")) : "весь каталог"}${s.market ? " · цены Европы" : ""}</span></div></div>
       <div class="hub-act"><button class="btn" data-hubload ${s.running ? "disabled" : ""}>${s.running ? "Загружается…" : "Загрузить новые товары"}</button><button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
-      <div class="hub-prog" id="hubProg" data-src="${esc(s.id)}" ${s.running ? "" : "hidden"}><span class="spin"></span><span>Загрузка идёт…</span></div>
+      <div class="hub-prog" id="hubProg" data-src="${esc(s.id)}" ${s.running ? "" : "hidden"}><span class="spin"></span><span>Загрузка идёт на сервере — админку можно закрыть</span></div>
       <label class="toggle"><input type="checkbox" data-hubavail ${s.onlyAvailable !== false ? "checked" : ""}>Только то, что можно купить сейчас: хотя бы один размер в наличии (старые распроданные не загружаем)</label>
       <label class="toggle"><input type="checkbox" data-hubauto ${s.autoPublish ? "checked" : ""}>Автовыгрузка: новые товары сразу появляются на сайте</label></div>`;
   };
@@ -2542,7 +2542,7 @@ async function vProducts2(pre) {
     if (sw) { const on = sw.checked; try { await api("status", { method: "POST", body: { ids: [sw.dataset.show1], status: on ? "published" : "draft" }, silent: true }); } catch (err) { sw.checked = !on; return toast(err.message); } const p = list.find(x => x._id === sw.dataset.show1); if (p) p.status = on ? "published" : "draft"; shown += on ? 1 : -1; tot(); return toast(on ? "На витрине через ~10 секунд" : "Скрыто с витрины"); }
     const ck = e.target.closest("[data-psel]"); if (ck) { ck.checked ? sel.add(ck.dataset.psel) : sel.delete(ck.dataset.psel); return bar(); }
     if (e.target.closest("[data-hubload]")) {
-      const s = hubSrc(); try { const r = await api("jobCreate", { method: "POST", body: { sourceId: s.id, mode: "full" } }); toast(r.existing ? "Загрузка уже идёт" : "Загружаем новые товары — они появятся здесь"); s.running = true; drawHub(); onJobsIdle = () => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); F.fresh = ""; load(); toast("Готово: товары обновлены"); }); pump(); } catch (err) { toast(err.message); } return;
+      const s = hubSrc(); try { const r = await api("jobCreate", { method: "POST", body: { sourceId: s.id, mode: "full" } }); toast(r.existing ? "Загрузка уже идёт" : "Загружаем на сервере — можно закрыть админку, загрузка не остановится"); s.running = true; drawHub(); onJobsIdle = () => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); F.fresh = ""; load(); toast("Готово: товары обновлены"); }); pump(); } catch (err) { toast(err.message); } return;
     }
     if (e.target.closest("[data-hubsec]")) return sectionsSheet(F.source, { stay: true, after: () => { const s = hubSrc(); if (s) { s.running = true; drawHub(); } onJobsIdle = () => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); load(); }); } });
     if (e.target.closest("[data-hubclean]")) {

@@ -2,6 +2,7 @@
  * API админки. Один обработчик на все действия (?a=…), чтобы укладываться в лимит функций Vercel.
  * Все действия, кроме входа, требуют авторизации; изменяющие — ещё и заголовок X-TB (защита от CSRF).
  */
+import { kickWorker } from "../lib/chain.js";
 import { getStore } from "../lib/store.js";
 import { checkPassword, issueCookie, clearCookie, readSession } from "../lib/auth.js";
 import { SOURCES, sourceWith, makeNet } from "../lib/sources.js";
@@ -149,6 +150,8 @@ export default async function handler(req, res) {
 
       case "jobCreate": {
         const { job, existing } = await createJob(store, { sourceId: body.sourceId, mode: body.mode, input: body.input || "", category: body.category || null, createdBy: me.name, onlyCats: body.onlyCats || null, gender: body.gender || null });
+        // загрузка идёт на сервере сама, даже если админку закрыть
+        if (!existing) await kickWorker(publicUrl(req), 1);
         return send(res, 200, { job: slim(job), existing });
       }
       case "jobs": return send(res, 200, { jobs: (await store.list("importJob", {}, { order: "createdAt desc", limit: 50, fields: JOB_FIELDS })).map(slim) });

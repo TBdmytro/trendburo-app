@@ -7,22 +7,37 @@ import { tick, createJob, ACTIVE } from "../lib/worker.js";
 import { SOURCES } from "../lib/sources.js";
 import { allSourceIds } from "../lib/suppliers.js";
 import { refreshFx } from "../lib/fx.js";
+import { kickWorker, CHAIN_MAX } from "../lib/chain.js";
+import { publicUrl } from "./bot.js";
 
 export default async function handler(req, res) {
   const auth = req.headers.authorization || "";
   if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) { res.statusCode = 401; return res.end("unauthorized"); }
   const store = getStore();
-  await refreshFx(store).catch(() => {});
-  const planned = await planRefresh(store);
+  const step = Math.max(0, Math.min(CHAIN_MAX + 1, Number(req.query?.chain || new URL(req.url, "http://x").searchParams.get("chain")) || 0));
+  // шаг цепочки — только продолжение задач; курсы и плановые обновления — в обычном (ночном) запуске
+  if (!step) await refreshFx(store).catch(() => {});
+  const planned = step ? [] : await planRefresh(store);
   const results = [];
   const started = Date.now();
   while (Date.now() - started < 45000) {
     const r = await tick(store, { budgetMs: Math.max(5000, 45000 - (Date.now() - started)), owner: "cron" });
     results.push(r);
-    if (!r.jobId || r.status === "waiting") break;
+    if (r.jobId && r.status !== "waiting") continue;
+    // сейчас делать нечего: задача на паузе после ошибки или занята админкой — ждём, если пауза короче оставшегося времени
+    const act = await store.list("importJob", { status: ACTIVE }, { limit: 20, fields: "_id, nextRunAt, lock" });
+    if (!act.length) break;
+    const soon = Math.min(...act.map(j => Math.max(Date.parse(j.nextRunAt || 0), Date.parse(j.lock?.until || 0))));
+    const wait = soon - Date.now();
+    if (wait > 45000 - (Date.now() - started) - 2000) break;
+    await new Promise(t => setTimeout(t, Math.max(800, wait)));
   }
+  // работа осталась — запускаем следующий шаг, не дожидаясь админки
+  const left = (await store.list("importJob", { status: ACTIVE }, { limit: 5, fields: "_id" })).length;
+  let next = false;
+  if (left && step < CHAIN_MAX) next = await kickWorker(publicUrl(req), step + 1);
   res.setHeader("Content-Type", "application/json"); res.statusCode = 200;
-  res.end(JSON.stringify({ planned, results }));
+  res.end(JSON.stringify({ planned, results, left, next }));
 }
 
 /** Плановое обновление опубликованных товаров источника (цены и наличие) по расписанию. */
