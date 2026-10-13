@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v38">
+<meta name="trendburo-build" content="2026-10-13-admin-v40">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -825,7 +825,10 @@ async function pump() {
       p.hidden = false;
       p.innerHTML = `<b>${esc(srcName(j.sourceId))}</b> · ${esc(STATUS[j.status][0].toLowerCase())}<div>${j.phase === "discover" ? "ищем товары… найдено " + j.found : `${j.processed} из ${j.found}`}</div><div class="bar"><i style="width:${j.phase === "discover" ? 8 : pct}%"></i></div>`;
       if (view === "job:" + j._id || view === "jobs") refreshCurrent();
-      const hp = $("#hubProg"); if (hp && hp.dataset.src === j.sourceId) { hp.hidden = false; hp.innerHTML = `<span class="spin"></span><span>${j.phase === "discover" ? "Ищем товары на сайте… найдено " + j.found : `Проверено ${j.processed} из ${j.found}`} · сохранено <b>${j.saved || 0}</b>${j.filtered ? ` · не подошли по фильтру ${j.filtered}` : ""}${j.skipped ? ` · без цены/фото ${j.skipped}` : ""}${j.errors?.length ? ` · ошибок ${j.errors.length}` : ""}</span><div class="bar"><i style="width:${pct}%"></i></div>`; }
+      const hp = $("#hubProg"); if (hp && hp.dataset.src === j.sourceId) { hp.hidden = false; const stale = j.lastProgressAt && Date.now() - Date.parse(j.lastProgressAt) > 120000, le = (j.errors || []).slice(-1)[0];
+        if (typeof onHubProgress === "function") onHubProgress(j.saved || 0);
+        hp.hidden = false; hp.innerHTML = `<span style="flex-basis:100%"><b style="font-size:20px">${j.saved || 0}</b> ${plural(j.saved || 0, ["товар загружен", "товара загружено", "товаров загружено"])} · проверено ${j.processed} из ${j.found}${j.discoverLeft ? "+" : ""}${j.filtered ? ` · не подошли по фильтру ${j.filtered}` : ""}${j.skipped ? ` · без цены/фото ${j.skipped}` : ""}</span><div class="bar"><i style="width:${pct}%"></i></div>
+          ${stale ? `<span style="flex-basis:100%;color:var(--err)">Загрузка не двигается больше 2 минут${le ? ": " + esc(le.text) : ""}. Нажмите «Остановить» и запустите заново.</span>` : le ? `<span class="hint" style="flex-basis:100%">Последняя ошибка: ${esc(le.text)}</span>` : ""}`; }
       try { await api("tick", { method: "POST", body: {}, silent: true }); } catch {}
       await new Promise(r => setTimeout(r, 300));
     }
@@ -833,7 +836,7 @@ async function pump() {
   if (view === "jobs" || view.startsWith("job:")) refreshCurrent(true);
   if (typeof onJobsIdle === "function") { const f = onJobsIdle; onJobsIdle = null; f(); }
 }
-let refreshT = 0, onJobsIdle = null;
+let refreshT = 0, onJobsIdle = null, onHubProgress = null;
 function refreshCurrent(force) { const now = Date.now(); if (!force && now - refreshT < 2500) return; refreshT = now; if (view === "jobs") vJobs(true); else if (view.startsWith("job:")) vJob(view.split(":")[1], true); }
 const srcName = id => id === "manual" ? "Добавлен вручную" : (sources || []).find(s => s.id === id)?.name || id;
 
@@ -2486,8 +2489,9 @@ async function vProducts2(pre) {
     const s = hubSrc(), h = $("#hub"); if (!h) return;
     if (!s) { h.innerHTML = ""; return; }
     h.innerHTML = `<div class="hub"><div class="hub-top"><span class="av">${esc((s.name || "?")[0])}</span><div class="tx"><b>${esc(s.name)}</b><span>${esc((s.home || "").replace("https://", ""))} · ${s.collections?.length ? "разделы: " + esc(s.collections.map(secName).join(", ")) : "весь каталог"}${s.market ? " · цены Европы" : ""}</span></div></div>
-      <div class="hub-act"><button class="btn" data-hubload ${s.running ? "disabled" : ""}>${s.running ? "Загружается…" : "Загрузить новые товары"}</button><button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
-      <div class="hub-prog" id="hubProg" data-src="${esc(s.id)}" ${s.running ? "" : "hidden"}><span class="spin"></span><span>Загрузка идёт на сервере — админку можно закрыть</span></div>
+      ${s.cats?.length || s.brands?.length ? `<div class="note-box" style="align-items:center"><div style="flex:1">Фильтр загрузки: ${s.cats?.length ? "только " + esc(s.cats.map(c => CATS[c] || c).join(", ")) : ""}${s.brands?.length ? (s.cats?.length ? " · " : "") + "бренды " + esc(s.brands.join(", ")) : ""} — остальное не загружается</div><button class="btn ghost sm" data-hubnofilter>Брать всё</button></div>` : ""}
+      <div class="hub-act">${s.running ? `<button class="btn danger" data-hubstop>Остановить загрузку</button>` : `<button class="btn" data-hubload>Загрузить каталог</button>`}<button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
+      <div class="hub-prog" id="hubProg" data-src="${esc(s.id)}" ${s.running ? "" : "hidden"}><span>Загрузка идёт на сервере — админку можно закрыть. Нажмите «Остановить», когда товаров хватит: всё загруженное останется в каталоге.</span></div>
       <label class="toggle"><input type="checkbox" data-hubavail ${s.onlyAvailable !== false ? "checked" : ""}>Только то, что можно купить сейчас: хотя бы один размер в наличии (старые распроданные не загружаем)</label>
       <label class="toggle"><input type="checkbox" data-hubauto ${s.autoPublish ? "checked" : ""}>Автовыгрузка: новые товары сразу появляются на сайте</label></div>`;
   };
@@ -2528,6 +2532,8 @@ async function vProducts2(pre) {
     list = append ? list.concat(r.products) : r.products; total = r.total; shown = r.shown; facets = r.facets;
     tot(); drawFilters(); draw();
   };
+  let lastSaved = -1, lastReload = 0;
+  onHubProgress = n => { if (!view.startsWith("products") || n === lastSaved || Date.now() - lastReload < 5000) return; lastSaved = n; lastReload = Date.now(); if (!sel.size) load(); };
   drawHub(); if (hubSrc()?.running) { onJobsIdle = () => { if (view.startsWith("products")) { getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); load(); }); } }; pump(); }
   let t; $("#pq").oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(load, 300); };
   $("#main").onchange = e => { const f = e.target.dataset.f; if (f) { F[f] = e.target.value; if (f === "source") { F.brand = ""; F.cat = ""; } load(); } };
@@ -2541,6 +2547,15 @@ async function vProducts2(pre) {
     const sw = e.target.closest("[data-show1]");
     if (sw) { const on = sw.checked; try { await api("status", { method: "POST", body: { ids: [sw.dataset.show1], status: on ? "published" : "draft" }, silent: true }); } catch (err) { sw.checked = !on; return toast(err.message); } const p = list.find(x => x._id === sw.dataset.show1); if (p) p.status = on ? "published" : "draft"; shown += on ? 1 : -1; tot(); return toast(on ? "На витрине через ~10 секунд" : "Скрыто с витрины"); }
     const ck = e.target.closest("[data-psel]"); if (ck) { ck.checked ? sel.add(ck.dataset.psel) : sel.delete(ck.dataset.psel); return bar(); }
+    if (e.target.closest("[data-hubstop]")) {
+      const { jobs } = await api("jobs"); const act = jobs.filter(j => j.sourceId === F.source && ACTIVE.includes(j.status));
+      for (const j of act) await api("jobCancel", { method: "POST", body: { id: j._id } });
+      const s = hubSrc(); if (s) s.running = false; sources = null;
+      toast(`Остановлено. Загруженные товары остались в каталоге`); drawHub(); setTimeout(() => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); load(); }), 2500); return load();
+    }
+    if (e.target.closest("[data-hubnofilter]")) {
+      try { await api("sourceSave", { method: "POST", body: { id: F.source, cats: [], brands: [] } }); const s = hubSrc(); if (s) { s.cats = []; s.brands = []; } sources = null; toast("Фильтр снят — со следующей загрузки берём все категории"); drawHub(); } catch (err) { toast(err.message); } return;
+    }
     if (e.target.closest("[data-hubload]")) {
       const s = hubSrc(); try { const r = await api("jobCreate", { method: "POST", body: { sourceId: s.id, mode: "full" } }); toast(r.existing ? "Загрузка уже идёт" : "Загружаем на сервере — можно закрыть админку, загрузка не остановится"); s.running = true; drawHub(); onJobsIdle = () => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); F.fresh = ""; load(); toast("Готово: товары обновлены"); }); pump(); } catch (err) { toast(err.message); } return;
     }
