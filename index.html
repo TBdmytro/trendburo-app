@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-13-live-v43">
+<meta name="trendburo-build" content="2026-10-13-live-v44">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -701,8 +701,8 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .cb{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#17181b;overflow:hidden;transform:rotateY(var(--fa,0deg)) translateZ(calc(var(--w)/2))}
 .sv2 .cb::after{content:"";position:absolute;inset:0;background:#000;opacity:var(--dim,0);pointer-events:none;z-index:9}
 .sv2 .bz{position:absolute;left:0;right:0;top:0;z-index:6;display:flex;gap:4px;padding:calc(10px + var(--st)) 10px 0;transition:opacity .2s}
-.sv2 .bz i{flex:1;height:2.5px;border-radius:2px;background:rgba(255,255,255,.32);overflow:hidden}
-.sv2 .bz b{display:block;height:100%;width:0;background:#fff}
+.sv2 .bz i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.38);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.sv2 .bz b{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,#fff,#f3e3c0 60%,#d9b97a)}
 .sv2 .hz{position:absolute;left:0;right:0;top:calc(18px + var(--st));z-index:6;display:flex;align-items:center;gap:9px;padding:6px 12px;color:#fff;transition:opacity .2s}
 .sv2 .hz .av{width:32px;height:32px;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#41444b,#1b1c1f);border:1.5px solid rgba(255,255,255,.75);flex:none;display:grid;place-items:center;color:#f4efe4}
 .sv2 .hz .av img{width:100%;height:100%;object-fit:contain;background:#f3f3f3;padding:3px;box-sizing:border-box}
@@ -711,9 +711,9 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .hz button{margin-left:auto;background:none;border:0;color:#fff;font-size:26px;line-height:1;padding:4px 8px}
 .sv2.paused .bz,.sv2.paused .hz,.sv2.paused .pn{opacity:0}
 .sv2 .sl{position:absolute;inset:0}
-.sv2 .sl.nw{opacity:0;transition:opacity .18s ease-out}.sv2 .sl.nw.on{opacity:1}
+.sv2 .sl{will-change:transform}.sv2 .sl.mv{transition:transform .34s cubic-bezier(.25,.8,.3,1),opacity .34s,filter .34s}.sv2 .sl.out{filter:brightness(.6)}
 .sv2 .st{position:absolute;inset:0;background:var(--phbg,#f3f3f3);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:calc(64px + var(--st)) 0 calc(196px + var(--sb));box-sizing:border-box}
-.sv2 .st::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(130px + var(--st));background:linear-gradient(rgba(0,0,0,.42),transparent);z-index:1}
+.sv2 .st::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(140px + var(--st));background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.2) 55%,transparent);z-index:1}
 .sv2 .st img{width:100%;height:100%;object-fit:contain;animation:svkb 7s linear both}
 @keyframes svkb{from{transform:scale(1.045)}to{transform:none}}
 .sv2 .st img.sw{animation:svsw .35s var(--ease) both}@keyframes svsw{from{opacity:0;transform:scale(.97)}}
@@ -734,7 +734,7 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .dt{display:flex;gap:10px;margin:0 0 10px}
 .sv2 .dt button{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:#f3f3f3 50%/contain no-repeat;transition:transform .3s cubic-bezier(.34,1.56,.64,1),border-color .2s}
 .sv2 .dt button.on{border-color:#fff;transform:scale(1.15)}
-.sv2 .tp{position:absolute;top:calc(70px + var(--st));bottom:200px;width:34%;z-index:3;border:0;background:none}.sv2 .tp.l{left:0}.sv2 .tp.r{right:0}
+.sv2 .tp{display:none;position:absolute;top:calc(70px + var(--st));bottom:200px;width:34%;z-index:3;border:0;background:none}.sv2 .tp.l{left:0}.sv2 .tp.r{right:0}
 .sv2 .du{position:absolute;inset:0;display:grid;grid-template-rows:1fr 1fr;gap:6px;padding:calc(72px + var(--st)) 10px calc(10px + var(--sb));background:#17181b}
 .sv2 .dc{position:relative;border:0;border-radius:22px;background:#f3f3f3;display:grid;place-items:center;overflow:hidden;transition:transform .45s cubic-bezier(.34,1.56,.64,1),filter .3s;font:inherit;padding:0}
 .sv2 .dc img{position:absolute;inset:0 0 44px;width:100%;height:calc(100% - 44px);object-fit:contain}
@@ -2222,10 +2222,14 @@ function openAuto(ri){
     cb.querySelector(".tp.l").hidden=cb.querySelector(".tp.r").hidden=s.t==="du";
     cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1])};
   // смена слайда внутри рубрики: как в Instagram — сразу, без мигания (новое фото уже загружено заранее)
-  const goSlide=k=>{const s=list[k];i=k;const old=cb.querySelector(".sl"),n=slideNode(AUTO[r],s);n.classList.add("nw");old.after(n);
-    const show=()=>{n.classList.add("on");setTimeout(()=>{old.remove();n.classList.remove("nw","on")},200)};
-    const im=n.querySelector(".st img,.dc img");if(im&&!(im.complete&&im.naturalWidth)){let done=false;const go=()=>{if(!done){done=true;show()}};im.addEventListener("load",go,{once:true});im.addEventListener("error",go,{once:true});setTimeout(go,600)}else requestAnimationFrame(show);
-    host.classList.remove("first");enter()};
+  // листание внутри рубрики: новая картинка въезжает сбоку, старая уходит — видно, как листается; быстрые тапы не ломают анимацию
+  const goSlide=k=>{const dir=k>i?1:-1,s=list[k];i=k;
+    cb.querySelectorAll(".sl.out").forEach(x=>x.remove());cb.querySelectorAll(".sl").forEach(x=>{x.classList.remove("mv");x.style.transform=""});
+    const old=cb.querySelector(".sl"),n=slideNode(AUTO[r],s);n.style.transform=`translateX(${dir*100}%)`;old.after(n);
+    const run=()=>{if(RMo()){old.remove();n.style.transform="";return}void n.offsetWidth;n.classList.add("mv");old.classList.add("mv","out");n.style.transform="translateX(0)";old.style.transform=`translateX(${-dir*30}%) scale(.96)`;
+      setTimeout(()=>{if(old.isConnected)old.remove();n.classList.remove("mv")},360)};
+    const im=n.querySelector(".st img,.dc img");if(im&&!(im.complete&&im.naturalWidth)){let done=false;const go=()=>{if(!done){done=true;run()}};im.addEventListener("load",go,{once:true});im.addEventListener("error",go,{once:true});setTimeout(go,350)}else run();
+    host.classList.remove("first");enter();hap()};
   const wire=s=>{
     const f=cb.querySelector("[data-f]");if(f)f.onclick=()=>{toggleFav(s.p.id);const on=favs.has(s.p.id);f.textContent=on?"♥":"♡";f.classList.toggle("on",on);hap("light")};
     const g=cb.querySelector("[data-go]");if(g)g.onclick=()=>{const id=s.p.id;close(true);openProduct(id)};
@@ -2233,7 +2237,7 @@ function openAuto(ri){
       im.src=c.idx>=0&&svImg(s.p,c.idx)?svImg(s.p,c.idx).src:c.image;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");
       cb.querySelectorAll("[data-c]").forEach(x=>x.classList.toggle("on",x===b));el=Math.min(el,DUR*.3);hap()});
     if(s.t==="du")cb.querySelectorAll(".dc").forEach(b=>b.onclick=()=>{const id=(+b.dataset.v?s.b:s.a).id;close(true);openProduct(id)})};
-  const bindFace=f=>{f.querySelector("[data-x]").onclick=()=>close();f.querySelector(".tp.l").onclick=()=>prev();f.querySelector(".tp.r").onclick=()=>next()};
+  const bindFace=f=>{f.querySelector("[data-x]").onclick=()=>close()};
   cb=face(AUTO[r],list,0);bindFace(cb);cw.append(cb);enter();
   const tick=n=>{if(dead)return;if(!paused&&!busy)el+=n-t0;t0=n;const s=list[i],dur=s&&s.t==="du"?DUR*1.4:DUR;
     const b=cb.querySelectorAll(".bz b")[i];if(b)b.style.width=Math.min(100,el/dur*100)+"%";if(el>=dur&&!busy)next();raf=requestAnimationFrame(tick)};
@@ -2247,12 +2251,14 @@ function openAuto(ri){
   const prev=()=>{if(busy)return;if(i>0)goSlide(i-1);else if(r>0)commit(-1);else el=0};
   function close(quick){if(dead)return;dead=true;cancelAnimationFrame(raf);if(quick===true)host.remove();else{host.classList.remove("in");setTimeout(()=>host.remove(),320)}renderFeed()}
   let sx=0,sy=0,st=0,hold=0,mode="",W=1;
-  host.addEventListener("pointerdown",e=>{if(busy||e.target.closest("button:not(.tp)"))return;sx=e.clientX;sy=e.clientY;st=1;mode="";W=host.offsetWidth;setW();hold=setTimeout(()=>{paused=true;host.classList.add("paused")},200)});
+  let t0d=0;host.addEventListener("pointerdown",e=>{if(busy||e.target.closest("button:not(.tp),.pn"))return;sx=e.clientX;sy=e.clientY;st=1;t0d=Date.now();mode="";W=host.offsetWidth;setW();hold=setTimeout(()=>{paused=true;host.classList.add("paused")},200)});
   host.addEventListener("pointermove",e=>{if(!st)return;const dx=e.clientX-sx,dy=e.clientY-sy;
     if(!mode&&(Math.abs(dx)>8||Math.abs(dy)>8)){clearTimeout(hold);mode=Math.abs(dx)>Math.abs(dy)?"x":dy>0?"down":"up";paused=true}
     if(mode==="x"){const dir=dx<0?1:-1,N=neighbor(dir);let a=dx/W*90;if(!N)a=a/4;setA(Math.max(-90,Math.min(90,a)),false)}
     else if(mode==="down"){host.classList.add("drag");host.style.transform=`translateY(${Math.max(0,dy)*.7}px) scale(${1-Math.max(0,dy)/1600})`;host.style.borderRadius="26px"}});
-  const up=e=>{if(!st)return;st=0;clearTimeout(hold);const dx=e.clientX-sx,dy=e.clientY-sy,m=mode;mode="";host.classList.remove("paused");paused=false;
+  const up=e=>{if(!st)return;st=0;clearTimeout(hold);const dx=e.clientX-sx,dy=e.clientY-sy,m=mode,held=Date.now()-t0d;mode="";host.classList.remove("paused");paused=false;
+    // короткий тап: левая треть — назад, остальное — вперёд (как в Instagram); долгое нажатие — только пауза
+    if(!m&&held<280&&!e.target.closest("button,.pn,a")){const x=e.clientX-host.getBoundingClientRect().left;return x<W*.3?prev():next()}
     if(m==="down"){host.classList.remove("drag");if(dy>110)return close();host.style.transform="";host.style.borderRadius="";return}
     if(m==="up"){const s=list[i];if(dy<-70&&s&&s.p){const id=s.p.id;close(true);openProduct(id)}return}
     if(m==="x"){if(Math.abs(dx)>W*.22)commit(dx<0?1:-1);else{setA(0,true);setTimeout(()=>{if(nb&&!busy){nb.f.remove();nb=null}},440)}}};
