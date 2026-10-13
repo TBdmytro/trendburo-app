@@ -22,6 +22,11 @@ const shop = items => async (url, o) => {
   const J = x => new Response(JSON.stringify(x), { headers: { "content-type": "application/json" } });
   if (u.pathname === "/robots.txt") return new Response("User-agent: *\n", { headers: { "content-type": "text/plain" } });
   if (u.pathname === "/meta.json") return J({ name: "Alo Yoga", currency: "EUR" });
+  // разделы магазина: бестселлеры (свой порядок), женское, мужское
+  const cols = { bestsellers: items.slice(0, 40).reverse(), womens: items.filter(p => /^Women/.test(p.product_type)), mens: items.filter(p => /^Men/.test(p.product_type)) };
+  if (u.pathname === "/collections.json") return J({ collections: [{ handle: "bestsellers", title: "Bestsellers", products_count: 40 }, { handle: "womens", title: "Women", products_count: 1 }, { handle: "mens", title: "Men", products_count: 1 }, { handle: "sale-xyz", title: "Sale", products_count: 3 }] });
+  const cm = u.pathname.match(/\/collections\/([a-z-]+)\/products\.json$/);
+  if (cm) { const pg = +u.searchParams.get("page") || 1, lim = +u.searchParams.get("limit") || 30; return J({ products: (cols[cm[1]] || []).slice((pg - 1) * lim, pg * lim) }); }
   if (u.pathname.endsWith("/products.json")) { const pg = +u.searchParams.get("page") || 1, lim = +u.searchParams.get("limit") || 30; return J({ products: items.slice((pg - 1) * lim, pg * lim) }); }
   return new Response("nf", { status: 404, headers: { "content-type": "text/html" } });
 };
@@ -125,4 +130,27 @@ test("база как сейчас на сервере (перевод оста�
   assert.equal((await loadState(store, id)).status, "done");
   assert.equal((await store.get("settings.dbv")).v, 3);
   assert.equal(fs.stats.rejected, 0);
+});
+
+test("раскладка по разделам магазина: вкладки по умолчанию, порядок как у бренда, повторная раскладка", { timeout: 120000 }, async () => {
+  const { store, id, route } = await setup({ oldBloated: 0, oldClean: 0, items: 300 });
+  const L0 = await startLoad(store, id); await chain(store, id, L0.runId, route);
+  const src = await store.get("source." + id);
+  assert.deepEqual(src.tabs.map(t => t.t), ["Бестселлеры", "Женское", "Мужское"]);
+  const prods = await store.list("product", {}, { limit: 5000 });
+  const best = prods.filter(p => (p.sections || []).includes("bestsellers"));
+  assert.ok(best.length >= 25, "в бестселлерах " + best.length);
+  // порядок: в магазине бестселлеры идут от 39-го товара к 0-му
+  const pos = p => p.secPos.find(x => x.s === "bestsellers").p;
+  const first = best.sort((a, b) => pos(a) - pos(b))[0];
+  assert.match(first.sourceUrl, /airlift-3[0-9]$/);
+  assert.ok(prods.some(p => (p.sections || []).includes("womens")) && prods.some(p => (p.sections || []).includes("mens")));
+  // выбрали свои разделы — раскладка заново, старые отметки сняты
+  const { saveCollections } = await import("../lib/suppliers.js");
+  await saveCollections(store, id, ["mens"], ["Мужское"]);
+  const L1 = await startLoad(store, id, { mode: "sort" }); await chain(store, id, L1.runId, route);
+  const after = await store.list("product", {}, { limit: 5000 });
+  assert.equal(after.some(p => (p.sections || []).includes("bestsellers")), false);
+  assert.ok(after.some(p => (p.sections || []).includes("mens")));
+  assert.equal((await loadState(store, id)).status, "done");
 });

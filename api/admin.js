@@ -144,7 +144,7 @@ export default async function handler(req, res) {
       case "supplierDetect": return send(res, 200, { result: await detectSupplier(String(body.url || "")) });
       case "supplierAdd": return send(res, 200, await addSupplier(store, body, { by: me.name }));
       case "supplierCollections": return send(res, 200, await listCollections(store, String(req.query.id || body.id || "")));
-      case "supplierSections": return send(res, 200, await saveCollections(store, String(body.id || ""), body.collections));
+      case "supplierSections": return send(res, 200, await saveCollections(store, String(body.id || ""), body.collections, body.titles));
       case "supplierRemove": return send(res, 200, await removeSupplier(store, String(body.id || ""), { deleteProducts: !!body.deleteProducts }));
       case "fxGet": return send(res, 200, await getFx(store));
       case "fxRefresh": { const r = await refreshFx(store, { force: true }); return send(res, 200, { ...(await getFx(store)), refresh: r }); }
@@ -171,7 +171,7 @@ export default async function handler(req, res) {
       }
       // загрузка каталога на сервере: старт / стоп / состояние (админка опрашивает раз в несколько секунд)
       case "catalogStart": {
-        const L = await startLoad(store, String(body.sourceId || ""), { resume: !!body.resume });
+        const L = await startLoad(store, String(body.sourceId || ""), { resume: !!body.resume, mode: body.mode === "sort" ? "sort" : "full" });
         await kickCatalog(publicUrl(req), String(body.sourceId), L.runId, 1);
         return send(res, 200, { load: L });
       }
@@ -213,25 +213,30 @@ export default async function handler(req, res) {
       case "status": return send(res, 200, { results: await setStatus(store, (body.ids || []).slice(0, 5000), ["published", "draft", "hidden"].includes(body.status) ? body.status : "draft", me.name) });
       case "productIds": {
         // все товары по текущему фильтру — для «Показать все найденные»
-        const all = await store.list("product", {}, { limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, offers[]{sourceId, onlineOrder}" });
+        const all = await store.list("product", {}, { limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, sections, offers[]{sourceId, onlineOrder}" });
         const Q = req.query, q = String(Q.q || "").toLowerCase();
-        const ids = all.filter(p => (!Q.avail || (p.offers || []).some(o => o.onlineOrder)) && (!Q.noavail || !(p.offers || []).some(o => o.onlineOrder)) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (!Q.status || p.status === Q.status)
+        const ids = all.filter(p => (!Q.sec || (p.sections || []).includes(Q.sec)) && (!Q.avail || (p.offers || []).some(o => o.onlineOrder)) && (!Q.noavail || !(p.offers || []).some(o => o.onlineOrder)) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (!Q.status || p.status === Q.status)
           && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source)) && (!Q.brand || p.brand === Q.brand) && (!Q.cat || (p.overrides?.category || p.category) === Q.cat)).map(p => p._id);
         return send(res, 200, { ids });
       }
 
       case "products": {
-        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, createdAt, issues, gender, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}" });
+        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, createdAt, issues, gender, sections, secPos, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}" });
         const Q = req.query, q = String(Q.q || "").toLowerCase();
         const cat = p => p.overrides?.category || p.category;
         // фильтры применяются по очереди; списки для выпадающих меню строятся по остальным фильтрам
         const base = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q))
           && (!Q.status || p.status === Q.status) && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source))
           && (!Q.avail || (p.offers || []).some(o => o.onlineOrder)));
-        const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat));
+        // вкладка раздела магазина (Бестселлеры, Женское…) — в том же порядке, что на сайте бренда
+        const pos = p => (p.secPos || []).find(x => x.s === Q.sec)?.p ?? 1e9;
+        const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat) && (!Q.sec || (p.sections || []).includes(Q.sec)));
+        if (Q.sec) list.sort((a, b) => pos(a) - pos(b));
+        const srcDoc = Q.source ? await store.get("source." + Q.source) : null;
+        const secCounts = {}; base.forEach(p => (p.sections || []).forEach(h => secCounts[h] = (secCounts[h] || 0) + 1));
         const facet = (arr, f) => { const m = {}; arr.forEach(p => { const k = f(p); if (k) m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ k, n })); };
         const offset = Math.max(0, Number(Q.offset) || 0), limit = Math.min(300, Math.max(1, Number(Q.limit) || 120));
-        return send(res, 200, { total: list.length, offset,
+        return send(res, 200, { total: list.length, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId) },
           shown: list.filter(p => p.status === "published").length,
           products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), gender: p.gender || null, sizes: sizeList(p), createdAt: p.createdAt || null })) });
