@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v35">
+<meta name="trendburo-build" content="2026-10-13-admin-v36">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -825,7 +825,7 @@ async function pump() {
       p.hidden = false;
       p.innerHTML = `<b>${esc(srcName(j.sourceId))}</b> · ${esc(STATUS[j.status][0].toLowerCase())}<div>${j.phase === "discover" ? "ищем товары… найдено " + j.found : `${j.processed} из ${j.found}`}</div><div class="bar"><i style="width:${j.phase === "discover" ? 8 : pct}%"></i></div>`;
       if (view === "job:" + j._id || view === "jobs") refreshCurrent();
-      const hp = $("#hubProg"); if (hp && hp.dataset.src === j.sourceId) { hp.hidden = false; hp.innerHTML = `<span class="spin"></span><span>${j.phase === "discover" ? "Ищем товары на сайте… найдено " + j.found : `Загружаем: ${j.processed} из ${j.found}`}</span><div class="bar"><i style="width:${pct}%"></i></div>`; }
+      const hp = $("#hubProg"); if (hp && hp.dataset.src === j.sourceId) { hp.hidden = false; hp.innerHTML = `<span class="spin"></span><span>${j.phase === "discover" ? "Ищем товары на сайте… найдено " + j.found : `Проверено ${j.processed} из ${j.found}`} · сохранено <b>${j.saved || 0}</b>${j.filtered ? ` · не подошли по фильтру ${j.filtered}` : ""}${j.skipped ? ` · без цены/фото ${j.skipped}` : ""}${j.errors?.length ? ` · ошибок ${j.errors.length}` : ""}</span><div class="bar"><i style="width:${pct}%"></i></div>`; }
       try { await api("tick", { method: "POST", body: {}, silent: true }); } catch {}
       await new Promise(r => setTimeout(r, 300));
     }
