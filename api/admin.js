@@ -4,6 +4,7 @@
  */
 import { kickWorker } from "../lib/chain.js";
 import { loadCatalogPage, dbStats } from "../lib/catalogload.js";
+import { startLoad, stopLoad, loadState, kickCatalog, STALE_MS } from "../lib/catalogrun.js";
 import { getStore } from "../lib/store.js";
 import { checkPassword, issueCookie, clearCookie, readSession } from "../lib/auth.js";
 import { SOURCES, sourceWith, makeNet } from "../lib/sources.js";
@@ -167,6 +168,21 @@ export default async function handler(req, res) {
         // строка в журнал сервера (без ключей и личных данных) — чтобы видеть ход загрузки в логах Vercel
         console.log("[catalog]", JSON.stringify({ src: body.sourceId, page: body.page, ms: Date.now() - t0, found: r.found, saved: r.saved, filtered: r.filtered, skipped: r.skipped, more: r.more, migrating: r.migrating || undefined, errors: r.errors.slice(0, 2) }));
         return send(res, 200, r);
+      }
+      // загрузка каталога на сервере: старт / стоп / состояние (админка опрашивает раз в несколько секунд)
+      case "catalogStart": {
+        const L = await startLoad(store, String(body.sourceId || ""), { resume: !!body.resume });
+        await kickCatalog(publicUrl(req), String(body.sourceId), L.runId, 1);
+        return send(res, 200, { load: L });
+      }
+      case "catalogStop": return send(res, 200, { load: await stopLoad(store, String(body.sourceId || "")) });
+      case "catalogState": {
+        const id = String(req.query.sourceId || ""); let L = await loadState(store, id);
+        // цепочка шагов оборвалась (нет движения дольше 90 с) — продолжаем с того же места
+        if (L?.status === "running" && Date.now() - Date.parse(L.updatedAt || 0) > STALE_MS && !(L.lease && Date.parse(L.lease.until) > Date.now())) {
+          L = await startLoad(store, id, { resume: true }); await kickCatalog(publicUrl(req), id, L.runId, 1);
+        }
+        return send(res, 200, { load: L });
       }
       case "dbStats": return send(res, 200, await dbStats(store));
       case "jobCancel": return send(res, 200, { job: slim(await cancelJob(store, body.id)) });

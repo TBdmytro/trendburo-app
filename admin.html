@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v50">
+<meta name="trendburo-build" content="2026-10-13-admin-v51">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1532,17 +1532,18 @@ async function sectionsSheet(id, { stay = false, after = null } = {}) {
 let SUP_OPEN = null, SUP_Q = "";
 /* Загрузка каталога поставщика: идёт прямо из админки, порциями по странице магазина.
    Каждая порция сразу записана в «Товары» — «Остановить» ничего не теряет. Одна загрузка за раз. */
-let HUB_AUTO = null, LD = null, LDLAST = null, onLdPage = null;
-function ldHTML() {
-  const L = LD || LDLAST; if (!L) return "";
-  const sec = (L.elapsed = Math.round((Date.now() - L.t0) / 1000), L.sec ? " · раздел «" + esc(L.sec) + "»" : "");
-  if (LD && LD.prep) return `<span class="spin"></span><span style="flex:1"><b>Готовим базу — один раз, 1–2 минуты</b><span class="hint" style="display:block">Убираем старые служебные записи (${L.prep.removed || 0}) и переводим товары на новый формат (${L.prep.fixed || 0}). Потом загрузка пойдёт сама. Не закрывайте админку.</span></span>`;
-  if (LD) return `<span class="spin"></span><span style="flex:1"><b class="num" style="font-size:17px">Загружено ${L.saved}</b> ${plural(L.saved, ["товар", "товара", "товаров"])}<span class="hint" style="display:block">Читаем страницу ${L.page}${sec} · просмотрено ${L.found}${L.filtered ? " · не подошло по фильтру " + L.filtered : ""}. ${L.stop ? "Дочитываем текущую страницу и останавливаемся…" : "Не закрывайте админку. «Остановить» — всё загруженное останется."}</span>${L.err ? `<span class="hint" style="display:block;color:var(--red,#c0392b)">${esc(L.err)}</span>` : ""}</span>`;
-  return `<span style="flex:1"><b>${L.failed ? "Загрузка прервалась" : L.stopped ? "Остановлено" : "Готово"}: в каталоге ${L.saved} ${plural(L.saved, ["товар", "товара", "товаров"])}</b><span class="hint" style="display:block">${L.failed ? esc(L.failed) + ". Нажмите «Загрузить каталог» ещё раз — уже загруженные не задвоятся. " : ""}Отметьте нужные товары ниже и нажмите «Добавить на сайт» — или «Все на сайт».</span></span>`;
+let HUB_AUTO = null, LDPOLL = null;
+/* Состояние загрузки приходит с сервера (load в настройках поставщика) — админку можно закрыть, загрузка идёт сама */
+function ldHTML(L) {
+  if (!L) return "";
+  const sec = L.handles?.length > 1 || (L.handles?.[0] && L.handles[0] !== "__all__") ? ` · раздел «${esc(secName(L.handles[Math.min(L.hi, L.handles.length - 1)]))}»` : "";
+  const err = L.lastError ? `<span class="hint" style="display:block;color:var(--red,#c0392b)">${esc(L.lastError)}</span>` : "";
+  if (L.status === "running" && L.prep) return `<span class="spin"></span><span style="flex:1"><b>Готовим базу — один раз, 1–2 минуты</b><span class="hint" style="display:block">Переводим товары на новый формат (${L.prep.fixed || 0}). Потом загрузка пойдёт сама. Админку можно закрыть.</span>${err}</span>`;
+  if (L.status === "running") return `<span class="spin"></span><span style="flex:1"><b class="num" style="font-size:17px">Загружено ${L.saved}</b> ${plural(L.saved, ["товар", "товара", "товаров"])}<span class="hint" style="display:block">Страница ${L.page}${sec} · просмотрено ${L.found}${L.filtered ? " · не подошло по фильтру " + L.filtered : ""}. Загрузка идёт на сервере — админку можно закрыть. «Остановить» — всё загруженное останется.</span>${err}</span>`;
+  const head = L.status === "done" ? "Готово" : L.status === "failed" ? "Загрузка прервалась" : "Остановлено";
+  return `<span style="flex:1"><b>${head}: загружено ${L.saved} ${plural(L.saved, ["товар", "товара", "товаров"])}</b><span class="hint" style="display:block">${L.status === "failed" ? "Нажмите «Продолжить» — загрузка пойдёт с того же места, дублей не будет. " : ""}Отметьте нужные товары ниже и нажмите «Добавить на сайт» — или «Все на сайт».</span>${err}</span>`;
 }
-function drawLd() { const el = $("#ldProg"); if (el && el.dataset.src === (LD || LDLAST)?.src) { el.hidden = false; el.innerHTML = ldHTML(); } }
 function openHubLoad(id) { HUB_AUTO = id; go("products:source=" + encodeURIComponent(id)); }
-window.addEventListener("beforeunload", e => { if (LD && !LD.stop) { e.preventDefault(); e.returnValue = ""; } });
 /* Поставщики одним списком: готовые и подключённые. Выбрал — «Выгрузить». */
 function supListHTML(sup) {
   SUP_CACHE = sup;
@@ -2482,7 +2483,7 @@ async function vTexts() {
 async function vProducts2(pre) {
   const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "" };
   if (pre) pre.split(",").forEach(kv => { const [k, v] = kv.split("="); if (k in F) F[k] = decodeURIComponent(v || ""); });
-  let sel = new Set(), list = [], total = 0, shown = 0, facets = { brands: [], cats: [], sources: [] };
+  let sel = new Set(), list = [], total = 0, shown = 0, facets = { brands: [], cats: [], sources: [] }, LS = null;
   const srcs = await getSources();
   const sname = id => id === "manual" ? "Вручную" : srcs.find(s => s.id === id)?.name || srcName(id);
   let PV = "grid"; try { PV = localStorage.getItem("tb_pview") || "grid"; } catch {}
@@ -2499,8 +2500,8 @@ async function vProducts2(pre) {
     if (!s) { h.innerHTML = ""; return; }
     h.innerHTML = `<div class="hub"><div class="hub-top"><span class="av">${esc((s.name || "?")[0])}</span><div class="tx"><b>${esc(s.name)}</b><span>${esc((s.home || "").replace("https://", ""))} · ${s.collections?.length ? "разделы: " + esc(s.collections.map(secName).join(", ")) : "весь каталог"}${s.market ? " · цены Европы" : ""}</span></div></div>
       ${s.cats?.length || s.brands?.length ? `<div class="note-box" style="align-items:center"><div style="flex:1">Фильтр загрузки: ${s.cats?.length ? "только " + esc(s.cats.map(c => CATS[c] || c).join(", ")) : ""}${s.brands?.length ? (s.cats?.length ? " · " : "") + "бренды " + esc(s.brands.join(", ")) : ""} — остальное не загружается</div><button class="btn ghost sm" data-hubnofilter>Брать всё</button></div>` : ""}
-      <div class="hub-act">${LD && LD.src === s.id ? `<button class="btn danger" data-hubstop ${LD.stop ? "disabled" : ""}>${LD.stop ? "Останавливаем…" : "Остановить"}</button>` : `<button class="btn" data-hubload ${LD ? "disabled" : ""}>Загрузить каталог</button>`}<button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
-      <div class="hub-prog" id="ldProg" data-src="${esc(s.id)}" ${LD && LD.src === s.id || LDLAST?.src === s.id ? "" : "hidden"}>${ldHTML()}</div>
+      <div class="hub-act">${LS?.status === "running" ? `<button class="btn danger" data-hubstop>Остановить</button>` : `<button class="btn" data-hubload>Загрузить каталог</button>${LS && ["stopped", "failed"].includes(LS.status) && LS.hi < (LS.handles?.length || 1) ? `<button class="btn soft" data-hubresume>Продолжить</button>` : ""}`}<button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
+      <div class="hub-prog" id="ldProg" ${LS ? "" : "hidden"}>${ldHTML(LS)}</div>
       <label class="toggle"><input type="checkbox" data-hubavail ${s.onlyAvailable !== false ? "checked" : ""}>Только то, что можно купить сейчас: хотя бы один размер в наличии (старые распроданные не загружаем)</label>
       <label class="toggle"><input type="checkbox" data-hubauto ${s.autoPublish ? "checked" : ""}>Автовыгрузка: новые товары сразу появляются на сайте</label></div>`;
   };
@@ -2541,42 +2542,27 @@ async function vProducts2(pre) {
     list = append ? list.concat(r.products) : r.products; total = r.total; shown = r.shown; facets = r.facets;
     tot(); drawFilters(); draw();
   };
-  // страницу «Товары» могли закрыть и открыть заново — обновляем ту, что сейчас на экране
-  onLdPage = fin => { if (!view.startsWith("products") || !$("#plist") || F.source !== (LD || LDLAST)?.src) return; if (fin) drawHub(); if (!sel.size) load(); };
-  // старые фоновые загрузки этого поставщика больше не нужны — тихо останавливаем, чтобы не мешали
-  const dropOldJobs = async id => { try { const { jobs } = await api("jobs", { silent: true }); for (const j of jobs.filter(j => j.sourceId === id && ACTIVE.includes(j.status))) { await api("jobCancel", { method: "POST", body: { id: j._id }, silent: true }).catch(() => api("jobDelete", { method: "POST", body: { id: j._id }, silent: true }).catch(() => {})); } } catch {} };
-  const runLoad = async () => {
-    const s = hubSrc(); if (!s || LD) return;
-    LD = { src: s.id, stop: false, saved: 0, found: 0, filtered: 0, skipped: 0, pages: 0, sec: "", err: "", t0: Date.now() }; LDLAST = null; drawHub();
-    await dropOldJobs(s.id);
-    const secs = s.collections?.length ? s.collections : ["__all__"];
-    let failed = "";
-    outer: for (const h of secs) {
-      for (let page = 1; ; page++) {
-        if (LD.stop) break outer;
-        LD.sec = h === "__all__" ? "" : secName(h); LD.page = page; drawLd();
-        let r = null;
-        for (let a = 0; a < 3 && !r; a++) {
-          try { r = await api("catalogPage", { method: "POST", body: { sourceId: s.id, handle: h, page, limit: 50 }, silent: true }); LD.err = ""; }
-          catch (err) { LD.err = "Повторяем: " + err.message; drawLd(); if (a < 2) await new Promise(z => setTimeout(z, 2500 * (a + 1))); }
-        }
-        if (!r) { failed = LD.err; break outer; }
-        // разовая подготовка базы идёт порциями — просим ту же страницу ещё раз
-        if (r.migrating) { LD.prep = r.migrating; drawLd(); page--; continue; }
-        LD.prep = null;
-        LD.found += r.found; LD.saved += r.saved; LD.filtered += r.filtered; LD.skipped += r.skipped; LD.pages++;
-        if (r.errors?.length) LD.err = r.errors[0];
-        drawLd(); onLdPage?.(false);
-        if (!r.more) break;
-      }
-    }
-    LDLAST = { ...LD, done: true, failed, stopped: LD.stop }; LD = null;
-    onLdPage?.(true);
-    toast(failed ? `Загрузка прервалась: ${failed}. Загружено ${LDLAST.saved} — они в каталоге, можно нажать «Загрузить каталог» ещё раз` : `${LDLAST.stopped ? "Остановлено" : "Готово"}: в каталоге ${LDLAST.saved} ${plural(LDLAST.saved, ["товар", "товара", "товаров"])}`);
+  // состояние загрузки с сервера; пока идёт — опрашиваем раз в 3 с и подгружаем новые товары в сетку
+  let lastGrid = 0;
+  const poll = async () => {
+    clearTimeout(LDPOLL); const s0 = hubSrc(); if (!s0 || !view.startsWith("products") || F.source !== s0.id) return;
+    try {
+      const prev = LS; LS = (await api("catalogState", { query: { sourceId: s0.id }, silent: true })).load;
+      drawHub();
+      const fin = prev?.status === "running" && LS?.status !== "running";
+      if ((LS?.saved !== prev?.saved && Date.now() - lastGrid > 5000) || fin) { lastGrid = Date.now(); if (!sel.size) load(); }
+      if (fin) toast(LS.status === "done" ? `Готово: загружено ${LS.saved}` : LS.status === "failed" ? "Загрузка прервалась — нажмите «Продолжить»" : "Остановлено");
+    } catch {}
+    if (LS?.status === "running") LDPOLL = setTimeout(poll, 3000);
   };
-  drawHub(); if (HUB_AUTO && HUB_AUTO === hubSrc()?.id) { HUB_AUTO = null; setTimeout(runLoad, 0); } else HUB_AUTO = null;
+  const startLoad = async resume => {
+    const s0 = hubSrc(); if (!s0) return;
+    try { LS = (await api("catalogStart", { method: "POST", body: { sourceId: s0.id, resume } })).load; drawHub(); toast("Загрузка идёт на сервере — админку можно закрыть"); setTimeout(poll, 2500); }
+    catch (err) { toast(err.message); }
+  };
+  drawHub(); poll().then(() => { if (HUB_AUTO && HUB_AUTO === hubSrc()?.id && LS?.status !== "running") startLoad(false); HUB_AUTO = null; });
   let t; $("#pq").oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(load, 300); };
-  $("#main").onchange = e => { const f = e.target.dataset.f; if (f) { F[f] = e.target.value; if (f === "source") { F.brand = ""; F.cat = ""; } load(); } };
+  $("#main").onchange = e => { const f = e.target.dataset.f; if (f) { F[f] = e.target.value; if (f === "source") { F.brand = ""; F.cat = ""; LS = null; drawHub(); poll(); } load(); } };
   $("#main").onclick = async e => {
     if (e.target.closest("select")) return;
     const g = e.target.closest("[data-go]"); if (g) return go(g.dataset.go);
@@ -2587,12 +2573,13 @@ async function vProducts2(pre) {
     const sw = e.target.closest("[data-show1]");
     if (sw) { const on = sw.checked; try { await api("status", { method: "POST", body: { ids: [sw.dataset.show1], status: on ? "published" : "draft" }, silent: true }); } catch (err) { sw.checked = !on; return toast(err.message); } const p = list.find(x => x._id === sw.dataset.show1); if (p) p.status = on ? "published" : "draft"; shown += on ? 1 : -1; tot(); return toast(on ? "На витрине через ~10 секунд" : "Скрыто с витрины"); }
     const ck = e.target.closest("[data-psel]"); if (ck) { ck.checked ? sel.add(ck.dataset.psel) : sel.delete(ck.dataset.psel); return bar(); }
-    if (e.target.closest("[data-hubstop]")) { if (LD) { LD.stop = true; drawHub(); } return; }
+    if (e.target.closest("[data-hubstop]")) { try { LS = (await api("catalogStop", { method: "POST", body: { sourceId: F.source } })).load; drawHub(); toast("Остановлено. Загруженные товары остались в каталоге"); load(); } catch (err) { toast(err.message); } return; }
+    if (e.target.closest("[data-hubresume]")) return startLoad(true);
     if (e.target.closest("[data-hubnofilter]")) {
       try { await api("sourceSave", { method: "POST", body: { id: F.source, cats: [], brands: [] } }); const s = hubSrc(); if (s) { s.cats = []; s.brands = []; } sources = null; toast("Фильтр снят — со следующей загрузки берём все категории"); drawHub(); } catch (err) { toast(err.message); } return;
     }
-    if (e.target.closest("[data-hubload]")) return runLoad();
-    if (e.target.closest("[data-hubsec]")) return sectionsSheet(F.source, { stay: true, after: async () => { const a = await getSources(true); srcs.splice(0, srcs.length, ...a); drawHub(); runLoad(); } });
+    if (e.target.closest("[data-hubload]")) return startLoad(false);
+    if (e.target.closest("[data-hubsec]")) return sectionsSheet(F.source, { stay: true, after: async () => { const a = await getSources(true); srcs.splice(0, srcs.length, ...a); drawHub(); startLoad(false); } });
     if (e.target.closest("[data-hubclean]")) {
       const { ids } = await api("productIds", { query: { source: F.source, status: "draft", noavail: "1" } });
       if (!ids.length) return toast("Распроданных скрытых товаров нет");

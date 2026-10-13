@@ -41,3 +41,29 @@ test("словари с меняющимися ключами хранятся �
   assert.deepEqual(db.categories, ["x"]);
   assert.deepEqual(fromDb(db), doc);
 });
+
+test("загрузка на сервере шагами: до конца, без дублей; «Остановить» прерывает; второй шаг одновременно не идёт", async () => {
+  const { startLoad, runStep, stopLoad, loadState } = await import("../lib/catalogrun.js");
+  const store = new MemoryStore();
+  const { id } = await addSupplier(store, { url: "https://shop.example" }, { fetchImpl: f });
+  let L = await startLoad(store, id);
+  let r, steps = 0;
+  do { r = await runStep(store, id, L.runId, { fetchImpl: f, stepMs: 1 }); steps++; } while (r.next && steps < 50);
+  L = await loadState(store, id);
+  assert.equal(L.status, "done");
+  assert.equal(L.saved, 207);
+  assert.equal((await store.list("product", {})).length, 207);
+  // старый шаг (другой запуск) ничего не делает
+  assert.equal((await runStep(store, id, "old", { fetchImpl: f })).next, false);
+  // остановка
+  L = await startLoad(store, id);
+  await runStep(store, id, L.runId, { fetchImpl: f, stepMs: 1 });
+  await stopLoad(store, id);
+  assert.equal((await runStep(store, id, L.runId, { fetchImpl: f })).next, false);
+  assert.equal((await loadState(store, id)).status, "stopped");
+  assert.equal((await store.list("product", {})).length, 207);
+  // аренда: пока шаг «жив», второй не стартует
+  L = await startLoad(store, id, { resume: true });
+  const s = await store.get("source." + id); await store.put({ ...s, load: { ...s.load, lease: { by: "x", until: new Date(Date.now() + 60000).toISOString() } } });
+  assert.equal((await runStep(store, id, L.runId, { fetchImpl: f })).why, "busy");
+});

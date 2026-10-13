@@ -9,11 +9,27 @@ import { allSourceIds } from "../lib/suppliers.js";
 import { refreshFx } from "../lib/fx.js";
 import { kickWorker, CHAIN_MAX } from "../lib/chain.js";
 import { publicUrl } from "./bot.js";
+import { runStep, kickCatalog, STALE_MS } from "../lib/catalogrun.js";
 
 export default async function handler(req, res) {
   const auth = req.headers.authorization || "";
   if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) { res.statusCode = 401; return res.end("unauthorized"); }
   const store = getStore();
+  const qp = new URL(req.url, "http://x").searchParams;
+  // шаг загрузки каталога поставщика (запущен кнопкой в админке или предыдущим шагом)
+  if (qp.get("catalog")) {
+    const src = qp.get("catalog"), run = qp.get("run") || "", n = Number(qp.get("n")) || 1;
+    const r = await runStep(store, src, run, { log: x => console.log("[load]", JSON.stringify({ src, n, ...x })) });
+    if (r.next) await kickCatalog(publicUrl(req), src, run, n + 1);
+    res.setHeader("Content-Type", "application/json"); res.statusCode = 200;
+    return res.end(JSON.stringify(r));
+  }
+  // ночной запуск: загрузки каталога, у которых оборвалась цепочка, продолжаем
+  if (!qp.get("chain")) {
+    for (const s of await store.list("sourceSettings", {}, { limit: 500, fields: "sourceId, load" }).catch(() => [])) {
+      if (s.load?.status === "running" && Date.now() - Date.parse(s.load.updatedAt || 0) > STALE_MS) await kickCatalog(publicUrl(req), s.sourceId, s.load.runId, 1);
+    }
+  }
   const step = Math.max(0, Math.min(CHAIN_MAX + 1, Number(req.query?.chain || new URL(req.url, "http://x").searchParams.get("chain")) || 0));
   // шаг цепочки — только продолжение задач; курсы и плановые обновления — в обычном (ночном) запуске
   if (!step) await refreshFx(store).catch(() => {});
