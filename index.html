@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-13-live-v46">
+<meta name="trendburo-build" content="2026-10-13-live-v47">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -149,7 +149,7 @@ button{cursor:pointer}
 @media (min-width:560px){#app{box-shadow:0 0 0 1px var(--line),0 30px 80px rgba(30,32,36,.12)}}
 
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg)}
-.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(104px + var(--sb))}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(164px + var(--sb))}
 .pad{padding-inline:18px}
 
 /* tabs crossfade */
@@ -760,6 +760,7 @@ textarea{min-height:88px;resize:vertical}
 .mchat span{max-width:90px;overflow:hidden;white-space:nowrap;transition:max-width .4s var(--ease),opacity .3s}
 .mchat.mini{padding:0 12px;gap:0}.mchat.mini span{max-width:0;opacity:0}
 .mchat:active{transform:scale(.94)}
+.mchat.hid{transform:translateX(-140%);opacity:0;pointer-events:none}
 .tabbar.hide+.mchat,#app.in-optix .mchat{transform:translateY(180%);opacity:0;pointer-events:none}
 /* горизонтальные ленты: листаются только вбок, сами вверх-вниз не двигаются */
 .bnr-track,.stories,.hrail,.chips,.gal,.pv-gal,.zv .zg,.cw,.st-prefs,.o-brands,.tops{overflow-y:hidden;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
@@ -1317,7 +1318,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
       <div class="svc-list">
         <button class="svc-card press big" style="--sc:var(--c-concierge)" data-act="svc" data-s="concierge" data-svc="concierge">
           <div><div class="cap" data-t="svc.concierge.cap">Консьерж Trend Büro</div><h3 data-t="svc.concierge.title">Всё для вас — организуем</h3></div>
-          <p data-t="svc.concierge.text">Покупки и редкие модели, отели, перелёты и джеты, трансферы, рестораны, охрана — одной заявкой</p>
+          <p data-t="svc.concierge.text">Покупки с доставкой вам в руки, отели, перелёты, трансферы, бронь лучших ресторанов — и всё, что вы загадаете, мы сделаем</p>
           <span class="gl"><svg viewBox="0 0 100 100"><path d="M18 70h64M26 70a24 24 0 0 1 48 0M50 42v-6M44 36h12"/></svg></span></button>
         <button class="svc-card press locked" style="--sc:var(--c-stylist)" data-act="soon" data-s="stylist" data-svc="stylist" aria-disabled="true"><span class="soon">Скоро</span>
           <div><div class="cap" data-t="svc.stylist.cap">AI-стилист</div><h3 data-t="svc.stylist.title">Образ из витрины</h3></div>
@@ -1335,8 +1336,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
         <div class="cells">
           <div class="cell"><div><span data-t="price.1.t">Цена в приложении</span><small data-t="price.1.d">Уже включает выкуп, упаковку и комплимент к заказу</small></div></div>
           <div class="cell"><div><span data-t="price.2.t">Доставка в Украину</span><small>Бесплатно, отправка <span data-wd2>каждую субботу</span></small></div></div>
-          <div class="cell"><div><span data-t="price.3.t">Доставка по Европе</span><small data-t="price.3.d">По тарифу перевозчика</small></div></div>
-          <div class="cell"><div data-t="price.4.t">Дубай</div><span class="v" data-t="price.4.v">по запросу</span></div>
+          <div class="cell"><div><span data-t="price.3.t">Доставка по Европе и в Дубай</span><small data-t="price.3.d">По тарифу перевозчика</small></div></div>
         </div></div>
     </div>
   </div>
@@ -2271,6 +2271,9 @@ function openAuto(ri){
 (function(){const a=document.getElementById("mchat");if(!a)return;
   const upd=()=>{const m=CONTACTS.find(c=>/менеджер/i.test(c.label)&&/^https:\/\/t\.me\//.test(c.url))||CONTACTS.find(c=>/^https:\/\/t\.me\//.test(c.url));if(m)a.href=m.url};upd();window.__updChat=upd;
   setTimeout(()=>a.classList.add("mini"),3500);
+  // прокрутка вниз — кнопка уезжает и не закрывает текст; вверх или остановка у конца — возвращается
+  let ly=0;document.addEventListener("scroll",e=>{const t=e.target;if(!(t instanceof Element)||!t.classList.contains("scroll"))return;const y=t.scrollTop,end=t.scrollHeight-t.clientHeight-y<40;
+    if(y>ly+6&&y>80&&!end)a.classList.add("hid");else if(y<ly-6||y<80||end)a.classList.remove("hid");ly=y},true);
   a.addEventListener("click",()=>{try{hap("light")}catch(e){}});
   // жест начался вбок — страница не едет вверх-вниз; начался вертикально — лента не дёргается вбок
   const SEL=".bnr-track,.stories,.hrail,.chips,.gal,.pv-gal,.cw,.st-prefs,.o-brands,.tops";let rail=null,sx=0,sy=0,lock="",page=null;
@@ -2309,7 +2312,7 @@ function openPrivacy(){const h=(t,b)=>`<div class="sec"><div class="sech"><h2>${
 /* ===== Сервисы ===== */
 const I=d=>`<svg viewBox="0 0 24 24">${d}</svg>`;
 const SVC={
- concierge:{accent:"var(--c-concierge)",cap:"Консьерж Trend Büro",title:"Всё для вас — организуем",text:"Покупки, поездки и любые задачи в Европе и Дубае. Опишите, что нужно, — менеджер вернётся с вариантами, сроками и стоимостью.",
+ concierge:{accent:"var(--c-concierge)",cap:"Консьерж Trend Büro",title:"Всё для вас — организуем",text:"Покупки с доставкой вам в руки, аренда отелей, перелёты, трансферы, бронь лучших ресторанов — и всё, что вы загадаете, мы сделаем. Опишите задачу — менеджер вернётся с вариантами и стоимостью.",
   items:[["#","Покупки"],
    ["Редкие модели","Hermès, Chanel, лимитированные выпуски, лист ожидания",'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>'],["Шопинг с байером","Милан, Париж, Мюнхен, Вена — вместе в бутиках",'<circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 11a3 3 0 1 0 0-6M17.5 19a5 5 0 0 0-3-4.6"/>'],["Покупки с доставкой в отель","Выкупим и привезём туда, где вы остановились",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],["Видеошопинг","Показываем вещь вживую из бутика",'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>'],["Подарки","Подбор, упаковка, открытка, доставка к дате",'<path d="M4 10h16v10H4zM3 7h18v3H3zM12 7v13"/>'],["Tax free и обмен","Документы, возвраты, другой размер",'<path d="M5 12h14M13 6l6 6-6 6"/>'],
    ["#","Поездки"],
