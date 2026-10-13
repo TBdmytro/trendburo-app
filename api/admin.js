@@ -158,7 +158,7 @@ export default async function handler(req, res) {
         if (j && ACTIVE.includes(j.status)) { await cancelJob(store, body.id); await store.patchMany([body.id], { status: "cancelled", lock: null }); }
         return send(res, 200, await deleteJob(store, body.id));
       }
-      case "tick": return send(res, 200, await tick(store, { budgetMs: 9000, owner: "admin-" + me.name }));
+      case "tick": return send(res, 200, await tick(store, { budgetMs: 25000, owner: "admin-" + me.name }));
       case "productDelete": {
         const ids = (body.ids || []).filter(i => typeof i === "string" && i.startsWith("product.")).slice(0, 2000);
         const linked = await store.list("importItem", { publishedAs: ids }, { limit: 20000, fields: "_id" });
@@ -188,7 +188,7 @@ export default async function handler(req, res) {
       }
 
       case "products": {
-        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, issues, offers[]{sourceId, onlineOrder}" });
+        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, issues, gender, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}" });
         const Q = req.query, q = String(Q.q || "").toLowerCase();
         const cat = p => p.overrides?.category || p.category;
         // фильтры применяются по очереди; списки для выпадающих меню строятся по остальным фильтрам
@@ -200,7 +200,7 @@ export default async function handler(req, res) {
         return send(res, 200, { total: list.length, offset,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId) },
           shown: list.filter(p => p.status === "published").length,
-          products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder) })) });
+          products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), gender: p.gender || null, sizes: sizeList(p) })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });
@@ -360,5 +360,11 @@ export default async function handler(req, res) {
   } catch (e) {
     return send(res, 400, { error: e.message });
   }
+}
+/** Размеры товара с наличием у поставщика: [{s:"M", ok:true}] */
+function sizeList(p) {
+  const out = new Map(), av = Object.assign({}, ...(p.offers || []).map(o => o.availability || {}));
+  for (const v of p.variants || []) if (v.size) { const ok = ["online", "boutique"].includes(av[v._key]?.status); out.set(v.size, out.get(v.size) || ok); }
+  return [...out].map(([s, ok]) => ({ s, ok })).slice(0, 14);
 }
 function safeJson(s) { try { return JSON.parse(s); } catch { return {}; } }
