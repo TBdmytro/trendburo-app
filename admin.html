@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v29">
+<meta name="trendburo-build" content="2026-10-13-admin-v30">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -460,6 +460,17 @@ textarea{min-height:110px}
 .fchip.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .fchip select{position:absolute;inset:0;opacity:0;width:100%;min-height:0;cursor:pointer}
 .plist{display:flex;flex-direction:column}
+.slist{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
+.srow{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.srow:last-child{border-bottom:0}
+.srow .av{width:42px;height:42px;border-radius:12px;background:var(--soft);display:grid;place-items:center;font-family:Prata,Georgia,serif;font-size:17px;flex:none}
+.srow.on .av{background:var(--ink);color:#fff}
+.srow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.srow .tx b{font-size:15px;font-weight:600}.srow .tx span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow .acts{display:flex;gap:8px;align-items:center;flex:none}
+.sdet{padding:0 16px 16px;border-bottom:1px solid var(--line);background:#fafafb}
+.sdet .card{box-shadow:none}
+@media (max-width:640px){.srow{flex-wrap:wrap}.srow .acts{width:100%;justify-content:flex-end}}
 .plist.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:14px}
 .pcard{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;cursor:pointer;transition:border-color .2s,box-shadow .2s}
 .pcard.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
@@ -1501,6 +1512,28 @@ async function sectionsSheet(id) {
   };
   draw();
 }
+let SUP_OPEN = null, SUP_Q = "";
+/* Поставщики одним списком: готовые и подключённые. Выбрал — «Выгрузить». */
+function supListHTML(sup) {
+  SUP_CACHE = sup;
+  return `<div class="sec" style="margin-top:0"><div class="row" style="margin-bottom:12px"><input type="search" id="supQ" placeholder="Найти поставщика: Alo Yoga, Kith… или вписать сайт" value="${esc(SUP_Q)}" style="flex:1" autocomplete="off"></div><div id="supList">${supRows(sup)}</div></div>`;
+}
+let SUP_CACHE = [];
+function supRows(sup) {
+  const byHost = new Map(sup.map(s => [hostOf(s.home || ""), s]));
+  const rows = [...sup.map(s => ({ s, host: hostOf(s.home || ""), name: s.name, note: READY_SUP.find(r => hostOf(r[0]) === hostOf(s.home || ""))?.[2] || "" })),
+    ...READY_SUP.filter(r => !byHost.has(hostOf(r[0]))).map(r => ({ s: null, host: hostOf(r[0]), url: r[0], name: r[1], note: r[2] }))];
+  const q = SUP_Q.toLowerCase().replace(/\s+/g, ""), shown = rows.filter(r => !q || (r.name + r.host).toLowerCase().replace(/\s+/g, "").includes(q));
+  return `<div class="slist">${shown.map(r => {
+      const s = r.s, fail = !s && READY_FAIL[r.url];
+      const st = s ? (s.running ? `<span class="pill run"><span class="dot"></span>Выгружается</span>` : `<span class="pill ok"><span class="dot"></span>Подключён</span>`) : fail ? `<span class="pill err">Не подходит</span>` : "";
+      const info = s ? `${s.stats.found} в админке · ${s.stats.published} на сайте${s.collections?.length ? " · разделы: " + s.collections.map(secName).join(", ") : ""}` : (fail || r.note);
+      const acts = s ? `<button class="btn sm" data-supload="${esc(s.id)}" ${s.running ? "disabled" : ""}>${s.running ? "Выгружается…" : "Выгрузить"}</button><button class="btn ghost sm" data-supopen="${esc(s.id)}" aria-expanded="${SUP_OPEN === s.id}">${SUP_OPEN === s.id ? "Свернуть" : "Настройки"}</button>`
+        : fail ? "" : `<button class="btn sm" data-ready="${esc(r.url)}" data-rname="${esc(r.name)}">Выгрузить</button>`;
+      return `<div class="srow ${s ? "on" : ""}"><span class="av" aria-hidden="true">${esc(r.name[0] || "?")}</span><div class="tx"><b>${esc(r.name)}</b><span>${esc(r.host)} · ${esc(info)}</span></div>${st}<div class="acts">${acts}</div></div>
+        ${s && SUP_OPEN === s.id ? `<div class="sdet">${supplierCard(s)}</div>` : ""}`; }).join("")
+      || `<div class="srow"><div class="tx"><b>«${esc(SUP_Q)}» нет в списке</b><span>Проверим сайт и подключим, если каталог открыт</span></div><div class="acts"><button class="btn sm" data-supnew2="${esc(SUP_Q)}">Подключить</button></div></div>`}</div>`;
+}
 /* Готовые поставщики: подключаются одним нажатием, без ввода ссылки.
    Сервер всё равно проверяет каждый сайт (robots.txt, открытый каталог) — закрытые не подключатся. */
 const READY_SUP = [
@@ -1533,18 +1566,16 @@ function readyHTML(sup) {
 async function connectReady(u, name) {
   try {
     const { id } = await api("supplierAdd", { method: "POST", body: { url: u, name } });
-    await api("jobCreate", { method: "POST", body: { sourceId: id, mode: "full" } }).catch(() => null);
-    return true;
+    const j = await api("jobCreate", { method: "POST", body: { sourceId: id, mode: "full" } }).catch(() => null);
+    return j?.job?._id || true;
   } catch (err) { READY_FAIL[u] = err.message; return false; }
 }
 async function vSources() {
   const all = await getSources(true);
   const sup = all.filter(s => s.custom), src = all.filter(s => s.connected && s.adapter !== "file" && !s.custom);
   $("#main").innerHTML = head("Поставщики", "Магазины, откуда товары подтягиваются сами, с ценами и размерами. На витрину попадает только то, что вы включите в «Товарах».", `<button class="btn" id="supNew">${svg("add")}Подключить сайт</button>`) +
-    readyHTML(sup) +
-    `<div class="sec" style="margin-top:0"><h2>Подключённые <small>весь каталог; на витрину — то, что включите в «Товарах»</small></h2>
-    ${sup.length ? `<div class="brands" style="grid-template-columns:repeat(auto-fill,minmax(360px,1fr))">${sup.map(supplierCard).join("")}</div>` : `<div class="card empty"><b>Подключённых поставщиков пока нет</b>Выберите из готовых выше или нажмите «Подключить сайт» для другого магазина</div>`}</div>
-    <details class="sec adv"><summary class="h2" style="cursor:pointer;list-style:revert">Сайты брендов и OPTIX — расширенные настройки</summary>
+    supListHTML(sup) +
+    `<details class="sec adv"><summary class="h2" style="cursor:pointer;list-style:revert">Сайты брендов и OPTIX — расширенные настройки</summary>
     <div class="brands" style="grid-template-columns:repeat(auto-fill,minmax(360px,1fr))">${src.map(s => {
       const ck = s.check ? CHECK[s.check.state] : null;
       return `<article class="card pad" data-id="${esc(s.id)}" style="display:flex;flex-direction:column;gap:14px">
@@ -1560,8 +1591,11 @@ async function vSources() {
       <details><summary class="hint" style="cursor:pointer">Что проверено</summary><ul class="hint" style="padding-left:18px">${s.checks.map(c => `<li>${esc(c)}</li>`).join("")}</ul></details>
       <div class="row"><button class="btn sm" data-save>Сохранить</button><button class="btn ghost sm" data-check="${esc(s.id)}">Проверить доступ</button></div>
     </article>`; }).join("")}</div></details>`;
+  const sq = $("#supQ"); if (sq) sq.oninput = () => { SUP_Q = sq.value.trim(); $("#supList").innerHTML = supRows(SUP_CACHE); };
   $("#main").onclick = async e => {
     if (e.target.closest("#supNew")) return connectSupplier();
+    const op = e.target.closest("[data-supopen]"); if (op) { SUP_OPEN = SUP_OPEN === op.dataset.supopen ? null : op.dataset.supopen; return vSources(); }
+    const n2 = e.target.closest("[data-supnew2]"); if (n2) return connectSupplier(n2.dataset.supnew2);
     const sec = e.target.closest("[data-supsec]"); if (sec) return sectionsSheet(sec.dataset.supsec);
     const ap = e.target.closest("[data-autopub]");
     if (ap) { try { await api("sourceSave", { method: "POST", body: { id: ap.dataset.autopub, autoPublish: ap.checked } }); toast(ap.checked ? "Автовыгрузка включена: при следующей загрузке товары сразу пойдут на сайт" : "Автовыгрузка выключена"); sources = null; } catch (err) { ap.checked = !ap.checked; toast(err.message); } return; }
@@ -1587,7 +1621,7 @@ async function vSources() {
       return;
     }
     const rd = e.target.closest("[data-ready]");
-    if (rd) { rd.disabled = true; rd.innerHTML = '<span class="spin"></span> Подключаем…'; const ok = await connectReady(rd.dataset.ready, rd.dataset.rname); toast(ok ? rd.dataset.rname + " подключён, каталог загружается" : rd.dataset.rname + ": " + READY_FAIL[rd.dataset.ready]); sources = null; await getSources(true); pump(); return vSources(); }
+    if (rd) { rd.disabled = true; rd.innerHTML = '<span class="spin"></span> Подключаем…'; const ok = await connectReady(rd.dataset.ready, rd.dataset.rname); toast(ok ? rd.dataset.rname + " подключён — выгружаем каталог" : rd.dataset.rname + ": " + READY_FAIL[rd.dataset.ready]); sources = null; await getSources(true); pump(); if (typeof ok === "string") return go("job:" + ok); return vSources(); }
     const ra = e.target.closest("[data-readyall]");
     if (ra) {
       const have = new Set((await getSources(true)).filter(s => s.custom).map(s => hostOf(s.home || "")));
