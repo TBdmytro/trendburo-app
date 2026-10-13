@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v51">
+<meta name="trendburo-build" content="2026-10-13-admin-v52">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1538,6 +1538,7 @@ function ldHTML(L) {
   if (!L) return "";
   const sec = L.handles?.length > 1 || (L.handles?.[0] && L.handles[0] !== "__all__") ? ` · раздел «${esc(secName(L.handles[Math.min(L.hi, L.handles.length - 1)]))}»` : "";
   const err = L.lastError ? `<span class="hint" style="display:block;color:var(--red,#c0392b)">${esc(L.lastError)}</span>` : "";
+  if (L.status === "running" && L.loadedAt) return `<span style="flex:1"><b>Готово: загружено ${L.saved} ${plural(L.saved, ["товар", "товара", "товаров"])}</b><span class="hint" style="display:block">Отметьте нужные товары ниже и нажмите «Добавить на сайт» — или «Все на сайт». (Сервер ещё пару минут доделывает базу в фоне — это не мешает.)</span>${err}</span>`;
   if (L.status === "running" && L.prep) return `<span class="spin"></span><span style="flex:1"><b>Готовим базу — один раз, 1–2 минуты</b><span class="hint" style="display:block">Переводим товары на новый формат (${L.prep.fixed || 0}). Потом загрузка пойдёт сама. Админку можно закрыть.</span>${err}</span>`;
   if (L.status === "running") return `<span class="spin"></span><span style="flex:1"><b class="num" style="font-size:17px">Загружено ${L.saved}</b> ${plural(L.saved, ["товар", "товара", "товаров"])}<span class="hint" style="display:block">Страница ${L.page}${sec} · просмотрено ${L.found}${L.filtered ? " · не подошло по фильтру " + L.filtered : ""}. Загрузка идёт на сервере — админку можно закрыть. «Остановить» — всё загруженное останется.</span>${err}</span>`;
   const head = L.status === "done" ? "Готово" : L.status === "failed" ? "Загрузка прервалась" : "Остановлено";
@@ -2500,7 +2501,7 @@ async function vProducts2(pre) {
     if (!s) { h.innerHTML = ""; return; }
     h.innerHTML = `<div class="hub"><div class="hub-top"><span class="av">${esc((s.name || "?")[0])}</span><div class="tx"><b>${esc(s.name)}</b><span>${esc((s.home || "").replace("https://", ""))} · ${s.collections?.length ? "разделы: " + esc(s.collections.map(secName).join(", ")) : "весь каталог"}${s.market ? " · цены Европы" : ""}</span></div></div>
       ${s.cats?.length || s.brands?.length ? `<div class="note-box" style="align-items:center"><div style="flex:1">Фильтр загрузки: ${s.cats?.length ? "только " + esc(s.cats.map(c => CATS[c] || c).join(", ")) : ""}${s.brands?.length ? (s.cats?.length ? " · " : "") + "бренды " + esc(s.brands.join(", ")) : ""} — остальное не загружается</div><button class="btn ghost sm" data-hubnofilter>Брать всё</button></div>` : ""}
-      <div class="hub-act">${LS?.status === "running" ? `<button class="btn danger" data-hubstop>Остановить</button>` : `<button class="btn" data-hubload>Загрузить каталог</button>${LS && ["stopped", "failed"].includes(LS.status) && LS.hi < (LS.handles?.length || 1) ? `<button class="btn soft" data-hubresume>Продолжить</button>` : ""}`}<button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
+      <div class="hub-act">${LS?.status === "running" && !LS.loadedAt ? `<button class="btn danger" data-hubstop>Остановить</button>` : `<button class="btn" data-hubload>Загрузить каталог</button>${LS && ["stopped", "failed"].includes(LS.status) && LS.hi < (LS.handles?.length || 1) ? `<button class="btn soft" data-hubresume>Продолжить</button>` : ""}`}<button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
       <div class="hub-prog" id="ldProg" ${LS ? "" : "hidden"}>${ldHTML(LS)}</div>
       <label class="toggle"><input type="checkbox" data-hubavail ${s.onlyAvailable !== false ? "checked" : ""}>Только то, что можно купить сейчас: хотя бы один размер в наличии (старые распроданные не загружаем)</label>
       <label class="toggle"><input type="checkbox" data-hubauto ${s.autoPublish ? "checked" : ""}>Автовыгрузка: новые товары сразу появляются на сайте</label></div>`;
@@ -2549,9 +2550,9 @@ async function vProducts2(pre) {
     try {
       const prev = LS; LS = (await api("catalogState", { query: { sourceId: s0.id }, silent: true })).load;
       drawHub();
-      const fin = prev?.status === "running" && LS?.status !== "running";
+      const fin = prev?.status === "running" && !prev.loadedAt && (LS?.status !== "running" || LS?.loadedAt);
       if ((LS?.saved !== prev?.saved && Date.now() - lastGrid > 5000) || fin) { lastGrid = Date.now(); if (!sel.size) load(); }
-      if (fin) toast(LS.status === "done" ? `Готово: загружено ${LS.saved}` : LS.status === "failed" ? "Загрузка прервалась — нажмите «Продолжить»" : "Остановлено");
+      if (fin) toast(LS.status === "done" || LS.loadedAt ? `Готово: загружено ${LS.saved}` : LS.status === "failed" ? "Загрузка прервалась — нажмите «Продолжить»" : "Остановлено");
     } catch {}
     if (LS?.status === "running") LDPOLL = setTimeout(poll, 3000);
   };

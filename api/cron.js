@@ -9,7 +9,7 @@ import { allSourceIds } from "../lib/suppliers.js";
 import { refreshFx } from "../lib/fx.js";
 import { kickWorker, CHAIN_MAX } from "../lib/chain.js";
 import { publicUrl } from "./bot.js";
-import { runStep, kickCatalog, STALE_MS } from "../lib/catalogrun.js";
+import { runStep, kickCatalog, startLoad, STALE_MS } from "../lib/catalogrun.js";
 
 export default async function handler(req, res) {
   const auth = req.headers.authorization || "";
@@ -34,6 +34,7 @@ export default async function handler(req, res) {
   // шаг цепочки — только продолжение задач; курсы и плановые обновления — в обычном (ночном) запуске
   if (!step) await refreshFx(store).catch(() => {});
   const planned = step ? [] : await planRefresh(store);
+  for (const p of planned) if (p.catalog) await kickCatalog(publicUrl(req), p.source, p.runId, 1);
   const results = [];
   const started = Date.now();
   while (Date.now() - started < 45000) {
@@ -69,10 +70,11 @@ export async function planRefresh(store, now = Date.now()) {
     if (s.lastSync?.status === "blocked" && now - Date.parse(s.lastSync.at) < 864e5) continue;
     // поставщик-каталог: заново проходим весь магазин — новинки появляются скрытыми, у показанных обновляются цены и наличие
     if (def.catalog) {
-      if ((await store.list("importJob", { sourceId: id, status: ACTIVE })).length) continue;
-      const { job } = await createJob(store, { sourceId: id, mode: "full", createdBy: "расписание", meta: { refresh: true } });
-      s.lastRefreshAt = new Date(now).toISOString(); await store.put(s);
-      planned.push({ source: id, jobId: job._id, catalog: true });
+      // тем же механизмом, что и кнопка «Загрузить каталог» (шаги на сервере)
+      if (s.load?.status === "running") continue;
+      const L = await startLoad(store, id);
+      await store.patchMany([s._id], { lastRefreshAt: new Date(now).toISOString() });
+      planned.push({ source: id, runId: L.runId, catalog: true });
       continue;
     }
     const products = (await store.list("product", { status: "published" })).filter(p => (p.offers || []).some(o => o.sourceId === id && o.url));
