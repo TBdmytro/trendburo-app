@@ -67,3 +67,13 @@ test("загрузка на сервере шагами: до конца, без
   const s = await store.get("source." + id); await store.put({ ...s, load: { ...s.load, lease: { by: "x", until: new Date(Date.now() + 60000).toISOString() } } });
   assert.equal((await runStep(store, id, L.runId, { fetchImpl: f })).why, "busy");
 });
+
+test("категории: книги, коврики и бутылки Alo — «Другое», а не аксессуары; шарф — аксессуар", async () => {
+  const { detectCategory } = await import("../lib/normalize.js");
+  assert.equal(detectCategory("Accessories:Books", "Mindful Movement"), "other");
+  assert.equal(detectCategory("Accessories:Yoga Mats", "Warrior Mat"), "other");
+  assert.equal(detectCategory("Accessories:Water Bottles", "Alo Bottle"), "other");
+  assert.equal(detectCategory("Accessories:Scarves", "Cashmere Scarf"), "accessories");
+  assert.equal(detectCategory("Women:Leggings", "Airlift Legging"), "clothing");
+  assert.equal(detectCategory("Accessories:Shoes:Sneakers", "Runner"), "shoes");
+});

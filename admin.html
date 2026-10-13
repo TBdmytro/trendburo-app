@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v53">
+<meta name="trendburo-build" content="2026-10-13-admin-v54">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -467,6 +467,8 @@ textarea{min-height:110px}
 .ptabs{display:flex;gap:8px;overflow-x:auto;margin:0 0 12px;padding-bottom:2px;scrollbar-width:none}.ptabs::-webkit-scrollbar{display:none}
 .ptabs button{flex:none;height:40px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:#fff;font:inherit;font-weight:600;font-size:14.5px;color:var(--ink);cursor:pointer}
 .ptabs button .num{color:var(--muted,#8a8d93);font-weight:500;margin-left:4px}
+.ptabs.sm button{height:34px;padding:0 13px;font-size:13.5px;font-weight:500;border-radius:10px}
+.ptabs.sm button[aria-pressed="true"]{background:var(--soft);border-color:var(--ink)}
 .ptabs button[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}.ptabs button[aria-selected="true"] .num{color:rgba(255,255,255,.65)}
 .hub-prog{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:13.5px}.hub-prog .bar{flex-basis:100%;height:4px;border-radius:4px;background:#e2e3e6;overflow:hidden}.hub-prog .bar i{display:block;height:100%;background:var(--ink)}
 .added{margin:14px 0 4px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
@@ -492,7 +494,7 @@ textarea{min-height:110px}
 .pcard.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
 .pcard .im{position:relative;aspect-ratio:4/5;background:#f3f3f4;display:grid;place-items:center;overflow:hidden}
 .pcard .im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%}
-.pcard .tick{position:absolute;top:10px;left:10px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.92);border:1.5px solid var(--line);display:grid;place-items:center;font-size:14px;font-weight:700;color:#fff}
+.pcard .tick{position:absolute;z-index:2;top:6px;left:6px;width:34px;height:34px;padding:0;cursor:pointer;font-family:inherit;box-shadow:0 0 0 6px transparent;border-radius:50%;background:rgba(255,255,255,.92);border:1.5px solid var(--line);display:grid;place-items:center;font-size:14px;font-weight:700;color:#fff}
 .pcard.sel .tick{background:var(--ink);border-color:var(--ink)}
 .pcard .live{position:absolute;top:10px;right:10px;padding:3px 9px;border-radius:99px;background:var(--ok-bg);color:var(--ok);font-size:11px;font-weight:700}
 .pcard .bd{padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px}
@@ -763,7 +765,7 @@ const svg = k => `<svg class="i" viewBox="0 0 24 24">${IC[k]}</svg>`;
 const STATUS = { queued: ["В очереди", "run"], running: ["Загружается", "dark run"], waiting: ["Пауза, повтор", "warn run"], done: ["Готово", "ok"], failed: ["Ошибка", "err"], blocked: ["Сайт блокирует", "err"], cancelled: ["Отменено", ""] };
 const MODE = { link: "Один товар", links: "По ссылкам", category: "Разделы сайта", full: "Весь каталог", file: "Файл" };
 const IKIND = { new: "Новые", update: "Обновления", duplicate: "Возможные дубли", incomplete: "Неполные", error: "Ошибки", excluded: "Исключены", pricechange: "Изменения цен" };
-const CATS = { bags: "Сумки", clothing: "Одежда", shoes: "Обувь", accessories: "Аксессуары", jewelry: "Украшения", eyewear: "Очки", watches: "Часы", fragrance: "Ароматы", other: "Другое" };
+const CATS = { bags: "Сумки", clothing: "Одежда", shoes: "Обувь", accessories: "Аксессуары", jewelry: "Украшения", eyewear: "Очки", watches: "Часы", fragrance: "Ароматы", other: "Другое: книги, коврики…" };
 const LOADCATS = ["bags", "clothing", "shoes", "accessories", "jewelry", "eyewear"];
 const AV = { online: ["онлайн", "ok"], boutique: ["в бутике", "warn"], out: ["нет", "err"], preorder: ["предзаказ", "warn"], unknown: ["?", ""] };
 const REGION = { DE: "Германия", ES: "Испания", FR: "Франция", IT: "Италия" };
@@ -2500,12 +2502,20 @@ async function vProducts2(pre) {
   $("#main").innerHTML = `<div class="vh"><h1>Товары</h1><span class="sp"></span><div class="pview" role="group" aria-label="Вид"><button data-pv="grid" aria-pressed="${PV === "grid"}">Каталог</button><button data-pv="list" aria-pressed="${PV === "list"}">Список</button></div><button class="btn sm" data-go="add">${svg("add")}Новый</button></div><p class="vsub" id="ptot" style="margin-bottom:12px"></p>
     <div id="hub"></div>
     <div class="ptabs" id="ptabs" role="tablist" aria-label="Разделы магазина"></div>
+    <div class="ptabs sm" id="pcats" aria-label="Категории"></div>
     <input type="search" id="pq" placeholder="Бренд, модель, артикул" value="${esc(F.q)}" aria-label="Поиск">
     <div class="fchips" id="pf"></div>
     <div class="plist" id="plist"></div><div class="more" id="pmore"></div><div class="pbar" id="pbar"></div>`;
   const q = extra => ({ q: F.q, status: F.status, source: F.source, brand: F.brand, cat: F.cat, avail: F.avail, sec: F.sec, ...extra });
   // вкладки разделов магазина поставщика: Все · Бестселлеры · Женское · Мужское · Аксессуары
   let tabs = [], baseTotal = 0;
+  // категории — сразу видны кнопками: Одежда · Обувь · Сумки · Аксессуары · Другое (книги, коврики…)
+  const drawCats = () => {
+    const el = $("#pcats"); if (!el) return;
+    const cs = (facets.cats || []).filter(c => c.n);
+    if (cs.length < 2 && !F.cat) { el.innerHTML = ""; return; }
+    el.innerHTML = [`<button data-catq="" aria-pressed="${!F.cat}">Все категории</button>`].concat(cs.map(c => `<button data-catq="${esc(c.k)}" aria-pressed="${F.cat === c.k}">${esc(CATS[c.k] || c.k)} <span class="num">${c.n}</span></button>`)).join("");
+  };
   const drawTabs = () => {
     const el = $("#ptabs"); if (!el) return;
     if (!F.source || !tabs.length) { el.innerHTML = ""; return; }
@@ -2536,8 +2546,8 @@ async function vProducts2(pre) {
       <div class="tx"><span class="br">${esc(p.brand || "—")} · ${esc(sname(p.source || "manual"))}</span><span class="tt">${esc(p.title)}</span>
         <span class="pr"><b class="num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</b> <span>· ${esc(CATS[p.category] || "—")}${p.avail === false ? " · нет в наличии" : ""}</span></span></div>
       <input type="checkbox" class="sw" data-show1="${esc(p._id)}" ${p.status === "published" ? "checked" : ""} ${p.price?.ua ? "" : "disabled"} aria-label="На витрине"></div>`;
-  const card = p => `<div class="pcard ${sel.has(p._id) ? "sel" : ""}" data-pick1="${esc(p._id)}">
-      <span class="tick" aria-hidden="true">${sel.has(p._id) ? "✓" : ""}</span>${p.status === "published" ? `<span class="live">На сайте</span>` : p.createdAt && Date.now() - Date.parse(p.createdAt) < 3 * 864e5 ? `<span class="live" style="background:#eef1fb;color:#3a55c4">Новое</span>` : ""}
+  const card = p => `<div class="pcard ${sel.has(p._id) ? "sel" : ""}" data-open="${esc(p._id)}">
+      <button type="button" class="tick" data-pick1="${esc(p._id)}" aria-label="Выбрать" aria-pressed="${sel.has(p._id)}">${sel.has(p._id) ? "✓" : ""}</button>${p.status === "published" ? `<span class="live">На сайте</span>` : p.createdAt && Date.now() - Date.parse(p.createdAt) < 3 * 864e5 ? `<span class="live" style="background:#eef1fb;color:#3a55c4">Новое</span>` : ""}
       <div class="im">${p.cover ? `<img src="${esc(thumb(p.cover))}" alt="" loading="lazy" decoding="async">` : svg("img")}</div>
       <div class="bd"><span class="br">${esc(p.brand || "—")}${p.gender ? " · " + (p.gender === "w" ? "жен" : p.gender === "m" ? "муж" : "унисекс") : ""}</span><span class="tt">${esc(p.title)}</span>
         <span class="pr num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</span>
@@ -2560,7 +2570,7 @@ async function vProducts2(pre) {
     const r = await api("products", { query: q({ offset: append ? list.length : 0 }) });
     list = append ? list.concat(r.products) : r.products; total = r.total; shown = r.shown; facets = r.facets;
     tabs = r.tabs || []; baseTotal = r.baseTotal ?? r.total; if (F.sec && !tabs.some(t => t.h === F.sec)) F.sec = "";
-    tot(); drawTabs(); drawFilters(); draw();
+    tot(); drawTabs(); drawCats(); drawFilters(); draw();
   };
   // состояние загрузки с сервера; пока идёт — опрашиваем раз в 3 с и подгружаем новые товары в сетку
   let lastGrid = 0;
@@ -2590,6 +2600,7 @@ async function vProducts2(pre) {
     const chip = e.target.closest(".fchip.on"); if (chip && chip.querySelector("select")) { const k = chip.querySelector("select").dataset.f; F[k] = ""; return load(); }
     const s = e.target.closest("[data-st]"); if (s) { F.status = s.dataset.st; return load(); }
     const sc = e.target.closest("[data-sec]"); if (sc) { F.sec = sc.dataset.sec; sel.clear(); return load(); }
+    const cq = e.target.closest("[data-catq]"); if (cq) { F.cat = cq.dataset.catq; sel.clear(); return load(); }
     if (e.target.closest("[data-avail]")) { F.avail = F.avail ? "" : "1"; return load(); }
     if (e.target.id === "pMore") return load(true);
     const sw = e.target.closest("[data-show1]");
@@ -2614,7 +2625,8 @@ async function vProducts2(pre) {
     const ha = e.target.closest("[data-hubauto]");
     if (ha) { try { await api("sourceSave", { method: "POST", body: { id: F.source, autoPublish: ha.checked } }); const s = hubSrc(); if (s) s.autoPublish = ha.checked; sources = null; toast(ha.checked ? "Автовыгрузка включена" : "Автовыгрузка выключена"); } catch (err) { ha.checked = !ha.checked; toast(err.message); } return; }
     const pv = e.target.closest("[data-pv]"); if (pv) { PV = pv.dataset.pv; try { localStorage.setItem("tb_pview", PV); } catch {} document.querySelectorAll("[data-pv]").forEach(b => b.setAttribute("aria-pressed", b.dataset.pv === PV)); return draw(); }
-    if (!e.target.closest("[data-open]")) { const pc = e.target.closest("[data-pick1]"); if (pc) { const id = pc.dataset.pick1; sel.has(id) ? sel.delete(id) : sel.add(id); pc.classList.toggle("sel", sel.has(id)); pc.querySelector(".tick").textContent = sel.has(id) ? "✓" : ""; return bar(); } }
+    // кружок в углу — выбрать товар; нажатие на саму карточку — открыть её
+    { const pc = e.target.closest("[data-pick1]"); if (pc) { const id = pc.dataset.pick1, c = pc.closest(".pcard"); sel.has(id) ? sel.delete(id) : sel.add(id); c?.classList.toggle("sel", sel.has(id)); pc.textContent = sel.has(id) ? "✓" : ""; pc.setAttribute("aria-pressed", sel.has(id)); return bar(); } }
     const all = e.target.closest("[data-all]");
     if (all) {
       const on = all.dataset.all === "on"; const { ids } = await api("productIds", { query: q() }); if (!ids.length) return toast("Нет товаров по фильтру");
