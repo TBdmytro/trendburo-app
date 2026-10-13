@@ -108,7 +108,7 @@ export default async function handler(req, res) {
             id, name: src.name, kind: src.kind, adapter: src.adapter, region: src.region, currency: src.currency,
             connected: src.adapter !== "none", checks: src.checks, imageRights: src.imageRights,
             photoCopy: settings?.photoCopy || { allowed: false, basis: "" },
-            schedule: settings?.schedule || "off", autoUpdate: settings?.autoUpdate !== false, autoPublish: !!settings?.autoPublish,
+            schedule: settings?.schedule || "off", autoUpdate: settings?.autoUpdate !== false, autoPublish: !!settings?.autoPublish, onlyAvailable: settings?.onlyAvailable !== false,
             sitemaps: settings?.sitemaps || src.sitemaps || [], collections: src.collections || [],
             lastSync: settings?.lastSync || null, check: settings?.check || null, home: src.home || null, lastJob: slim(last), running: jobs.some(j => j.sourceId === id && ACTIVE.includes(j.status)),
             stats: { found: mine.length, published: mine.filter(p => p.status === "published").length },
@@ -132,6 +132,7 @@ export default async function handler(req, res) {
         if (body.schedule) cur.schedule = ["off", "daily", "weekly"].includes(body.schedule) ? body.schedule : "off";
         if (body.autoUpdate !== undefined) cur.autoUpdate = !!body.autoUpdate;
         if (body.autoPublish !== undefined) cur.autoPublish = !!body.autoPublish;
+        if (body.onlyAvailable !== undefined) cur.onlyAvailable = !!body.onlyAvailable;
         if (Array.isArray(body.sitemaps)) cur.sitemaps = body.sitemaps.filter(s => /^https:\/\//.test(s)).slice(0, 20);
         await store.put(cur);
         return send(res, 200, { ok: true });
@@ -180,9 +181,9 @@ export default async function handler(req, res) {
       case "status": return send(res, 200, { results: await setStatus(store, (body.ids || []).slice(0, 5000), ["published", "draft", "hidden"].includes(body.status) ? body.status : "draft", me.name) });
       case "productIds": {
         // все товары по текущему фильтру — для «Показать все найденные»
-        const all = await store.list("product", {}, { limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, offers[]{sourceId}" });
+        const all = await store.list("product", {}, { limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, offers[]{sourceId, onlineOrder}" });
         const Q = req.query, q = String(Q.q || "").toLowerCase();
-        const ids = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (!Q.status || p.status === Q.status)
+        const ids = all.filter(p => (!Q.avail || (p.offers || []).some(o => o.onlineOrder)) && (!Q.noavail || !(p.offers || []).some(o => o.onlineOrder)) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (!Q.status || p.status === Q.status)
           && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source)) && (!Q.brand || p.brand === Q.brand) && (!Q.cat || (p.overrides?.category || p.category) === Q.cat)).map(p => p._id);
         return send(res, 200, { ids });
       }
@@ -193,7 +194,8 @@ export default async function handler(req, res) {
         const cat = p => p.overrides?.category || p.category;
         // фильтры применяются по очереди; списки для выпадающих меню строятся по остальным фильтрам
         const base = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q))
-          && (!Q.status || p.status === Q.status) && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source)));
+          && (!Q.status || p.status === Q.status) && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source))
+          && (!Q.avail || (p.offers || []).some(o => o.onlineOrder)));
         const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat));
         const facet = (arr, f) => { const m = {}; arr.forEach(p => { const k = f(p); if (k) m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ k, n })); };
         const offset = Math.max(0, Number(Q.offset) || 0), limit = Math.min(300, Math.max(1, Number(Q.limit) || 120));

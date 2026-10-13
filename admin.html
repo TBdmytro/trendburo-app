@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v36">
+<meta name="trendburo-build" content="2026-10-13-admin-v37">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2468,7 +2468,7 @@ async function vTexts() {
 
 /* ---------- Товары ---------- */
 async function vProducts2(pre) {
-  const F = { q: "", status: "", source: "", brand: "", cat: "" };
+  const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "" };
   if (pre) pre.split(",").forEach(kv => { const [k, v] = kv.split("="); if (k in F) F[k] = decodeURIComponent(v || ""); });
   let sel = new Set(), list = [], total = 0, shown = 0, facets = { brands: [], cats: [], sources: [] };
   const srcs = await getSources();
@@ -2479,20 +2479,22 @@ async function vProducts2(pre) {
     <input type="search" id="pq" placeholder="Бренд, модель, артикул" value="${esc(F.q)}" aria-label="Поиск">
     <div class="fchips" id="pf"></div>
     <div class="plist" id="plist"></div><div class="more" id="pmore"></div><div class="pbar" id="pbar"></div>`;
-  const q = extra => ({ q: F.q, status: F.status, source: F.source, brand: F.brand, cat: F.cat, ...extra });
+  const q = extra => ({ q: F.q, status: F.status, source: F.source, brand: F.brand, cat: F.cat, avail: F.avail, ...extra });
   /* Поставщик открыт — вся работа здесь: загрузить новые товары, разделы, автовыгрузка, на сайт */
   const hubSrc = () => srcs.find(s => s.id === F.source && s.custom);
   const drawHub = () => {
     const s = hubSrc(), h = $("#hub"); if (!h) return;
     if (!s) { h.innerHTML = ""; return; }
     h.innerHTML = `<div class="hub"><div class="hub-top"><span class="av">${esc((s.name || "?")[0])}</span><div class="tx"><b>${esc(s.name)}</b><span>${esc((s.home || "").replace("https://", ""))} · ${s.collections?.length ? "разделы: " + esc(s.collections.map(secName).join(", ")) : "весь каталог"}${s.market ? " · цены Европы" : ""}</span></div></div>
-      <div class="hub-act"><button class="btn" data-hubload ${s.running ? "disabled" : ""}>${s.running ? "Загружается…" : "Загрузить новые товары"}</button><button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-go="sources">Настройки</button></div>
+      <div class="hub-act"><button class="btn" data-hubload ${s.running ? "disabled" : ""}>${s.running ? "Загружается…" : "Загрузить новые товары"}</button><button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
       <div class="hub-prog" id="hubProg" data-src="${esc(s.id)}" ${s.running ? "" : "hidden"}><span class="spin"></span><span>Загрузка идёт…</span></div>
+      <label class="toggle"><input type="checkbox" data-hubavail ${s.onlyAvailable !== false ? "checked" : ""}>Только то, что можно купить сейчас: хотя бы один размер в наличии (старые распроданные не загружаем)</label>
       <label class="toggle"><input type="checkbox" data-hubauto ${s.autoPublish ? "checked" : ""}>Автовыгрузка: новые товары сразу появляются на сайте</label></div>`;
   };
   const chipSel = (key, label, arr, labf = x => x) => `<span class="fchip ${F[key] ? "on" : ""}">${esc(F[key] ? labf(F[key]) : label)} ${F[key] ? "×" : "▾"}<select data-f="${key}" aria-label="${label}"><option value="">${label}: все</option>${arr.map(x => `<option value="${esc(x.k)}" ${x.k === F[key] ? "selected" : ""}>${esc(labf(x.k))} · ${x.n}</option>`).join("")}</select></span>`;
   const drawFilters = () => {
     $("#pf").innerHTML = [["", "Все"], ["published", "На витрине"], ["draft", "Скрытые"]].map(([k, v]) => `<button class="fchip ${F.status === k ? "on" : ""}" data-st="${k}">${v}</button>`).join("")
+      + `<button class="fchip ${F.avail ? "on" : ""}" data-avail>Можно купить</button>`
       + chipSel("source", "Поставщик", facets.sources, sname) + chipSel("brand", "Бренд", facets.brands) + chipSel("cat", "Категория", facets.cats, k => CATS[k] || k);
   };
   const row = p => `<div class="prow" data-open="${esc(p._id)}">
@@ -2534,6 +2536,7 @@ async function vProducts2(pre) {
     const g = e.target.closest("[data-go]"); if (g) return go(g.dataset.go);
     const chip = e.target.closest(".fchip.on"); if (chip && chip.querySelector("select")) { const k = chip.querySelector("select").dataset.f; F[k] = ""; return load(); }
     const s = e.target.closest("[data-st]"); if (s) { F.status = s.dataset.st; return load(); }
+    if (e.target.closest("[data-avail]")) { F.avail = F.avail ? "" : "1"; return load(); }
     if (e.target.id === "pMore") return load(true);
     const sw = e.target.closest("[data-show1]");
     if (sw) { const on = sw.checked; try { await api("status", { method: "POST", body: { ids: [sw.dataset.show1], status: on ? "published" : "draft" }, silent: true }); } catch (err) { sw.checked = !on; return toast(err.message); } const p = list.find(x => x._id === sw.dataset.show1); if (p) p.status = on ? "published" : "draft"; shown += on ? 1 : -1; tot(); return toast(on ? "На витрине через ~10 секунд" : "Скрыто с витрины"); }
@@ -2542,6 +2545,15 @@ async function vProducts2(pre) {
       const s = hubSrc(); try { const r = await api("jobCreate", { method: "POST", body: { sourceId: s.id, mode: "full" } }); toast(r.existing ? "Загрузка уже идёт" : "Загружаем новые товары — они появятся здесь"); s.running = true; drawHub(); onJobsIdle = () => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); F.fresh = ""; load(); toast("Готово: товары обновлены"); }); pump(); } catch (err) { toast(err.message); } return;
     }
     if (e.target.closest("[data-hubsec]")) return sectionsSheet(F.source, { stay: true, after: () => { const s = hubSrc(); if (s) { s.running = true; drawHub(); } onJobsIdle = () => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); load(); }); } });
+    if (e.target.closest("[data-hubclean]")) {
+      const { ids } = await api("productIds", { query: { source: F.source, status: "draft", noavail: "1" } });
+      if (!ids.length) return toast("Распроданных скрытых товаров нет");
+      if (!(await confirmBox(`Удалить ${ids.length} ${plural(ids.length, ["распроданный товар", "распроданных товара", "распроданных товаров"])}?`, "Это скрытые товары, которых сейчас нет ни в одном размере. Товары на сайте не трогаем. Если вещь вернётся в наличие — подтянется при следующей загрузке.", "Удалить"))) return;
+      for (let i = 0; i < ids.length; i += 500) await api("productDelete", { method: "POST", body: { ids: ids.slice(i, i + 500) } });
+      toast("Удалено: " + ids.length); return load();
+    }
+    const hv = e.target.closest("[data-hubavail]");
+    if (hv) { try { await api("sourceSave", { method: "POST", body: { id: F.source, onlyAvailable: hv.checked } }); const s = hubSrc(); if (s) s.onlyAvailable = hv.checked; sources = null; toast(hv.checked ? "Будем брать только товары в наличии — со следующей загрузки" : "Будем брать весь каталог, включая распроданное"); } catch (err) { hv.checked = !hv.checked; toast(err.message); } return; }
     const ha = e.target.closest("[data-hubauto]");
     if (ha) { try { await api("sourceSave", { method: "POST", body: { id: F.source, autoPublish: ha.checked } }); const s = hubSrc(); if (s) s.autoPublish = ha.checked; sources = null; toast(ha.checked ? "Автовыгрузка включена" : "Автовыгрузка выключена"); } catch (err) { ha.checked = !ha.checked; toast(err.message); } return; }
     const pv = e.target.closest("[data-pv]"); if (pv) { PV = pv.dataset.pv; try { localStorage.setItem("tb_pview", PV); } catch {} document.querySelectorAll("[data-pv]").forEach(b => b.setAttribute("aria-pressed", b.dataset.pv === PV)); return draw(); }
