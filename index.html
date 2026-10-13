@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-13-live-v41">
+<meta name="trendburo-build" content="2026-10-13-live-v42">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -764,7 +764,7 @@ textarea{min-height:88px;resize:vertical}
 .xlock{overflow-y:hidden!important}
 .ylock{overflow-x:hidden!important}
 /* ===== Вход через Telegram ===== */
-.gate{position:absolute;inset:0;z-index:90;background:radial-gradient(120% 70% at 50% 0%,#fff,#f1f1f3);display:flex;flex-direction:column;justify-content:space-between;padding:calc(48px + var(--st)) 20px calc(22px + var(--sb));opacity:0;transition:opacity .35s,transform .5s var(--ease)}
+.gate{position:absolute;inset:0;z-index:90;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:radial-gradient(120% 70% at 50% 0%,#fff,#f1f1f3);display:flex;flex-direction:column;justify-content:space-between;padding:calc(48px + var(--st)) 20px calc(22px + var(--sb));opacity:0;transition:opacity .35s,transform .5s var(--ease)}
 .gate.in{opacity:1}.gate.out{opacity:0;transform:scale(1.04)}
 .gt-top{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:6vh}
 .gt-logo{width:78px;height:78px;border-radius:50%;background:linear-gradient(150deg,#3c3f45,#141518);color:#fff;display:grid;place-items:center;font-family:Prata,Georgia,serif;font-size:26px;box-shadow:0 14px 30px rgba(0,0,0,.18);margin-bottom:10px}
@@ -780,6 +780,9 @@ textarea{min-height:88px;resize:vertical}
 .gt-go{display:flex;align-items:center;justify-content:center;gap:9px;height:54px;font-size:16px}
 .gt-go svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
 .gt-go.busy{opacity:.7}
+.gate.kb{justify-content:flex-start;padding-bottom:calc(var(--kbh,300px) + 16px)}
+.gate.kb .gt-top{margin-top:0;gap:2px;transform:scale(.82);transform-origin:50% 0;transition:transform .3s var(--ease)}
+.gate.kb .gt-top p{display:none}.gate.kb .gt-card{margin-top:0}
 .gt-load{display:flex;align-items:center;gap:10px;color:var(--g2);font-size:14.5px;padding:14px 4px}
 .gt-load i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--fg);animation:gtspin .8s linear infinite}
 @keyframes gtspin{to{transform:rotate(360deg)}}
@@ -2417,7 +2420,7 @@ function authGate(force){if(!LIVE)return;const b=authBody();
       card.querySelector("[data-go]").onclick=async e=>{const bt=e.currentTarget;bt.disabled=true;bt.classList.add("busy");const r=await loadMe();if(r)done(r);else{bt.disabled=false;bt.classList.remove("busy");state.err(ME_ERR||{})}}},
     reg(j){const u=j.user||tgu();card.innerHTML=`<span class="gt-k">Регистрация через Telegram</span>
       <div class="gt-u">${avatarHTML({photo:u.photo,name:u.name},"gt-av")}<div><b>${esc(u.name||"Новый клиент")}</b><small>${u.username?"@"+esc(u.username):"аккаунт Telegram"} · новая учётная запись</small></div></div>
-      <label class="gt-f"><span>Как к вам обращаться</span><input type="text" id="gtName" autocomplete="name" value="${esc(u.name||"")}" placeholder="Имя и фамилия" maxlength="80"></label>
+      <label class="gt-f"><span>Как к вам обращаться</span><input type="text" id="gtName" autocomplete="name" enterkeyhint="done" value="${esc(u.name||"")}" placeholder="Имя и фамилия" maxlength="80"></label>
       <button class="btn block gt-go" data-go>${I_TG}Зарегистрироваться</button>${note}${skip}`;wire();
       card.querySelector("[data-go]").onclick=async e=>{const nm=card.querySelector("#gtName").value.trim();if(nm.length<2){card.querySelector("#gtName").focus();toast("Напишите, как к вам обращаться");return}
         const bt=e.currentTarget;bt.disabled=true;bt.classList.add("busy");const r=await loadMe({a:"register",name:nm});if(r)done(r);else{bt.disabled=false;bt.classList.remove("busy");state.err(ME_ERR||{})}}},
@@ -2427,6 +2430,12 @@ function authGate(force){if(!LIVE)return;const b=authBody();
         ${info.bot?`<div class="gt-widget" id="gtw"></div><a class="btn block gt-go soft" href="https://t.me/${esc(info.bot)}" target="_blank" rel="noopener">${I_TG}Открыть в Telegram</a>`:""}${note}${skip}`;wire();
       if(info.bot){window.tbOnTgAuth=u=>{store.set("tb_login",u);start()};const sc=document.createElement("script");sc.async=true;sc.src="https://telegram.org/js/telegram-widget.js?22";
         sc.setAttribute("data-telegram-login",info.bot);sc.setAttribute("data-size","large");sc.setAttribute("data-radius","14");sc.setAttribute("data-request-access","write");sc.setAttribute("data-onauth","tbOnTgAuth(user)");card.querySelector("#gtw").append(sc)}}};
+  // клавиатура: экран поднимается, карточка с кнопкой остаётся видна; Enter = отправить
+  const vv=window.visualViewport,kb=()=>{const h=vv?Math.max(0,innerHeight-vv.height-(vv.offsetTop||0)):0;g.style.setProperty("--kbh",(h||300)+"px")};
+  g.addEventListener("focusin",e=>{if(!e.target.matches("input"))return;g.classList.add("kb");kb();setTimeout(()=>{kb();const b=card.querySelector("[data-go]")||card;b.scrollIntoView({block:"end",behavior:"smooth"})},320)});
+  g.addEventListener("focusout",()=>setTimeout(()=>{if(!g.contains(document.activeElement)||!document.activeElement.matches("input"))g.classList.remove("kb")},120));
+  if(vv)vv.addEventListener("resize",()=>{if(g.classList.contains("kb"))kb()});
+  g.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("input")){e.preventDefault();e.target.blur();const b=card.querySelector("[data-go]");if(b)b.click()}});
   async function start(){if(!authBody())return state.web();state.load();const j=await meCall({a:"check"});if(j.error)return state.err(j);j.exists?state.login(j):state.reg(j)}
   start()}
 function logout(){store.set("tb_signed",0);store.set("tb_login",null);ME=null;renderTopIcons();popAll();toast("Вы вышли из профиля")}
