@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v55">
+<meta name="trendburo-build" content="2026-10-13-admin-v56">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -495,6 +495,8 @@ textarea{min-height:110px}
 .pcard .im{position:relative;aspect-ratio:4/5;background:#f3f3f4;display:grid;place-items:center;overflow:hidden}
 .pcard .im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%}
 .pcard .tick{position:absolute;z-index:2;top:6px;left:6px;width:34px;height:34px;padding:0;cursor:pointer;font-family:inherit;box-shadow:0 0 0 6px transparent;border-radius:50%;background:rgba(255,255,255,.92);border:1.5px solid var(--line);display:grid;place-items:center;font-size:14px;font-weight:700;color:#fff}
+.plist.picking .pcard{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.pcard.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink) inset}
 .pcard.sel .tick{background:var(--ink);border-color:var(--ink)}
 .pcard .live{position:absolute;top:10px;right:10px;padding:3px 9px;border-radius:99px;background:var(--ok-bg);color:var(--ok);font-size:11px;font-weight:700}
 .pcard .bd{padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px}
@@ -2553,12 +2555,25 @@ async function vProducts2(pre) {
         <span class="pr num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</span>
         ${p.sizes?.length ? `<div class="szs">${p.sizes.map(z => `<span class="${z.ok ? "" : "no"}">${esc(z.s)}</span>`).join("")}</div>` : p.avail === false ? `<span class="hint">нет в наличии</span>` : ""}</div>
       <button class="op" data-open="${esc(p._id)}" aria-label="Открыть товар">${svg("edit")}</button></div>`;
+  const togglePick = id => {
+    sel.has(id) ? sel.delete(id) : sel.add(id);
+    document.querySelectorAll(`[data-pick1="${CSS.escape(id)}"]`).forEach(t => { t.textContent = sel.has(id) ? "✓" : ""; t.setAttribute("aria-pressed", sel.has(id)); t.closest(".pcard")?.classList.toggle("sel", sel.has(id)); });
+    $("#plist").classList.toggle("picking", sel.size > 0); bar();
+  };
   const bar = () => {
     const n = sel.size;
-    $("#pbar").innerHTML = n ? `<span>Выбрано ${n}</span><button class="w" data-bulk="published">Добавить на сайт</button><button class="g" data-bulk="draft">Скрыть</button><button class="g" data-bulk="del">Удалить</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
-      : `<span>Найдено ${total}</span><button class="w" data-all="on">Все на сайт</button><button class="g" data-all="off">Скрыть все</button>`;
+    $("#pbar").innerHTML = n ? `<span>Выбрано ${n}${n < total ? ` из ${total}` : ""}</span>${n < total ? `<button class="g" data-selall>Выбрать все ${total}</button>` : ""}<button class="w" data-bulk="published">На сайт</button><button class="g" data-bulk="draft">Скрыть</button><button class="g" data-bulk="del">Удалить</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
+      : `<span>Найдено ${total}</span><button class="g" data-selall>Выбрать все</button><button class="w" data-all="on">Все на сайт</button><button class="g" data-all="off">Скрыть все</button>`;
     $("#pbar").hidden = !total;
+    $("#plist").classList.toggle("picking", n > 0);
   };
+  // долгое нажатие на карточку — выбрать её (дальше можно просто нажимать на другие)
+  let longT = 0, longAt = 0, longXY = null;
+  $("#plist").addEventListener("pointerdown", e => { const c = e.target.closest(".pcard"); if (!c || e.target.closest(".op")) return; longXY = [e.clientX, e.clientY];
+    longT = setTimeout(() => { const t = c.querySelector("[data-pick1]"); if (t && !sel.has(t.dataset.pick1)) { togglePick(t.dataset.pick1); try { navigator.vibrate?.(15); } catch {} } longAt = Date.now(); }, 450); });
+  const cancelLong = e => { if (longXY && e.type === "pointermove" && Math.hypot(e.clientX - longXY[0], e.clientY - longXY[1]) < 10) return; clearTimeout(longT); };
+  ["pointerup", "pointercancel", "pointermove", "scroll"].forEach(ev => $("#plist").addEventListener(ev, cancelLong, { passive: true }));
+  $("#plist").addEventListener("contextmenu", e => { if (e.target.closest(".pcard")) e.preventDefault(); });
   const draw = () => {
     $("#plist").className = "plist" + (PV === "grid" ? " grid" : "");
     $("#plist").innerHTML = list.map(PV === "grid" ? card : row).join("") || `<div class="empty"><b>Ничего не найдено</b>Измените фильтры, подключите поставщика или добавьте товар со скриншотов</div>`;
@@ -2627,19 +2642,29 @@ async function vProducts2(pre) {
     const ha = e.target.closest("[data-hubauto]");
     if (ha) { try { await api("sourceSave", { method: "POST", body: { id: F.source, autoPublish: ha.checked } }); const s = hubSrc(); if (s) s.autoPublish = ha.checked; sources = null; toast(ha.checked ? "Автовыгрузка включена" : "Автовыгрузка выключена"); } catch (err) { ha.checked = !ha.checked; toast(err.message); } return; }
     const pv = e.target.closest("[data-pv]"); if (pv) { PV = pv.dataset.pv; try { localStorage.setItem("tb_pview", PV); } catch {} document.querySelectorAll("[data-pv]").forEach(b => b.setAttribute("aria-pressed", b.dataset.pv === PV)); return draw(); }
-    // кружок в углу — выбрать товар; нажатие на саму карточку — открыть её
-    { const pc = e.target.closest("[data-pick1]"); if (pc) { const id = pc.dataset.pick1, c = pc.closest(".pcard"); sel.has(id) ? sel.delete(id) : sel.add(id); c?.classList.toggle("sel", sel.has(id)); pc.textContent = sel.has(id) ? "✓" : ""; pc.setAttribute("aria-pressed", sel.has(id)); return bar(); } }
+    // выбор: кружок в углу; если уже что-то выбрано — нажатие в любом месте карточки тоже выбирает; долгое нажатие — выбрать
+    if (Date.now() - longAt < 600) return;
+    { const pc = e.target.closest("[data-pick1]") || (sel.size && !e.target.closest(".op") ? e.target.closest(".pcard")?.querySelector("[data-pick1]") : null); if (pc) { togglePick(pc.dataset.pick1); return; } }
     const all = e.target.closest("[data-all]");
     if (all) {
       const on = all.dataset.all === "on"; const { ids } = await api("productIds", { query: q() }); if (!ids.length) return toast("Нет товаров по фильтру");
       if (!(await confirmBox(`${on ? "Показать" : "Скрыть"} ${ids.length} ${plural(ids.length, ["товар", "товара", "товаров"])}?`, on ? "Все найденные товары появятся на витрине через ~10 секунд. Товары без цены останутся скрытыми." : "Все найденные товары исчезнут с витрины. Вернуть можно в любой момент.", on ? "Показать" : "Скрыть"))) return;
-      await api("status", { method: "POST", body: { ids, status: on ? "published" : "draft" } }); toast((on ? "На витрине: " : "Скрыто: ") + ids.length); return load();
+      for (let i = 0; i < ids.length; i += 1000) { if (ids.length > 1000) toast(`${on ? "Выкладываем" : "Скрываем"}: ${Math.min(i + 1000, ids.length)} из ${ids.length}`); await api("status", { method: "POST", body: { ids: ids.slice(i, i + 1000), status: on ? "published" : "draft" } }); }
+      toast((on ? "На витрине: " : "Скрыто: ") + ids.length); return load();
+    }
+    if (e.target.closest("[data-selall]")) {
+      const { ids } = await api("productIds", { query: q() }); ids.forEach(id => sel.add(id));
+      document.querySelectorAll("[data-pick1]").forEach(t => { const on = sel.has(t.dataset.pick1); t.textContent = on ? "✓" : ""; t.closest(".pcard")?.classList.toggle("sel", on); });
+      toast("Выбрано " + sel.size); return bar();
     }
     const bk = e.target.closest("[data-bulk]");
     if (bk) {
       const ids = [...sel], k = bk.dataset.bulk;
       if (k === "clr") { sel.clear(); return draw(); }
-      if (k === "del") { if (!(await confirmBox(`Удалить ${ids.length} ${plural(ids.length, ["товар", "товара", "товаров"])}?`, "Товары исчезнут из админки и с витрины. Товары поставщика вернутся при следующем обновлении каталога — чтобы не показывать, лучше «Скрыть»."))) return; await api("productDelete", { method: "POST", body: { ids } }); toast("Удалено: " + ids.length); }
+      // большие выборки — частями, чтобы каждый запрос укладывался по времени
+      const chunks = []; for (let i = 0; i < ids.length; i += 1000) chunks.push(ids.slice(i, i + 1000));
+      if (k !== "del") { for (let i = 0; i < chunks.length; i++) { if (chunks.length > 1) toast(`${k === "published" ? "Выкладываем" : "Скрываем"}: ${Math.min((i + 1) * 1000, ids.length)} из ${ids.length}`); await api("status", { method: "POST", body: { ids: chunks[i], status: k } }); } toast((k === "published" ? "На сайте: " : "Скрыто: ") + ids.length); sel.clear(); return load(); }
+      if (k === "del") { if (!(await confirmBox(`Удалить ${ids.length} ${plural(ids.length, ["товар", "товара", "товаров"])}?`, "Товары исчезнут из админки и с витрины. Товары поставщика вернутся при следующем обновлении каталога — чтобы не показывать, лучше «Скрыть»."))) return; for (let i = 0; i < ids.length; i += 1000) await api("productDelete", { method: "POST", body: { ids: ids.slice(i, i + 1000) } }); toast("Удалено: " + ids.length); }
       else { await api("status", { method: "POST", body: { ids, status: k } }); toast((k === "published" ? "На витрине: " : "Скрыто: ") + ids.length); }
       sel.clear(); return load();
     }
