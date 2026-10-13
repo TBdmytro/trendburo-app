@@ -3,6 +3,7 @@
  * Все действия, кроме входа, требуют авторизации; изменяющие — ещё и заголовок X-TB (защита от CSRF).
  */
 import { kickWorker } from "../lib/chain.js";
+import { loadCatalogPage } from "../lib/catalogload.js";
 import { getStore } from "../lib/store.js";
 import { checkPassword, issueCookie, clearCookie, readSession } from "../lib/auth.js";
 import { SOURCES, sourceWith, makeNet } from "../lib/sources.js";
@@ -156,6 +157,7 @@ export default async function handler(req, res) {
       }
       case "jobs": return send(res, 200, { jobs: (await store.list("importJob", {}, { order: "createdAt desc", limit: 50, fields: JOB_FIELDS })).map(slim) });
       case "job": return send(res, 200, { job: slim((await store.list("importJob", { _id: String(req.query.id || "") }, { limit: 1, fields: JOB_FIELDS }))[0] || null) });
+      case "catalogPage": return send(res, 200, await loadCatalogPage(store, String(body.sourceId || ""), { handle: body.handle, page: body.page, limit: body.limit }));
       case "jobCancel": return send(res, 200, { job: slim(await cancelJob(store, body.id)) });
       case "jobDelete": {
         const j = await store.get(body.id);

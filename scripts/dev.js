@@ -13,7 +13,7 @@ if (process.env.FAKE_SHOP === "1") {
   const { setDnsCheck } = await import("../lib/http.js"); setDnsCheck(false);
   const real = globalThis.fetch;
   const brands = ["Kith", "Fear of God", "The Row", "Amiri"], types = ["Hoodies", "Bags", "Sneakers", "Jackets"];
-  const all = Array.from({ length: 40 }, (_, i) => ({ id: i + 1, title: `${types[i % 4].replace(/s$/, "")} ${i + 1}`, handle: `item-${i + 1}`, vendor: brands[i % 4], product_type: types[i % 4], tags: [i % 3 ? "Mens" : "Womens"],
+  const all = Array.from({ length: Number(process.env.FAKE_N) || 40 }, (_, i) => ({ id: i + 1, title: `${types[i % 4].replace(/s$/, "")} ${i + 1}`, handle: `item-${i + 1}`, vendor: brands[i % 4], product_type: types[i % 4], tags: [i % 3 ? "Mens" : "Womens"],
     options: [{ name: "Size" }], images: [1, 2, 3].map(k => ({ id: i * 10 + k, src: `https://cdn.shopify.com/fake/${i + 1}-${k}.jpg` })),
     variants: [{ sku: `S${i}-1`, option1: "S", price: String(150 + i * 25), available: i % 7 !== 0 }, { sku: `S${i}-2`, option1: "M", price: String(150 + i * 25), available: true }] }));
   const json = o => new Response(JSON.stringify(o), { headers: { "content-type": "application/json" } });

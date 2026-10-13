@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v42">
+<meta name="trendburo-build" content="2026-10-13-admin-v43">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1339,8 +1339,7 @@ async function connectSupplier(preUrl) {
           brands: root.querySelector("#supBrands").value, cats: [...root.querySelectorAll('[data-scat][aria-pressed="true"]')].map(b => b.dataset.scat), factor: Number(root.querySelector("#supFactor").value) || 1 };
         const { id } = await api("supplierAdd", { method: "POST", body });
         await getSources(true);
-        const r = await api("jobCreate", { method: "POST", body: { sourceId: id, mode: "full" } });
-        toast("Подключено — товары загружаются и появятся здесь"); d.close(); go("products:source=" + encodeURIComponent(id)); pump();
+        d.close(); openHubLoad(id);
       } catch (err) { toast(err.message); t.disabled = false; t.textContent = "Подключить и загрузить каталог"; }
     }
   };
@@ -1362,7 +1361,7 @@ function supplierCard(s) {
     <label class="f">Обновление каталога<select data-f="schedule">${["off", "daily", "weekly"].map(v => `<option value="${v}" ${s.schedule === v ? "selected" : ""}>${{ off: "Выключено", daily: "Каждый день", weekly: "Раз в неделю" }[v]}</option>`).join("")}</select></label>
     <div class="note-box" style="align-items:center"><div style="flex:1"><b>${s.stats.found}</b> ${plural(s.stats.found, ["товар", "товара", "товаров"])} в админке · на сайте <b>${s.stats.published}</b></div>${s.stats.found > s.stats.published ? `<button class="btn sm" data-puball="${esc(s.id)}">Все товары на сайт</button>` : ""}</div>
     <label class="toggle"><input type="checkbox" data-autopub="${esc(s.id)}" ${s.autoPublish ? "checked" : ""}>Автовыгрузка: новые товары этого поставщика сразу появляются на сайте</label>
-    <div class="row"><button class="btn sm" data-supload="${esc(s.id)}" ${s.running ? "disabled" : ""}>${s.running ? "Загружается…" : "Загрузить каталог"}</button><button class="btn ghost sm" data-go="products:source=${encodeURIComponent(s.id)}">Товары</button><button class="btn soft sm" data-supsave>Сохранить</button><button class="btn ghost sm" data-check="${esc(s.id)}">Проверить</button><span class="sp"></span><button class="btn danger sm" data-suprm="${esc(s.id)}">Отключить</button></div>
+    <div class="row"><button class="btn sm" data-supload="${esc(s.id)}" >Загрузить каталог</button><button class="btn ghost sm" data-go="products:source=${encodeURIComponent(s.id)}">Товары</button><button class="btn soft sm" data-supsave>Сохранить</button><button class="btn ghost sm" data-check="${esc(s.id)}">Проверить</button><span class="sp"></span><button class="btn danger sm" data-suprm="${esc(s.id)}">Отключить</button></div>
   </article>`;
 }
 
@@ -1525,13 +1524,24 @@ async function sectionsSheet(id, { stay = false, after = null } = {}) {
     gb.disabled = true; gb.innerHTML = '<span class="spin"></span>';
     try {
       await api("supplierSections", { method: "POST", body: { id, collections: sel } });
-      const r = await api("jobCreate", { method: "POST", body: { sourceId: id, mode: "full" } });
-      toast(r.existing ? "Загрузка уже идёт — новые разделы возьмутся со следующей" : "Загружаем выбранные разделы"); d.close(); sources = null; if (stay) { pump(); after && after(); } else { go("job:" + r.job._id); pump(); }
+      d.close(); sources = null; if (stay && after) after(); else openHubLoad(id);
     } catch (err) { toast(err.message); gb.disabled = false; gb.textContent = "Загрузить"; }
   };
   draw();
 }
 let SUP_OPEN = null, SUP_Q = "";
+/* Загрузка каталога поставщика: идёт прямо из админки, порциями по странице магазина.
+   Каждая порция сразу записана в «Товары» — «Остановить» ничего не теряет. Одна загрузка за раз. */
+let HUB_AUTO = null, LD = null, LDLAST = null, onLdPage = null;
+function ldHTML() {
+  const L = LD || LDLAST; if (!L) return "";
+  const sec = (L.elapsed = Math.round((Date.now() - L.t0) / 1000), L.sec ? " · раздел «" + esc(L.sec) + "»" : "");
+  if (LD) return `<span class="spin"></span><span style="flex:1"><b class="num" style="font-size:17px">Загружено ${L.saved}</b> ${plural(L.saved, ["товар", "товара", "товаров"])}<span class="hint" style="display:block">Читаем страницу ${L.page}${sec} · просмотрено ${L.found}${L.filtered ? " · не подошло по фильтру " + L.filtered : ""}. ${L.stop ? "Дочитываем текущую страницу и останавливаемся…" : "Не закрывайте админку. «Остановить» — всё загруженное останется."}</span>${L.err ? `<span class="hint" style="display:block;color:var(--red,#c0392b)">Повторяем: ${esc(L.err)}</span>` : ""}</span>`;
+  return `<span style="flex:1"><b>${L.failed ? "Загрузка прервалась" : L.stopped ? "Остановлено" : "Готово"}: в каталоге ${L.saved} ${plural(L.saved, ["товар", "товара", "товаров"])}</b><span class="hint" style="display:block">${L.failed ? esc(L.failed) + ". Нажмите «Загрузить каталог» ещё раз — уже загруженные не задвоятся. " : ""}Отметьте нужные товары ниже и нажмите «Добавить на сайт» — или «Все на сайт».</span></span>`;
+}
+function drawLd() { const el = $("#ldProg"); if (el && el.dataset.src === (LD || LDLAST)?.src) { el.hidden = false; el.innerHTML = ldHTML(); } }
+function openHubLoad(id) { HUB_AUTO = id; go("products:source=" + encodeURIComponent(id)); }
+window.addEventListener("beforeunload", e => { if (LD && !LD.stop) { e.preventDefault(); e.returnValue = ""; } });
 /* Поставщики одним списком: готовые и подключённые. Выбрал — «Выгрузить». */
 function supListHTML(sup) {
   SUP_CACHE = sup;
@@ -1547,7 +1557,7 @@ function supRows(sup) {
       const s = r.s, fail = !s && READY_FAIL[r.url];
       const st = s ? (s.running ? `<span class="pill run"><span class="dot"></span>Выгружается</span>` : `<span class="pill ok"><span class="dot"></span>Подключён</span>`) : fail ? `<span class="pill err">Не подходит</span>` : "";
       const info = s ? `${s.stats.found} в админке · ${s.stats.published} на сайте${s.collections?.length ? " · разделы: " + s.collections.map(secName).join(", ") : ""}` : (fail || r.note);
-      const acts = s ? `<button class="btn sm" data-supload="${esc(s.id)}" ${s.running ? "disabled" : ""}>${s.running ? "Выгружается…" : "Выгрузить"}</button><button class="btn ghost sm" data-supopen="${esc(s.id)}" aria-expanded="${SUP_OPEN === s.id}">${SUP_OPEN === s.id ? "Свернуть" : "Настройки"}</button>`
+      const acts = s ? `<button class="btn sm" data-supload="${esc(s.id)}" >Выгрузить</button><button class="btn ghost sm" data-supopen="${esc(s.id)}" aria-expanded="${SUP_OPEN === s.id}">${SUP_OPEN === s.id ? "Свернуть" : "Настройки"}</button>`
         : fail ? "" : `<button class="btn sm" data-ready="${esc(r.url)}" data-rname="${esc(r.name)}">Выгрузить</button>`;
       return `<div class="srow ${s ? "on" : ""}"><span class="av" aria-hidden="true">${esc(r.name[0] || "?")}</span><div class="tx"><b>${esc(r.name)}</b><span>${esc(r.host)} · ${esc(info)}</span></div>${st}<div class="acts">${acts}</div></div>
         ${s && SUP_OPEN === s.id ? `<div class="sdet">${supplierCard(s)}</div>` : ""}`; }).join("")
@@ -1586,13 +1596,12 @@ function readyHTML(sup) {
         <div class="hint">${esc(fail || note)}</div>
         ${on || fail ? "" : `<button class="btn sm" data-ready="${esc(u)}" data-rname="${esc(n)}">Подключить</button>`}
       </article>`; }).join("")}</div>
-    ${left.length > 1 ? `<div class="row" style="margin-top:12px"><button class="btn ghost" data-readyall>Подключить все (${left.length})</button><span class="hint">каталоги загрузятся в фоне по очереди</span></div>` : ""}</div>`;
+    ${left.length > 1 ? `<div class="row" style="margin-top:12px"><button class="btn ghost" data-readyall>Подключить все (${left.length})</button><span class="hint">каталог каждого загрузите на его странице</span></div>` : ""}</div>`;
 }
 async function connectReady(u, name) {
   try {
     const { id } = await api("supplierAdd", { method: "POST", body: { url: u, name } });
-    const j = await api("jobCreate", { method: "POST", body: { sourceId: id, mode: "full" } }).catch(() => null);
-    return j?.job?._id || true;
+    return id;
   } catch (err) { READY_FAIL[u] = err.message; return false; }
 }
 async function vSources() {
@@ -1640,25 +1649,24 @@ async function vSources() {
         const det = (await api("supplierDetect", { method: "POST", body: { url: s0.home } })).result;
         if (!det.ok || !det.market) { toast(det.reason || "У этого магазина нет европейского раздела с ценами в € — цены пересчитываются по курсу"); eu.disabled = false; eu.textContent = "Перевести на цены Европы (€)"; return; }
         const { id } = await api("supplierAdd", { method: "POST", body: { url: s0.home, name: s0.name, kind: s0.kind, factor: 1, brands: s0.brands, cats: s0.cats } });
-        await api("jobCreate", { method: "POST", body: { sourceId: id, mode: "full" } }).catch(() => null);
-        toast("Готово: цены Европы в €. Каталог обновляется"); sources = null; await getSources(true); pump(); return vSources();
+        sources = null; await getSources(true); toast("Готово: цены Европы в €. Загружаем каталог заново"); return openHubLoad(id);
       } catch (err) { toast(err.message); eu.disabled = false; eu.textContent = "Перевести на цены Европы (€)"; }
       return;
     }
     const rd = e.target.closest("[data-ready]");
-    if (rd) { rd.disabled = true; rd.innerHTML = '<span class="spin"></span> Подключаем…'; const ok = await connectReady(rd.dataset.ready, rd.dataset.rname); toast(ok ? rd.dataset.rname + " подключён — выгружаем каталог" : rd.dataset.rname + ": " + READY_FAIL[rd.dataset.ready]); sources = null; await getSources(true); pump(); if (ok) { const sid = (await getSources(true)).find(x => x.custom && hostOf(x.home || "") === hostOf(rd.dataset.ready))?.id; if (sid) return go("products:source=" + encodeURIComponent(sid)); } return vSources(); }
+    if (rd) { rd.disabled = true; rd.innerHTML = '<span class="spin"></span> Подключаем…'; const sid = await connectReady(rd.dataset.ready, rd.dataset.rname); sources = null; if (sid) { await getSources(true); return openHubLoad(sid); } toast(rd.dataset.rname + ": " + READY_FAIL[rd.dataset.ready]); return vSources(); }
     const ra = e.target.closest("[data-readyall]");
     if (ra) {
       const have = new Set((await getSources(true)).filter(s => s.custom).map(s => hostOf(s.home || "")));
       const todo = READY_SUP.filter(r => !have.has(hostOf(r[0])) && !READY_FAIL[r[0]]); let ok = 0;
       for (let i = 0; i < todo.length; i++) { ra.disabled = true; ra.innerHTML = `<span class="spin"></span> ${i + 1} из ${todo.length}: ${esc(todo[i][1])}`; if (await connectReady(todo[i][0], todo[i][1])) ok++; }
-      toast(`Подключено: ${ok} из ${todo.length}` + (ok < todo.length ? " — у остальных сайт закрыт, причина на карточке" : "")); sources = null; await getSources(true); pump(); return vSources();
+      toast(`Подключено: ${ok} из ${todo.length}. Откройте поставщика и нажмите «Загрузить каталог»` + (ok < todo.length ? " — у остальных сайт закрыт, причина на карточке" : "")); sources = null; await getSources(true); return vSources();
     }
     const tr = e.target.closest("[data-try]"); if (tr) return connectSupplier(tr.dataset.try);
     if (e.target.closest("[data-go]")) return go(e.target.closest("[data-go]").dataset.go);
     const sc = e.target.closest("[data-scat]"); if (sc) { sc.setAttribute("aria-pressed", sc.getAttribute("aria-pressed") !== "true"); return; }
     const ld = e.target.closest("[data-supload]");
-    if (ld) { try { const r = await api("jobCreate", { method: "POST", body: { sourceId: ld.dataset.supload, mode: "full" } }); toast(r.existing ? "Загрузка уже идёт — открыл её" : "Каталог загружается в фоне"); go("job:" + r.job._id); pump(); } catch (err) { toast(err.message); } return; }
+    if (ld) return openHubLoad(ld.dataset.supload);
     const rm = e.target.closest("[data-suprm]");
     if (rm) {
       if (!(await confirmBox("Отключить поставщика?", "Его товары скроются с витрины, но останутся в «Товарах». Подключить снова можно в любой момент.", "Отключить"))) return;
@@ -2490,8 +2498,8 @@ async function vProducts2(pre) {
     if (!s) { h.innerHTML = ""; return; }
     h.innerHTML = `<div class="hub"><div class="hub-top"><span class="av">${esc((s.name || "?")[0])}</span><div class="tx"><b>${esc(s.name)}</b><span>${esc((s.home || "").replace("https://", ""))} · ${s.collections?.length ? "разделы: " + esc(s.collections.map(secName).join(", ")) : "весь каталог"}${s.market ? " · цены Европы" : ""}</span></div></div>
       ${s.cats?.length || s.brands?.length ? `<div class="note-box" style="align-items:center"><div style="flex:1">Фильтр загрузки: ${s.cats?.length ? "только " + esc(s.cats.map(c => CATS[c] || c).join(", ")) : ""}${s.brands?.length ? (s.cats?.length ? " · " : "") + "бренды " + esc(s.brands.join(", ")) : ""} — остальное не загружается</div><button class="btn ghost sm" data-hubnofilter>Брать всё</button></div>` : ""}
-      <div class="hub-act">${s.running ? `<button class="btn danger" data-hubstop>Остановить загрузку</button>` : `<button class="btn" data-hubload>Загрузить каталог</button>`}<button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
-      <div class="hub-prog" id="hubProg" data-src="${esc(s.id)}" ${s.running ? "" : "hidden"}><span>Загрузка идёт на сервере — админку можно закрыть. Нажмите «Остановить», когда товаров хватит: всё загруженное останется в каталоге.</span></div>
+      <div class="hub-act">${LD && LD.src === s.id ? `<button class="btn danger" data-hubstop ${LD.stop ? "disabled" : ""}>${LD.stop ? "Останавливаем…" : "Остановить"}</button>` : `<button class="btn" data-hubload ${LD ? "disabled" : ""}>Загрузить каталог</button>`}<button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
+      <div class="hub-prog" id="ldProg" data-src="${esc(s.id)}" ${LD && LD.src === s.id || LDLAST?.src === s.id ? "" : "hidden"}>${ldHTML()}</div>
       <label class="toggle"><input type="checkbox" data-hubavail ${s.onlyAvailable !== false ? "checked" : ""}>Только то, что можно купить сейчас: хотя бы один размер в наличии (старые распроданные не загружаем)</label>
       <label class="toggle"><input type="checkbox" data-hubauto ${s.autoPublish ? "checked" : ""}>Автовыгрузка: новые товары сразу появляются на сайте</label></div>`;
   };
@@ -2532,9 +2540,37 @@ async function vProducts2(pre) {
     list = append ? list.concat(r.products) : r.products; total = r.total; shown = r.shown; facets = r.facets;
     tot(); drawFilters(); draw();
   };
-  let lastSaved = -1, lastReload = 0;
-  onHubProgress = n => { if (!view.startsWith("products") || n === lastSaved || Date.now() - lastReload < 5000) return; lastSaved = n; lastReload = Date.now(); if (!sel.size) load(); };
-  drawHub(); if (hubSrc()?.running) { onJobsIdle = () => { if (view.startsWith("products")) { getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); load(); }); } }; pump(); }
+  // страницу «Товары» могли закрыть и открыть заново — обновляем ту, что сейчас на экране
+  onLdPage = fin => { if (!view.startsWith("products") || !$("#plist") || F.source !== (LD || LDLAST)?.src) return; if (fin) drawHub(); if (!sel.size) load(); };
+  // старые фоновые загрузки этого поставщика больше не нужны — тихо останавливаем, чтобы не мешали
+  const dropOldJobs = async id => { try { const { jobs } = await api("jobs", { silent: true }); for (const j of jobs.filter(j => j.sourceId === id && ACTIVE.includes(j.status))) { await api("jobCancel", { method: "POST", body: { id: j._id }, silent: true }).catch(() => api("jobDelete", { method: "POST", body: { id: j._id }, silent: true }).catch(() => {})); } } catch {} };
+  const runLoad = async () => {
+    const s = hubSrc(); if (!s || LD) return;
+    LD = { src: s.id, stop: false, saved: 0, found: 0, filtered: 0, skipped: 0, pages: 0, sec: "", err: "", t0: Date.now() }; LDLAST = null; drawHub();
+    await dropOldJobs(s.id);
+    const secs = s.collections?.length ? s.collections : ["__all__"];
+    let failed = "";
+    outer: for (const h of secs) {
+      for (let page = 1; ; page++) {
+        if (LD.stop) break outer;
+        LD.sec = h === "__all__" ? "" : secName(h); LD.page = page; drawLd();
+        let r = null;
+        for (let a = 0; a < 3 && !r; a++) {
+          try { r = await api("catalogPage", { method: "POST", body: { sourceId: s.id, handle: h, page }, silent: true }); LD.err = ""; }
+          catch (err) { LD.err = err.message; drawLd(); if (a < 2) await new Promise(z => setTimeout(z, 2500 * (a + 1))); }
+        }
+        if (!r) { failed = LD.err; break outer; }
+        LD.found += r.found; LD.saved += r.saved; LD.filtered += r.filtered; LD.skipped += r.skipped; LD.pages++;
+        if (r.errors?.length) LD.err = r.errors[0];
+        drawLd(); onLdPage?.(false);
+        if (!r.more) break;
+      }
+    }
+    LDLAST = { ...LD, done: true, failed, stopped: LD.stop }; LD = null;
+    onLdPage?.(true);
+    toast(failed ? `Загрузка прервалась: ${failed}. Загружено ${LDLAST.saved} — они в каталоге, можно нажать «Загрузить каталог» ещё раз` : `${LDLAST.stopped ? "Остановлено" : "Готово"}: в каталоге ${LDLAST.saved} ${plural(LDLAST.saved, ["товар", "товара", "товаров"])}`);
+  };
+  drawHub(); if (HUB_AUTO && HUB_AUTO === hubSrc()?.id) { HUB_AUTO = null; setTimeout(runLoad, 0); } else HUB_AUTO = null;
   let t; $("#pq").oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(load, 300); };
   $("#main").onchange = e => { const f = e.target.dataset.f; if (f) { F[f] = e.target.value; if (f === "source") { F.brand = ""; F.cat = ""; } load(); } };
   $("#main").onclick = async e => {
@@ -2547,20 +2583,12 @@ async function vProducts2(pre) {
     const sw = e.target.closest("[data-show1]");
     if (sw) { const on = sw.checked; try { await api("status", { method: "POST", body: { ids: [sw.dataset.show1], status: on ? "published" : "draft" }, silent: true }); } catch (err) { sw.checked = !on; return toast(err.message); } const p = list.find(x => x._id === sw.dataset.show1); if (p) p.status = on ? "published" : "draft"; shown += on ? 1 : -1; tot(); return toast(on ? "На витрине через ~10 секунд" : "Скрыто с витрины"); }
     const ck = e.target.closest("[data-psel]"); if (ck) { ck.checked ? sel.add(ck.dataset.psel) : sel.delete(ck.dataset.psel); return bar(); }
-    if (e.target.closest("[data-hubstop]")) {
-      const { jobs } = await api("jobs"); const act = jobs.filter(j => j.sourceId === F.source && ACTIVE.includes(j.status));
-      // остановка; если задачу не получается изменить — удаляем её целиком (загруженные товары не трогаются)
-      for (const j of act) { try { await api("jobCancel", { method: "POST", body: { id: j._id } }); } catch { await api("jobDelete", { method: "POST", body: { id: j._id } }).catch(() => {}); } }
-      const s = hubSrc(); if (s) s.running = false; sources = null;
-      toast(`Остановлено. Загруженные товары остались в каталоге`); drawHub(); setTimeout(() => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); load(); }), 2500); return load();
-    }
+    if (e.target.closest("[data-hubstop]")) { if (LD) { LD.stop = true; drawHub(); } return; }
     if (e.target.closest("[data-hubnofilter]")) {
       try { await api("sourceSave", { method: "POST", body: { id: F.source, cats: [], brands: [] } }); const s = hubSrc(); if (s) { s.cats = []; s.brands = []; } sources = null; toast("Фильтр снят — со следующей загрузки берём все категории"); drawHub(); } catch (err) { toast(err.message); } return;
     }
-    if (e.target.closest("[data-hubload]")) {
-      const s = hubSrc(); try { const r = await api("jobCreate", { method: "POST", body: { sourceId: s.id, mode: "full" } }); toast(r.existing ? "Загрузка уже идёт" : "Загружаем на сервере — можно закрыть админку, загрузка не остановится"); s.running = true; drawHub(); onJobsIdle = () => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); F.fresh = ""; load(); toast("Готово: товары обновлены"); }); pump(); } catch (err) { toast(err.message); } return;
-    }
-    if (e.target.closest("[data-hubsec]")) return sectionsSheet(F.source, { stay: true, after: () => { const s = hubSrc(); if (s) { s.running = true; drawHub(); } onJobsIdle = () => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); load(); }); } });
+    if (e.target.closest("[data-hubload]")) return runLoad();
+    if (e.target.closest("[data-hubsec]")) return sectionsSheet(F.source, { stay: true, after: async () => { const a = await getSources(true); srcs.splice(0, srcs.length, ...a); drawHub(); runLoad(); } });
     if (e.target.closest("[data-hubclean]")) {
       const { ids } = await api("productIds", { query: { source: F.source, status: "draft", noavail: "1" } });
       if (!ids.length) return toast("Распроданных скрытых товаров нет");
