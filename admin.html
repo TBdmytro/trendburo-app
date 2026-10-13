@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v32">
+<meta name="trendburo-build" content="2026-10-13-admin-v33">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1293,8 +1293,8 @@ async function connectSupplier(preUrl) {
   const d = sheet("Подключить сайт поставщика", `<div class="form">
     <p class="hint" style="margin:0">Вставьте адрес магазина, например <b>kith.com</b> или <b>therow.com</b>. Проверим, открыт ли каталог (сейчас подключаются магазины на Shopify), и покажем, что там есть.</p>
     <div class="row"><input type="text" id="supUrl" placeholder="Название или адрес: Alo Yoga, kith.com" style="flex:1" inputmode="url" autocomplete="off"><button class="btn" id="supCheck">Проверить</button></div>
-    <div id="supRes"></div><div id="supAdded">${addedHTML((sources || []).filter(s => s.custom))}</div></div>`);
-  getSources(true).then(all => { const el = d.querySelector("#supAdded"); if (el) el.innerHTML = addedHTML(all.filter(s => s.custom)); }).catch(() => {});
+    <div id="supRes"></div><div id="supAdded">${addedHTML((sources || []).filter(s => s.custom || s.stats?.found > 0))}</div></div>`);
+  getSources(true).then(all => { const el = d.querySelector("#supAdded"); if (el) el.innerHTML = addedHTML(all.filter(s => s.custom || s.stats?.found > 0)); }).catch(() => {});
   const root = d.querySelector(".sh-b");
   let det = null;
   root.onclick = async e => {
@@ -1525,7 +1525,7 @@ let SUP_OPEN = null, SUP_Q = "";
 /* Поставщики одним списком: готовые и подключённые. Выбрал — «Выгрузить». */
 function supListHTML(sup) {
   SUP_CACHE = sup;
-  return `<div class="sec" style="margin-top:0"><div class="row" style="margin-bottom:12px"><input type="search" id="supQ" placeholder="Найти поставщика: Alo Yoga, Kith… или вписать сайт" value="${esc(SUP_Q)}" style="flex:1" autocomplete="off"></div>${addedHTML(sup)}<h2 style="margin:18px 0 10px;font-size:16px">Все поставщики</h2><div id="supList">${supRows(sup)}</div></div>`;
+  return `<div class="sec" style="margin-top:0"><div class="row" style="margin-bottom:12px"><input type="search" id="supQ" placeholder="Найти поставщика: Alo Yoga, Kith… или вписать сайт" value="${esc(SUP_Q)}" style="flex:1" autocomplete="off"></div>${addedHTML((sources || sup).filter(s => s.custom || s.stats?.found > 0))}<h2 style="margin:18px 0 10px;font-size:16px">Все поставщики</h2><div id="supList">${supRows(sup)}</div></div>`;
 }
 let SUP_CACHE = [];
 function supRows(sup) {
@@ -1545,7 +1545,7 @@ function supRows(sup) {
 }
 /* Плашка «Уже добавлены»: бренды/поставщики, которые есть в админке — зайти и добавлять товары на сайт вручную. */
 function addedHTML(list) {
-  if (!list.length) return "";
+  if (!list.length) return `<div class="added"><div class="added-h"><b>Уже добавлены в админке</b></div><div class="added-r" style="cursor:default"><span class="tx"><b>Пока никого нет</b><span>Впишите название или адрес выше — добавленные поставщики появятся здесь</span></span></div></div>`;
   return `<div class="added"><div class="added-h"><b>Уже добавлены в админке</b><span class="hint">${list.length} — откройте и добавляйте товары на сайт</span></div>
     <div class="added-l">${list.map(s => `<button type="button" class="added-r" data-go="products:source=${encodeURIComponent(s.id)}"><span class="av">${esc((s.name || "?")[0])}</span><span class="tx"><b>${esc(s.name)}</b><span>${s.stats.found} ${plural(s.stats.found, ["товар", "товара", "товаров"])} · на сайте ${s.stats.published}</span></span><span class="go">Товары ›</span></button>`).join("")}</div></div>`;
 }
