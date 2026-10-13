@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v45">
+<meta name="trendburo-build" content="2026-10-13-admin-v46">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2556,7 +2556,7 @@ async function vProducts2(pre) {
         LD.sec = h === "__all__" ? "" : secName(h); LD.page = page; drawLd();
         let r = null;
         for (let a = 0; a < 3 && !r; a++) {
-          try { r = await api("catalogPage", { method: "POST", body: { sourceId: s.id, handle: h, page }, silent: true }); LD.err = ""; }
+          try { r = await api("catalogPage", { method: "POST", body: { sourceId: s.id, handle: h, page, limit: 50 }, silent: true }); LD.err = ""; }
           catch (err) { LD.err = "Повторяем: " + err.message; drawLd(); if (a < 2) await new Promise(z => setTimeout(z, 2500 * (a + 1))); }
         }
         if (!r) { failed = LD.err; break outer; }
