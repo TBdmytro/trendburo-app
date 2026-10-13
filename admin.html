@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v28">
+<meta name="trendburo-build" content="2026-10-13-admin-v29">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1274,14 +1274,16 @@ const thumb = u => !u ? "" : /cdn\.shopify\.com/.test(u) ? u + (u.includes("?") 
 async function connectSupplier(preUrl) {
   const d = sheet("Подключить сайт поставщика", `<div class="form">
     <p class="hint" style="margin:0">Вставьте адрес магазина, например <b>kith.com</b> или <b>therow.com</b>. Проверим, открыт ли каталог (сейчас подключаются магазины на Shopify), и покажем, что там есть.</p>
-    <div class="row"><input type="text" id="supUrl" placeholder="https://…" style="flex:1" inputmode="url" autocomplete="off"><button class="btn" id="supCheck">Проверить</button></div>
+    <div class="row"><input type="text" id="supUrl" placeholder="Название или адрес: Alo Yoga, kith.com" style="flex:1" inputmode="url" autocomplete="off"><button class="btn" id="supCheck">Проверить</button></div>
     <div id="supRes"></div></div>`);
   const root = d.querySelector(".sh-b");
   let det = null;
   root.onclick = async e => {
     const t = e.target.closest("button"); if (!t) return;
     if (t.id === "supCheck") {
-      const url = root.querySelector("#supUrl").value.trim(); if (!url) return;
+      let url = root.querySelector("#supUrl").value.trim(); if (!url) return;
+      // можно ввести просто название: «Alo Yoga» → сайт из списка готовых или название.com
+      if (!/[.\/]/.test(url)) { const k = url.toLowerCase().replace(/[^a-z0-9]/g, ""); const hit = READY_SUP.find(r => r[1].toLowerCase().replace(/[^a-z0-9]/g, "") === k || r[0].replace(/[^a-z0-9]/g, "").startsWith(k)); url = hit ? hit[0] : k + ".com"; root.querySelector("#supUrl").value = url; }
       t.disabled = true; t.innerHTML = '<span class="spin"></span>';
       try { det = (await api("supplierDetect", { method: "POST", body: { url } })).result; } catch (err) { det = { ok: false, reason: err.message }; }
       t.disabled = false; t.textContent = "Проверить";
@@ -1328,6 +1330,8 @@ function supplierCard(s) {
     <label class="f" style="flex:2;min-width:200px">Только бренды <span class="hint" style="font-weight:400">пусто — все</span><input type="text" data-f="brands" value="${esc(s.brands.join(", "))}"></label></div>
     <div class="chips">${LOADCATS.map(c => `<button type="button" class="chip" data-scat="${c}" aria-pressed="${s.cats.includes(c)}">${CATS[c]}</button>`).join("")}</div>
     <label class="f">Обновление каталога<select data-f="schedule">${["off", "daily", "weekly"].map(v => `<option value="${v}" ${s.schedule === v ? "selected" : ""}>${{ off: "Выключено", daily: "Каждый день", weekly: "Раз в неделю" }[v]}</option>`).join("")}</select></label>
+    <div class="note-box" style="align-items:center"><div style="flex:1"><b>${s.stats.found}</b> ${plural(s.stats.found, ["товар", "товара", "товаров"])} в админке · на сайте <b>${s.stats.published}</b></div>${s.stats.found > s.stats.published ? `<button class="btn sm" data-puball="${esc(s.id)}">Все товары на сайт</button>` : ""}</div>
+    <label class="toggle"><input type="checkbox" data-autopub="${esc(s.id)}" ${s.autoPublish ? "checked" : ""}>Автовыгрузка: новые товары этого поставщика сразу появляются на сайте</label>
     <div class="row"><button class="btn sm" data-supload="${esc(s.id)}" ${s.running ? "disabled" : ""}>${s.running ? "Загружается…" : "Загрузить каталог"}</button><button class="btn ghost sm" data-go="products:source=${encodeURIComponent(s.id)}">Товары</button><button class="btn soft sm" data-supsave>Сохранить</button><button class="btn ghost sm" data-check="${esc(s.id)}">Проверить</button><span class="sp"></span><button class="btn danger sm" data-suprm="${esc(s.id)}">Отключить</button></div>
   </article>`;
 }
@@ -1559,6 +1563,16 @@ async function vSources() {
   $("#main").onclick = async e => {
     if (e.target.closest("#supNew")) return connectSupplier();
     const sec = e.target.closest("[data-supsec]"); if (sec) return sectionsSheet(sec.dataset.supsec);
+    const ap = e.target.closest("[data-autopub]");
+    if (ap) { try { await api("sourceSave", { method: "POST", body: { id: ap.dataset.autopub, autoPublish: ap.checked } }); toast(ap.checked ? "Автовыгрузка включена: при следующей загрузке товары сразу пойдут на сайт" : "Автовыгрузка выключена"); sources = null; } catch (err) { ap.checked = !ap.checked; toast(err.message); } return; }
+    const pa = e.target.closest("[data-puball]");
+    if (pa) {
+      const { ids } = await api("productIds", { query: { source: pa.dataset.puball, status: "draft" } }); if (!ids.length) return toast("Все товары уже на сайте");
+      if (!(await confirmBox(`Выгрузить на сайт ${ids.length} ${plural(ids.length, ["товар", "товара", "товаров"])}?`, "Все скрытые товары этого поставщика появятся на витрине. Товары без цены не покажутся. Убрать любой можно в «Товарах».", "Выгрузить"))) return;
+      pa.disabled = true; pa.innerHTML = '<span class="spin"></span>';
+      for (let i = 0; i < ids.length; i += 500) await api("status", { method: "POST", body: { ids: ids.slice(i, i + 500), status: "published" } });
+      toast("На сайте: " + ids.length); sources = null; return vSources();
+    }
     const eu = e.target.closest("[data-supeu]");
     if (eu) {
       const s0 = (await getSources()).find(x => x.id === eu.dataset.supeu); if (!s0) return;
@@ -2430,7 +2444,7 @@ async function vProducts2(pre) {
   const bar = () => {
     const n = sel.size;
     $("#pbar").innerHTML = n ? `<span>Выбрано ${n}</span><button class="w" data-bulk="published">Добавить на сайт</button><button class="g" data-bulk="draft">Скрыть</button><button class="g" data-bulk="del">Удалить</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
-      : `<span>Найдено ${total}</span><button class="w" data-all="on">Показать все</button><button class="g" data-all="off">Скрыть все</button>`;
+      : `<span>Найдено ${total}</span><button class="w" data-all="on">Все на сайт</button><button class="g" data-all="off">Скрыть все</button>`;
     $("#pbar").hidden = !total;
   };
   const draw = () => {
