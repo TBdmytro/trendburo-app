@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v41">
+<meta name="trendburo-build" content="2026-10-13-admin-v42">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2549,7 +2549,8 @@ async function vProducts2(pre) {
     const ck = e.target.closest("[data-psel]"); if (ck) { ck.checked ? sel.add(ck.dataset.psel) : sel.delete(ck.dataset.psel); return bar(); }
     if (e.target.closest("[data-hubstop]")) {
       const { jobs } = await api("jobs"); const act = jobs.filter(j => j.sourceId === F.source && ACTIVE.includes(j.status));
-      for (const j of act) await api("jobCancel", { method: "POST", body: { id: j._id } });
+      // остановка; если задачу не получается изменить — удаляем её целиком (загруженные товары не трогаются)
+      for (const j of act) { try { await api("jobCancel", { method: "POST", body: { id: j._id } }); } catch { await api("jobDelete", { method: "POST", body: { id: j._id } }).catch(() => {}); } }
       const s = hubSrc(); if (s) s.running = false; sources = null;
       toast(`Остановлено. Загруженные товары остались в каталоге`); drawHub(); setTimeout(() => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); load(); }), 2500); return load();
     }
