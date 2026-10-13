@@ -160,10 +160,12 @@ export default async function handler(req, res) {
       case "catalogPage": {
         // упёрлись в лимит полей базы — к ошибке добавляем, кто именно занимает место (чтобы чинить по факту, а не наугад)
         const why = async () => { const st = await dbStats(store).catch(() => null); return st ? ` [всего полей ${st.total}: ` + st.byType.slice(0, 4).map(t => `${t.type} ${t.fields} (${t.docs} шт.)`).join(", ") + "]" : ""; };
-        let r;
+        let r; const t0 = Date.now();
         try { r = await loadCatalogPage(store, String(body.sourceId || ""), { handle: body.handle, page: body.page, limit: body.limit }); }
-        catch (e) { if (/attribute/i.test(e.message)) e.message += await why(); throw e; }
+        catch (e) { if (/attribute/i.test(e.message)) e.message += await why(); console.log("[catalog] FAIL", JSON.stringify({ src: body.sourceId, page: body.page, ms: Date.now() - t0, error: e.message.slice(0, 400) })); throw e; }
         if (r.errors.some(x => /attribute/i.test(x))) r.errors[0] += await why();
+        // строка в журнал сервера (без ключей и личных данных) — чтобы видеть ход загрузки в логах Vercel
+        console.log("[catalog]", JSON.stringify({ src: body.sourceId, page: body.page, ms: Date.now() - t0, found: r.found, saved: r.saved, filtered: r.filtered, skipped: r.skipped, more: r.more, migrating: r.migrating || undefined, errors: r.errors.slice(0, 2) }));
         return send(res, 200, r);
       }
       case "dbStats": return send(res, 200, await dbStats(store));
