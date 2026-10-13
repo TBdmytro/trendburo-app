@@ -91,6 +91,13 @@ test("минимальная комиссия за единицу: одежда 
   assert.equal(ua(40, "clothing"), 55, "кофта: минимум +15 € → 55");
   assert.equal(ua(200, "shoes"), 240, "обувь: 10% = 20 € < 40 € → 240");
   assert.equal(ua(600, "shoes"), 660, "дорогая обувь: 10% больше минимума");
-  assert.equal(ua(50, "bags"), 55, "у других категорий минимума нет");
+  assert.equal(ua(50, "bags"), 65, "у всех категорий, кроме обуви, минимум +15 €");
+  assert.equal(ua(20, "accessories"), 35, "носки 20 € → 35");
+  assert.equal(ua(95, "other"), 110, "книга 95 € → 110");
+  assert.equal(ua(150, "accessories"), 165, "до 150 € — минимум 15 €");
+  assert.equal(ua(338, "clothing"), 375, "338 + 10% = 371,8 → округление вверх → 375 (не 370)");
+  assert.equal(ua(400, "shoes"), 440, "обувь до 400 € — +40 €");
+  assert.equal(ua(450, "shoes"), 495, "обувь дороже 400 € — +10%");
+  assert.equal(ua(1200, "bags"), 1320, "сумка 1200 € → +10%");
   assert.equal(priceOffer({ kind: "official", boutique: 50, dest: "eu", category: "clothing" }).final, 65, "Европа: тот же минимум");
 });

@@ -111,7 +111,7 @@ test("сквозной импорт: ссылка → предпросмотр �
   const items = await store.list("importItem", { jobId: job._id });
   assert.equal(items.length, 1); assert.equal(items[0].kind, "new");
   assert.equal(items[0].pricing.ua, 2365); // 2150 × 1,10
-  assert.equal(items[0].pricing.eu, 2320); // 2150 × 1,08 = 2322 → 2320
+  assert.equal(items[0].pricing.eu, 2325); // 2150 × 1,08 = 2322 → вверх до 2325
   const pub = await publishItems(store, [items[0]._id], { fetchImpl: f });
   assert.equal(pub[0].ok, true, pub[0].reason);
   const prod = await store.get(pub[0].productId);
@@ -326,7 +326,7 @@ test("ручная карточка: 3 фото, название, цена бу
   await assert.rejects(saveManualProduct(store, { brand: "Louis Vuitton", title: "Neverfull MM", category: "bags", boutique: 2200, images: [] }), /фото/);
   const p = await saveManualProduct(store, { brand: "Louis Vuitton", title: "Neverfull MM", category: "bags", gender: "w", boutique: 2200,
     images: ["https://cdn.sanity.io/images/x/y/1.jpg", "https://cdn.sanity.io/images/x/y/2.jpg", "https://cdn.sanity.io/images/x/y/3.jpg"], availability: "online" });
-  assert.equal(p.status, "published"); assert.equal(p.pricing.ua, 2420); assert.equal(p.pricing.eu, 2375);
+  assert.equal(p.status, "published"); assert.equal(p.pricing.ua, 2420); assert.equal(p.pricing.eu, 2380);
   const sf = toStorefront(p);
   assert.equal(sf.images.length, 3); assert.equal(sf.price.ua, 2420); assert.equal(sf.title, "Neverfull MM"); assert.equal(sf.orderable, true);
   const shoe = await saveManualProduct(store, { brand: "Dior", title: "B27", category: "shoes", gender: "m", boutique: 1150, sizes: ["40", "41"], images: ["https://cdn.sanity.io/images/x/y/4.jpg"] });

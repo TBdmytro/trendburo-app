@@ -154,3 +154,25 @@ test("раскладка по разделам магазина: вкладки 
   assert.ok(after.some(p => (p.sections || []).includes("mens")));
   assert.equal((await loadState(store, id)).status, "done");
 });
+
+test("пересчёт цен по правилу владельца: обувь +40 € до 400 €, остальное +15 €, дальше 10%, округление вверх; витрину без предпросмотра не трогаем", { timeout: 120000 }, async () => {
+  const { fs, store } = await setup({ oldBloated: 0, oldClean: 0 });
+  const offer = boutique => [{ _key: "o", sourceId: "s", sourceKind: "retailer", region: "EU", currency: "EUR", boutique, purchase: null, availability: {} }];
+  const mk = (id, category, boutique, status = "draft", extra = {}) => fs.db.set(id, { _id: id, _type: "product", _rev: "x", title: id, category, status, overrides: {}, offers: offer(boutique), pricing: { ua: 1 }, ...extra });
+  mk("product.shoe200", "shoes", 200); mk("product.shoe450", "shoes", 450); mk("product.tee50", "clothing", 50); mk("product.coat338", "clothing", 338);
+  mk("product.socks20", "accessories", 20); mk("product.book95", "accessories", 95, "draft", { overrides: { category: "other" } }); mk("product.bag1200", "bags", 1200);
+  mk("product.live", "clothing", 50, "published");
+  const { ensurePrices } = await import("../lib/reprice.js");
+  let r; do { r = await ensurePrices(store, { budgetMs: 5000 }); } while (!r.done);
+  const ua = async id => (await store.get(id)).pricing.ua;
+  assert.equal(await ua("product.shoe200"), 240);
+  assert.equal(await ua("product.shoe450"), 495);
+  assert.equal(await ua("product.tee50"), 65);
+  assert.equal(await ua("product.coat338"), 375);
+  assert.equal(await ua("product.socks20"), 35);
+  assert.equal(await ua("product.book95"), 110);
+  assert.equal(await ua("product.bag1200"), 1320);
+  assert.equal(await ua("product.live"), 1, "товар на витрине без предпросмотра не пересчитывается");
+  // повторный вызов ничего не делает
+  assert.equal((await ensurePrices(store)).done, true);
+});

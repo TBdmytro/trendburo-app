@@ -5,6 +5,7 @@
 import { kickWorker } from "../lib/chain.js";
 import { loadCatalogPage, dbStats } from "../lib/catalogload.js";
 import { startLoad, stopLoad, loadState, kickCatalog, STALE_MS } from "../lib/catalogrun.js";
+import { repriceAll, ensurePrices, PRICE_VER } from "../lib/reprice.js";
 import { getStore } from "../lib/store.js";
 import { checkPassword, issueCookie, clearCookie, readSession } from "../lib/auth.js";
 import { SOURCES, sourceWith, makeNet } from "../lib/sources.js";
@@ -184,6 +185,8 @@ export default async function handler(req, res) {
         }
         return send(res, 200, { load: L });
       }
+      // пересчитать скрытые товары, если формула цен в коде новее (вызывает админка при открытии «Товаров»)
+      case "ensurePrices": return send(res, 200, await ensurePrices(store, { budgetMs: 40000, log: x => console.log("[price]", JSON.stringify(x)) }));
       case "dbStats": return send(res, 200, await dbStats(store));
       case "jobCancel": return send(res, 200, { job: slim(await cancelJob(store, body.id)) });
       case "jobDelete": {
@@ -373,6 +376,7 @@ export default async function handler(req, res) {
           { kind: "official", boutique: 3000, dest: "ua" }, { kind: "official", boutique: 3000, dest: "eu" },
           { kind: "official", boutique: 50, dest: "ua", category: "clothing" }, { kind: "official", boutique: 340, dest: "ua", category: "clothing" },
           { kind: "official", boutique: 200, dest: "ua", category: "shoes" }, { kind: "official", boutique: 500, dest: "ua", category: "shoes" },
+          { kind: "official", boutique: 20, dest: "ua", category: "accessories" }, { kind: "official", boutique: 95, dest: "ua", category: "other" }, { kind: "official", boutique: 338, dest: "ua", category: "clothing" },
           { kind: "eyewear-supplier", boutique: 330, purchase: 240 }, { kind: "eyewear-supplier", boutique: 400, purchase: 300 },
           { kind: "eyewear-supplier", boutique: 460, purchase: 300 }, { kind: "eyewear-supplier", boutique: 1000, purchase: 800 },
           { kind: "eyewear-supplier", boutique: 1000, purchase: 900 }, { kind: "official", boutique: null }
@@ -389,10 +393,12 @@ export default async function handler(req, res) {
         if (!body.confirmPreview) return send(res, 400, { error: "Сначала посмотрите предпросмотр изменений цен" });
         const cfg = mergeConfig(body.config);
         await store.put({ _id: "settings.pricing", _type: "settings", config: cfg, by: me.name, at: new Date().toISOString() });
-        // пересчёт опубликованных товаров по новым правилам
-        const pub = await store.list("product", {}, { limit: 50000 });
-        for (const p of pub) { p.pricing = computePricing(p, cfg); await store.put(p); }
-        return send(res, 200, { ok: true, updated: pub.length });
+        // пересчёт всех товаров (и на витрине — предпросмотр уже посмотрели) точечными правками пачками
+        let r = { done: false, cursor: "" }, changed = 0; const t0 = Date.now();
+        while (!r.done && Date.now() - t0 < 45000) { r = await repriceAll(store, cfg, { cursor: r.cursor, budgetMs: 45000 - (Date.now() - t0) }); changed += r.changed; }
+        if (r.done) await store.put({ _id: "settings.priceVer", _type: "settings", v: PRICE_VER, cursor: "", at: new Date().toISOString() });
+        console.log("[price] save", JSON.stringify({ changed, done: r.done }));
+        return send(res, 200, { ok: true, updated: changed, done: r.done });
       }
       default: return send(res, 404, { error: "Неизвестное действие" });
     }
