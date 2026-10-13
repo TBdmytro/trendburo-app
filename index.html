@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-13-live-v42">
+<meta name="trendburo-build" content="2026-10-13-live-v43">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -2399,7 +2399,6 @@ const I_TG='<svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><pat
 /* Вход: Telegram решает, кто вы. Есть учётная запись — «Войти», нет — «Регистрация» с именем. Один Telegram = одна учётная запись. */
 function authGate(force){if(!LIVE)return;const b=authBody();
   if(b&&store.get("tb_signed",0)&&!force){loadMe();return}
-  if(!b&&!force){try{if(sessionStorage.getItem("tb_gate_seen"))return;sessionStorage.setItem("tb_gate_seen","1")}catch(e){}}
   document.querySelectorAll(".gate").forEach(x=>x.remove());
   const g=document.createElement("div");g.className="gate";g.setAttribute("role","dialog");g.setAttribute("aria-label","Вход");
   g.innerHTML=`<div class="gt-top"><span class="gt-logo">TB</span><h1>Trend Büro</h1><p>Байер-сервис из бутиков Европы</p></div><div class="gt-card" id="gtc"></div>`;
@@ -2416,18 +2415,18 @@ function authGate(force){if(!LIVE)return;const b=authBody();
       ${j.code==="no_token"?"":`<button class="btn block gt-go" data-retry>Попробовать снова</button>`}${skip}`;wire();const r=card.querySelector("[data-retry]");if(r)r.onclick=start},
     login(j){const n=(j.profile&&j.profile.name)||j.user.name,u=j.user;card.innerHTML=`<span class="gt-k">Вход</span>
       <div class="gt-u">${avatarHTML({photo:u.photo,name:n},"gt-av")}<div><b>С возвращением, ${esc(String(n).split(" ")[0])}</b><small>${u.username?"@"+esc(u.username)+" · ":""}аккаунт найден</small></div><svg class="gt-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
-      <button class="btn block gt-go" data-go>${I_TG}Войти</button>${note}${skip}`;wire();
+      <button class="btn block gt-go" data-go>${I_TG}Войти</button>${note}`;wire();
       card.querySelector("[data-go]").onclick=async e=>{const bt=e.currentTarget;bt.disabled=true;bt.classList.add("busy");const r=await loadMe();if(r)done(r);else{bt.disabled=false;bt.classList.remove("busy");state.err(ME_ERR||{})}}},
     reg(j){const u=j.user||tgu();card.innerHTML=`<span class="gt-k">Регистрация через Telegram</span>
       <div class="gt-u">${avatarHTML({photo:u.photo,name:u.name},"gt-av")}<div><b>${esc(u.name||"Новый клиент")}</b><small>${u.username?"@"+esc(u.username):"аккаунт Telegram"} · новая учётная запись</small></div></div>
       <label class="gt-f"><span>Как к вам обращаться</span><input type="text" id="gtName" autocomplete="name" enterkeyhint="done" value="${esc(u.name||"")}" placeholder="Имя и фамилия" maxlength="80"></label>
-      <button class="btn block gt-go" data-go>${I_TG}Зарегистрироваться</button>${note}${skip}`;wire();
+      <button class="btn block gt-go" data-go>${I_TG}Зарегистрироваться</button>${note}`;wire();
       card.querySelector("[data-go]").onclick=async e=>{const nm=card.querySelector("#gtName").value.trim();if(nm.length<2){card.querySelector("#gtName").focus();toast("Напишите, как к вам обращаться");return}
         const bt=e.currentTarget;bt.disabled=true;bt.classList.add("busy");const r=await loadMe({a:"register",name:nm});if(r)done(r);else{bt.disabled=false;bt.classList.remove("busy");state.err(ME_ERR||{})}}},
     async web(){state.load("Загружаем…");let info={};try{info=await (await fetch("/api/me",{cache:"no-store"})).json()}catch(e){}
       if(!info.ready)return state.err({code:"no_token"});
       card.innerHTML=`<span class="gt-k">Вход и регистрация</span><div class="gt-msg"><b>Войдите через Telegram</b><p>Если вы у нас впервые — аккаунт создастся сам. Если уже были — откроется ваш профиль с заказами.</p></div>
-        ${info.bot?`<div class="gt-widget" id="gtw"></div><a class="btn block gt-go soft" href="https://t.me/${esc(info.bot)}" target="_blank" rel="noopener">${I_TG}Открыть в Telegram</a>`:""}${note}${skip}`;wire();
+        ${info.bot?`<div class="gt-widget" id="gtw"></div><a class="btn block gt-go soft" href="https://t.me/${esc(info.bot)}" target="_blank" rel="noopener">${I_TG}Открыть в Telegram</a>`:""}${note}`;wire();
       if(info.bot){window.tbOnTgAuth=u=>{store.set("tb_login",u);start()};const sc=document.createElement("script");sc.async=true;sc.src="https://telegram.org/js/telegram-widget.js?22";
         sc.setAttribute("data-telegram-login",info.bot);sc.setAttribute("data-size","large");sc.setAttribute("data-radius","14");sc.setAttribute("data-request-access","write");sc.setAttribute("data-onauth","tbOnTgAuth(user)");card.querySelector("#gtw").append(sc)}}};
   // клавиатура: экран поднимается, карточка с кнопкой остаётся видна; Enter = отправить
@@ -2438,7 +2437,7 @@ function authGate(force){if(!LIVE)return;const b=authBody();
   g.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("input")){e.preventDefault();e.target.blur();const b=card.querySelector("[data-go]");if(b)b.click()}});
   async function start(){if(!authBody())return state.web();state.load();const j=await meCall({a:"check"});if(j.error)return state.err(j);j.exists?state.login(j):state.reg(j)}
   start()}
-function logout(){store.set("tb_signed",0);store.set("tb_login",null);ME=null;renderTopIcons();popAll();toast("Вы вышли из профиля")}
+function logout(){store.set("tb_signed",0);store.set("tb_login",null);ME=null;renderTopIcons();popAll();toast("Вы вышли из профиля");setTimeout(()=>authGate(true),400)}
 
 /* этапы заказа: что видит клиент */
 const fmtD=s=>s?new Date(String(s).length===10?s+"T12:00":s).toLocaleDateString("ru-RU",{day:"numeric",month:"long"}):"";
