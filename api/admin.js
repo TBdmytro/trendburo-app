@@ -188,7 +188,7 @@ export default async function handler(req, res) {
       }
 
       case "products": {
-        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, issues, gender, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}" });
+        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, createdAt, issues, gender, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}" });
         const Q = req.query, q = String(Q.q || "").toLowerCase();
         const cat = p => p.overrides?.category || p.category;
         // фильтры применяются по очереди; списки для выпадающих меню строятся по остальным фильтрам
@@ -200,7 +200,7 @@ export default async function handler(req, res) {
         return send(res, 200, { total: list.length, offset,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId) },
           shown: list.filter(p => p.status === "published").length,
-          products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), gender: p.gender || null, sizes: sizeList(p) })) });
+          products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), gender: p.gender || null, sizes: sizeList(p), createdAt: p.createdAt || null })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });

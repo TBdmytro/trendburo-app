@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v33">
+<meta name="trendburo-build" content="2026-10-13-admin-v34">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -460,6 +460,11 @@ textarea{min-height:110px}
 .fchip.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .fchip select{position:absolute;inset:0;opacity:0;width:100%;min-height:0;cursor:pointer}
 .plist{display:flex;flex-direction:column}
+.hub{border:1px solid var(--line);border-radius:18px;padding:16px;margin:4px 0 14px;display:flex;flex-direction:column;gap:12px;background:#fff}
+.hub-top{display:flex;align-items:center;gap:12px}.hub-top .av{width:44px;height:44px;border-radius:12px;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:Prata,Georgia,serif;font-size:18px;flex:none}
+.hub-top .tx{display:flex;flex-direction:column;min-width:0}.hub-top .tx b{font-size:18px;font-weight:600}.hub-top .tx span{font-size:12.5px;color:var(--muted)}
+.hub-act{display:flex;gap:8px;flex-wrap:wrap}
+.hub-prog{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:13.5px}.hub-prog .bar{flex-basis:100%;height:4px;border-radius:4px;background:#e2e3e6;overflow:hidden}.hub-prog .bar i{display:block;height:100%;background:var(--ink)}
 .added{margin:14px 0 4px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
 .added-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:12px 16px;background:var(--soft)}.added-h b{font-size:14.5px}
 .added-l{display:flex;flex-direction:column;max-height:320px;overflow:auto}
@@ -820,13 +825,15 @@ async function pump() {
       p.hidden = false;
       p.innerHTML = `<b>${esc(srcName(j.sourceId))}</b> · ${esc(STATUS[j.status][0].toLowerCase())}<div>${j.phase === "discover" ? "ищем товары… найдено " + j.found : `${j.processed} из ${j.found}`}</div><div class="bar"><i style="width:${j.phase === "discover" ? 8 : pct}%"></i></div>`;
       if (view === "job:" + j._id || view === "jobs") refreshCurrent();
+      const hp = $("#hubProg"); if (hp && hp.dataset.src === j.sourceId) { hp.hidden = false; hp.innerHTML = `<span class="spin"></span><span>${j.phase === "discover" ? "Ищем товары на сайте… найдено " + j.found : `Загружаем: ${j.processed} из ${j.found}`}</span><div class="bar"><i style="width:${pct}%"></i></div>`; }
       try { await api("tick", { method: "POST", body: {}, silent: true }); } catch {}
       await new Promise(r => setTimeout(r, 300));
     }
   } finally { pumpOn = false; }
   if (view === "jobs" || view.startsWith("job:")) refreshCurrent(true);
+  if (typeof onJobsIdle === "function") { const f = onJobsIdle; onJobsIdle = null; f(); }
 }
-let refreshT = 0;
+let refreshT = 0, onJobsIdle = null;
 function refreshCurrent(force) { const now = Date.now(); if (!force && now - refreshT < 2500) return; refreshT = now; if (view === "jobs") vJobs(true); else if (view.startsWith("job:")) vJob(view.split(":")[1], true); }
 const srcName = id => id === "manual" ? "Добавлен вручную" : (sources || []).find(s => s.id === id)?.name || id;
 
@@ -1330,7 +1337,7 @@ async function connectSupplier(preUrl) {
         const { id } = await api("supplierAdd", { method: "POST", body });
         await getSources(true);
         const r = await api("jobCreate", { method: "POST", body: { sourceId: id, mode: "full" } });
-        toast("Подключено. Каталог загружается в фоне"); d.close(); go("job:" + r.job._id); pump();
+        toast("Подключено — товары загружаются и появятся здесь"); d.close(); go("products:source=" + encodeURIComponent(id)); pump();
       } catch (err) { toast(err.message); t.disabled = false; t.textContent = "Подключить и загрузить каталог"; }
     }
   };
@@ -1492,7 +1499,7 @@ async function vPrices() {
 /* ---------- Источники (настройки) ---------- */
 const secName = h => String(h).replace(/-/g, " ").replace(/^\w/, c => c.toUpperCase());
 /* Разделы магазина: как на его сайте — Бестселлеры, Женское, Мужское. Грузим только выбранные, по порядку выбора. */
-async function sectionsSheet(id) {
+async function sectionsSheet(id, { stay = false, after = null } = {}) {
   const d = sheet("Разделы магазина", `<div class="form"><p class="hint" style="margin:0">Отметьте разделы, как на сайте магазина. Загрузятся только они, в порядке выбора: например, сначала «Бестселлеры», потом «Женское» и «Мужское». Ничего не отмечено — весь каталог.</p><div id="secBox"><span class="spin"></span></div></div>`);
   const box = d.querySelector("#secBox");
   let data; try { data = await api("supplierCollections", { query: { id } }); } catch (err) { box.innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(err.message)}</div></div>`; return; }
@@ -1516,7 +1523,7 @@ async function sectionsSheet(id) {
     try {
       await api("supplierSections", { method: "POST", body: { id, collections: sel } });
       const r = await api("jobCreate", { method: "POST", body: { sourceId: id, mode: "full" } });
-      toast(r.existing ? "Загрузка уже идёт — новые разделы возьмутся со следующей" : "Загружаем выбранные разделы"); d.close(); sources = null; go("job:" + r.job._id); pump();
+      toast(r.existing ? "Загрузка уже идёт — новые разделы возьмутся со следующей" : "Загружаем выбранные разделы"); d.close(); sources = null; if (stay) { pump(); after && after(); } else { go("job:" + r.job._id); pump(); }
     } catch (err) { toast(err.message); gb.disabled = false; gb.textContent = "Загрузить"; }
   };
   draw();
@@ -1636,7 +1643,7 @@ async function vSources() {
       return;
     }
     const rd = e.target.closest("[data-ready]");
-    if (rd) { rd.disabled = true; rd.innerHTML = '<span class="spin"></span> Подключаем…'; const ok = await connectReady(rd.dataset.ready, rd.dataset.rname); toast(ok ? rd.dataset.rname + " подключён — выгружаем каталог" : rd.dataset.rname + ": " + READY_FAIL[rd.dataset.ready]); sources = null; await getSources(true); pump(); if (typeof ok === "string") return go("job:" + ok); return vSources(); }
+    if (rd) { rd.disabled = true; rd.innerHTML = '<span class="spin"></span> Подключаем…'; const ok = await connectReady(rd.dataset.ready, rd.dataset.rname); toast(ok ? rd.dataset.rname + " подключён — выгружаем каталог" : rd.dataset.rname + ": " + READY_FAIL[rd.dataset.ready]); sources = null; await getSources(true); pump(); if (ok) { const sid = (await getSources(true)).find(x => x.custom && hostOf(x.home || "") === hostOf(rd.dataset.ready))?.id; if (sid) return go("products:source=" + encodeURIComponent(sid)); } return vSources(); }
     const ra = e.target.closest("[data-readyall]");
     if (ra) {
       const have = new Set((await getSources(true)).filter(s => s.custom).map(s => hostOf(s.home || "")));
@@ -2468,10 +2475,21 @@ async function vProducts2(pre) {
   const sname = id => id === "manual" ? "Вручную" : srcs.find(s => s.id === id)?.name || srcName(id);
   let PV = "grid"; try { PV = localStorage.getItem("tb_pview") || "grid"; } catch {}
   $("#main").innerHTML = `<div class="vh"><h1>Товары</h1><span class="sp"></span><div class="pview" role="group" aria-label="Вид"><button data-pv="grid" aria-pressed="${PV === "grid"}">Каталог</button><button data-pv="list" aria-pressed="${PV === "list"}">Список</button></div><button class="btn sm" data-go="add">${svg("add")}Новый</button></div><p class="vsub" id="ptot" style="margin-bottom:12px"></p>
+    <div id="hub"></div>
     <input type="search" id="pq" placeholder="Бренд, модель, артикул" value="${esc(F.q)}" aria-label="Поиск">
     <div class="fchips" id="pf"></div>
     <div class="plist" id="plist"></div><div class="more" id="pmore"></div><div class="pbar" id="pbar"></div>`;
   const q = extra => ({ q: F.q, status: F.status, source: F.source, brand: F.brand, cat: F.cat, ...extra });
+  /* Поставщик открыт — вся работа здесь: загрузить новые товары, разделы, автовыгрузка, на сайт */
+  const hubSrc = () => srcs.find(s => s.id === F.source && s.custom);
+  const drawHub = () => {
+    const s = hubSrc(), h = $("#hub"); if (!h) return;
+    if (!s) { h.innerHTML = ""; return; }
+    h.innerHTML = `<div class="hub"><div class="hub-top"><span class="av">${esc((s.name || "?")[0])}</span><div class="tx"><b>${esc(s.name)}</b><span>${esc((s.home || "").replace("https://", ""))} · ${s.collections?.length ? "разделы: " + esc(s.collections.map(secName).join(", ")) : "весь каталог"}${s.market ? " · цены Европы" : ""}</span></div></div>
+      <div class="hub-act"><button class="btn" data-hubload ${s.running ? "disabled" : ""}>${s.running ? "Загружается…" : "Загрузить новые товары"}</button><button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-go="sources">Настройки</button></div>
+      <div class="hub-prog" id="hubProg" data-src="${esc(s.id)}" ${s.running ? "" : "hidden"}><span class="spin"></span><span>Загрузка идёт…</span></div>
+      <label class="toggle"><input type="checkbox" data-hubauto ${s.autoPublish ? "checked" : ""}>Автовыгрузка: новые товары сразу появляются на сайте</label></div>`;
+  };
   const chipSel = (key, label, arr, labf = x => x) => `<span class="fchip ${F[key] ? "on" : ""}">${esc(F[key] ? labf(F[key]) : label)} ${F[key] ? "×" : "▾"}<select data-f="${key}" aria-label="${label}"><option value="">${label}: все</option>${arr.map(x => `<option value="${esc(x.k)}" ${x.k === F[key] ? "selected" : ""}>${esc(labf(x.k))} · ${x.n}</option>`).join("")}</select></span>`;
   const drawFilters = () => {
     $("#pf").innerHTML = [["", "Все"], ["published", "На витрине"], ["draft", "Скрытые"]].map(([k, v]) => `<button class="fchip ${F.status === k ? "on" : ""}" data-st="${k}">${v}</button>`).join("")
@@ -2484,7 +2502,7 @@ async function vProducts2(pre) {
         <span class="pr"><b class="num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</b> <span>· ${esc(CATS[p.category] || "—")}${p.avail === false ? " · нет в наличии" : ""}</span></span></div>
       <input type="checkbox" class="sw" data-show1="${esc(p._id)}" ${p.status === "published" ? "checked" : ""} ${p.price?.ua ? "" : "disabled"} aria-label="На витрине"></div>`;
   const card = p => `<div class="pcard ${sel.has(p._id) ? "sel" : ""}" data-pick1="${esc(p._id)}">
-      <span class="tick" aria-hidden="true">${sel.has(p._id) ? "✓" : ""}</span>${p.status === "published" ? `<span class="live">На сайте</span>` : ""}
+      <span class="tick" aria-hidden="true">${sel.has(p._id) ? "✓" : ""}</span>${p.status === "published" ? `<span class="live">На сайте</span>` : p.createdAt && Date.now() - Date.parse(p.createdAt) < 3 * 864e5 ? `<span class="live" style="background:#eef1fb;color:#3a55c4">Новое</span>` : ""}
       <div class="im">${p.cover ? `<img src="${esc(thumb(p.cover))}" alt="" loading="lazy" decoding="async">` : svg("img")}</div>
       <div class="bd"><span class="br">${esc(p.brand || "—")}${p.gender ? " · " + (p.gender === "w" ? "жен" : p.gender === "m" ? "муж" : "унисекс") : ""}</span><span class="tt">${esc(p.title)}</span>
         <span class="pr num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</span>
@@ -2508,6 +2526,7 @@ async function vProducts2(pre) {
     list = append ? list.concat(r.products) : r.products; total = r.total; shown = r.shown; facets = r.facets;
     tot(); drawFilters(); draw();
   };
+  drawHub(); if (hubSrc()?.running) { onJobsIdle = () => { if (view.startsWith("products")) { getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); load(); }); } }; pump(); }
   let t; $("#pq").oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(load, 300); };
   $("#main").onchange = e => { const f = e.target.dataset.f; if (f) { F[f] = e.target.value; if (f === "source") { F.brand = ""; F.cat = ""; } load(); } };
   $("#main").onclick = async e => {
@@ -2519,6 +2538,12 @@ async function vProducts2(pre) {
     const sw = e.target.closest("[data-show1]");
     if (sw) { const on = sw.checked; try { await api("status", { method: "POST", body: { ids: [sw.dataset.show1], status: on ? "published" : "draft" }, silent: true }); } catch (err) { sw.checked = !on; return toast(err.message); } const p = list.find(x => x._id === sw.dataset.show1); if (p) p.status = on ? "published" : "draft"; shown += on ? 1 : -1; tot(); return toast(on ? "На витрине через ~10 секунд" : "Скрыто с витрины"); }
     const ck = e.target.closest("[data-psel]"); if (ck) { ck.checked ? sel.add(ck.dataset.psel) : sel.delete(ck.dataset.psel); return bar(); }
+    if (e.target.closest("[data-hubload]")) {
+      const s = hubSrc(); try { const r = await api("jobCreate", { method: "POST", body: { sourceId: s.id, mode: "full" } }); toast(r.existing ? "Загрузка уже идёт" : "Загружаем новые товары — они появятся здесь"); s.running = true; drawHub(); onJobsIdle = () => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); F.fresh = ""; load(); toast("Готово: товары обновлены"); }); pump(); } catch (err) { toast(err.message); } return;
+    }
+    if (e.target.closest("[data-hubsec]")) return sectionsSheet(F.source, { stay: true, after: () => { const s = hubSrc(); if (s) { s.running = true; drawHub(); } onJobsIdle = () => getSources(true).then(a => { srcs.splice(0, srcs.length, ...a); drawHub(); load(); }); } });
+    const ha = e.target.closest("[data-hubauto]");
+    if (ha) { try { await api("sourceSave", { method: "POST", body: { id: F.source, autoPublish: ha.checked } }); const s = hubSrc(); if (s) s.autoPublish = ha.checked; sources = null; toast(ha.checked ? "Автовыгрузка включена" : "Автовыгрузка выключена"); } catch (err) { ha.checked = !ha.checked; toast(err.message); } return; }
     const pv = e.target.closest("[data-pv]"); if (pv) { PV = pv.dataset.pv; try { localStorage.setItem("tb_pview", PV); } catch {} document.querySelectorAll("[data-pv]").forEach(b => b.setAttribute("aria-pressed", b.dataset.pv === PV)); return draw(); }
     if (!e.target.closest("[data-open]")) { const pc = e.target.closest("[data-pick1]"); if (pc) { const id = pc.dataset.pick1; sel.has(id) ? sel.delete(id) : sel.add(id); pc.classList.toggle("sel", sel.has(id)); pc.querySelector(".tick").textContent = sel.has(id) ? "✓" : ""; return bar(); } }
     const all = e.target.closest("[data-all]");
