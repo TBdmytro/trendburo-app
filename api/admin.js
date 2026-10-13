@@ -339,7 +339,7 @@ export default async function handler(req, res) {
         // влияние на опубликованные товары: сколько цен изменится
         let changes = [];
         if (body.config) {
-          const pub = await store.list("product", { status: "published" }, { limit: 5000 });
+          const pub = await store.list("product", { status: "published" }, { limit: 50000 });
           changes = pub.map(p => ({ id: p._id, title: p.title, brand: p.brand, before: p.pricing?.ua ?? null, after: computePricing(p, body.config).ua })).filter(x => x.before !== x.after).slice(0, 300);
         }
         return send(res, 200, { results: cases.map(c => ({ input: c, ...priceOffer(c, cfg) })), changes });
@@ -349,7 +349,7 @@ export default async function handler(req, res) {
         const cfg = mergeConfig(body.config);
         await store.put({ _id: "settings.pricing", _type: "settings", config: cfg, by: me.name, at: new Date().toISOString() });
         // пересчёт опубликованных товаров по новым правилам
-        const pub = await store.list("product", {}, { limit: 5000 });
+        const pub = await store.list("product", {}, { limit: 50000 });
         for (const p of pub) { p.pricing = computePricing(p, cfg); await store.put(p); }
         return send(res, 200, { ok: true, updated: pub.length });
       }
