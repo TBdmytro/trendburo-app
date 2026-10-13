@@ -22,6 +22,9 @@ if (process.env.FAKE_SHOP === "1") {
     if (u.hostname.endsWith("shop.test")) {
       if (u.pathname === "/robots.txt") return new Response("User-agent: *\nDisallow: /cart", { headers: { "content-type": "text/plain" } });
       if (u.pathname === "/meta.json") return json({ name: "Test Shop", currency: "USD" });
+      if (u.pathname === "/collections.json") return json({ collections: [{ handle: "bestsellers", title: "Bestsellers", products_count: 10 }, { handle: "womens", title: "Women", products_count: 20 }, { handle: "mens", title: "Men", products_count: 20 }, { handle: "empty", title: "Empty", products_count: 0 }] });
+      const cm = u.pathname.match(/^\/collections\/([a-z-]+)\/products\.json$/);
+      if (cm) { const sets = { bestsellers: all.slice(0, 10), womens: all.slice(0, 20), mens: all.slice(20, 40) }; const lst = sets[cm[1]] || []; const lim = +u.searchParams.get("limit") || 30, pg = +u.searchParams.get("page") || 1; return json({ products: lst.slice((pg - 1) * lim, pg * lim) }); }
       if (u.pathname === "/products.json") { const lim = +u.searchParams.get("limit") || 30, pg = +u.searchParams.get("page") || 1; return json({ products: all.slice((pg - 1) * lim, pg * lim) }); }
       return new Response("nf", { status: 404, headers: { "content-type": "text/html" } });
     }

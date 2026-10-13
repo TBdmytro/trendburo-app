@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v26">
+<meta name="trendburo-build" content="2026-10-13-admin-v27">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -808,7 +808,7 @@ function brandCard(s) {
 }
 function jobRow(j) {
   const st = STATUS[j.status] || [j.status, ""]; const pct = j.found ? Math.round(j.processed / j.found * 100) : 0;
-  const what = (j.onlyCats && j.onlyCats.length ? j.onlyCats.map(c => CATS[c] || c).join(", ") : MODE[j.mode] || j.mode) + (j.gender ? (j.gender === "w" ? " · женское" : " · мужское") : "");
+  const what = (j.onlyCats && j.onlyCats.length ? j.onlyCats.map(c => CATS[c] || c).join(", ") : j.meta?.sections?.length ? "Разделы: " + j.meta.sections.map(secName).join(", ") : MODE[j.mode] || j.mode) + (j.gender ? (j.gender === "w" ? " · женское" : " · мужское") : "");
   return `<div class="li" data-job="${esc(j._id)}"><div class="t"><b>${esc(srcName(j.sourceId))} — ${esc(what)}</b><span>${dt(j.createdAt)} · ${esc(j.createdBy)}${j.meta?.refresh ? " · плановое обновление" : ""}</span></div>
     <div class="pr"><div class="bar"><i style="width:${ACTIVE.includes(j.status) && j.phase === "discover" ? 6 : pct}%"></i></div><div class="hint num" style="margin-top:4px">${j.processed} из ${j.found}${j.errors?.length ? " · ошибок " + j.errors.length : ""}</div></div>
     <span class="pill ${st[1]}"><span class="dot"></span>${st[0]}</span><button class="btn soft sm" data-deljob="${esc(j._id)}" aria-label="Удалить задачу" title="Удалить задачу">×</button></div>`;
@@ -1144,7 +1144,7 @@ async function vJob(id, quiet) {
   vJob.kind = kind; vJob.sel = [...keep.sel]; vJob.shown = keep.shown;
   const st = STATUS[j.status] || [j.status, ""];
   const pct = j.found ? Math.round(j.processed / j.found * 100) : 0;
-  const what = (j.onlyCats && j.onlyCats.length ? j.onlyCats.map(c => CATS[c] || c).join(", ") : MODE[j.mode] || j.mode) + (j.gender ? (j.gender === "w" ? " · женское" : " · мужское") : "");
+  const what = (j.onlyCats && j.onlyCats.length ? j.onlyCats.map(c => CATS[c] || c).join(", ") : j.meta?.sections?.length ? "Разделы: " + j.meta.sections.map(secName).join(", ") : MODE[j.mode] || j.mode) + (j.gender ? (j.gender === "w" ? " · женское" : " · мужское") : "");
   const blockedTxt = j.status === "blocked" ? `<div class="note-box err">${svg("warn")}<div><b>Сайт ${esc(srcName(j.sourceId))} не пускает автоматическую загрузку с нашего сервера.</b><br>Это защита сайта от роботов — обходить её мы не будем. Что делать: загрузить товары файлом CSV (шаблон есть на вкладке «Загрузка → Файл»), либо подключить официальный фид бренда, если он есть.<div style="margin-top:10px"><button class="btn sm" data-go="load:file">Загрузить файлом</button></div></div></div>` : "";
   const lastErr = j.errors?.length ? j.errors[j.errors.length - 1] : null;
   const failTxt = j.status === "failed" || (j.status === "done" && !j.processed && lastErr) ? `<div class="note-box err">${svg("warn")}<div><b>Загрузка не удалась.</b> Последняя ошибка: ${esc(lastErr?.text || "неизвестно")}${lastErr?.url && !lastErr.url.startsWith("row:") ? `<div class="hint" style="margin-top:4px">${esc(lastErr.url)}</div>` : ""}</div></div>` : "";
@@ -1303,6 +1303,7 @@ function supplierCard(s) {
     <div class="row"><div><div class="wm" style="font-size:17px">${esc(s.name)}</div><div class="hint">${esc((s.home || "").replace("https://", ""))} · ${s.kind === "eyewear-supplier" ? "поставщик очков" : "магазин"} · ${s.stats.found} ${plural(s.stats.found, ["товар", "товара", "товаров"])}, на витрине ${s.stats.published}</div></div><span class="sp"></span>${ck ? `<span class="pill ${ck[1]}"><span class="dot"></span>${ck[0]}</span>` : ""}</div>
     ${s.lastSync ? `<div class="hint">Последняя загрузка ${dt(s.lastSync.at)}: ${esc(STATUS[s.lastSync.status]?.[0] || s.lastSync.status)}${s.running ? " · идёт загрузка" : ""}</div>` : ""}
     ${s.market ? `<div class="hint">Цены Европы, в евро (раздел магазина ${esc(s.market)})</div>` : ""}
+    <div class="row" style="align-items:center"><div class="hint" style="flex:1">Что загружать: <b style="color:var(--fg)">${s.collections?.length ? esc(s.collections.map(secName).join(", ")) : "весь каталог"}</b></div><button class="btn ghost sm" data-supsec="${esc(s.id)}">Выбрать разделы</button></div>
     ${s.shopCurrency && s.shopCurrency !== "EUR" ? `<button class="btn sm" data-supeu="${esc(s.id)}">Перевести на цены Европы (€)</button>` : ""}
     ${s.shopCurrency && s.shopCurrency !== "EUR" ? `<div class="note-box">${svg("info")}<div>Цены в ${esc(s.shopCurrency)}. Курс: 1 € = ${s.fx ? s.fx.rate : "?"} ${esc(s.shopCurrency)} (${esc(s.fx?.source || "")}). Изменить — в «Цены».</div></div>` : ""}
     <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:130px">Коэффициент к цене<input type="number" data-f="factor" value="${esc(s.factor)}" step="0.01" min="0.5" max="3"></label>
@@ -1447,6 +1448,37 @@ async function vPrices() {
 }
 
 /* ---------- Источники (настройки) ---------- */
+const secName = h => String(h).replace(/-/g, " ").replace(/^\w/, c => c.toUpperCase());
+/* Разделы магазина: как на его сайте — Бестселлеры, Женское, Мужское. Грузим только выбранные, по порядку выбора. */
+async function sectionsSheet(id) {
+  const d = sheet("Разделы магазина", `<div class="form"><p class="hint" style="margin:0">Отметьте разделы, как на сайте магазина. Загрузятся только они, в порядке выбора: например, сначала «Бестселлеры», потом «Женское» и «Мужское». Ничего не отмечено — весь каталог.</p><div id="secBox"><span class="spin"></span></div></div>`);
+  const box = d.querySelector("#secBox");
+  let data; try { data = await api("supplierCollections", { query: { id } }); } catch (err) { box.innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(err.message)}</div></div>`; return; }
+  let sel = [...data.selected], q = "";
+  const draw = () => {
+    const list = data.collections.filter(c => !q || (c.title + " " + c.handle).toLowerCase().includes(q));
+    box.innerHTML = `<input type="text" id="secQ" placeholder="Поиск раздела: best, women, men, leggings…" value="${esc(q)}" style="margin-bottom:10px">
+      <div style="display:flex;flex-direction:column;max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:12px">${list.slice(0, 300).map(c => { const i = sel.indexOf(c.handle);
+        return `<button type="button" data-sech="${esc(c.handle)}" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border:0;border-bottom:1px solid var(--line);background:${i >= 0 ? "var(--soft)" : "#fff"};text-align:left;font:inherit;cursor:pointer">
+          <span style="width:22px;height:22px;border-radius:7px;flex:none;display:grid;place-items:center;font-size:12px;font-weight:700;${i >= 0 ? "background:var(--ink);color:#fff" : "border:1.5px solid var(--line)"}">${i >= 0 ? i + 1 : ""}</span>
+          <span style="flex:1"><b style="font-weight:600">${esc(c.title)}</b><span class="hint" style="display:block">${esc(c.handle)}</span></span>${c.count != null ? `<span class="hint num">${c.count}</span>` : ""}</button>`; }).join("") || `<div class="hint" style="padding:14px">Ничего не нашлось</div>`}</div>
+      <div class="row" style="margin-top:12px"><button class="btn lg" id="secGo">${sel.length ? `Загрузить: ${sel.length} ${plural(sel.length, ["раздел", "раздела", "разделов"])}` : "Загрузить весь каталог"}</button>${sel.length ? `<button class="btn ghost" id="secClr">Сбросить</button>` : ""}</div>`;
+    const qi = box.querySelector("#secQ"); qi.oninput = () => { q = qi.value.trim().toLowerCase(); const pos = qi.selectionStart; draw(); const n = box.querySelector("#secQ"); n.focus(); n.setSelectionRange(pos, pos); };
+  };
+  box.onclick = async e => {
+    const b = e.target.closest("[data-sech]");
+    if (b) { const h = b.dataset.sech, i = sel.indexOf(h); if (i >= 0) sel.splice(i, 1); else sel.push(h); return draw(); }
+    if (e.target.closest("#secClr")) { sel = []; return draw(); }
+    const gb = e.target.closest("#secGo"); if (!gb) return;
+    gb.disabled = true; gb.innerHTML = '<span class="spin"></span>';
+    try {
+      await api("supplierSections", { method: "POST", body: { id, collections: sel } });
+      const r = await api("jobCreate", { method: "POST", body: { sourceId: id, mode: "full" } });
+      toast(r.existing ? "Загрузка уже идёт — новые разделы возьмутся со следующей" : "Загружаем выбранные разделы"); d.close(); sources = null; go("job:" + r.job._id); pump();
+    } catch (err) { toast(err.message); gb.disabled = false; gb.textContent = "Загрузить"; }
+  };
+  draw();
+}
 /* Готовые поставщики: подключаются одним нажатием, без ввода ссылки.
    Сервер всё равно проверяет каждый сайт (robots.txt, открытый каталог) — закрытые не подключатся. */
 const READY_SUP = [
@@ -1508,6 +1540,7 @@ async function vSources() {
     </article>`; }).join("")}</div></details>`;
   $("#main").onclick = async e => {
     if (e.target.closest("#supNew")) return connectSupplier();
+    const sec = e.target.closest("[data-supsec]"); if (sec) return sectionsSheet(sec.dataset.supsec);
     const eu = e.target.closest("[data-supeu]");
     if (eu) {
       const s0 = (await getSources()).find(x => x.id === eu.dataset.supeu); if (!s0) return;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-13-live-v47">
+<meta name="trendburo-build" content="2026-10-13-live-v48">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -433,6 +433,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .dsz button{min-width:48px;height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:14px;padding:0 12px}
 .dsz button[aria-pressed="true"]{background:#fff;color:var(--fg);border-color:#fff}
 .dsz button.q{color:rgba(255,255,255,.7);font-size:13px}
+.dsz button.na{color:rgba(255,255,255,.35);border-color:rgba(255,255,255,.1);text-decoration:line-through;cursor:default}
 .trust{display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:rgba(255,255,255,.82)}
 .trust div{display:flex;gap:10px;align-items:center}
 .trust svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.5;stroke-linejoin:round;flex:none}
@@ -1893,8 +1894,10 @@ function openProduct(id){
   const st=p&&p.st;if(st&&st.loc==="ua")d="ua";
   const cws=st?[{name:"",c:it.c,ok:true}]:colorways(it);
   const sizes=st?null:(p&&p.live?(p.sizes&&p.sizes.length?[...new Set(p.sizes.map(z=>z.size))]:null):(p&&SIZES[p.cat]?SIZES[p.cat][p.g]:null));
+  // размеры, которых нет у поставщика, показываем зачёркнутыми и не даём выбрать
+  const szOut=new Set(p&&p.live&&p.sizes?[...new Set(p.sizes.map(z=>z.size))].filter(z=>!p.sizes.some(x=>x.size===z&&(x.status==="online"||x.status==="boutique"))):[]);
   if(st&&st.size)size=st.size;
-  if(sizes){const pz=p.cat==="shoes"?prefs.shoe:prefs.cloth;if(pz&&sizes.includes(pz))size=pz}
+  if(sizes){const pz=p.cat==="shoes"?prefs.shoe:prefs.cloth;if(pz&&sizes.includes(pz)&&!szOut.has(pz))size=pz}
   const like=p?similarTo(p):RESALE.filter(x=>x.id!==it.id);
   const showDl=!r&&!(st&&st.loc==="ua");
   const btnLabel=()=>r?"Купить":"В корзину · "+eur(priceFor(it,d));
@@ -1921,7 +1924,7 @@ function openProduct(id){
     ${st&&st.size?`<div><div class="pv-lbl">Размер</div><div class="fixsz"><b>${st.size}</b><span>один экземпляр</span></div></div>`:""}
     ${r?`<div class="tags"><span class="dark" style="background:#fff;color:var(--fg)">Проверено Trend Büro</span><span style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">${esc(r.set)}</span></div>`:""}
     ${cws.length>1?`<div><div class="pv-lbl">Цвет · ${cw.name}${cw.ok?"":" · под заказ"}</div><div class="cw">${cws.map((c,i)=>`<button data-ci="${i}" class="${c.ok?"":"na"}" aria-pressed="${i===ci}" aria-label="Цвет ${c.name}"><span class="t">${shapeSVG(it.shape,c.c,"")}</span><span>${c.name}</span></button>`).join("")}</div></div>`:""}
-    ${sizes?`<div><div class="pv-lbl">Размер${size&&size!=="?"?" · "+size:""}</div><div class="dsz">${sizes.map(z=>`<button data-sz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-sz="?" aria-pressed="${size==="?"}">Не знаю</button></div></div>`:""}
+    ${sizes?`<div><div class="pv-lbl">Размер${size&&size!=="?"?" · "+size:""}</div><div class="dsz">${sizes.map(z=>szOut.has(z)?`<button class="na" disabled aria-label="${z} — нет в наличии">${z}</button>`:`<button data-sz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-sz="?" aria-pressed="${size==="?"}">Не знаю</button></div></div>`:""}
     ${p&&(p.dims||p.material)?`<div class="pv-specs">${p.dims?`<span><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/></svg>${esc(p.dims)}</span>`:""}${p.material?`<span><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/></svg>${esc(p.material)}</span>`:""}</div>`:""}
     ${st&&st.loc==="ua"?`<div class="pv-note">Уже в Украине — отправим Новой почтой за 1–3 дня</div>`:!st&&p&&p.live&&!p.orderable?`<div class="pv-note">Наличие и размер менеджер подтвердит после заказа</div>`:""}
     ${r?`<div class="trust"><div><svg viewBox="0 0 24 24">${IC.shield}</svg><span>Проверяем подлинность, сделку ведём сами</span></div></div>`:""}`;

@@ -524,3 +524,22 @@ test("поставщик в долларах с европейским разд�
   assert.equal(p.offers[0].boutique, 220, "цена из европейского раздела, без пересчёта по курсу");
   assert.ok(!String(p.offers[0].url || p.url || "").includes("/en-de"), "адрес товара прежний — без дублей");
 });
+
+test("поставщик: загрузка выбранных разделов не помечает остальные товары «нет в наличии»", async () => {
+  const store = new MemoryStore(); const state = { n: 3 };
+  await saveManualFx(store, { USD: 1.17 });
+  const f = shopFetch(state);
+  const f2 = fakeFetch(u => /\/collections\/bestsellers\/products\.json/.test(u) ? { body: JSON.stringify({ products: shopFixture(1) }), type: "application/json" } : null);
+  const both = async (u, o) => { const r = await f2(u, o); return r.status === 404 ? f(u, o) : r; };
+  const { id } = await addSupplier(store, { url: "https://kith.com" }, { fetchImpl: f });
+  await createJob(store, { sourceId: id, mode: "full" });
+  for (let i = 0; i < 10; i++) { const r = await tick(store, { fetchImpl: f, sleep: noSleep }); if (!r.jobId) break; }
+  const { saveCollections } = await import("../lib/suppliers.js");
+  await saveCollections(store, id, ["bestsellers"]);
+  const { job } = await createJob(store, { sourceId: id, mode: "full" });
+  for (let i = 0; i < 10; i++) { const r = await tick(store, { fetchImpl: both, sleep: noSleep }); if (!r.jobId) break; }
+  const j = await store.get(job._id);
+  assert.equal(j.status, "done", JSON.stringify(j.errors)); assert.ok(j.partial); assert.ok(!j.gone, "ничего не помечено исчезнувшим");
+  const p3 = (await store.list("product")).find(p => p.title.includes("Hoodie 3"));
+  assert.ok(Object.values(p3.offers[0].availability).some(a => a.status !== "out"));
+});

@@ -12,7 +12,7 @@ import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
 import { toStorefront } from "../lib/catalog.js";
 import { saveManualProduct } from "../lib/manual.js";
 import { LEAD_STATUS, notifyClient } from "./lead.js";
-import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier } from "../lib/suppliers.js";
+import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier, listCollections, saveCollections } from "../lib/suppliers.js";
 import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
 import { readScreen, screensEnabled, ScreenError } from "../lib/screens.js";
 import { setupBot, botToken, publicUrl, tg } from "./bot.js";
@@ -139,6 +139,8 @@ export default async function handler(req, res) {
 
       case "supplierDetect": return send(res, 200, { result: await detectSupplier(String(body.url || "")) });
       case "supplierAdd": return send(res, 200, await addSupplier(store, body, { by: me.name }));
+      case "supplierCollections": return send(res, 200, await listCollections(store, String(req.query.id || body.id || "")));
+      case "supplierSections": return send(res, 200, await saveCollections(store, String(body.id || ""), body.collections));
       case "supplierRemove": return send(res, 200, await removeSupplier(store, String(body.id || ""), { deleteProducts: !!body.deleteProducts }));
       case "fxGet": return send(res, 200, await getFx(store));
       case "fxRefresh": { const r = await refreshFx(store, { force: true }); return send(res, 200, { ...(await getFx(store)), refresh: r }); }
