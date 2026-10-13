@@ -130,3 +130,19 @@ test("кабинет: профиль, доставка, заказ с маршр
   assert.equal(other.length, 0);
   delete process.env.DEV_AUTH;
 });
+
+test("регистрация и вход: один Telegram — одна учётная запись; без токена вход честно выключен", async () => {
+  const me = (await import("../api/me.js")).default;
+  delete process.env.DEV_AUTH; delete process.env.TELEGRAM_BOT_TOKEN;
+  assert.equal((await call(me, { method: "POST", body: { initData: "dev:1:Х" } })).body.code, "no_token");
+  process.env.DEV_AUTH = "1";
+  let r = await call(me, { method: "POST", body: { initData: "dev:900:Олег", a: "check" } });
+  assert.equal(r.body.exists, false);
+  r = await call(me, { method: "POST", body: { initData: "dev:900:Олег", a: "register", name: "Олег Петренко" } });
+  assert.equal(r.body.profile.name, "Олег Петренко");
+  r = await call(me, { method: "POST", body: { initData: "dev:900:Другое имя в Telegram", a: "check" } });
+  assert.equal(r.body.exists, true); assert.equal(r.body.profile.name, "Олег Петренко"); // тот же id — тот же аккаунт, имя сохранено
+  r = await call(me, { method: "POST", body: { initData: "dev:900:Олег", a: "register", name: "Повторно" } });
+  assert.equal((await store.list("customer", {})).filter(c => c.tg.id === 900).length, 1); // дубля нет
+  delete process.env.DEV_AUTH;
+});
