@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-13-live-v48">
+<meta name="trendburo-build" content="2026-10-13-live-v49">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -341,7 +341,9 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .shimg{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply;display:block}
 .pc .art img.shimg{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;padding:0;box-sizing:border-box;object-fit:contain;mix-blend-mode:normal}
 .pc .art:has(img.shimg){background:var(--tbg,#f3f3f3);transition:background .3s}
-.pc .art img.shimg{transition:transform .35s var(--ease),opacity .3s}.pc .art:not(.framed) img.shimg[crossorigin]{opacity:.001}.pc .art.framed img.shimg{opacity:1}
+.pc .art img.shimg{transition:transform .35s var(--ease),opacity .3s}
+/* фото «на модели» и вертикальные снимки — во всю плитку, без полей */
+.pc .art.fill img.shimg{object-fit:cover;object-position:50% 22%;transform:none!important;opacity:1}.pc .art:not(.framed) img.shimg[crossorigin]{opacity:.001}.pc .art.framed img.shimg{opacity:1}
 .pv-hero .v img.shimg{width:100%;height:auto;max-height:330px}
 .pv-hero .v:has(img.shimg){mix-blend-mode:multiply}
 .cw .t img.shimg{width:86%;height:86%}
@@ -2300,7 +2302,7 @@ function frameTile(im,a){const key=(im.currentSrc||im.src)+"|"+im.naturalWidth+"
   const Px=ox+b.x*dw,Py=oy+b.y*dh,Pw=b.w*dw,Ph=b.h*dh,k=Math.min(4,Math.max(.6,Math.min(W*.84/Pw,H*.7/Ph)));
   const tx=W/2-k*(Px+Pw/2),ty=H*.53-k*(Py+Ph/2);im.style.transformOrigin="0 0";im.style.transform=`translate(${(tx/W*100).toFixed(2)}%,${(ty/H*100).toFixed(2)}%) scale(${k.toFixed(3)})`;a.classList.add("framed")}
 document.addEventListener("load",e=>{const im=e.target;if(!(im instanceof HTMLImageElement)||!im.classList.contains("shimg"))return;const a=im.closest(".pc .art,.cartrow .th,.ordc .oth");if(!a)return;const c=edgeColor(im);if(c)a.style.setProperty("--tbg",c);
-  if(a.matches(".pc .art"))frameTile(im,a),a.classList.add("framed")},true);
+  if(a.matches(".pc .art")){if(im.naturalWidth/Math.max(1,im.naturalHeight)<=.95){a.classList.add("fill","framed");return}frameTile(im,a);a.classList.add("framed")}},true);
 document.addEventListener("error",e=>{const im=e.target;if(im instanceof HTMLImageElement&&im.classList.contains("shimg")){const a=im.closest(".pc .art");if(a)a.classList.add("framed")}},true);
 
 /* ===== Конфиденциальность ===== */
