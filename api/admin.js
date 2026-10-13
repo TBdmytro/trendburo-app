@@ -180,19 +180,31 @@ export default async function handler(req, res) {
       case "status": return send(res, 200, { results: await setStatus(store, (body.ids || []).slice(0, 5000), ["published", "draft", "hidden"].includes(body.status) ? body.status : "draft", me.name) });
       case "productIds": {
         // все товары по текущему фильтру — для «Показать все найденные»
-        const all = await store.list("product", {}, { limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, offers[]{sourceId}" });
-        const Q = req.query, q = String(Q.q || "").toLowerCase();
-        const ids = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (!Q.status || p.status === Q.status)
+        const all = await store.list("product", {}, { limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, createdAt, offers[]{sourceId}" });
+        const Q = req.query, q = String(Q.q || "").toLowerCase(), since = Q.fresh ? new Date(Date.now() - 7 * 864e5).toISOString() : null;
+        const ids = all.filter(p => (!since || (p.createdAt || "") >= since) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (!Q.status || p.status === Q.status)
           && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source)) && (!Q.brand || p.brand === Q.brand) && (!Q.cat || (p.overrides?.category || p.category) === Q.cat)).map(p => p._id);
         return send(res, 200, { ids });
       }
 
+      case "brandsBoard": {
+        // доска брендов: каждый поставщик — сколько товаров, на сайте, новых за неделю, обложки последних
+        const all = await store.list("product", {}, { order: "createdAt desc", limit: 50000, fields: "_id, brand, status, createdAt, images[0...1]{url}, offers[]{sourceId}" });
+        const since = new Date(Date.now() - 7 * 864e5).toISOString(), by = {};
+        for (const p of all) {
+          const sid = (p.offers || [])[0]?.sourceId || "manual", b = by[sid] ||= { id: sid, total: 0, published: 0, fresh: 0, covers: [], brands: {} };
+          b.total++; if (p.status === "published") b.published++; if ((p.createdAt || "") >= since && p.status !== "published") b.fresh++;
+          if (b.covers.length < 4 && p.images?.[0]?.url) b.covers.push(p.images[0].url);
+          if (p.brand) b.brands[p.brand] = (b.brands[p.brand] || 0) + 1;
+        }
+        return send(res, 200, { boards: Object.values(by).map(b => ({ ...b, brands: Object.entries(b.brands).sort((x, y) => y[1] - x[1]).slice(0, 8).map(([k, n]) => ({ k, n })) })).sort((a, b) => b.fresh - a.fresh || b.total - a.total) });
+      }
       case "products": {
-        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, issues, gender, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}" });
-        const Q = req.query, q = String(Q.q || "").toLowerCase();
+        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, createdAt, issues, gender, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}" });
+        const Q = req.query, q = String(Q.q || "").toLowerCase(), since = Q.fresh ? new Date(Date.now() - 7 * 864e5).toISOString() : null;
         const cat = p => p.overrides?.category || p.category;
         // фильтры применяются по очереди; списки для выпадающих меню строятся по остальным фильтрам
-        const base = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q))
+        const base = all.filter(p => (!since || (p.createdAt || "") >= since) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q))
           && (!Q.status || p.status === Q.status) && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source)));
         const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat));
         const facet = (arr, f) => { const m = {}; arr.forEach(p => { const k = f(p); if (k) m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ k, n })); };
