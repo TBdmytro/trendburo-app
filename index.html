@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-13-live-v45">
+<meta name="trendburo-build" content="2026-10-13-live-v46">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -236,7 +236,7 @@ button{cursor:pointer}
 .pc .art svg.sh{width:66%;height:66%;transition:transform .6s var(--ease)}
 .pc .art.s-flat svg.sh,.pc .art.s-loafer svg.sh,.pc .art.s-sneaker svg.sh,.pc .art.s-sandal svg.sh,.pc .art.s-belt svg.sh{width:86%;height:86%}
 .pc:hover .art svg.sh{transform:scale(1.05) translateY(-2px)}
-.pc .newb{position:absolute;left:12px;top:12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg)}
+.pc .newb{position:absolute;z-index:2;left:12px;top:12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg)}
 .pc .fav{position:absolute;z-index:2;right:6px;top:10px;width:40px;height:40px;border:0;background:none;display:grid;place-items:center}
 .pc .fav svg{width:18px;height:18px;stroke:var(--fg);fill:none;stroke-width:1.5;transition:transform .35s var(--ease)}
 .pc .fav[aria-pressed="true"] svg{fill:var(--fg);transform:scale(1.12)}
@@ -341,6 +341,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .shimg{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply;display:block}
 .pc .art img.shimg{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;padding:0;box-sizing:border-box;object-fit:contain;mix-blend-mode:normal}
 .pc .art:has(img.shimg){background:var(--tbg,#f3f3f3);transition:background .3s}
+.pc .art img.shimg{transition:transform .35s var(--ease),opacity .3s}.pc .art:not(.framed) img.shimg[crossorigin]{opacity:.001}.pc .art.framed img.shimg{opacity:1}
 .pv-hero .v img.shimg{width:100%;height:auto;max-height:330px}
 .pv-hero .v:has(img.shimg){mix-blend-mode:multiply}
 .cw .t img.shimg{width:86%;height:86%}
@@ -2281,7 +2282,20 @@ function openAuto(ri){
 })();
 
 /* плитки товаров: фон под фото = цвет краёв фото, без белых полос */
-document.addEventListener("load",e=>{const im=e.target;if(!(im instanceof HTMLImageElement)||!im.classList.contains("shimg"))return;const a=im.closest(".pc .art,.cartrow .th,.ordc .oth");if(!a)return;const c=edgeColor(im);if(c)a.style.setProperty("--tbg",c)},true);
+/* «умная рамка»: находим саму вещь на фото и масштабируем, чтобы во всех плитках она была одного размера и по центру */
+const FRAME=new Map();
+function productBox(im){try{const n=96,w=im.naturalWidth,h=im.naturalHeight;if(!w||!h)return null;const sw=w>=h?n:Math.round(n*w/h),sh=w>=h?Math.round(n*h/w):n;
+  const c=document.createElement("canvas");c.width=sw;c.height=sh;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,sw,sh);const d=x.getImageData(0,0,sw,sh).data;
+  const px=[];for(let i=0;i<sw;i++){px.push(i*4,((sh-1)*sw+i)*4)}for(let j=0;j<sh;j++){px.push(j*sw*4,(j*sw+sw-1)*4)}let R=0,G=0,B=0;px.forEach(k=>{R+=d[k];G+=d[k+1];B+=d[k+2]});R/=px.length;G/=px.length;B/=px.length;
+  let x0=sw,y0=sh,x1=-1,y1=-1;for(let j=0;j<sh;j++)for(let i=0;i<sw;i++){const k=(j*sw+i)*4;if(Math.abs(d[k]-R)+Math.abs(d[k+1]-G)+Math.abs(d[k+2]-B)>42){if(i<x0)x0=i;if(i>x1)x1=i;if(j<y0)y0=j;if(j>y1)y1=j}}
+  if(x1<0||(x1-x0)<sw*.08||(y1-y0)<sh*.08)return null;return{x:x0/sw,y:y0/sh,w:(x1-x0+1)/sw,h:(y1-y0+1)/sh,ar:w/h}}catch(e){return null}}
+function frameTile(im,a){const key=(im.currentSrc||im.src)+"|"+im.naturalWidth+"x"+im.naturalHeight;let b=FRAME.get(key);if(b===undefined){b=productBox(im);FRAME.set(key,b)}if(!b){a.classList.add("framed");return}
+  const W=1,H=a.clientHeight/Math.max(1,a.clientWidth),s0=Math.min(W/b.ar,H)/1,dw=b.ar*s0,dh=s0,ox=(W-dw)/2,oy=(H-dh)/2;
+  const Px=ox+b.x*dw,Py=oy+b.y*dh,Pw=b.w*dw,Ph=b.h*dh,k=Math.min(4,Math.max(.6,Math.min(W*.84/Pw,H*.7/Ph)));
+  const tx=W/2-k*(Px+Pw/2),ty=H*.53-k*(Py+Ph/2);im.style.transformOrigin="0 0";im.style.transform=`translate(${(tx/W*100).toFixed(2)}%,${(ty/H*100).toFixed(2)}%) scale(${k.toFixed(3)})`;a.classList.add("framed")}
+document.addEventListener("load",e=>{const im=e.target;if(!(im instanceof HTMLImageElement)||!im.classList.contains("shimg"))return;const a=im.closest(".pc .art,.cartrow .th,.ordc .oth");if(!a)return;const c=edgeColor(im);if(c)a.style.setProperty("--tbg",c);
+  if(a.matches(".pc .art"))frameTile(im,a),a.classList.add("framed")},true);
+document.addEventListener("error",e=>{const im=e.target;if(im instanceof HTMLImageElement&&im.classList.contains("shimg")){const a=im.closest(".pc .art");if(a)a.classList.add("framed")}},true);
 
 /* ===== Конфиденциальность ===== */
 function openPrivacy(){const h=(t,b)=>`<div class="sec"><div class="sech"><h2>${t}</h2></div><div class="pad" style="font-size:15px;line-height:1.55;color:var(--g2)">${b}</div></div>`;
