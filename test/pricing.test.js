@@ -82,3 +82,15 @@ test("закреплённая цена имеет приоритет", () => {
   const r = priceOffer({ kind: "official", boutique: 3000, dest: "ua", pinned: 3250 });
   assert.equal(r.final, 3250);
 });
+
+test("минимальная комиссия за единицу: одежда +15 €, обувь +40 € (пример Alo Yoga)", () => {
+  const ua = (boutique, category) => priceOffer({ kind: "official", boutique, dest: "ua", category }).final;
+  assert.equal(ua(50, "clothing"), 65, "майка: 10% = 5 € < 15 € → 65");
+  assert.equal(ua(340, "clothing"), 375, "худи: +34 € → 374 → 375");
+  assert.equal(ua(200, "clothing"), 220, "штаны: +20 € → 220");
+  assert.equal(ua(40, "clothing"), 55, "кофта: минимум +15 € → 55");
+  assert.equal(ua(200, "shoes"), 240, "обувь: 10% = 20 € < 40 € → 240");
+  assert.equal(ua(600, "shoes"), 660, "дорогая обувь: 10% больше минимума");
+  assert.equal(ua(50, "bags"), 55, "у других категорий минимума нет");
+  assert.equal(priceOffer({ kind: "official", boutique: 50, dest: "eu", category: "clothing" }).final, 65, "Европа: тот же минимум");
+});

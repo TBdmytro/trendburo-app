@@ -237,7 +237,7 @@ export default async function handler(req, res) {
       case "manualSave": return send(res, 200, { product: await saveManualProduct(store, body, { by: me.name, pricingCfg }) });
       case "pricePreview": {
         const { priceFor } = await import("../lib/pipeline.js");
-        const p = priceFor({ sourceKind: "official", boutique: Number(body.boutique) || null, region: "DE", currency: "EUR" }, pricingCfg, Number(body.pinned) || null);
+        const p = priceFor({ sourceKind: "official", boutique: Number(body.boutique) || null, region: "DE", currency: "EUR" }, pricingCfg, Number(body.pinned) || null, body.category || null);
         return send(res, 200, { ua: p.ua, eu: p.eu, dxb: p.dxb });
       }
       case "watchGet": {
@@ -330,6 +330,8 @@ export default async function handler(req, res) {
         const cfg = mergeConfig(body.config || pricingCfg);
         const cases = (body.cases && body.cases.length ? body.cases : [
           { kind: "official", boutique: 3000, dest: "ua" }, { kind: "official", boutique: 3000, dest: "eu" },
+          { kind: "official", boutique: 50, dest: "ua", category: "clothing" }, { kind: "official", boutique: 340, dest: "ua", category: "clothing" },
+          { kind: "official", boutique: 200, dest: "ua", category: "shoes" }, { kind: "official", boutique: 500, dest: "ua", category: "shoes" },
           { kind: "eyewear-supplier", boutique: 330, purchase: 240 }, { kind: "eyewear-supplier", boutique: 400, purchase: 300 },
           { kind: "eyewear-supplier", boutique: 460, purchase: 300 }, { kind: "eyewear-supplier", boutique: 1000, purchase: 800 },
           { kind: "eyewear-supplier", boutique: 1000, purchase: 900 }, { kind: "official", boutique: null }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v25">
+<meta name="trendburo-build" content="2026-10-13-admin-v26">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1027,7 +1027,7 @@ async function vAdd(editId) {
   const calc = () => { clearTimeout(pt); pt = setTimeout(async () => {
     const b = Number(F.boutique);
     if (!(b > 0)) { price = null; $("#fCalc").textContent = "Наша цена появится здесь"; return drawPrev(); }
-    try { price = await api("pricePreview", { method: "POST", body: { boutique: b } }); $("#fCalc").innerHTML = `На витрине: <b class="num" style="color:var(--fg)">${eur(price.ua)}</b> Украина с доставкой · ${eur(price.eu)} Европа/Дубай + доставка`; } catch {}
+    try { price = await api("pricePreview", { method: "POST", body: { boutique: b, category: F.category || null } }); $("#fCalc").innerHTML = `На витрине: <b class="num" style="color:var(--fg)">${eur(price.ua)}</b> Украина с доставкой · ${eur(price.eu)} Европа/Дубай + доставка`; } catch {}
     drawPrev();
   }, 250); };
   const resize = file => fileToJpegB64(file, 1600);
@@ -1056,7 +1056,7 @@ async function vAdd(editId) {
     if ("pick" in t.dataset) return $("#fpick").click();
     if (t.dataset.rm) { F.images.splice(+t.dataset.rm, 1); shot = 0; drawSlots(); return drawPrev(); }
     if (t.dataset.left) { const i = +t.dataset.left; [F.images[i - 1], F.images[i]] = [F.images[i], F.images[i - 1]]; drawSlots(); return drawPrev(); }
-    if (t.dataset.fcat) { F.category = t.dataset.fcat; document.querySelectorAll("[data-fcat]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fcat === F.category)); F.sizes = F.sizes.filter(z => !Object.values(SIZE_PRESETS).flat().includes(z) || (SIZE_PRESETS[F.category] || []).includes(z)); drawSizes(); return drawPrev(); }
+    if (t.dataset.fcat) { F.category = t.dataset.fcat; document.querySelectorAll("[data-fcat]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fcat === F.category)); F.sizes = F.sizes.filter(z => !Object.values(SIZE_PRESETS).flat().includes(z) || (SIZE_PRESETS[F.category] || []).includes(z)); drawSizes(); calc(); return drawPrev(); }
     if (t.dataset.fg) { F.gender = t.dataset.fg; document.querySelectorAll("[data-fg]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fg === F.gender)); return; }
     if (t.dataset.fst !== undefined) { F.stock.loc = t.dataset.fst; document.querySelectorAll("[data-fst]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fst === F.stock.loc)); $("#fStX").hidden = !F.stock.loc; return; }
     if (t.dataset.fav) { F.availability = t.dataset.fav; document.querySelectorAll("[data-fav]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fav === F.availability)); return; }
@@ -1403,7 +1403,8 @@ async function vPrices() {
      <label class="f">Европа — наценка (+ доставка) ${n("cEu", config.official.markup.eu)}</label>
      <label class="f">Дубай — наценка (+ доставка) ${n("cDxb", config.official.markup.dxb)}</label>
      <label class="f">Округление до 5 €<select id="cRound">${[["nearest", "до ближайших (середина вверх)"], ["up", "всегда вверх"], ["down", "всегда вниз"]].map(([k, v]) => `<option value="${k}" ${config.rounding === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
-     <p class="hint" style="margin:0">0.10 = +10%. Пример: бутик 3000 € → Украина 3300 €.</p></div>
+     <div class="row"><label class="f" style="flex:1">Минимум за обувь, € ${n("cMinSh", config.official.minAdd?.shoes ?? 40, "1")}</label><label class="f" style="flex:1">Минимум за одежду, € ${n("cMinCl", config.official.minAdd?.clothing ?? 15, "1")}</label></div>
+     <p class="hint" style="margin:0">0.10 = +10%. Пример: бутик 3000 € → Украина 3300 €. Минимум — за каждую единицу: если процент меньше, берём минимум (майка 50 € → 65 €, обувь 200 € → 240 €).</p></div>
    <div class="card pad" style="display:flex;flex-direction:column;gap:14px"><h2 style="margin:0;font-size:16px">Очки от поставщиков</h2>
      <label class="f">Порог большой скидки поставщика ${n("cThr", config.eyewear.bigDiscountThreshold)}</label>
      <label class="f">Граница цены бутика, € ${n("cCap", config.eyewear.capBoutique, "1")}</label>
@@ -1425,14 +1426,14 @@ async function vPrices() {
     $("#fxRef").onclick = async () => { const r = await api("fxRefresh", { method: "POST", body: {} }); drawFx(r); toast(r.refresh?.ok ? "Курсы ЕЦБ обновлены" : "ЕЦБ не ответил: " + (r.refresh?.error || "")); };
   };
   api("fxGet").then(drawFx).catch(() => { $("#fxBox").textContent = "Не удалось загрузить курсы"; });
-  const read = () => ({ rounding: $("#cRound").value, official: { markup: { ua: +$("#cUa").value, eu: +$("#cEu").value, dxb: +$("#cDxb").value } },
+  const read = () => ({ rounding: $("#cRound").value, official: { markup: { ua: +$("#cUa").value, eu: +$("#cEu").value, dxb: +$("#cDxb").value }, minAdd: { shoes: +$("#cMinSh").value || 0, clothing: +$("#cMinCl").value || 0 } },
     eyewear: { bigDiscountThreshold: +$("#cThr").value, capBoutique: +$("#cCap").value, flatAdd: +$("#cFlat").value, pctAdd: +$("#cPct").value, clientDiscount: +$("#cDisc").value, smallMarkup: +$("#cSm").value, smallFactor: +$("#cSf").value } });
   $("#main").oninput = e => { if (e.target.closest(".card") && !e.target.closest("#fxBox")) { previewed = false; $("#cSave").disabled = true; } };
   $("#cPrev").onclick = async () => {
     const { results, changes } = await api("pricingPreview", { method: "POST", body: { config: read() } });
     const KIND = { official: "Сайт бренда", "eyewear-supplier": "Очки" }, DEST = { ua: "Украина", eu: "Европа", dxb: "Дубай" };
     $("#cOut").innerHTML = `<div class="card tw"><table><thead><tr><th>Пример</th><th>Бутик</th><th>Закупка</th><th>Правило</th><th>Итог</th><th>Замечания</th></tr></thead><tbody>
-      ${results.map(r => `<tr><td>${esc(KIND[r.input.kind] || r.input.kind)}${r.input.dest ? " · " + DEST[r.input.dest] : ""}</td><td class="num">${eur(r.input.boutique)}</td><td class="num">${eur(r.input.purchase)}</td><td>${esc(r.rule || "—")}</td>
+      ${results.map(r => `<tr><td>${esc(KIND[r.input.kind] || r.input.kind)}${r.input.category ? " · " + ({ shoes: "обувь", clothing: "одежда" }[r.input.category] || r.input.category) : ""}${r.input.dest ? " · " + DEST[r.input.dest] : ""}</td><td class="num">${eur(r.input.boutique)}</td><td class="num">${eur(r.input.purchase)}</td><td>${esc(r.rule || "—")}</td>
       <td class="num"><b>${eur(r.final)}</b></td><td>${r.reasons.map(x => `<span class="pill ${r.blocked ? "err" : "warn"}">${esc(x)}</span>`).join(" ")}</td></tr>`).join("")}
       </tbody></table></div>
       <div class="sec"><h2>Изменятся цены на витрине: ${changes.length}</h2>
