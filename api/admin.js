@@ -3,7 +3,7 @@
  * Все действия, кроме входа, требуют авторизации; изменяющие — ещё и заголовок X-TB (защита от CSRF).
  */
 import { kickWorker } from "../lib/chain.js";
-import { loadCatalogPage } from "../lib/catalogload.js";
+import { loadCatalogPage, dbStats } from "../lib/catalogload.js";
 import { getStore } from "../lib/store.js";
 import { checkPassword, issueCookie, clearCookie, readSession } from "../lib/auth.js";
 import { SOURCES, sourceWith, makeNet } from "../lib/sources.js";
@@ -157,7 +157,16 @@ export default async function handler(req, res) {
       }
       case "jobs": return send(res, 200, { jobs: (await store.list("importJob", {}, { order: "createdAt desc", limit: 50, fields: JOB_FIELDS })).map(slim) });
       case "job": return send(res, 200, { job: slim((await store.list("importJob", { _id: String(req.query.id || "") }, { limit: 1, fields: JOB_FIELDS }))[0] || null) });
-      case "catalogPage": return send(res, 200, await loadCatalogPage(store, String(body.sourceId || ""), { handle: body.handle, page: body.page, limit: body.limit }));
+      case "catalogPage": {
+        // упёрлись в лимит полей базы — к ошибке добавляем, кто именно занимает место (чтобы чинить по факту, а не наугад)
+        const why = async () => { const st = await dbStats(store).catch(() => null); return st ? ` [всего полей ${st.total}: ` + st.byType.slice(0, 4).map(t => `${t.type} ${t.fields} (${t.docs} шт.)`).join(", ") + "]" : ""; };
+        let r;
+        try { r = await loadCatalogPage(store, String(body.sourceId || ""), { handle: body.handle, page: body.page, limit: body.limit }); }
+        catch (e) { if (/attribute/i.test(e.message)) e.message += await why(); throw e; }
+        if (r.errors.some(x => /attribute/i.test(x))) r.errors[0] += await why();
+        return send(res, 200, r);
+      }
+      case "dbStats": return send(res, 200, await dbStats(store));
       case "jobCancel": return send(res, 200, { job: slim(await cancelJob(store, body.id)) });
       case "jobDelete": {
         const j = await store.get(body.id);

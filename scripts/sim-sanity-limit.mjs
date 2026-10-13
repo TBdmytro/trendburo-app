@@ -22,6 +22,7 @@ const sanity = async (url, o = {}) => {
     for (const k of [...db.keys()]) if (!next.has(k)) db.delete(k); for (const [k, v] of next) db.set(k, v);
     return J({ results: body.mutations.map(m => ({ document: m.createOrReplace || m.create || null })) });
   }
+  if (u.pathname.includes("/export/")) return new Response([...db.values()].map(d => JSON.stringify(d)).join("\n"));
   let q, params;
   if (o.method === "POST") ({ query: q, params } = JSON.parse(o.body)); else { q = u.searchParams.get("query"); params = {}; for (const [k, v] of u.searchParams) if (k.startsWith("$")) params[k.slice(1)] = JSON.parse(v); }
   const all = [...db.values()];
@@ -40,6 +41,8 @@ const sanity = async (url, o = {}) => {
 const prods = JSON.parse(fs.readFileSync("process.argv[2]"));
 const rnd = () => Math.random().toString(16).slice(2, 18);
 for (let i = 0; i < 118; i++) db.set("product.u.old" + i, { _id: "product.u.old" + i, _type: "product", brand: "Alo Yoga", title: "Old " + i, status: "draft", overrides: { title: i === 3 ? "Моё название" : undefined }, offers: [{ _key: "o", sourceId: "x", availability: Object.fromEntries([0, 1, 2, 3, 4].map(() => [rnd(), { status: "online", price: 10 }])) }], variants: [] });
+db.set("settings.dbv", { _id: "settings.dbv", _type: "settings", v: 2 });
+for (let i = 0; i < 50; i++) db.set("item." + i, { _id: "item." + i, _type: "importItem", jobId: "j", offer: { availability: Object.fromEntries([0, 1, 2, 3, 4].map(() => [rnd(), { status: "online", price: 10 }])) } });
 for (let i = 0; i < 20; i++) db.set("job." + i, { _id: "job." + i, _type: "importJob", status: "done", attempts: Object.fromEntries([0, 1, 2].map(() => [rnd(), 1])) });
 // магазин
 const shop = async (url) => { const u = new URL(url);
@@ -52,6 +55,7 @@ const store = new SanityStore({ projectId: "x", token: "t", fetchImpl: (u, o) =>
 const { id } = await addSupplier(store, { url: "https://shop.example" }, { fetchImpl: shop });
 let base = countPaths(db); let pad = 0; while (base < 1995) { db.set("pad" + pad, { _id: "pad" + pad, _type: "pad", ["f" + pad]: 1 }); pad++; base = countPaths(db); }
 console.log("start paths", countPaths(db));
+const { dbStats } = await import("../lib/catalogload.js"); console.log("stats before", JSON.stringify((await dbStats(store)).byType.slice(0,3)));
 console.log("migrate", await migrateDb(store), "paths now", countPaths(db));
 let page = 1, r, saved = 0; do { r = await loadCatalogPage(store, id, { page, limit: 50, fetchImpl: shop }); saved += r.saved; console.log("page", page, r.saved, r.errors[0] || ""); page++; } while (r.more);
 console.log("saved", saved, "products", [...db.values()].filter(d => d._type === "product").length, "paths", countPaths(db), "peak", peak);
