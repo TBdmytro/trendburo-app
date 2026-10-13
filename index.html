@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-13-live-v44">
+<meta name="trendburo-build" content="2026-10-13-live-v45">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -622,6 +622,7 @@ textarea{min-height:88px;resize:vertical}
 .svc-hero .cap{color:rgba(255,255,255,.65)}
 .svc-hero h2{font-size:28px;font-weight:700}
 .svc-hero p{color:rgba(255,255,255,.78);font-size:14.5px;max-width:34ch}
+.items-h{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--g2);font-weight:700;padding:18px 18px 6px}
 .items{display:flex;flex-direction:column;padding-inline:18px}
 .item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .item:last-child{border:0}
@@ -1313,13 +1314,10 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
     <div class="scroll">
       <div class="bigtitle"><h1>Сервисы</h1><div class="topicons"></div></div>
       <div class="svc-list">
-        <button class="svc-card press" style="--sc:var(--c-concierge)" data-act="svc" data-s="concierge" data-svc="concierge">
-          <div><div class="cap" data-t="svc.concierge.cap">Консьерж</div><h3 data-t="svc.concierge.title">Личные задачи</h3></div>
-          <p data-t="svc.concierge.text">Редкие модели, покупки с доставкой в отель, шопинг с байером</p>
+        <button class="svc-card press big" style="--sc:var(--c-concierge)" data-act="svc" data-s="concierge" data-svc="concierge">
+          <div><div class="cap" data-t="svc.concierge.cap">Консьерж Trend Büro</div><h3 data-t="svc.concierge.title">Всё для вас — организуем</h3></div>
+          <p data-t="svc.concierge.text">Покупки и редкие модели, отели, перелёты и джеты, трансферы, рестораны, охрана — одной заявкой</p>
           <span class="gl"><svg viewBox="0 0 100 100"><path d="M18 70h64M26 70a24 24 0 0 1 48 0M50 42v-6M44 36h12"/></svg></span></button>
-        <button class="svc-card press" style="--sc:var(--c-travel)" data-act="svc" data-s="travel" data-svc="travel">
-            <div><div class="cap" data-t="svc.travel.cap">Путешествия</div><h3 data-t="svc.travel.title">Поездки под ключ</h3></div><p data-t="svc.travel.text">Отели, перелёты, джеты, трансферы, рестораны, охрана</p>
-            <span class="gl"><svg viewBox="0 0 100 100"><path d="M15 60l70-25-18 40-14-12-12 14V60z"/></svg></span></button>
         <button class="svc-card press locked" style="--sc:var(--c-stylist)" data-act="soon" data-s="stylist" data-svc="stylist" aria-disabled="true"><span class="soon">Скоро</span>
           <div><div class="cap" data-t="svc.stylist.cap">AI-стилист</div><h3 data-t="svc.stylist.title">Образ из витрины</h3></div>
           <p data-t="svc.stylist.text">Повод, стиль и бюджет — подбор за минуту</p>
@@ -2297,33 +2295,33 @@ function openPrivacy(){const h=(t,b)=>`<div class="sec"><div class="sech"><h2>${
 /* ===== Сервисы ===== */
 const I=d=>`<svg viewBox="0 0 24 24">${d}</svg>`;
 const SVC={
- concierge:{accent:"var(--c-concierge)",cap:"Консьерж",title:"Личные задачи в Европе",text:"То, что не помещается в каталог. Опишите задачу — менеджер вернётся с вариантами, сроками и стоимостью.",
-  items:[["Редкие модели","Hermès, Chanel, лимитированные выпуски, лист ожидания",'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>'],["Покупки с доставкой в отель","Выкупим в бутике и привезём туда, где вы остановились",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],["Шопинг с байером","Милан, Париж, Мюнхен, Вена — вместе в бутиках",'<circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 11a3 3 0 1 0 0-6M17.5 19a5 5 0 0 0-3-4.6"/>'],["Видеошопинг","Показываем вещь вживую из бутика",'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>'],["Подарки","Подбор, упаковка, открытка, доставка к дате",'<path d="M4 10h16v10H4zM3 7h18v3H3zM12 7v13"/>'],["Tax free и обмен","Документы, возвраты, другой размер",'<path d="M5 12h14M13 6l6 6-6 6"/>']]},
- travel:{accent:"var(--c-travel)",cap:"Путешествия",title:"Поездки под ключ",text:"Отели, перелёты, джеты, трансферы, рестораны и охрана — соберём поездку целиком и будем на связи всё время.",
-  items:[["Отели","Бронь проверенных адресов, апгрейд и поздний выезд",'<path d="M3 20V8l9-4 9 4v12M9 20v-6h6v6"/>'],["Авиабилеты","Бизнес и первый класс, лучшие стыковки",'<path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/>'],["Частные джеты","Аренда джета и джет-трансферы между городами",'<path d="M2 15l9-2 4-7h2l-2 7 5-1 1.5-2H23l-1.5 4.5L15 16l2 6h-2l-4-5-9 1z"/>'],["Трансферы","Аэропорт, водитель на день, вертолёт",'<path d="M5 16v-5l2-5h10l2 5v5M5 16h14M7 19v-3M17 19v-3"/>'],["Рестораны","Столики в местах, куда сложно попасть",'<path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8M17 3c-2 0-3 3-3 6s1 4 3 4v8"/>'],["Экскурсии и события","Частные гиды, показы, концерты, яхты",'<path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 16l-5.3 3 1.3-5.9-4.5-4 6-.6z"/>'],["Охрана в поездке","Личная охрана и водитель-телохранитель",'<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/>'],["Покупки в ваш отель","Байер выкупит и привезёт заказ к вам в номер",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],["Любая другая задача","Всё, что нужно в поездке, — опишите, и мы организуем",'<path d="M12 5v14M5 12h14"/>']]}
+ concierge:{accent:"var(--c-concierge)",cap:"Консьерж Trend Büro",title:"Всё для вас — организуем",text:"Покупки, поездки и любые задачи в Европе и Дубае. Опишите, что нужно, — менеджер вернётся с вариантами, сроками и стоимостью.",
+  items:[["#","Покупки"],
+   ["Редкие модели","Hermès, Chanel, лимитированные выпуски, лист ожидания",'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>'],["Шопинг с байером","Милан, Париж, Мюнхен, Вена — вместе в бутиках",'<circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 11a3 3 0 1 0 0-6M17.5 19a5 5 0 0 0-3-4.6"/>'],["Покупки с доставкой в отель","Выкупим и привезём туда, где вы остановились",'<path d="M5 8h14l-1.5 12h-11zM9 8V6a3 3 0 0 1 6 0v2"/>'],["Видеошопинг","Показываем вещь вживую из бутика",'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>'],["Подарки","Подбор, упаковка, открытка, доставка к дате",'<path d="M4 10h16v10H4zM3 7h18v3H3zM12 7v13"/>'],["Tax free и обмен","Документы, возвраты, другой размер",'<path d="M5 12h14M13 6l6 6-6 6"/>'],
+   ["#","Поездки"],
+   ["Отели","Бронь проверенных адресов, апгрейд и поздний выезд",'<path d="M3 20V8l9-4 9 4v12M9 20v-6h6v6"/>'],["Авиабилеты","Бизнес и первый класс, лучшие стыковки",'<path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/>'],["Частные джеты","Аренда джета и джет-трансферы между городами",'<path d="M2 15l9-2 4-7h2l-2 7 5-1 1.5-2H23l-1.5 4.5L15 16l2 6h-2l-4-5-9 1z"/>'],["Трансферы","Аэропорт, водитель на день, вертолёт",'<path d="M5 16v-5l2-5h10l2 5v5M5 16h14M7 19v-3M17 19v-3"/>'],["Рестораны","Столики в местах, куда сложно попасть",'<path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8M17 3c-2 0-3 3-3 6s1 4 3 4v8"/>'],["Экскурсии и события","Частные гиды, показы, концерты, яхты",'<path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 16l-5.3 3 1.3-5.9-4.5-4 6-.6z"/>'],["Охрана","Личная охрана и водитель-телохранитель",'<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/>'],
+   ["#","И ещё"],["Любая другая задача","Опишите, что нужно, — организуем",'<path d="M12 5v14M5 12h14"/>']]}
 };
 const SOON=new Set(["stylist","resale"]);
-function openService(k,sell){if(SOON.has(k)){toast((k==="stylist"?"AI-стилист":"Ресейл")+" — скоро запустим");return}
+function openService(k,sell){if(k==="travel")k="concierge";if(SOON.has(k)){toast((k==="stylist"?"AI-стилист":"Ресейл")+" — скоро запустим");return}
   if(k==="resale")return openResale(sell);
   const S=SVC[k];
-  const form=k==="concierge"?`
-    <div class="field"><label for="f1">Услуга</label><select id="f1">${S.items.map(x=>`<option>${x[0]}</option>`).join("")}</select></div>
-    <div class="field"><label for="f2">Задача</label><textarea id="f2" placeholder="Например: Hermès Picotin 18, Gold, золотая фурнитура — готов ждать до двух месяцев"></textarea></div>
-    <div class="frow"><div class="field"><label for="f3">Город получения</label><input type="text" id="f3" placeholder="Киев, или ваш отель"></div><div class="field"><label for="f4">Желательно к</label><input type="date" id="f4"></div></div>`:`
-    <div class="frow"><div class="field"><label for="f1">Куда</label><input type="text" id="f1" list="cities" placeholder="Милан, Париж, Дубай…"><datalist id="cities"><option>Милан</option><option>Париж</option><option>Лондон</option><option>Вена</option><option>Мюнхен</option><option>Лазурный берег</option><option>Куршевель</option><option>Дубай</option><option>Мальдивы</option></datalist></div><div class="field"><label for="f5">Гостей</label><input type="number" id="f5" value="2" min="1"></div></div>
-    <div class="frow"><div class="field"><label for="f3">Заезд</label><input type="date" id="f3"></div><div class="field"><label for="f4">Выезд</label><input type="date" id="f4"></div></div>
-    <div class="field"><span class="fl">Включить</span><div class="chips wrap" id="needs">${["Отель","Авиабилеты","Частный джет","Трансфер","Рестораны","Экскурсии","Охрана","Шопинг с байером","Покупки в отель"].map((n,i)=>`<button type="button" class="chip" data-need aria-pressed="${i<1}">${n}</button>`).join("")}</div></div>
-    <div class="field"><label for="f6">Бюджет, €</label><input type="number" id="f6" value="6000" step="500"></div>
-    <div class="field"><label for="f2">Пожелания</label><textarea id="f2" placeholder="Например: отель в центре, ужин в ресторане со звездой, трансфер из аэропорта"></textarea></div>`;
+  const form=`
+    <div class="field"><span class="fl">Что нужно</span><div class="chips wrap" id="needs">${S.items.filter(x=>x[0]!=="#").map(x=>`<button type="button" class="chip" data-need aria-pressed="false">${x[0]}</button>`).join("")}</div></div>
+    <div class="field"><label for="f2">Задача</label><textarea id="f2" placeholder="Например: Hermès Picotin 18 Gold; или отель в Милане на 3 ночи, трансфер из аэропорта и ужин"></textarea></div>
+    <div class="frow"><div class="field"><label for="f1">Город</label><input type="text" id="f1" list="cities" placeholder="Милан, Париж, Дубай…"><datalist id="cities"><option>Милан</option><option>Париж</option><option>Лондон</option><option>Вена</option><option>Мюнхен</option><option>Лазурный берег</option><option>Куршевель</option><option>Дубай</option><option>Мальдивы</option><option>Киев</option></datalist></div><div class="field"><label for="f5">Гостей</label><input type="number" id="f5" min="1" placeholder="—"></div></div>
+    <div class="frow"><div class="field"><label for="f3">С</label><input type="date" id="f3"></div><div class="field"><label for="f4">По</label><input type="date" id="f4"></div></div>
+    <div class="field"><label for="f6">Бюджет, € (если есть)</label><input type="number" id="f6" step="500" placeholder="—"></div>`;
   const s=push(S.cap,`<div class="svc-hero"><span class="cap">${S.cap}</span><h2>${S.title}</h2><p>${S.text}</p></div>
-   <div class="items" style="margin-top:6px">${S.items.map(x=>`<div class="item"><span class="ic">${I(x[2])}</span><div><b>${x[0]}</b><span>${x[1]}</span></div></div>`).join("")}</div>
+   <div class="items" style="margin-top:6px">${S.items.map(x=>x[0]==="#"?`<div class="items-h">${x[1]}</div>`:`<div class="item"><span class="ic">${I(x[2])}</span><div><b>${x[0]}</b><span>${x[1]}</span></div></div>`).join("")}</div>
    <div class="sec"><div class="sech"><h2>Запрос</h2></div><form class="form" id="sf">${form}<button class="btn block" type="submit">Подготовить сообщение</button></form></div>`,{clear:true,accent:S.accent});
   s.querySelectorAll("[data-need]").forEach(b=>b.onclick=()=>b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")!=="true"));
   const fd=v=>v?new Date(v).toLocaleDateString("ru-RU",{day:"numeric",month:"long"}):"без даты";
   s.querySelector("#sf").addEventListener("submit",e=>{e.preventDefault();const g=id=>s.querySelector(id).value.trim();
-    const msg=k==="concierge"?`Здравствуйте! Запрос в консьерж Trend Büro.\nУслуга: ${g("#f1")}\nЗадача: ${g("#f2")}\nГород получения: ${g("#f3")}\nСрок: ${fd(g("#f4"))}`
-      :`Здравствуйте! Хочу поездку через Trend Büro.\nКуда: ${g("#f1")}\nДаты: ${fd(g("#f3"))} — ${fd(g("#f4"))}\nГостей: ${g("#f5")}\nВключить: ${[...s.querySelectorAll('[data-need][aria-pressed="true"]')].map(b=>b.textContent).join(", ")||"—"}\nБюджет: ${eur(+g("#f6")||0)}\nПожелания: ${g("#f2")}`;
-    orderSheet(k==="concierge"?"Запрос консьержу":"Запрос на поездку",msg)});
+    const nd=[...s.querySelectorAll('[data-need][aria-pressed="true"]')].map(b=>b.textContent),dt=g("#f3")||g("#f4")?`${fd(g("#f3"))} — ${fd(g("#f4"))}`:"";
+    if(!nd.length&&!g("#f2")){toast("Отметьте, что нужно, или опишите задачу");return}
+    const msg=["Здравствуйте! Запрос в консьерж Trend Büro.",nd.length?"Что нужно: "+nd.join(", "):"",g("#f2")?"Задача: "+g("#f2"):"",g("#f1")?"Город: "+g("#f1"):"",dt?"Даты: "+dt:"",g("#f5")?"Гостей: "+g("#f5"):"",g("#f6")?"Бюджет: "+eur(+g("#f6")):""].filter(Boolean).join("\n");
+    orderSheet("Запрос консьержу",msg,{kind:"concierge"})});
 }
 let mine=store.get("tb_mine",[]);
 function openResale(sell){let mode=sell?"sell":"buy",rf="all";
