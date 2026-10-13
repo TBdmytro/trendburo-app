@@ -33,6 +33,9 @@ const sanity = async (url, o = {}) => {
     let r = all.filter(d => d._type === params.t);
     for (const c of m[2].matchAll(/&& (\w+) == \$(w\d+)/g)) r = r.filter(d => d[c[1]] === params[c[2]]);
     if (m[1]) return J({ result: r.length });
+    if (/order\(_id asc\)/.test(q)) r.sort((a, b) => a._id < b._id ? -1 : 1);
+    const lim = q.match(/\[0\.\.\.(\d+)\]/); if (lim) r = r.slice(0, +lim[1]);
+    await new Promise(z => setTimeout(z, 5));
     return J({ result: r });
   }
   throw new Error("fake: unsupported query " + q);
@@ -56,7 +59,7 @@ const { id } = await addSupplier(store, { url: "https://shop.example" }, { fetch
 let base = countPaths(db); let pad = 0; while (base < 1995) { db.set("pad" + pad, { _id: "pad" + pad, _type: "pad", ["f" + pad]: 1 }); pad++; base = countPaths(db); }
 console.log("start paths", countPaths(db));
 const { dbStats } = await import("../lib/catalogload.js"); console.log("stats before", JSON.stringify((await dbStats(store)).byType.slice(0,3)));
-console.log("migrate", await migrateDb(store), "paths now", countPaths(db));
-let page = 1, r, saved = 0; do { r = await loadCatalogPage(store, id, { page, limit: 50, fetchImpl: shop }); saved += r.saved; console.log("page", page, r.saved, r.errors[0] || ""); page++; } while (r.more);
+let mg, calls = 0; do { mg = await migrateDb(store, { budgetMs: 15 }); calls++; } while (!mg.done && calls < 500); console.log("migrate", mg, "calls", calls, "paths now", countPaths(db));
+let page = 1, r, saved = 0; do { r = await loadCatalogPage(store, id, { page, limit: 50, fetchImpl: shop }); if (r.migrating) { console.log("still migrating"); continue; } saved += r.saved; console.log("page", page, r.saved, r.errors[0] || ""); page++; } while (r.more);
 console.log("saved", saved, "products", [...db.values()].filter(d => d._type === "product").length, "paths", countPaths(db), "peak", peak);
 console.log("override kept:", (await store.get("product.u.old3")).overrides);
