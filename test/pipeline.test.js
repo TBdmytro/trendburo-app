@@ -502,3 +502,25 @@ test("ручной товар с несколькими цветами: у ка�
   const one = await saveManualProduct(store, { brand: "Dior", title: "Saddle", category: "bags", boutique: 3000, images: imgs, color: "Blue" });
   assert.deepEqual(one.colors, ["Blue"]);
 });
+
+test("поставщик в долларах с европейским разделом (/en-de): берём цены Европы в евро, ссылки без дублей", async () => {
+  const store = new MemoryStore();
+  const eu = fx => fx.map(p => ({ ...p, variants: p.variants.map(v => ({ ...v, price: "220.00" })) }));
+  const f = fakeFetch(u => {
+    if (u.endsWith("/robots.txt")) return { body: "User-agent: *\nDisallow: /*/cart.js\n", type: "text/plain" };
+    if (u.includes("/meta.json")) return { body: JSON.stringify({ name: "Alo", currency: "USD" }), type: "application/json" };
+    if (/\/en-de\/products\/hoodie-1$/.test(u)) return { body: '<script>Shopify.currency = {"active":"EUR","rate":"0.92"};</script>', type: "text/html" };
+    const m = u.match(/(\/en-de)?\/products\.json\?limit=(\d+)(?:&page=(\d+))?/);
+    if (m) { const page = Number(m[3] || 1), all = shopFixture(2), lim = Number(m[2]); const list = m[1] ? eu(all) : all; return { body: JSON.stringify({ products: list.slice((page - 1) * lim, page * lim) }), type: "application/json" }; }
+    return null;
+  });
+  const det = await detectSupplier("aloyoga.com", { fetchImpl: f });
+  assert.ok(det.ok, det.reason); assert.equal(det.market, "/en-de"); assert.equal(det.currency, "EUR"); assert.equal(det.baseCurrency, "USD");
+  const { id, source } = await addSupplier(store, { url: "https://aloyoga.com" }, { fetchImpl: f });
+  assert.equal(source.custom.market, "/en-de"); assert.equal(source.custom.region, "EU");
+  await createJob(store, { sourceId: id, mode: "full" });
+  for (let i = 0; i < 10; i++) { const r = await tick(store, { fetchImpl: f, sleep: noSleep }); if (!r.jobId) break; }
+  const p = (await store.list("product")).find(x => x.title.includes("Hoodie 1"));
+  assert.equal(p.offers[0].boutique, 220, "цена из европейского раздела, без пересчёта по курсу");
+  assert.ok(!String(p.offers[0].url || p.url || "").includes("/en-de"), "адрес товара прежний — без дублей");
+});

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="trendburo-build" content="2026-10-13-admin-v24">
+<meta name="trendburo-build" content="2026-10-13-admin-v25">
 <title>Trend Büro — Каталог</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1270,6 +1270,7 @@ async function connectSupplier(preUrl) {
       const box = root.querySelector("#supRes");
       if (!det.ok) { box.innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(det.reason)}</div></div>`; return; }
       box.innerHTML = `<div class="note-box ok">${svg("ok")}<div><b>${esc(det.name)}</b> — каталог открыт. На первой странице ${det.sample}${det.more ? "+" : ""} товаров, ${det.vendorCount} ${plural(det.vendorCount, ["бренд", "бренда", "брендов"])}. Валюта: ${esc(det.currency)}${det.currency !== "EUR" ? " — пересчитаем в € по курсу" : ""}.</div></div>
+        ${det.market ? `<div class="note-box ok">${svg("ok")}<div>Цены Европы: берём европейский раздел магазина (${esc(det.market)}), в евро.</div></div>` : det.currency !== "EUR" ? `<div class="note-box">${svg("info")}<div>У магазина нет европейского раздела — цены в ${esc(det.currency)} пересчитаем в € по курсу.</div></div>` : ""}
         <div class="supprev">${det.preview.map(p => `<div>${p.image ? `<img src="${esc(thumb(p.image))}" alt="">` : "<i></i>"}<small>${esc(p.vendor || "")}</small><span>${esc(p.title)}</span><b class="num">${esc(p.price || "")} ${esc(det.currency)}</b></div>`).join("")}</div>
         <label class="f">Название<input type="text" id="supName" value="${esc(det.name)}"></label>
         <div><div class="f" style="margin-bottom:8px">Какие цены на сайте</div><div class="seg" data-seg="kind"><button type="button" data-v="retailer" aria-pressed="${det.kind === "retailer"}">Обычный магазин</button><button type="button" data-v="eyewear-supplier" aria-pressed="${det.kind === "eyewear-supplier"}">Поставщик очков (закупка)</button></div></div>
@@ -1301,6 +1302,8 @@ function supplierCard(s) {
   return `<article class="card pad sup" data-id="${esc(s.id)}" style="display:flex;flex-direction:column;gap:14px">
     <div class="row"><div><div class="wm" style="font-size:17px">${esc(s.name)}</div><div class="hint">${esc((s.home || "").replace("https://", ""))} · ${s.kind === "eyewear-supplier" ? "поставщик очков" : "магазин"} · ${s.stats.found} ${plural(s.stats.found, ["товар", "товара", "товаров"])}, на витрине ${s.stats.published}</div></div><span class="sp"></span>${ck ? `<span class="pill ${ck[1]}"><span class="dot"></span>${ck[0]}</span>` : ""}</div>
     ${s.lastSync ? `<div class="hint">Последняя загрузка ${dt(s.lastSync.at)}: ${esc(STATUS[s.lastSync.status]?.[0] || s.lastSync.status)}${s.running ? " · идёт загрузка" : ""}</div>` : ""}
+    ${s.market ? `<div class="hint">Цены Европы, в евро (раздел магазина ${esc(s.market)})</div>` : ""}
+    ${s.shopCurrency && s.shopCurrency !== "EUR" ? `<button class="btn sm" data-supeu="${esc(s.id)}">Перевести на цены Европы (€)</button>` : ""}
     ${s.shopCurrency && s.shopCurrency !== "EUR" ? `<div class="note-box">${svg("info")}<div>Цены в ${esc(s.shopCurrency)}. Курс: 1 € = ${s.fx ? s.fx.rate : "?"} ${esc(s.shopCurrency)} (${esc(s.fx?.source || "")}). Изменить — в «Цены».</div></div>` : ""}
     <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:130px">Коэффициент к цене<input type="number" data-f="factor" value="${esc(s.factor)}" step="0.01" min="0.5" max="3"></label>
     <label class="f" style="flex:2;min-width:200px">Только бренды <span class="hint" style="font-weight:400">пусто — все</span><input type="text" data-f="brands" value="${esc(s.brands.join(", "))}"></label></div>
@@ -1460,7 +1463,7 @@ const READY_SUP = [
 const READY_FAIL = {};
 const hostOf = u => { try { return new URL(/^https?:/.test(u) ? u : "https://" + u).hostname.replace(/^www\./, ""); } catch { return u; } };
 function readyHTML(sup) {
-  const have = new Set(sup.map(s => hostOf(s.custom?.home || "")));
+  const have = new Set(sup.map(s => hostOf(s.home || "")));
   const left = READY_SUP.filter(r => !have.has(hostOf(r[0])) && !READY_FAIL[r[0]]);
   return `<div class="sec" style="margin-top:0"><h2>Готовые поставщики <small>подключаются одним нажатием — ссылку вводить не нужно</small></h2>
     <div class="brands" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">${READY_SUP.map(([u, n, note]) => {
@@ -1504,11 +1507,24 @@ async function vSources() {
     </article>`; }).join("")}</div></details>`;
   $("#main").onclick = async e => {
     if (e.target.closest("#supNew")) return connectSupplier();
+    const eu = e.target.closest("[data-supeu]");
+    if (eu) {
+      const s0 = (await getSources()).find(x => x.id === eu.dataset.supeu); if (!s0) return;
+      eu.disabled = true; eu.innerHTML = '<span class="spin"></span> Ищем европейский раздел…';
+      try {
+        const det = (await api("supplierDetect", { method: "POST", body: { url: s0.home } })).result;
+        if (!det.ok || !det.market) { toast(det.reason || "У этого магазина нет европейского раздела с ценами в € — цены пересчитываются по курсу"); eu.disabled = false; eu.textContent = "Перевести на цены Европы (€)"; return; }
+        const { id } = await api("supplierAdd", { method: "POST", body: { url: s0.home, name: s0.name, kind: s0.kind, factor: 1, brands: s0.brands, cats: s0.cats } });
+        await api("jobCreate", { method: "POST", body: { sourceId: id, mode: "full" } }).catch(() => null);
+        toast("Готово: цены Европы в €. Каталог обновляется"); sources = null; await getSources(true); pump(); return vSources();
+      } catch (err) { toast(err.message); eu.disabled = false; eu.textContent = "Перевести на цены Европы (€)"; }
+      return;
+    }
     const rd = e.target.closest("[data-ready]");
     if (rd) { rd.disabled = true; rd.innerHTML = '<span class="spin"></span> Подключаем…'; const ok = await connectReady(rd.dataset.ready, rd.dataset.rname); toast(ok ? rd.dataset.rname + " подключён, каталог загружается" : rd.dataset.rname + ": " + READY_FAIL[rd.dataset.ready]); sources = null; await getSources(true); pump(); return vSources(); }
     const ra = e.target.closest("[data-readyall]");
     if (ra) {
-      const have = new Set((await getSources(true)).filter(s => s.custom).map(s => hostOf(s.custom.home || "")));
+      const have = new Set((await getSources(true)).filter(s => s.custom).map(s => hostOf(s.home || "")));
       const todo = READY_SUP.filter(r => !have.has(hostOf(r[0])) && !READY_FAIL[r[0]]); let ok = 0;
       for (let i = 0; i < todo.length; i++) { ra.disabled = true; ra.innerHTML = `<span class="spin"></span> ${i + 1} из ${todo.length}: ${esc(todo[i][1])}`; if (await connectReady(todo[i][0], todo[i][1])) ok++; }
       toast(`Подключено: ${ok} из ${todo.length}` + (ok < todo.length ? " — у остальных сайт закрыт, причина на карточке" : "")); sources = null; await getSources(true); pump(); return vSources();
