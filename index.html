@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-13-live-v49">
+<meta name="trendburo-build" content="2026-10-14-live-v50">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -378,7 +378,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .wtile span svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
 .pv-gal{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .pv-gal::-webkit-scrollbar{display:none}
-.pv-gal .sl{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;padding:calc(64px + var(--st)) 12% 70px}
+.pv-gal .sl{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;display:grid;place-items:center;padding:calc(64px + var(--st)) 12% 70px}
 .pv-gal img{max-width:100%;max-height:300px;object-fit:contain;mix-blend-mode:multiply}
 .pv-dots{position:absolute;left:0;right:0;bottom:44px;display:flex;justify-content:center;gap:6px;pointer-events:none}
 .pv-dots i{width:6px;height:6px;border-radius:50%;background:rgba(28,29,32,.2);transition:background .2s,width .2s}
@@ -389,7 +389,10 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-panel{position:relative;margin-top:-34px;border-radius:30px 30px 0 0;background:var(--ink-grad);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -12px 30px rgba(20,22,25,.12);padding:10px 20px 120px;display:flex;flex-direction:column;gap:18px;min-height:max(460px,calc(100vh - 120px));animation:panelUp .7s var(--ease) .1s both}
 /* карточка товара с реальными фото: фото целиком, панель начинается под ним */
 .pv-hero.ph{--top:calc(var(--st) + 48px);height:max(380px,calc(100vh - var(--sb) - 358px));display:block;background:var(--phbg,#f3f3f3);transition:background .3s}
-.intg .pv-hero.ph{--top:0px}
+/* в Telegram: зона кнопок Telegram — отдельная белая полоса, фото начинается под ней и не заезжает наверх */
+.intg .pv-hero.ph{--top:0px;background:#fff}
+.intg .pv-hero.ph .pv-gal{top:var(--st)}
+.intg .navbar.clear::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--st);background:#fff;pointer-events:none}
 .intg .navbar.clear{padding-top:calc(var(--st) + 14px);height:calc(66px + var(--st))}
 .pv-hero.ph .pv-gal .sl{padding:var(--top) 0 0;display:block;background:var(--slbg,var(--phbg,#f3f3f3))}
 .pv-hero.ph .pv-gal img{display:block;width:100%;height:100%;max-height:none;object-fit:cover;object-position:50% 50%;box-sizing:border-box;padding:0;mix-blend-mode:normal;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
@@ -1912,6 +1915,13 @@ function openProduct(id){
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
     foot:`<div class="foot dark glass"><button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
   {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/g.clientWidth);dots.forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true});
+    // листание фото: один свайп — ровно один слайд (вправо/влево), без остановки между снимками
+    {const n=g.querySelectorAll(".sl").length;let x0=0,y0=0,k0=0,t0=0;const go=k=>{k=Math.max(0,Math.min(n-1,k));g.scrollTo({left:k*g.clientWidth,behavior:"smooth"})};
+     g.addEventListener("touchstart",e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now();k0=Math.round(g.scrollLeft/g.clientWidth)},{passive:true});
+     g.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)<Math.abs(dy)&&Math.abs(dy)>12){go(Math.round(g.scrollLeft/g.clientWidth));return}
+       const fast=Math.abs(dx)>30&&Date.now()-t0<350;setTimeout(()=>go(Math.abs(dx)>g.clientWidth*.18||fast?k0+(dx<0?1:-1):k0),0)},{passive:true});
+     // на всякий случай: прокрутка остановилась между снимками — доводим до ближайшего
+     let st=0;g.addEventListener("scroll",()=>{clearTimeout(st);st=setTimeout(()=>{const r=g.scrollLeft/g.clientWidth;if(Math.abs(r-Math.round(r))>.02)go(Math.round(r))},140)},{passive:true});}
     const sc=s.querySelector(".scroll"),ims=[...g.querySelectorAll("img")];let raf=0;
     sc.addEventListener("scroll",()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;const y=Math.max(0,Math.min(sc.scrollTop,500));ims.forEach(im=>im.style.transform=y?`translateY(${y*.35}px) scale(${1-y/2400})`:"")})},{passive:true});
     // фон под фото = цвет краёв снимка, чтобы фото смотрелось на весь экран без рамок
