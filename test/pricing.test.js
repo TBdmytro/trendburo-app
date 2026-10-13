@@ -101,3 +101,12 @@ test("минимальная комиссия за единицу: одежда 
   assert.equal(ua(1200, "bags"), 1320, "сумка 1200 € → +10%");
   assert.equal(priceOffer({ kind: "official", boutique: 50, dest: "eu", category: "clothing" }).final, 65, "Европа: тот же минимум");
 });
+
+test("магазины-поставщики (Alo Yoga): +10% и минимумы одинаково во все регионы", async () => {
+  const { priceFor } = await import("../lib/pipeline.js");
+  const p = (boutique, category) => priceFor({ sourceKind: "retailer", boutique }, null, null, category);
+  assert.deepEqual([p(338, "clothing").ua, p(338, "clothing").eu, p(338, "clothing").dxb], [375, 375, 375]);
+  assert.deepEqual([p(50, "clothing").eu, p(200, "shoes").eu, p(450, "shoes").dxb, p(20, "accessories").eu], [65, 240, 495, 35]);
+  // официальные сайты брендов — как раньше: Европа и Дубай +8%
+  assert.equal(priceFor({ sourceKind: "official", boutique: 3000 }, null, null, "bags").eu, 3240);
+});
