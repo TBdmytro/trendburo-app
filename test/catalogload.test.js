@@ -31,3 +31,13 @@ test("каталог порциями: всё в наличии сохранен
   await loadCatalogPage(store, id, { page: 1, limit: 100, fetchImpl: f });
   assert.equal((await store.list("product", {})).length, n);
 });
+
+test("словари с меняющимися ключами хранятся в базе с постоянными названиями полей", async () => {
+  const { toDb, fromDb } = await import("../lib/store.js");
+  const doc = { _id: "p", offers: [{ availability: { "3da379b8": { status: "online", price: 1 }, a1: { status: "out", price: 2 } } }], attempts: {}, categories: ["x"], coverage: { categories: { "womens-new": { pages: 1 } } } };
+  const db = toDb(doc);
+  assert.deepEqual(Object.keys(db.offers[0].availability), ["_kv"]);
+  assert.equal(JSON.stringify(db).includes('"3da379b8":'), false);
+  assert.deepEqual(db.categories, ["x"]);
+  assert.deepEqual(fromDb(db), doc);
+});
