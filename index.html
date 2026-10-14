@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-14-live-v58">
+<meta name="trendburo-build" content="2026-10-14-live-v59">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -386,13 +386,16 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero .v svg{width:100%;height:auto}
 .pv-hero .v.swap{opacity:0;transform:scale(.96)}
 .pv-hero .newp{position:absolute;top:calc(64px + var(--st));left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;padding:5px 10px;border-radius:99px}
-.pv-panel{position:relative;margin-top:-34px;border-radius:30px 30px 0 0;background:var(--ink-grad);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -12px 30px rgba(20,22,25,.12);padding:10px 20px 120px;display:flex;flex-direction:column;gap:18px;min-height:max(460px,calc(100vh - 120px));animation:panelUp .7s var(--ease) .1s both}
+.pv-panel{position:relative;margin-top:-34px;border-radius:30px 30px 0 0;background:var(--ink-grad);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -12px 30px rgba(20,22,25,.12);padding:6px 20px 120px;display:flex;flex-direction:column;gap:16px;min-height:max(460px,calc(100vh - 120px));animation:panelUp .7s var(--ease) .1s both}
 /* карточка товара с реальными фото: фото целиком, панель начинается под ним */
 /* высота рамки = ширина × пропорции фото (--phh считает скрипт), чтобы снимок заполнял рамку слева направо и сверху вниз без полос и почти без обрезки */
 .pv-hero.ph{--top:calc(var(--st) + 48px);--off:var(--top);height:calc(var(--off) + 34px + var(--frh,100vw));display:block;background:var(--phbg,#f3f3f3);transition:background .3s}
 /* в Telegram: зона кнопок Telegram — отдельная белая полоса, фото начинается под ней и не заезжает наверх */
-.intg .pv-hero.ph{--top:0px;--off:var(--st);background:#fff}
-.intg .pv-hero.ph .pv-gal{top:var(--st)}
+.intg .pv-hero.ph{--top:0px;--off:0px;background:#fff}
+.intg .pv-hero.ph .pv-gal{top:0}
+/* карточка товара в Telegram: фото с самого верха, под кнопками Telegram; белая плашка появляется, когда карточку листают */
+.intg .pushed:has(.pv-hero.ph) .navbar.clear::before{opacity:0;transition:opacity .2s}
+.intg .pushed:has(.pv-hero.ph) .navbar.clear.moved::before{opacity:1}
 .intg .navbar.clear::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--st);background:#fff;pointer-events:none}
 .intg .navbar.clear{padding-top:calc(var(--st) + 14px);height:calc(66px + var(--st))}
 /* рамка фото: от верхней плашки до панели; фото целиком (без обрезки), нижние 34 px рамки уходят под графитовую панель */
@@ -422,7 +425,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .zv .zt button{width:40px;height:40px;border-radius:20px;border:0;background:rgba(28,29,32,.06);display:grid;place-items:center}
 .zv .zt svg{width:20px;height:20px;stroke:var(--fg);fill:none;stroke-width:2;stroke-linecap:round}
 @keyframes panelUp{from{transform:translateY(120px);opacity:.4}to{transform:none;opacity:1}}
-.pv-panel .grab2{align-self:center;width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.22)}
+.pv-panel .grab2{align-self:center;width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.22);margin-bottom:-6px}
 .pv-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .pv-top .bl{border:0;background:none;padding:0;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);text-align:left}
 .pv-top h2{font-size:23px;font-weight:600;letter-spacing:-.02em;margin-top:4px}
@@ -500,6 +503,10 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .dlv-more>div{overflow:hidden;min-height:0}
 .dlv:not(.open) .dlv-more{grid-template-rows:0fr;opacity:0}
 .dlv:not(.open) .dlv-line{margin-top:0}
+.dlv-seg{max-height:64px;transition:max-height .55s var(--ease),opacity .35s,margin .55s var(--ease),padding .55s var(--ease)}
+.dlv:not(.open) .dlv-seg{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-bottom:-14px;overflow:hidden;pointer-events:none}
+.dlv:not(.open) .dlv-line{border-top-color:transparent;padding-top:0}
+.dlv:not(.open) .dlv-line [data-to]::after{content:" · сменить ›";color:rgba(255,255,255,.45)}
 .dlv:not(.open){cursor:pointer}
 .dlv.open .dlv-st i{animation:dlpop .55s var(--ease) backwards}
 .dlv.open .dlv-st:nth-child(1) i{animation-delay:.18s}.dlv.open .dlv-st:nth-child(2) i{animation-delay:.3s}.dlv.open .dlv-st:nth-child(3) i{animation-delay:.42s}
@@ -1806,7 +1813,7 @@ function push(title,content,{clear=false,foot="",accent="",right=""}={}){
   $("#app").append(s);stack.push(s);$("#tabbar").classList.add("hide");
   s.querySelector("[data-back]").onclick=pop;
   const sc=s.querySelector(".scroll"),nb=s.querySelector(".navbar");
-  sc.addEventListener("scroll",()=>{nb.classList.toggle("solid",sc.scrollTop>(clear?220:30));const art=s.querySelector(".hero-art svg");if(art){const y=sc.scrollTop;art.style.transform=`translateY(${y*.25}px) scale(${1+Math.min(y,300)/1500})`}},{passive:true});
+  sc.addEventListener("scroll",()=>{nb.classList.toggle("solid",sc.scrollTop>(clear?220:30));nb.classList.toggle("moved",sc.scrollTop>4);const art=s.querySelector(".hero-art svg");if(art){const y=sc.scrollTop;art.style.transform=`translateY(${y*.25}px) scale(${1+Math.min(y,300)/1500})`}},{passive:true});
   if(!clear)nb.classList.add("solid");
   requestAnimationFrame(()=>requestAnimationFrame(()=>s.classList.add("in")));
   let sx=null;s.addEventListener("touchstart",e=>{const x=e.touches[0].clientX-s.getBoundingClientRect().left;sx=x<24?e.touches[0].clientX:null},{passive:true});
@@ -1991,18 +1998,25 @@ function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!
   const si=shotInfo(im),bx=si?si.box:[0,0,1,1],res=box.dataset.res?+box.dataset.res:box.closest(".pv-hero")&&box.closest(".pv-hero").querySelector(".pv-dots")?24:0,Hc=H-res;
   // поле вокруг товара 4% (если товар упирается в край снимка — поля не нужно)
   const cw=(bx[2]-bx[0])*w,ch=(bx[3]-bx[1])*h,mx=bx[0]<.01&&bx[2]>.99?1:.92,my=bx[1]<.01&&bx[3]>.99?1:.92;
-  const sCover=Math.max(W/w,H/h),sFit=Math.min(W*mx/cw,Hc*my/ch);let sc=Math.min(sCover,Math.max(sFit,Math.min(W/w,Hc/h)));
+  const rt=+box.dataset.rt||0;
+  const sCover=Math.max(W/w,H/h),sFit=Math.min(W*mx/cw,(Hc-rt)*my/ch);let sc=Math.min(sCover,Math.max(sFit,Math.min(W/w,Hc/h)));
   // data-whole: квадратные и широкие снимки не приближаем дальше полного кадра — фото целиком по ширине, вокруг цвет фона снимка
   if(box.dataset.whole&&w/h>=.8)sc=Math.min(sc,W/w,Hc/h);
+  const live=box.dataset.live&&si&&!si.flat&&(bx[0]<.02||bx[2]>.98);
+  if(live)sc=Math.min(W/w,H/h);
   // len — вся рамка, vis — где товар должен быть виден (над точками листания); сначала без полей, затем товар целиком
-  const ax=(n,len,vis,c0,c1)=>{let t=n<=len?(vis-n)/2:Math.min(0,Math.max(len-n,vis/2-(c0+c1)/2*n));t=Math.min(t,vis-c1*n);t=Math.max(t,-c0*n);return t};
-  const dw=w*sc,dh=h*sc,L=ax(dw,W,W,bx[0],bx[2]),T=ax(dh,H,Hc,bx[1],bx[3]);
+  // v0..v1 — где товар должен быть виден (ниже кнопок Telegram, выше точек листания); товар по центру этой области,
+  // снимок закрывает рамку без полей, если может; товар целиком важнее всего
+  const ax=(n,len,v0,v1,c0,c1)=>{let t=(v0+v1)/2-(c0+c1)/2*n;if(n>=len)t=Math.min(0,Math.max(len-n,t));t=Math.min(t,v1-c1*n);t=Math.max(t,v0-c0*n);return t};
+  // «живое» фото чуть уже рамки (до 7%) — растягиваем по ширине на эти проценты: глазом не видно, зато ни полос, ни обрезки
+  let dw=w*sc;const dh=h*sc;if(live&&dw<W&&(W-dw)/W<=.07)dw=W;
+  const L=live?(W-dw)/2:ax(dw,W,0,W,bx[0],bx[2]),T=live?(dh>=H-1?0:ax(dh,H,rt,Hc,0,1)):ax(dh,H,rt,Hc,bx[1],bx[3]);
   Object.assign(im.style,{position:"absolute",left:L+"px",top:(pt+T)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"fill"});
   const gap=dw<W-1||dh<H-1;box.style.setProperty("--slbg",si&&si.bg||"#f3f3f3");
   // поля сверху/снизу — цветом фона; по бокам — тем же цветом по высоте (у студийных фото фон сверху и снизу разный)
   const at=g=>g.replace(/(\d+(?:\.\d+)?)%\)?(?=[,)])/g,(m,v)=>`${(pt+T+dh*v/100).toFixed(1)}px`);
   // если товар упирается в край снимка, продолжать этот край нельзя (растянется сам товар) — там ровный фон снимка
-  const gl=bx[0]<.01?`linear-gradient(${si&&si.bg},${si&&si.bg})`:si&&at(si.grad),gr=bx[2]>.99?`linear-gradient(${si&&si.bg},${si&&si.bg})`:si&&at(si.gradR);
+  const thin=W-dw<36,gl=bx[0]<.01&&!thin?`linear-gradient(${si&&si.bg},${si&&si.bg})`:si&&at(si.grad),gr=bx[2]>.99&&!thin?`linear-gradient(${si&&si.bg},${si&&si.bg})`:si&&at(si.gradR);
   // сверху/снизу — цвет верхнего/нижнего края снимка, по бокам — продолжение левого/правого края
   const edgeC=(g,end)=>{const m=g.match(/rgb\([^)]*\)/g)||[];return end?m[m.length-1]:m[0]};
   const vfill=si?`linear-gradient(to bottom,${edgeC(si.grad)} ${(pt+T).toFixed(1)}px,${edgeC(si.grad,1)} ${(pt+T+dh).toFixed(1)}px)`:"";
@@ -2054,6 +2068,10 @@ function openProduct(id){
     // фон под фото = цвет краёв снимка, чтобы фото смотрелось на весь экран без рамок
     const hero=s.querySelector(".pv-hero");
     // фото вписывается в рамку по самому товару: приближаем, но товар целиком; свободные края — фоном снимка
+    // фото «на улице»: кадр держится за верх снимка, а для обуви и брюк — за низ (чтобы не срезать сам товар)
+    const anchor=p.cat==="shoes"||/pant|trouser|legging|jean|short|skirt|jogger|брюк|джинс|шорт|юбк/i.test(it.name)?"bottom":"top";
+    const stp=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--st"))||0;
+    g.querySelectorAll(".sl").forEach(sl=>{sl.dataset.live=anchor;if(document.documentElement.classList.contains("intg")&&stp)sl.dataset.rt=Math.round(stp+4)});
     const fitAll=()=>ims.forEach(im=>{if(im.complete&&im.naturalWidth)fitShot(im,im.parentNode,p.imgs[+im.dataset.zi])});
     s._fitAll=fitAll;
     ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.addEventListener("load",go,{once:true});im.src=im.src}else im.classList.add("fit")}))});
@@ -2088,9 +2106,10 @@ function openProduct(id){
   // рамка фото: от верхней плашки до панели; панель на первом экране видна целиком — до конца блока доставки, над кнопкой
   {const hero=s.querySelector(".pv-hero.ph");if(hero){const pan=s.querySelector(".pv-panel"),ft=s.querySelector(".foot");
     const size=()=>{const last=s.querySelector("#pvd")||s.querySelector("#pvb");if(!last||!pan.offsetHeight)return;
+      const scr=s.querySelector(".scroll");if(scr&&scr.scrollTop>4)return;const dlo=s.querySelector(".dlv.open");if(dlo)return;
       const gl=hero.querySelector(".pv-gal"),sl0=gl&&gl.querySelector(".sl"),off=(gl?gl.offsetTop:0)+(sl0?parseFloat(getComputedStyle(sl0).paddingTop)||0:0);
       const k=last.offsetTop+last.offsetHeight,W=hero.clientWidth,f=ft?ft.offsetHeight:90;
-      const h=Math.round(Math.max(W*.78,Math.min(W*1.35,innerHeight-off-k-f-8)));
+      const h=Math.round(Math.max(W*.78,Math.min(W*1.6,innerHeight-off-k-f+4)));
       if(Math.abs((parseFloat(hero.style.getPropertyValue("--frh"))||0)-h)>1){hero.style.setProperty("--frh",h+"px");s._fitAll&&s._fitAll()}};
     size();requestAnimationFrame(size);setTimeout(size,400);(document.fonts&&document.fonts.ready||Promise.resolve()).then(size);
     const onR=()=>{if(!s.isConnected)return removeEventListener("resize",onR);size()};addEventListener("resize",onR)}}
