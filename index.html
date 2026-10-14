@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-14-live-v55">
+<meta name="trendburo-build" content="2026-10-14-live-v56">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -389,14 +389,18 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-panel{position:relative;margin-top:-34px;border-radius:30px 30px 0 0;background:var(--ink-grad);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -12px 30px rgba(20,22,25,.12);padding:10px 20px 120px;display:flex;flex-direction:column;gap:18px;min-height:max(460px,calc(100vh - 120px));animation:panelUp .7s var(--ease) .1s both}
 /* карточка товара с реальными фото: фото целиком, панель начинается под ним */
 /* высота рамки = ширина × пропорции фото (--phh считает скрипт), чтобы снимок заполнял рамку слева направо и сверху вниз без полос и почти без обрезки */
-.pv-hero.ph{--top:calc(var(--st) + 48px);--off:var(--top);height:calc(var(--off) + 34px + min(var(--phh,125vw), 100vh - var(--off) - 150px - var(--sb)));display:block;background:var(--phbg,#f3f3f3);transition:background .3s}
+.pv-hero.ph{--top:calc(var(--st) + 48px);--off:var(--top);height:calc(var(--off) + 34px + var(--frh,100vw));display:block;background:var(--phbg,#f3f3f3);transition:background .3s}
 /* в Telegram: зона кнопок Telegram — отдельная белая полоса, фото начинается под ней и не заезжает наверх */
 .intg .pv-hero.ph{--top:0px;--off:var(--st);background:#fff}
 .intg .pv-hero.ph .pv-gal{top:var(--st)}
 .intg .navbar.clear::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--st);background:#fff;pointer-events:none}
 .intg .navbar.clear{padding-top:calc(var(--st) + 14px);height:calc(66px + var(--st))}
 /* рамка фото: от верхней плашки до панели; фото целиком (без обрезки), нижние 34 px рамки уходят под графитовую панель */
-.pv-hero.ph .pv-gal .sl{padding:var(--top) 0 34px;display:block;background:var(--slbg,var(--phbg,#f3f3f3));box-sizing:border-box}
+.pv-hero.ph .pv-gal .sl{padding:var(--top) 0 34px;display:block;position:relative;overflow:hidden;background:var(--slbg,var(--phbg,#f3f3f3));box-sizing:border-box}
+.pv-hero.ph .pv-gal .slb{position:absolute;left:-30px;right:-30px;top:calc(var(--top) - 30px);bottom:4px;background:center/cover no-repeat;filter:blur(26px) saturate(1.05);opacity:.95;pointer-events:none}
+.pv-hero.ph .pv-gal .slb[hidden]{display:none}
+.pv-hero.ph .pv-gal img:not(.fit){opacity:0}
+.pv-hero.ph .pv-gal img.fit{animation:fitin .25s ease both}@keyframes fitin{from{opacity:0}}
 .pv-hero.ph .pv-gal img{display:block;width:100%;height:100%;max-height:none;object-fit:cover;object-position:50% 50%;box-sizing:border-box;padding:0;mix-blend-mode:normal;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
 .pv-hero.ph .pv-dots{bottom:46px;left:50%;right:auto;transform:translateX(-50%);padding:6px 9px;border-radius:99px;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .navbar.clear .round{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
@@ -724,42 +728,48 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .sl{will-change:transform}.sv2 .sl.mv{transition:transform .34s cubic-bezier(.25,.8,.3,1),opacity .34s,filter .34s}.sv2 .sl.out{filter:brightness(.6)}
 /* сторис: верх (полоски, бренд, кнопки Telegram) не трогаем — фото начинается под ним и целиком помещается до плашки заказа снизу;
    фон вокруг — затемнённый цвет краёв снимка */
-.sv2 .st{position:absolute;inset:0;background:color-mix(in oklab,var(--phbg,#8a8d93) 38%,#121315);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:calc(66px + var(--st)) 0 calc(236px + var(--sb));box-sizing:border-box}
+.sv2 .tb0{position:absolute;left:0;right:0;top:0;height:calc(66px + var(--st));background:#1d1f22;z-index:5;pointer-events:none}
+.sv2 .st{position:absolute;inset:0;background:#1d1f22;display:block;overflow:hidden;padding:calc(66px + var(--st)) 0 0;box-sizing:border-box}
 .sv2 .st::before{display:none}
-.sv2 .pd{position:absolute;left:0;right:0;bottom:calc(219px + var(--sb));z-index:4;display:flex;justify-content:center;gap:5px;pointer-events:none}
+.sv2 .pd{position:absolute;left:0;right:0;bottom:calc(120px + var(--sb));z-index:4;display:flex;justify-content:center;gap:5px;pointer-events:none}
 .sv2 .pd i{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.45);transition:width .25s,background .25s}.sv2 .pd i.on{width:16px;background:#fff}
 .sv2 .st::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(140px + var(--st));background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.2) 55%,transparent);z-index:1}
-.sv2 .st img{width:100%;height:100%;object-fit:contain}
+.sv2 .st img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 40%}
 @keyframes svkb{from{transform:scale(1.045)}to{transform:none}}
 .sv2 .st img.sw{animation:svsw .35s var(--ease) both}@keyframes svsw{from{opacity:0;transform:scale(.97)}}
 .sv2 .bg{position:absolute;top:calc(74px + var(--st));right:14px;z-index:3;font-size:12px;font-weight:800;padding:6px 10px;border-radius:99px;background:#1f2125;color:#fff}
 .sv2 .bg.s{background:#c8343c}
-.sv2 .pn{position:absolute;left:10px;right:10px;bottom:calc(10px + var(--sb));z-index:4;padding:14px;border-radius:22px;background:rgba(28,30,33,.9);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#fff;transition:opacity .2s}
+.sv2 .pn{position:absolute;left:12px;right:12px;bottom:calc(16px + var(--sb));z-index:4;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 15px;border-radius:22px;background:rgba(24,25,28,.36);border:1px solid rgba(255,255,255,.2);box-shadow:0 8px 28px rgba(0,0,0,.18);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25);transition:opacity .2s}
+.sv2 .pn .t{flex:1;min-width:0}
 .sv2.first .pn{animation:svrise .45s .1s var(--ease) both}
 @keyframes svrise{from{transform:translateY(20px);opacity:0}}
-.sv2 .pn .br{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;font-weight:700}
-.sv2 .pn .nm{font-size:20px;font-weight:700;margin:3px 0 8px;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv2 .pn .br{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;opacity:.8;font-weight:700}
+.sv2 .pn .nm{font-size:14.5px;font-weight:600;margin:2px 0 1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sv2 .pn .row{display:flex;align-items:baseline;gap:10px}
-.sv2 .pn .pr{font-size:19px;font-weight:800;color:#fff}.sv2 .pn s{opacity:.5;font-size:14px;margin-left:6px;font-weight:600}
+.sv2 .pn .pr{font-size:14px;font-weight:700;color:#fff}.sv2 .pn s{opacity:.6;font-size:12px;margin-left:6px;font-weight:600}
 .sv2 .pn .ac{display:flex;gap:8px;margin-top:12px}
-.sv2 .pn .ac button{height:46px;border-radius:14px;border:0;font:inherit;font-size:15px;font-weight:700}
-.sv2 .pn .go{flex:1;background:#fff;color:#1f2125}
-.sv2 .pn .fv{width:46px;flex:none;background:rgba(255,255,255,.12);color:#fff;font-size:19px}.sv2 .pn .fv.on{color:#ff6b74}
+.sv2 .pn>button{height:40px;border:0;font:inherit;flex:none;text-shadow:none;white-space:nowrap;min-width:max-content}
+.sv2 .pn .go{border-radius:20px;padding:0 16px;background:#fff;color:#1f2125;font-size:14px;font-weight:700}
+.sv2 .pn .fv{width:40px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:17px}.sv2 .pn .fv.on{color:#ff6b74}
 .sv2 .pn .up{text-align:center;font-size:11.5px;opacity:.6;margin-top:8px}
 .sv2 .pn .pd2{display:none}
-.sv2 .dt{display:flex;gap:10px;margin:0 0 10px}
+.sv2 .dt{position:absolute;left:16px;bottom:calc(92px + var(--sb));z-index:4;display:flex;gap:10px;padding:6px 8px;border-radius:99px;background:rgba(24,25,28,.32);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .sv2 .dt button{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:#f3f3f3 50%/contain no-repeat;transition:transform .3s cubic-bezier(.34,1.56,.64,1),border-color .2s}
 .sv2 .dt button.on{border-color:#fff;transform:scale(1.15)}
 .sv2 .tp{display:none;position:absolute;top:calc(70px + var(--st));bottom:200px;width:34%;z-index:3;border:0;background:none}.sv2 .tp.l{left:0}.sv2 .tp.r{right:0}
-.sv2 .du{position:absolute;inset:0;display:grid;grid-template-rows:1fr 1fr;gap:6px;padding:calc(72px + var(--st)) 10px calc(10px + var(--sb));background:#17181b}
-.sv2 .dc{position:relative;border:0;border-radius:22px;background:#f3f3f3;display:grid;place-items:center;overflow:hidden;transition:transform .45s cubic-bezier(.34,1.56,.64,1),filter .3s;font:inherit;padding:0}
-.sv2 .dc img{position:absolute;inset:0 0 44px;width:100%;height:calc(100% - 44px);object-fit:contain}
-.sv2 .dc .lb{position:absolute;left:12px;right:12px;bottom:10px;text-align:left;color:#1f2125}
-.sv2 .dc .lb b{display:block;font-size:14px}.sv2 .dc .lb span{font-size:12.5px;color:#6b6f76}
+.sv2 .du{position:absolute;inset:0;display:grid;grid-template-rows:1fr 1fr;gap:9px;padding:calc(72px + var(--st)) 10px calc(34px + var(--sb));background:#17181b}
+.sv2 .duh{position:absolute;left:0;right:0;bottom:calc(9px + var(--sb));text-align:center;font-size:12px;color:rgba(255,255,255,.55);pointer-events:none}
+.sv2 .dc{position:relative;border:0;border-radius:24px;background:#26282c;overflow:hidden;font:inherit;padding:0;touch-action:none;transition:transform .32s cubic-bezier(.25,.8,.3,1),opacity .32s;will-change:transform}
+.sv2 .dc.drag{transition:none}.sv2 .dc.enter{animation:dcin .35s var(--ease) both}@keyframes dcin{from{opacity:0;transform:scale(.92)}}
+.sv2 .dc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;pointer-events:none}
+.sv2 .dc .lb{position:absolute;left:10px;right:10px;bottom:10px;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:16px;text-align:left;color:#fff;background:rgba(24,25,28,.38);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.sv2 .dc .lb .t{flex:1;min-width:0}.sv2 .dc .lb small{display:block;font-size:9.5px;letter-spacing:.15em;font-weight:700;opacity:.8;text-transform:uppercase}
+.sv2 .dc .lb b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sv2 .dc .lb .p{font-size:14px;font-weight:700;flex:none}
+.sv2 .dc .no{position:absolute;top:18px;left:16px;border:3px solid #fff;color:#fff;font-weight:800;font-size:19px;letter-spacing:.06em;padding:3px 11px;border-radius:10px;background:rgba(0,0,0,.25);transform:rotate(-12deg);opacity:var(--no,0);pointer-events:none}
 .sv2 .dc .hv{position:absolute;top:10px;right:12px;font-size:13px;font-weight:700;background:#1f2125;color:#fff;border-radius:99px;padding:5px 10px;opacity:0;transform:scale(.6);transition:opacity .3s,transform .4s cubic-bezier(.34,1.56,.64,1)}
 .sv2 .du.vt .dc:not(.pk){filter:brightness(.5) saturate(.6);transform:scale(.97)}
 .sv2 .du.vt .dc.pk{transform:scale(1.02)}.sv2 .du.vt .dc.pk .hv{opacity:1;transform:none}
-.sv2 .vs{position:absolute;left:50%;top:calc(50% + (62px + var(--st) - var(--sb))/2);transform:translate(-50%,-50%);z-index:2;width:46px;height:46px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;border:3px solid #17181b;pointer-events:none}
+.sv2 .vs{position:absolute;left:50%;top:calc(50% + (38px + var(--st) - var(--sb))/2);transform:translate(-50%,-50%);z-index:2;width:40px;height:40px;border-radius:50%;background:rgba(24,25,28,.4);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#fff;display:grid;place-items:center;font-weight:800;font-size:12px;pointer-events:none}
 .sv2 .in2{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:22px 20px calc(40px + var(--sb));color:#fff;background:radial-gradient(80% 60% at 70% 30%,#3a3c42,#17181b)}
 .sv2 .in2 .gr{position:absolute;top:calc(80px + var(--st));left:20px;right:20px;bottom:220px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sv2 .in2 .gr div{border-radius:18px;background:#f3f3f3 center/84% no-repeat}
@@ -1909,6 +1919,50 @@ function howSheet(){const r=(t,d,ic)=>`<div class="hw-r"><span class="hw-i"><svg
     ${r(tx("ch.5.t","Оплата"),esc(tx("ch.5.d","Менеджер подтверждает наличие и размер, после этого — оплата удобным способом.")),INF)}</div>`)}
 /* «Похожие»: та же категория, бренд того же или соседнего уровня, цена ±40% (если мало — шире) */
 const TIER_OF=(()=>{const T={1:"hermes chanel therow loropiana goyard brunellocucinelli",2:"louisvuitton lv dior celine loewe bottegaveneta prada saintlaurent ysl gucci miumiu fendi givenchy balenciaga valentino burberry cartier"};const m={};Object.entries(T).forEach(([t,s])=>s.split(" ").forEach(n=>m[n]=+t));return b=>m[String(b||"").toLowerCase().normalize("NFD").replace(/[^a-z]/g,"")]||3})();
+/* Где на снимке товар: уменьшенная копия, сравнение с цветом краёв. Результат запоминается на картинке.
+   bg — цвет фона, flat — фон ровный (студия), box — рамка товара в долях [x0,y0,x1,y1]; null — снимок нельзя прочитать */
+function shotInfo(im){if(im._si!==undefined)return im._si;let r=null;
+  try{const w=72,h=Math.max(8,Math.round(72*im.naturalHeight/im.naturalWidth)),c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,w,h);
+    const d=x.getImageData(0,0,w,h).data,ed=[];for(let i=0;i<w;i++)ed.push(i,(h-1)*w+i);for(let j=1;j<h-1;j++)ed.push(j*w,j*w+w-1);
+    let R=0,G=0,B=0;ed.forEach(k=>{R+=d[k*4];G+=d[k*4+1];B+=d[k*4+2]});const n=ed.length;R/=n;G/=n;B/=n;
+    // фон по бокам по высоте: цвет левого и правого края в каждой строке; ровный, если края похожи и цвет меняется плавно (студийный градиент)
+    const px=k=>[d[k*4],d[k*4+1],d[k*4+2]],side=[];let lr=0,jump=0;
+    for(let j=0;j<h;j++){const a=px(j*w),b=px(j*w+w-1);lr+=(Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2]))/3;side.push([(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2])}
+    for(let j=2;j<h;j++){const a=side[j],b=side[j-2];jump=Math.max(jump,(Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2]))/3)}
+    lr/=h;const dev=lr<10&&jump<7?0:99;
+    // заливка полей: отдельно для левого и правого края — продолжение крайнего столбца снимка (сглаженное по высоте)
+    const col=x=>{const o=[];for(let t=0;t<=1.0001;t+=.125){const j0=Math.max(0,Math.round(t*(h-1))-2),j1=Math.min(h-1,j0+4);let a=[0,0,0],m=0;for(let j=j0;j<=j1;j++)for(let i=x;i<x+3&&i<w;i++){const k=(j*w+(x?i-2:i))*4;a[0]+=d[k];a[1]+=d[k+1];a[2]+=d[k+2];m++}o.push(`rgb(${a[0]/m|0},${a[1]/m|0},${a[2]/m|0}) ${(t*100).toFixed(1)}%`)}return "linear-gradient(to bottom,"+o.join(",")+")"};
+    const grad=col(0),gradR=col(w-1);
+    // пиксель товара — заметно отличается от фона; строка/столбец считаются «с товаром», если таких пикселей больше 2%
+    const on=(i)=>Math.max(Math.abs(d[i]-R),Math.abs(d[i+1]-G),Math.abs(d[i+2]-B))>26;
+    const rows=new Array(h).fill(0),cols=new Array(w).fill(0);
+    for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(on((j*w+i)*4)){rows[j]++;cols[i]++}
+    const fr=(a,len,lim)=>{let s0=0,e0=a.length-1;while(s0<a.length&&a[s0]<=lim)s0++;while(e0>s0&&a[e0]<=lim)e0--;return s0>=a.length?[0,1]:[s0/len,(e0+1)/len]};
+    const [y0,y1]=fr(rows,h,w*.02),[x0,x1]=fr(cols,w,h*.02);
+    r={bg:`rgb(${R|0},${G|0},${B|0})`,grad,gradR,flat:dev<9,box:[x0,y0,x1,y1]}}catch(e){r=null}
+  im._si=r;return r}
+/* Кадр в рамке: товар целиком и как можно крупнее; если снимок закрывает рамку — без полей, иначе края заливаются фоном снимка */
+function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!box)return;
+  const cs=getComputedStyle(box),pt=parseFloat(cs.paddingTop)||0,pb=parseFloat(cs.paddingBottom)||0,W=box.clientWidth,H=box.clientHeight-pt-pb;if(W<10||H<10)return;
+  const si=shotInfo(im),bx=si?si.box:[0,0,1,1],res=box.closest(".pv-hero")&&box.closest(".pv-hero").querySelector(".pv-dots")?24:0,Hc=H-res;
+  // поле вокруг товара 4% (если товар упирается в край снимка — поля не нужно)
+  const cw=(bx[2]-bx[0])*w,ch=(bx[3]-bx[1])*h,mx=bx[0]<.01&&bx[2]>.99?1:.92,my=bx[1]<.01&&bx[3]>.99?1:.92;
+  const sCover=Math.max(W/w,H/h),sFit=Math.min(W*mx/cw,Hc*my/ch),sc=Math.min(sCover,Math.max(sFit,Math.min(W/w,Hc/h)));
+  // len — вся рамка, vis — где товар должен быть виден (над точками листания); сначала без полей, затем товар целиком
+  const ax=(n,len,vis,c0,c1)=>{let t=n<=len?(vis-n)/2:Math.min(0,Math.max(len-n,vis/2-(c0+c1)/2*n));t=Math.min(t,vis-c1*n);t=Math.max(t,-c0*n);return t};
+  const dw=w*sc,dh=h*sc,L=ax(dw,W,W,bx[0],bx[2]),T=ax(dh,H,Hc,bx[1],bx[3]);
+  Object.assign(im.style,{position:"absolute",left:L+"px",top:(pt+T)+"px",width:dw+"px",height:dh+"px",objectFit:"fill"});
+  const gap=dw<W-1||dh<H-1;box.style.setProperty("--slbg",si&&si.bg||"#f3f3f3");
+  // поля сверху/снизу — цветом фона; по бокам — тем же цветом по высоте (у студийных фото фон сверху и снизу разный)
+  const at=g=>g.replace(/(\d+(?:\.\d+)?)%\)?(?=[,)])/g,(m,v)=>`${(pt+T+dh*v/100).toFixed(1)}px`);
+  // если товар упирается в край снимка, продолжать этот край нельзя (растянется сам товар) — там ровный фон снимка
+  const gl=bx[0]<.01?`linear-gradient(${si&&si.bg},${si&&si.bg})`:si&&at(si.grad),gr=bx[2]>.99?`linear-gradient(${si&&si.bg},${si&&si.bg})`:si&&at(si.gradR);
+  box.style.background=si&&dw<W-1?`${gl} left top/${Math.ceil(L+dw/2)}px 100% no-repeat,${gr} right top/${Math.ceil(W-L-dw/2)}px 100% no-repeat,${si.bg}`:"";
+  // «живой» фон (улица, интерьер): края — размытое продолжение этого же снимка
+  const b=box.querySelector(".slb");if(b){const live=gap&&!si;b.hidden=!live;if(live&&src&&!b.style.backgroundImage)b.style.backgroundImage=`url("${(src.thumb||src.src).replace(/"/g,"%22")}")`}
+  // края снимка мягко растворяются в заливке — без шва
+  const fx=si&&dw<W-1?"linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)":"";im.style.webkitMaskImage=im.style.maskImage=fx;
+  im.classList.add("fit")}
 function edgeColor(im){try{const w=24,h=24,c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,w,h);
   const d=x.getImageData(0,0,w,h).data,px=[];for(let i=0;i<w;i++){px.push(i*4,((h-1)*w+i)*4)}for(let j=0;j<h;j++){px.push(j*w*4,(j*w+w-1)*4)}
   let r=0,g=0,b=0;px.forEach(k=>{r+=d[k];g+=d[k+1];b+=d[k+2]});const n=px.length;return `rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`}catch(e){return ""}}
@@ -1930,9 +1984,10 @@ function openProduct(id){
   const showDl=!r&&!(st&&st.loc==="ua");
   const btnLabel=()=>r?"Купить":"В корзину · "+eur(priceFor(it,d));
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
-  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl"><img src="${esc(im.src)}"${im.big?` srcset="${esc(im.src)} 1000w, ${esc(im.big)} 1600w" sizes="100vw"`:""} crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
-   <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:18px"></div>
+  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl"><i class="slb"></i><img src="${esc(im.src)}"${im.big?` srcset="${esc(im.src)} 1000w, ${esc(im.big)} 1600w" sizes="100vw"`:""} crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
+   <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:14px"></div>
    ${showDl?`<div id="pvd"></div>`:""}
+   <div id="pvx" style="display:flex;flex-direction:column;gap:18px"></div>
    ${r?"":`<button class="pv-how press" type="button" data-how><span class="ic"><svg viewBox="0 0 24 24">${IC.shield}</svg></span><span><b>Как мы работаем</b><small>Поиск, выкуп, проверка, отправка</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`}
    ${like.length?`<div class="ondark"><div class="sech"><h2>${r?"Ещё в ресейле":"Похожие"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div></div>`:""}
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
@@ -1949,9 +2004,10 @@ function openProduct(id){
     sc.addEventListener("scroll",()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;const y=Math.max(0,Math.min(sc.scrollTop,500));ims.forEach(im=>im.style.transform=y?`translateY(${y*.35}px) scale(${1-y/2400})`:"")})},{passive:true});
     // фон под фото = цвет краёв снимка, чтобы фото смотрелось на весь экран без рамок
     const hero=s.querySelector(".pv-hero");
-    // рамка под пропорции первого фото: ширина экрана × (высота/ширина снимка)
-    {const im0=ims[0],fit=()=>{if(!im0.naturalWidth)return;const set=()=>hero.style.setProperty("--phh",Math.round(hero.clientWidth*im0.naturalHeight/im0.naturalWidth)+"px");set();addEventListener("resize",set)};im0.complete?fit():im0.addEventListener("load",fit,{once:true})}
-    ims.forEach((im,i)=>{const go=()=>{const c=edgeColor(im);if(!c)return;im.parentNode.style.setProperty("--slbg",c);if(i===0)hero.style.setProperty("--phbg",c)};im.complete?go():im.addEventListener("load",go,{once:true})});
+    // фото вписывается в рамку по самому товару: приближаем, но товар целиком; свободные края — фоном снимка
+    const fitAll=()=>ims.forEach(im=>{if(im.complete&&im.naturalWidth)fitShot(im,im.parentNode,p.imgs[+im.dataset.zi])});
+    s._fitAll=fitAll;
+    ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>im.classList.add("fit"),{once:true}))});
     g.addEventListener("click",e=>{const im=e.target.closest("img[data-zi]");if(im)zoomView(p.imgs.slice(0,8),+im.dataset.zi,it.brand+" "+it.name)})}}
   const oldP=()=>p&&p.sale&&p.oldPrices?(p.oldPrices[d]??p.oldPrices.ua):0;
   const draw=()=>{const cw=cws[ci];
@@ -1959,12 +2015,13 @@ function openProduct(id){
     <div class="pv-top"><div style="min-width:0">${p?`<button class="bl" data-act="brand" data-bk="${p.bk}">${esc(it.brand)} ›</button>`:`<span class="bl">${esc(it.brand)}</span>`}<h2>${esc(it.name)}</h2></div>
       <div class="pr"><b class="num">${eur(r?it.price:priceFor(it,d))}</b>${oldP()?`<s class="num">${eur(oldP())}</s>`:r?"<span>Цена продавца</span>":""}</div></div>
     ${st?`<span class="avail"><span class="gdot"></span>В наличии · ${st.city}${st.loc==="ua"?", Украина":", Германия"}</span>`:""}
+    ${st&&st.loc==="ua"?`<div class="pv-note">Уже в Украине — отправим Новой почтой за 1–3 дня</div>`:!st&&p&&p.live&&!p.orderable?`<div class="pv-note">Наличие и размер менеджер подтвердит после заказа</div>`:""}`;
+    s.querySelector("#pvx").innerHTML=`
     ${st&&st.size?`<div><div class="pv-lbl">Размер</div><div class="fixsz"><b>${st.size}</b><span>один экземпляр</span></div></div>`:""}
     ${r?`<div class="tags"><span class="dark" style="background:#fff;color:var(--fg)">Проверено Trend Büro</span><span style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">${esc(r.set)}</span></div>`:""}
     ${cws.length>1?`<div><div class="pv-lbl">Цвет · ${cw.name}${cw.ok?"":" · под заказ"}</div><div class="cw">${cws.map((c,i)=>`<button data-ci="${i}" class="${c.ok?"":"na"}" aria-pressed="${i===ci}" aria-label="Цвет ${c.name}"><span class="t">${shapeSVG(it.shape,c.c,"")}</span><span>${c.name}</span></button>`).join("")}</div></div>`:""}
     ${sizes?`<div><div class="pv-lbl">Размер${size&&size!=="?"?" · "+size:""}</div><div class="dsz">${sizes.map(z=>szOut.has(z)?`<button class="na" disabled aria-label="${z} — нет в наличии">${z}</button>`:`<button data-sz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-sz="?" aria-pressed="${size==="?"}">Не знаю</button></div></div>`:""}
     ${p&&(p.dims||p.material)?`<div class="pv-specs">${p.dims?`<span><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/></svg>${esc(p.dims)}</span>`:""}${p.material?`<span><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/></svg>${esc(p.material)}</span>`:""}</div>`:""}
-    ${st&&st.loc==="ua"?`<div class="pv-note">Уже в Украине — отправим Новой почтой за 1–3 дня</div>`:!st&&p&&p.live&&!p.orderable?`<div class="pv-note">Наличие и размер менеджер подтвердит после заказа</div>`:""}
     ${r?`<div class="trust"><div><svg viewBox="0 0 24 24">${IC.shield}</svg><span>Проверяем подлинность, сделку ведём сами</span></div></div>`:""}`;
     s.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=size===b.dataset.sz?"":b.dataset.sz;draw()});
     s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;{const g=s.querySelector("#pvg"),ix=cws[ci].idx;if(g&&ix>=0)g.scrollTo({left:ix*g.clientWidth,behavior:"smooth"})}const v=s.querySelector("#pvv");if(v){v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180)}resetBtn();draw()});
@@ -1979,6 +2036,15 @@ function openProduct(id){
        onSc=()=>{const y=sc.scrollTop;if(y>24)open();else if(y<6&&!dl.querySelector(".dlv-in.on"))dl.classList.remove("open")};
      sc.addEventListener("scroll",onSc,{passive:true});dl.addEventListener("click",e=>{if(!e.target.closest(".dlv-fb"))open()})}dlvMount(box,d,k=>{d=k;prefs.dest=k;store.set("tb_prefs",prefs);draw();if(!ob.dataset.added)setLbl(btnLabel())})}
   {const hb=s.querySelector("[data-how]");if(hb)hb.onclick=howSheet}
+  // рамка фото: от верхней плашки до панели; панель на первом экране видна целиком — до конца блока доставки, над кнопкой
+  {const hero=s.querySelector(".pv-hero.ph");if(hero){const pan=s.querySelector(".pv-panel"),ft=s.querySelector(".foot");
+    const size=()=>{const last=s.querySelector("#pvd")||s.querySelector("#pvb");if(!last||!pan.offsetHeight)return;
+      const gl=hero.querySelector(".pv-gal"),sl0=gl&&gl.querySelector(".sl"),off=(gl?gl.offsetTop:0)+(sl0?parseFloat(getComputedStyle(sl0).paddingTop)||0:0);
+      const k=last.offsetTop+last.offsetHeight,W=hero.clientWidth,f=ft?ft.offsetHeight:90;
+      const h=Math.round(Math.max(W*.78,Math.min(W*1.35,innerHeight-off-k-f-8)));
+      if(Math.abs((parseFloat(hero.style.getPropertyValue("--frh"))||0)-h)>1){hero.style.setProperty("--frh",h+"px");s._fitAll&&s._fitAll()}};
+    size();requestAnimationFrame(size);setTimeout(size,400);(document.fonts&&document.fonts.ready||Promise.resolve()).then(size);
+    const onR=()=>{if(!s.isConnected)return removeEventListener("resize",onR);size()};addEventListener("resize",onR)}}
   // высота фото задаётся пропорциями снимка (см. --phh в стилях .pv-hero.ph) — фото на всю ширину, без полос и без обрезки
   ob.onclick=()=>{
     if(sizes&&!size){toast("Выберите размер или «Не знаю»");s.querySelector(".dsz").scrollIntoView({behavior:"smooth",block:"center"});return}
@@ -2242,23 +2308,23 @@ function openAuto(ri){
   const pre=s=>{const u=s&&srcOf(s);if(u){const m=new Image();m.src=u;if(s.t==="du"){const m2=new Image();m2.src=svImg(s.b).src}}};
   const slideH=(R,s)=>{
     if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
-    if(s.t==="du")return `<div class="du">${[s.a,s.b].map((p,j)=>`<button class="dc" data-v="${j}"><img src="${esc(svImg(p).src)}" alt="${esc(p.brand+" "+p.name)}" decoding="async"><span class="lb"><b>${esc(p.brand)}</b><span>${esc(p.name)} · ${eur(priceFor(p,d))}</span></span></button>`).join("")}</div>`;
+    if(s.t==="du")return `<div class="du">${[s.a,s.b].map((p,j)=>duCardH(p,j)).join("")}<span class="vs">VS</span></div><div class="duh">смахните неинтересное · тап по карточке — открыть</div>`;
     const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
     const nph=s.t==="p"?Math.min(6,(p.imgs||[]).length):0;
-    return `<div class="st"><img crossorigin="anonymous" src="${esc(srcOf(s))}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j?"":"on"}"></i>`).join("")}</div>`:""}
+    return `<div class="st"><img src="${esc(srcOf(s))}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j?"":"on"}"></i>`).join("")}</div>`:""}
       ${p.sale?`<span class="bg s">−${p.sale}%</span>`:p.isNew?`<span class="bg">Новинка</span>`:""}
-      <div class="pn"><div class="br">${esc(p.brand)}</div><div class="nm">${esc(p.name)}</div>
-        ${cs?`<div class="dt">${cs.map((c,j)=>`<button data-c="${j}" class="${j?"":"on"}" aria-label="${esc(c.name)}" style="background-image:url('${esc(c.idx>=0&&svImg(p,c.idx)?svImg(p,c.idx).thumb:c.image)}')"></button>`).join("")}</div>`:""}
-        <div class="row"><span class="pr num">${priceH(p)}</span></div>
-        <div class="ac"><button class="fv ${favs.has(p.id)?"on":""}" data-f aria-label="В избранное">${favs.has(p.id)?"♥":"♡"}</button><button class="go" data-go>Смотреть товар</button></div><div class="up">нажмите сбоку — следующее фото</div></div>`};
+      ${cs?`<div class="dt">${cs.map((c,j)=>`<button data-c="${j}" class="${j?"":"on"}" aria-label="${esc(c.name)}" style="background-image:url('${esc(c.idx>=0&&svImg(p,c.idx)?svImg(p,c.idx).thumb:c.image)}')"></button>`).join("")}</div>`:""}
+      <div class="pn"><div class="t"><div class="br">${esc(p.brand)}</div><div class="nm">${esc(p.name)}</div><div class="pr num">${priceH(p)}</div></div>
+        <button class="fv ${favs.has(p.id)?"on":""}" data-f aria-label="В избранное">${favs.has(p.id)?"♥":"♡"}</button><button class="go" data-go>Смотреть ›</button></div>`};
+  const duCardH=(p,j)=>`<button class="dc" data-v="${j}" aria-label="${esc(p.brand+" "+p.name)}"><img src="${esc(svImg(p).src)}" alt="" decoding="async"><span class="no">НЕ МОЁ</span><span class="lb"><span class="t"><small>${esc(p.brand)}</small><b>${esc(p.name)}</b></span><span class="p num">${eur(priceFor(p,d))}</span></span></button>`;
   // грань куба: шапка и полоски общие для рубрики, слайд внутри меняется без перестройки
   const face=(R,L,k)=>{const f=document.createElement("div");f.className="cb";const ic=svIco(R);
-    f.innerHTML=`<div class="bz">${L.map((_,j)=>`<i><b style="width:${j<k?100:0}%"></b></i>`).join("")}</div>
+    f.innerHTML=`<div class="tb0"></div><div class="bz">${L.map((_,j)=>`<i><b style="width:${j<k?100:0}%"></b></i>`).join("")}</div>
       <div class="hz"><span class="av">${ic||`<img src="${esc(R.cover)}" alt="">`}</span><b>${esc(R.name)}</b><small></small><button data-x aria-label="Закрыть">×</button></div>
       <button class="tp l" aria-label="Назад"></button><button class="tp r" aria-label="Далее"></button>`;
     f.appendChild(slideNode(R,L[k]));return f};
   const slideNode=(R,s)=>{const n=document.createElement("div");n.className="sl";n.innerHTML=slideH(R,s);
-    const im=n.querySelector(".st img");if(im){const bgc=()=>{const c=edgeColor(im);if(c)n.querySelector(".st").style.setProperty("--phbg",c)};im.complete&&im.naturalWidth?bgc():im.addEventListener("load",bgc,{once:true})}return n};
+    return n};
   const mark=s=>{if(s.p)svMark(s.p.id);if(s.t==="du"){svMark(s.a.id);svMark(s.b.id)}};
   // фото товара внутри одной сторис: тап сбоку листает снимки этого товара, после последнего — следующий товар
   let pj=0;const phs=()=>{const s=list[i];return s&&s.t==="p"&&s.p.imgs&&s.p.imgs.length>1?s.p.imgs.slice(0,6):null};
@@ -2269,7 +2335,7 @@ function openAuto(ri){
   const tapL=()=>{const L=phs();if(L&&pj>0){pj--;showPh()}else prev()};
   const enter=()=>{const s=list[i];mark(s);el=0;pj=0;{const L=phs();if(L&&L[1]){const m=new Image();m.src=L[1].src}}cb.querySelector(".hz small").textContent="сегодня";
     cb.querySelector(".tp.l").hidden=cb.querySelector(".tp.r").hidden=s.t==="du";
-    cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1])};
+    cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1]);if(s.t==="du")duPre()};
   // смена слайда внутри рубрики: как в Instagram — сразу, без мигания (новое фото уже загружено заранее)
   // листание внутри рубрики: новая картинка въезжает сбоку, старая уходит — видно, как листается; быстрые тапы не ломают анимацию
   const goSlide=k=>{const dir=k>i?1:-1,s=list[k];i=k;
@@ -2287,7 +2353,30 @@ function openAuto(ri){
     cur.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const cs=s.p.colors.filter(c=>c.idx>=0||c.image),c=cs[+b.dataset.c],im=cur.querySelector(".st img");
       im.src=c.idx>=0&&svImg(s.p,c.idx)?svImg(s.p,c.idx).src:c.image;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");
       cur.querySelectorAll("[data-c]").forEach(x=>x.classList.toggle("on",x===b));el=Math.min(el,DUR*.3);hap()});
-    if(s.t==="du")cur.querySelectorAll(".dc").forEach(b=>b.onclick=()=>{const id=(+b.dataset.v?s.b:s.a).id;close(true);openProduct(id)})};
+    if(s.t==="du")cur.querySelectorAll(".dc").forEach(b=>duWire(b,s))};
+  // «Это или это»: тап по краю экрана — листать пары, тап по карточке — открыть товар, смахнуть карточку вбок — «не моё», на её место новая вещь
+  const duSeen=new Set();
+  const duNext=()=>{const R=AUTO[r];if(!R||!R.pool)return null;const busyIds=new Set(list.flatMap(x=>x.t==="du"?[x.a.id,x.b.id]:x.p?[x.p.id]:[]));
+    return svShuffle(R.pool,977).find(p=>!duSeen.has(p.id)&&!busyIds.has(p.id)&&svImg(p))||null};
+  const duPre=()=>{const p=duNext();if(p){const m=new Image();m.src=svImg(p).src}};
+  const duWire=(b,s)=>{let x0=0,y0=0,t0=0,on=false,drag=false,pid=0;const Wd=()=>host.offsetWidth||360;
+    [s.a,s.b].forEach(p=>duSeen.add(p.id));
+    b.onclick=e=>e.preventDefault();
+    b.addEventListener("pointerdown",e=>{if(busy)return;on=true;drag=false;x0=e.clientX;y0=e.clientY;t0=Date.now();pid=e.pointerId;try{b.setPointerCapture(pid)}catch(x){}});
+    b.addEventListener("pointermove",e=>{if(!on)return;const dx=e.clientX-x0,dy=e.clientY-y0;
+      if(!drag&&Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)){drag=true;paused=true;b.classList.add("drag")}
+      if(drag){b.style.transform=`translateX(${dx}px) rotate(${dx/22}deg)`;b.style.setProperty("--no",Math.min(1,Math.abs(dx)/(Wd()*.3)).toFixed(2))}});
+    const end=e=>{if(!on)return;on=false;const dx=e.clientX-x0,held=Date.now()-t0;b.classList.remove("drag");
+      if(drag){paused=false;if(Math.abs(dx)>Wd()*.28)return duOut(b,s,dx<0?-1:1);b.style.transform="";b.style.setProperty("--no",0);return}
+      if(e.type==="pointercancel"||held>600)return;
+      const x=e.clientX-host.getBoundingClientRect().left,W0=Wd();
+      if(x<W0*.2)return tapL();if(x>W0*.8)return tapR();
+      const id=(+b.dataset.v?s.b:s.a).id;close(true);openProduct(id)};
+    b.addEventListener("pointerup",end);b.addEventListener("pointercancel",end)};
+  const duOut=(b,s,dir)=>{const p=duNext();hap("light");b.style.transform=`translateX(${dir*130}%) rotate(${dir*18}deg)`;b.style.opacity="0";el=Math.min(el,DUR*.4);
+    setTimeout(()=>{if(dead||!b.isConnected)return;if(!p){b.style.visibility="hidden";return}
+      const j=+b.dataset.v;if(j)s.b=p;else s.a=p;duSeen.add(p.id);svMark(p.id);
+      const w=document.createElement("div");w.innerHTML=duCardH(p,j);const nb2=w.firstElementChild;nb2.classList.add("enter");b.replaceWith(nb2);duWire(nb2,s);duPre()},300)};
   const bindFace=f=>{f.querySelector("[data-x]").onclick=()=>close()};
   cb=face(AUTO[r],list,0);bindFace(cb);cw.append(cb);enter();
   const tick=n=>{if(dead)return;if(!paused&&!busy)el+=n-t0;t0=n;const s=list[i],dur=s&&s.t==="du"?DUR*1.4:DUR;
