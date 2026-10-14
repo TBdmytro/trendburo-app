@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-14-live-v51">
+<meta name="trendburo-build" content="2026-10-14-live-v53">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -388,15 +388,16 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero .newp{position:absolute;top:calc(64px + var(--st));left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;padding:5px 10px;border-radius:99px}
 .pv-panel{position:relative;margin-top:-34px;border-radius:30px 30px 0 0;background:var(--ink-grad);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -12px 30px rgba(20,22,25,.12);padding:10px 20px 120px;display:flex;flex-direction:column;gap:18px;min-height:max(460px,calc(100vh - 120px));animation:panelUp .7s var(--ease) .1s both}
 /* карточка товара с реальными фото: фото целиком, панель начинается под ним */
-.pv-hero.ph{--top:calc(var(--st) + 48px);height:max(380px,calc(100vh - var(--sb) - 358px));display:block;background:var(--phbg,#f3f3f3);transition:background .3s}
+/* высота рамки = ширина × пропорции фото (--phh считает скрипт), чтобы снимок заполнял рамку слева направо и сверху вниз без полос и почти без обрезки */
+.pv-hero.ph{--top:calc(var(--st) + 48px);--off:var(--top);height:calc(var(--off) + 34px + min(var(--phh,125vw), 100vh - var(--off) - 150px - var(--sb)));display:block;background:var(--phbg,#f3f3f3);transition:background .3s}
 /* в Telegram: зона кнопок Telegram — отдельная белая полоса, фото начинается под ней и не заезжает наверх */
-.intg .pv-hero.ph{--top:0px;background:#fff}
+.intg .pv-hero.ph{--top:0px;--off:var(--st);background:#fff}
 .intg .pv-hero.ph .pv-gal{top:var(--st)}
 .intg .navbar.clear::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--st);background:#fff;pointer-events:none}
 .intg .navbar.clear{padding-top:calc(var(--st) + 14px);height:calc(66px + var(--st))}
 /* рамка фото: от верхней плашки до панели; фото целиком (без обрезки), нижние 34 px рамки уходят под графитовую панель */
 .pv-hero.ph .pv-gal .sl{padding:var(--top) 0 34px;display:block;background:var(--slbg,var(--phbg,#f3f3f3));box-sizing:border-box}
-.pv-hero.ph .pv-gal img{display:block;width:100%;height:100%;max-height:none;object-fit:contain;object-position:50% 50%;box-sizing:border-box;padding:0;mix-blend-mode:normal;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
+.pv-hero.ph .pv-gal img{display:block;width:100%;height:100%;max-height:none;object-fit:cover;object-position:50% 50%;box-sizing:border-box;padding:0;mix-blend-mode:normal;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
 .pv-hero.ph .pv-dots{bottom:46px;left:50%;right:auto;transform:translateX(-50%);padding:6px 9px;border-radius:99px;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .navbar.clear .round{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .intg .navbar.clear [data-back]{visibility:hidden}
@@ -1931,7 +1932,10 @@ function openProduct(id){
     const sc=s.querySelector(".scroll"),ims=[...g.querySelectorAll("img")];let raf=0;
     sc.addEventListener("scroll",()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;const y=Math.max(0,Math.min(sc.scrollTop,500));ims.forEach(im=>im.style.transform=y?`translateY(${y*.35}px) scale(${1-y/2400})`:"")})},{passive:true});
     // фон под фото = цвет краёв снимка, чтобы фото смотрелось на весь экран без рамок
-    const hero=s.querySelector(".pv-hero");ims.forEach((im,i)=>{const go=()=>{const c=edgeColor(im);if(!c)return;im.parentNode.style.setProperty("--slbg",c);if(i===0)hero.style.setProperty("--phbg",c)};im.complete?go():im.addEventListener("load",go,{once:true})});
+    const hero=s.querySelector(".pv-hero");
+    // рамка под пропорции первого фото: ширина экрана × (высота/ширина снимка)
+    {const im0=ims[0],fit=()=>{if(!im0.naturalWidth)return;const set=()=>hero.style.setProperty("--phh",Math.round(hero.clientWidth*im0.naturalHeight/im0.naturalWidth)+"px");set();addEventListener("resize",set)};im0.complete?fit():im0.addEventListener("load",fit,{once:true})}
+    ims.forEach((im,i)=>{const go=()=>{const c=edgeColor(im);if(!c)return;im.parentNode.style.setProperty("--slbg",c);if(i===0)hero.style.setProperty("--phbg",c)};im.complete?go():im.addEventListener("load",go,{once:true})});
     g.addEventListener("click",e=>{const im=e.target.closest("img[data-zi]");if(im)zoomView(p.imgs.slice(0,8),+im.dataset.zi,it.brand+" "+it.name)})}}
   const oldP=()=>p&&p.sale&&p.oldPrices?(p.oldPrices[d]??p.oldPrices.ua):0;
   const draw=()=>{const cw=cws[ci];
@@ -1959,12 +1963,7 @@ function openProduct(id){
        onSc=()=>{const y=sc.scrollTop;if(y>24)open();else if(y<6&&!dl.querySelector(".dlv-in.on"))dl.classList.remove("open")};
      sc.addEventListener("scroll",onSc,{passive:true});dl.addEventListener("click",e=>{if(!e.target.closest(".dlv-fb"))open()})}dlvMount(box,d,k=>{d=k;prefs.dest=k;store.set("tb_prefs",prefs);draw();if(!ob.dataset.added)setLbl(btnLabel())})}
   {const hb=s.querySelector("[data-how]");if(hb)hb.onclick=howSheet}
-  // высота фото: первый экран заканчивается ровно на блоке доставки (с цветами плашка выше — фото чуть ниже)
-  {const hero=s.querySelector(".pv-hero.ph"),pan=s.querySelector(".pv-panel"),ft=s.querySelector(".foot"),sc=s.querySelector(".scroll");
-   const fit=()=>{if(!hero||!pan||!ft||sc.scrollTop>4)return;const end=s.querySelector(".dlv")||s.querySelector("#pvb");
-     const pt=pan.getBoundingClientRect().top,eb=end.getBoundingClientRect().bottom,ftop=ft.getBoundingClientRect().top;
-     const top0=sc.getBoundingClientRect().top,h=(ftop-top0)-12-(eb-pt)+34,mx=innerHeight*.74;hero.style.height=Math.round(Math.max(300,Math.min(mx,h)))+"px"};
-   requestAnimationFrame(()=>requestAnimationFrame(fit));addEventListener("resize",fit,{passive:true})}
+  // высота фото задаётся пропорциями снимка (см. --phh в стилях .pv-hero.ph) — фото на всю ширину, без полос и без обрезки
   ob.onclick=()=>{
     if(sizes&&!size){toast("Выберите размер или «Не знаю»");s.querySelector(".dsz").scrollIntoView({behavior:"smooth",block:"center"});return}
     const cw=cws[ci];
