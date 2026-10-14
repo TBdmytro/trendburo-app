@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-14-live-v50">
+<meta name="trendburo-build" content="2026-10-14-live-v51">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -394,8 +394,9 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .intg .pv-hero.ph .pv-gal{top:var(--st)}
 .intg .navbar.clear::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--st);background:#fff;pointer-events:none}
 .intg .navbar.clear{padding-top:calc(var(--st) + 14px);height:calc(66px + var(--st))}
-.pv-hero.ph .pv-gal .sl{padding:var(--top) 0 0;display:block;background:var(--slbg,var(--phbg,#f3f3f3))}
-.pv-hero.ph .pv-gal img{display:block;width:100%;height:100%;max-height:none;object-fit:cover;object-position:50% 50%;box-sizing:border-box;padding:0;mix-blend-mode:normal;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
+/* рамка фото: от верхней плашки до панели; фото целиком (без обрезки), нижние 34 px рамки уходят под графитовую панель */
+.pv-hero.ph .pv-gal .sl{padding:var(--top) 0 34px;display:block;background:var(--slbg,var(--phbg,#f3f3f3));box-sizing:border-box}
+.pv-hero.ph .pv-gal img{display:block;width:100%;height:100%;max-height:none;object-fit:contain;object-position:50% 50%;box-sizing:border-box;padding:0;mix-blend-mode:normal;cursor:zoom-in;will-change:transform;transition:transform .05s linear}
 .pv-hero.ph .pv-dots{bottom:46px;left:50%;right:auto;transform:translateX(-50%);padding:6px 9px;border-radius:99px;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .navbar.clear .round{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .intg .navbar.clear [data-back]{visibility:hidden}
@@ -720,14 +721,18 @@ textarea{min-height:88px;resize:vertical}
 .sv2.paused .bz,.sv2.paused .hz,.sv2.paused .pn{opacity:0}
 .sv2 .sl{position:absolute;inset:0}
 .sv2 .sl{will-change:transform}.sv2 .sl.mv{transition:transform .34s cubic-bezier(.25,.8,.3,1),opacity .34s,filter .34s}.sv2 .sl.out{filter:brightness(.6)}
-.sv2 .st{position:absolute;inset:0;background:var(--phbg,#f3f3f3);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:calc(64px + var(--st)) 0 calc(196px + var(--sb));box-sizing:border-box}
+.sv2 .st{position:absolute;inset:0;background:var(--phbg,#f3f3f3);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;box-sizing:border-box}
+/* сторис как в Instagram: фото на весь экран, снизу — затемнение под подпись и кнопку */
+.sv2 .st::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(240px + var(--sb));background:linear-gradient(transparent,rgba(0,0,0,.28) 35%,rgba(0,0,0,.72));z-index:1;pointer-events:none}
+.sv2 .pd{position:absolute;left:0;right:0;bottom:calc(206px + var(--sb));z-index:4;display:flex;justify-content:center;gap:5px;pointer-events:none}
+.sv2 .pd i{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.45);transition:width .25s,background .25s}.sv2 .pd i.on{width:16px;background:#fff}
 .sv2 .st::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(140px + var(--st));background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.2) 55%,transparent);z-index:1}
-.sv2 .st img{width:100%;height:100%;object-fit:contain;animation:svkb 7s linear both}
+.sv2 .st img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;animation:svkb 7s linear both}
 @keyframes svkb{from{transform:scale(1.045)}to{transform:none}}
 .sv2 .st img.sw{animation:svsw .35s var(--ease) both}@keyframes svsw{from{opacity:0;transform:scale(.97)}}
 .sv2 .bg{position:absolute;top:calc(74px + var(--st));right:14px;z-index:3;font-size:12px;font-weight:800;padding:6px 10px;border-radius:99px;background:#1f2125;color:#fff}
 .sv2 .bg.s{background:#c8343c}
-.sv2 .pn{position:absolute;left:10px;right:10px;bottom:calc(10px + var(--sb));z-index:4;padding:14px;border-radius:22px;background:rgba(28,30,33,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#fff;transition:opacity .2s}
+.sv2 .pn{position:absolute;left:14px;right:14px;bottom:calc(14px + var(--sb));z-index:4;padding:0;background:none;color:#fff;transition:opacity .2s;text-shadow:0 1px 8px rgba(0,0,0,.35)}
 .sv2.first .pn{animation:svrise .45s .1s var(--ease) both}
 @keyframes svrise{from{transform:translateY(20px);opacity:0}}
 .sv2 .pn .br{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;font-weight:700}
@@ -738,7 +743,8 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .pn .ac button{height:46px;border-radius:14px;border:0;font:inherit;font-size:15px;font-weight:700}
 .sv2 .pn .go{flex:1;background:#fff;color:#1f2125}
 .sv2 .pn .fv{width:46px;flex:none;background:rgba(255,255,255,.12);color:#fff;font-size:19px}.sv2 .pn .fv.on{color:#ff6b74}
-.sv2 .pn .up{text-align:center;font-size:11.5px;opacity:.45;margin-top:8px}
+.sv2 .pn .up{text-align:center;font-size:11.5px;opacity:.6;margin-top:8px}
+.sv2 .pn .go{box-shadow:0 6px 18px rgba(0,0,0,.25);text-shadow:none}.sv2 .pn .fv{background:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);text-shadow:none}
 .sv2 .dt{display:flex;gap:10px;margin:0 0 10px}
 .sv2 .dt button{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:#f3f3f3 50%/contain no-repeat;transition:transform .3s cubic-bezier(.34,1.56,.64,1),border-color .2s}
 .sv2 .dt button.on{border-color:#fff;transform:scale(1.15)}
@@ -2217,12 +2223,13 @@ function openAuto(ri){
     if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
     if(s.t==="du")return `<div class="du">${[s.a,s.b].map((p,j)=>`<button class="dc" data-v="${j}"><img src="${esc(svImg(p).src)}" alt="${esc(p.brand+" "+p.name)}" decoding="async"><span class="lb"><b>${esc(p.brand)}</b><span>${esc(p.name)} · ${eur(priceFor(p,d))}</span></span></button>`).join("")}</div>`;
     const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
-    return `<div class="st"><img crossorigin="anonymous" src="${esc(srcOf(s))}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>
+    const nph=s.t==="p"?Math.min(6,(p.imgs||[]).length):0;
+    return `<div class="st"><img crossorigin="anonymous" src="${esc(srcOf(s))}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j?"":"on"}"></i>`).join("")}</div>`:""}
       ${p.sale?`<span class="bg s">−${p.sale}%</span>`:p.isNew?`<span class="bg">Новинка</span>`:""}
       <div class="pn"><div class="br">${esc(p.brand)}</div><div class="nm">${esc(p.name)}</div>
         ${cs?`<div class="dt">${cs.map((c,j)=>`<button data-c="${j}" class="${j?"":"on"}" aria-label="${esc(c.name)}" style="background-image:url('${esc(c.idx>=0&&svImg(p,c.idx)?svImg(p,c.idx).thumb:c.image)}')"></button>`).join("")}</div>`:""}
         <div class="row"><span class="pr num">${priceH(p)}</span></div>
-        <div class="ac"><button class="fv ${favs.has(p.id)?"on":""}" data-f aria-label="В избранное">${favs.has(p.id)?"♥":"♡"}</button><button class="go" data-go>Смотреть</button></div><div class="up">⌃ свайп вверх — открыть</div></div>`};
+        <div class="ac"><button class="fv ${favs.has(p.id)?"on":""}" data-f aria-label="В избранное">${favs.has(p.id)?"♥":"♡"}</button><button class="go" data-go>Смотреть товар</button></div><div class="up">нажмите сбоку — следующее фото</div></div>`};
   // грань куба: шапка и полоски общие для рубрики, слайд внутри меняется без перестройки
   const face=(R,L,k)=>{const f=document.createElement("div");f.className="cb";const ic=svIco(R);
     f.innerHTML=`<div class="bz">${L.map((_,j)=>`<i><b style="width:${j<k?100:0}%"></b></i>`).join("")}</div>
@@ -2232,7 +2239,14 @@ function openAuto(ri){
   const slideNode=(R,s)=>{const n=document.createElement("div");n.className="sl";n.innerHTML=slideH(R,s);
     const im=n.querySelector(".st img");if(im){const bgc=()=>{const c=edgeColor(im);if(c)n.querySelector(".st").style.setProperty("--phbg",c)};im.complete&&im.naturalWidth?bgc():im.addEventListener("load",bgc,{once:true})}return n};
   const mark=s=>{if(s.p)svMark(s.p.id);if(s.t==="du"){svMark(s.a.id);svMark(s.b.id)}};
-  const enter=()=>{const s=list[i];mark(s);el=0;cb.querySelector(".hz small").textContent="сегодня";
+  // фото товара внутри одной сторис: тап сбоку листает снимки этого товара, после последнего — следующий товар
+  let pj=0;const phs=()=>{const s=list[i];return s&&s.t==="p"&&s.p.imgs&&s.p.imgs.length>1?s.p.imgs.slice(0,6):null};
+  const showPh=()=>{const L=phs();if(!L)return;const n=[...cb.querySelectorAll(".sl")].filter(x=>!x.classList.contains("out")).pop();if(!n)return;const im=n.querySelector(".st img");if(!im)return;
+    im.src=L[pj].src;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");n.querySelectorAll(".pd i").forEach((d,k)=>d.classList.toggle("on",k===pj));
+    if(L[pj+1]){const m=new Image();m.src=L[pj+1].src}el=0;hap("light")};
+  const tapR=()=>{const L=phs();if(L&&pj<L.length-1){pj++;showPh()}else next()};
+  const tapL=()=>{const L=phs();if(L&&pj>0){pj--;showPh()}else prev()};
+  const enter=()=>{const s=list[i];mark(s);el=0;pj=0;{const L=phs();if(L&&L[1]){const m=new Image();m.src=L[1].src}}cb.querySelector(".hz small").textContent="сегодня";
     cb.querySelector(".tp.l").hidden=cb.querySelector(".tp.r").hidden=s.t==="du";
     cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1])};
   // смена слайда внутри рубрики: как в Instagram — сразу, без мигания (новое фото уже загружено заранее)
@@ -2245,12 +2259,14 @@ function openAuto(ri){
     const im=n.querySelector(".st img,.dc img");if(im&&!(im.complete&&im.naturalWidth)){let done=false;const go=()=>{if(!done){done=true;run()}};im.addEventListener("load",go,{once:true});im.addEventListener("error",go,{once:true});setTimeout(go,350)}else run();
     host.classList.remove("first");enter();hap()};
   const wire=s=>{
-    const f=cb.querySelector("[data-f]");if(f)f.onclick=()=>{toggleFav(s.p.id);const on=favs.has(s.p.id);f.textContent=on?"♥":"♡";f.classList.toggle("on",on);hap("light")};
-    const g=cb.querySelector("[data-go]");if(g)g.onclick=()=>{const id=s.p.id;close(true);openProduct(id)};
-    cb.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const cs=s.p.colors.filter(c=>c.idx>=0||c.image),c=cs[+b.dataset.c],im=cb.querySelector(".st img");
+    // кнопки берём у нового слайда (старый ещё уезжает и стоит в разметке первым)
+    const cur=[...cb.querySelectorAll(".sl")].pop()||cb;
+    const f=cur.querySelector("[data-f]");if(f)f.onclick=()=>{toggleFav(s.p.id);const on=favs.has(s.p.id);f.textContent=on?"♥":"♡";f.classList.toggle("on",on);hap("light")};
+    const g=cur.querySelector("[data-go]");if(g)g.onclick=()=>{const id=s.p.id;close(true);openProduct(id)};
+    cur.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const cs=s.p.colors.filter(c=>c.idx>=0||c.image),c=cs[+b.dataset.c],im=cur.querySelector(".st img");
       im.src=c.idx>=0&&svImg(s.p,c.idx)?svImg(s.p,c.idx).src:c.image;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");
-      cb.querySelectorAll("[data-c]").forEach(x=>x.classList.toggle("on",x===b));el=Math.min(el,DUR*.3);hap()});
-    if(s.t==="du")cb.querySelectorAll(".dc").forEach(b=>b.onclick=()=>{const id=(+b.dataset.v?s.b:s.a).id;close(true);openProduct(id)})};
+      cur.querySelectorAll("[data-c]").forEach(x=>x.classList.toggle("on",x===b));el=Math.min(el,DUR*.3);hap()});
+    if(s.t==="du")cur.querySelectorAll(".dc").forEach(b=>b.onclick=()=>{const id=(+b.dataset.v?s.b:s.a).id;close(true);openProduct(id)})};
   const bindFace=f=>{f.querySelector("[data-x]").onclick=()=>close()};
   cb=face(AUTO[r],list,0);bindFace(cb);cw.append(cb);enter();
   const tick=n=>{if(dead)return;if(!paused&&!busy)el+=n-t0;t0=n;const s=list[i],dur=s&&s.t==="du"?DUR*1.4:DUR;
@@ -2272,7 +2288,7 @@ function openAuto(ri){
     else if(mode==="down"){host.classList.add("drag");host.style.transform=`translateY(${Math.max(0,dy)*.7}px) scale(${1-Math.max(0,dy)/1600})`;host.style.borderRadius="26px"}});
   const up=e=>{if(!st)return;st=0;clearTimeout(hold);const dx=e.clientX-sx,dy=e.clientY-sy,m=mode,held=Date.now()-t0d;mode="";host.classList.remove("paused");paused=false;
     // короткий тап: левая треть — назад, остальное — вперёд (как в Instagram); долгое нажатие — только пауза
-    if(!m&&held<280&&!e.target.closest("button,.pn,a")){const x=e.clientX-host.getBoundingClientRect().left;return x<W*.3?prev():next()}
+    if(!m&&held<280&&!e.target.closest("button,.pn,a")){const x=e.clientX-host.getBoundingClientRect().left;return x<W*.3?tapL():tapR()}
     if(m==="down"){host.classList.remove("drag");if(dy>110)return close();host.style.transform="";host.style.borderRadius="";return}
     if(m==="up"){const s=list[i];if(dy<-70&&s&&s.p){const id=s.p.id;close(true);openProduct(id)}return}
     if(m==="x"){if(Math.abs(dx)>W*.22)commit(dx<0?1:-1);else{setA(0,true);setTimeout(()=>{if(nb&&!busy){nb.f.remove();nb=null}},440)}}};
