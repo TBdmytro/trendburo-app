@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-14-live-v57">
+<meta name="trendburo-build" content="2026-10-14-live-v58">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -1991,7 +1991,9 @@ function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!
   const si=shotInfo(im),bx=si?si.box:[0,0,1,1],res=box.dataset.res?+box.dataset.res:box.closest(".pv-hero")&&box.closest(".pv-hero").querySelector(".pv-dots")?24:0,Hc=H-res;
   // поле вокруг товара 4% (если товар упирается в край снимка — поля не нужно)
   const cw=(bx[2]-bx[0])*w,ch=(bx[3]-bx[1])*h,mx=bx[0]<.01&&bx[2]>.99?1:.92,my=bx[1]<.01&&bx[3]>.99?1:.92;
-  const sCover=Math.max(W/w,H/h),sFit=Math.min(W*mx/cw,Hc*my/ch),sc=Math.min(sCover,Math.max(sFit,Math.min(W/w,Hc/h)));
+  const sCover=Math.max(W/w,H/h),sFit=Math.min(W*mx/cw,Hc*my/ch);let sc=Math.min(sCover,Math.max(sFit,Math.min(W/w,Hc/h)));
+  // data-whole: квадратные и широкие снимки не приближаем дальше полного кадра — фото целиком по ширине, вокруг цвет фона снимка
+  if(box.dataset.whole&&w/h>=.8)sc=Math.min(sc,W/w,Hc/h);
   // len — вся рамка, vis — где товар должен быть виден (над точками листания); сначала без полей, затем товар целиком
   const ax=(n,len,vis,c0,c1)=>{let t=n<=len?(vis-n)/2:Math.min(0,Math.max(len-n,vis/2-(c0+c1)/2*n));t=Math.min(t,vis-c1*n);t=Math.max(t,-c0*n);return t};
   const dw=w*sc,dh=h*sc,L=ax(dw,W,W,bx[0],bx[2]),T=ax(dh,H,Hc,bx[1],bx[3]);
@@ -2387,7 +2389,7 @@ function openAuto(ri){
     f.appendChild(slideNode(R,L[k]));return f};
   const slideNode=(R,s)=>{const n=document.createElement("div");n.className="sl";n.innerHTML=slideH(R,s);
     const im=n.querySelector(".st img");if(im){const box=n.querySelector(".st");
-      const go=()=>{const pn=n.querySelector(".pn");box.dataset.res=pn&&pn.offsetHeight?pn.offsetHeight+24:110;fitShot(im,box)};
+      const go=()=>{const pn=n.querySelector(".pn");box.dataset.res=pn&&pn.offsetHeight?pn.offsetHeight+24:110;box.dataset.whole=1;fitShot(im,box)};
       im.addEventListener("load",()=>{im._si=undefined;n.isConnected?go():requestAnimationFrame(go)});
       im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.src=im.src}else im.classList.add("fit")})}
     return n};
