@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-14-live-v59">
+<meta name="trendburo-build" content="2026-10-14-live-v60">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -17,6 +17,10 @@ img{-webkit-user-drag:none}
 :root{--st:max(env(safe-area-inset-top,0px),var(--tgst,0px));--sb:max(env(safe-area-inset-bottom,0px),var(--tgsb,0px))}
 .tglogo{display:none;position:fixed;z-index:400;left:50%;top:var(--tgs,0px);height:var(--tgc,0px);transform:translateX(-50%);align-items:center;justify-content:center;pointer-events:none}
 html.fs .tglogo{display:flex}
+/* над фото карточки товара: логотип — прозрачное стекло, сверху мягкое затемнение снимка */
+.tglogo i{transition:background .25s,border-color .25s}
+html.pvtop .tglogo i{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);-webkit-backdrop-filter:blur(10px) saturate(1.3);backdrop-filter:blur(10px) saturate(1.3);text-shadow:0 1px 2px rgba(0,0,0,.25)}
+html.pvtop .tglogo i::before{background:conic-gradient(from 0deg,rgba(255,255,255,.8) 0 18%,transparent 18% 50%,rgba(255,255,255,.8) 50% 68%,transparent 68%)}
 .tglogo i{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em}
 .tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);animation:tgspin 6s linear infinite}
 @keyframes tgspin{to{transform:rotate(360deg)}}
@@ -393,6 +397,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 /* в Telegram: зона кнопок Telegram — отдельная белая полоса, фото начинается под ней и не заезжает наверх */
 .intg .pv-hero.ph{--top:0px;--off:0px;background:#fff}
 .intg .pv-hero.ph .pv-gal{top:0}
+.intg .pv-hero.ph::after{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--st) + 40px);background:linear-gradient(rgba(0,0,0,.24),rgba(0,0,0,.07) 60%,transparent);pointer-events:none;z-index:1}
 /* карточка товара в Telegram: фото с самого верха, под кнопками Telegram; белая плашка появляется, когда карточку листают */
 .intg .pushed:has(.pv-hero.ph) .navbar.clear::before{opacity:0;transition:opacity .2s}
 .intg .pushed:has(.pv-hero.ph) .navbar.clear.moved::before{opacity:1}
@@ -1799,7 +1804,10 @@ function backLayer(){
   if(stack.length)return pop(),true;
   if($("#app").classList.contains("in-optix"))return tab(lastMain||"feed"),true;
   return false}
-function syncBack(){if(!TGW||!TGW.BackButton)return;requestAnimationFrame(()=>{const need=!!(OXA||document.querySelector(".zv,.sv")||sheetEl||stack.length||$("#app").classList.contains("in-optix"));try{need?TGW.BackButton.show():TGW.BackButton.hide()}catch(e){}})}
+// логотип TB поверх фото карточки товара — стеклянный; когда карточку листают и появилась плашка — обычный
+function updTop(){requestAnimationFrame(()=>{const L=typeof stack!=="undefined"&&stack.length?stack[stack.length-1]:null;
+  document.documentElement.classList.toggle("pvtop",!!(L&&L.querySelector(".pv-hero.ph")&&!L.querySelector(".navbar.moved")))})}
+function syncBack(){updTop();if(!TGW||!TGW.BackButton)return;requestAnimationFrame(()=>{const need=!!(OXA||document.querySelector(".zv,.sv")||sheetEl||stack.length||$("#app").classList.contains("in-optix"));try{need?TGW.BackButton.show():TGW.BackButton.hide()}catch(e){}})}
 if(TGW&&TGW.BackButton){try{TGW.BackButton.onClick(()=>{backLayer();setTimeout(syncBack,60)})}catch(e){}
   new MutationObserver(syncBack).observe(document.getElementById("app")||document.body,{childList:true,attributes:true,attributeFilter:["class"]});
   new MutationObserver(syncBack).observe(document.body,{childList:true})}
@@ -1810,17 +1818,17 @@ function push(title,content,{clear=false,foot="",accent="",right=""}={}){
   const s=document.createElement("div");s.className="screen pushed"+(accent?" accent":"");if(accent)s.style.setProperty("--sc",accent);
   s.innerHTML=`<div class="navbar ${clear?"clear":""}"><button class="round" data-back aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><div class="t">${esc(title)}</div>${right||'<span style="width:38px"></span>'}</div><div class="scroll ${clear?"under":""}">${content}</div>${foot}`;
   const under=stack.length?stack[stack.length-1]:currentTabEl(); under.classList.add("behind");
-  $("#app").append(s);stack.push(s);$("#tabbar").classList.add("hide");
+  $("#app").append(s);stack.push(s);$("#tabbar").classList.add("hide");updTop();
   s.querySelector("[data-back]").onclick=pop;
   const sc=s.querySelector(".scroll"),nb=s.querySelector(".navbar");
-  sc.addEventListener("scroll",()=>{nb.classList.toggle("solid",sc.scrollTop>(clear?220:30));nb.classList.toggle("moved",sc.scrollTop>4);const art=s.querySelector(".hero-art svg");if(art){const y=sc.scrollTop;art.style.transform=`translateY(${y*.25}px) scale(${1+Math.min(y,300)/1500})`}},{passive:true});
+  sc.addEventListener("scroll",()=>{nb.classList.toggle("solid",sc.scrollTop>(clear?220:30));{const was=nb.classList.contains("moved");nb.classList.toggle("moved",sc.scrollTop>4);if(was!==nb.classList.contains("moved"))updTop()}const art=s.querySelector(".hero-art svg");if(art){const y=sc.scrollTop;art.style.transform=`translateY(${y*.25}px) scale(${1+Math.min(y,300)/1500})`}},{passive:true});
   if(!clear)nb.classList.add("solid");
   requestAnimationFrame(()=>requestAnimationFrame(()=>s.classList.add("in")));
   let sx=null;s.addEventListener("touchstart",e=>{const x=e.touches[0].clientX-s.getBoundingClientRect().left;sx=x<24?e.touches[0].clientX:null},{passive:true});
   s.addEventListener("touchend",e=>{if(sx!==null&&e.changedTouches[0].clientX-sx>80)pop();sx=null});
   return s;
 }
-function pop(){const s=stack.pop();if(!s)return;s.classList.remove("in");const under=stack.length?stack[stack.length-1]:currentTabEl();under.classList.remove("behind");if(!stack.length)$("#tabbar").classList.remove("hide");setTimeout(()=>s.remove(),500)}
+function pop(){const s=stack.pop();if(!s)return;updTop();s.classList.remove("in");const under=stack.length?stack[stack.length-1]:currentTabEl();under.classList.remove("behind");if(!stack.length)$("#tabbar").classList.remove("hide");setTimeout(()=>s.remove(),500)}
 function popAll(){while(stack.length){const s=stack.pop();s.remove()}$$(".behind").forEach(x=>x.classList.remove("behind"));$("#tabbar").classList.remove("hide")}
 
 /* ===== Товар ===== */
