@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-14-live-v56">
+<meta name="trendburo-build" content="2026-10-14-live-v57">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -734,7 +734,8 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .pd{position:absolute;left:0;right:0;bottom:calc(120px + var(--sb));z-index:4;display:flex;justify-content:center;gap:5px;pointer-events:none}
 .sv2 .pd i{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.45);transition:width .25s,background .25s}.sv2 .pd i.on{width:16px;background:#fff}
 .sv2 .st::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(140px + var(--st));background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.2) 55%,transparent);z-index:1}
-.sv2 .st img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 40%}
+.sv2 .st img{display:block;width:100%;height:100%;object-fit:contain}
+.sv2 .st img:not(.fit){opacity:0}
 @keyframes svkb{from{transform:scale(1.045)}to{transform:none}}
 .sv2 .st img.sw{animation:svsw .35s var(--ease) both}@keyframes svsw{from{opacity:0;transform:scale(.97)}}
 .sv2 .bg{position:absolute;top:calc(74px + var(--st));right:14px;z-index:3;font-size:12px;font-weight:800;padding:6px 10px;border-radius:99px;background:#1f2125;color:#fff}
@@ -761,7 +762,14 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .duh{position:absolute;left:0;right:0;bottom:calc(9px + var(--sb));text-align:center;font-size:12px;color:rgba(255,255,255,.55);pointer-events:none}
 .sv2 .dc{position:relative;border:0;border-radius:24px;background:#26282c;overflow:hidden;font:inherit;padding:0;touch-action:none;transition:transform .32s cubic-bezier(.25,.8,.3,1),opacity .32s;will-change:transform}
 .sv2 .dc.drag{transition:none}.sv2 .dc.enter{animation:dcin .35s var(--ease) both}@keyframes dcin{from{opacity:0;transform:scale(.92)}}
-.sv2 .dc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;pointer-events:none}
+.sv2 .dc{display:flex;flex-direction:column}
+.sv2 .dc .im{position:relative;display:block;flex:1;min-height:0;overflow:hidden;background:#26282c}
+.sv2 .dc img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.sv2 .dc .im img:not(.fit){opacity:0}.sv2 .dc .im img.fit{animation:fitin .25s ease both}
+.sv2 .du.row{grid-template-rows:none;grid-template-columns:1fr 1fr;gap:8px}
+.sv2 .du.row .dc .lb{position:static;flex:none;flex-direction:column;align-items:flex-start;gap:3px;margin:0;padding:10px 12px 12px;border:0;border-radius:0;background:#26282c;backdrop-filter:none;-webkit-backdrop-filter:none;text-shadow:none}
+.sv2 .du.row .dc .lb .t{width:100%}.sv2 .du.row .dc .lb b{white-space:normal;font-size:13.5px;line-height:1.25;height:2.5em;overflow:hidden}
+.sv2 .du.row .vs{top:calc(50% + (38px + var(--st) - var(--sb))/2 - 30px)}
 .sv2 .dc .lb{position:absolute;left:10px;right:10px;bottom:10px;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:16px;text-align:left;color:#fff;background:rgba(24,25,28,.38);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);text-shadow:0 1px 2px rgba(0,0,0,.25)}
 .sv2 .dc .lb .t{flex:1;min-width:0}.sv2 .dc .lb small{display:block;font-size:9.5px;letter-spacing:.15em;font-weight:700;opacity:.8;text-transform:uppercase}
 .sv2 .dc .lb b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sv2 .dc .lb .p{font-size:14px;font-weight:700;flex:none}
@@ -1919,49 +1927,88 @@ function howSheet(){const r=(t,d,ic)=>`<div class="hw-r"><span class="hw-i"><svg
     ${r(tx("ch.5.t","Оплата"),esc(tx("ch.5.d","Менеджер подтверждает наличие и размер, после этого — оплата удобным способом.")),INF)}</div>`)}
 /* «Похожие»: та же категория, бренд того же или соседнего уровня, цена ±40% (если мало — шире) */
 const TIER_OF=(()=>{const T={1:"hermes chanel therow loropiana goyard brunellocucinelli",2:"louisvuitton lv dior celine loewe bottegaveneta prada saintlaurent ysl gucci miumiu fendi givenchy balenciaga valentino burberry cartier"};const m={};Object.entries(T).forEach(([t,s])=>s.split(" ").forEach(n=>m[n]=+t));return b=>m[String(b||"").toLowerCase().normalize("NFD").replace(/[^a-z]/g,"")]||3})();
+/* Разбор фото товара (по маленькой копии 400px): где товар, ровный ли фон. Запоминается по адресу снимка —
+   при следующих открытиях раскладка выбирается сразу. SHP[url] = [x0,y0,x1,y1, ровный фон 0/1, ширина/высота снимка] */
+const SHP=(()=>{const o=store.get("tb_shp",{});return o&&typeof o==="object"?o:{}})();
+let shpSave=0;const shpPut=(u,si,ar)=>{if(!u||!si)return;const k=u.replace(/[?&]width=\d+/,"");SHP[k]=[...si.box.map(v=>Math.round(v*100)/100),si.flat?1:0,Math.round(ar*100)/100];
+  if(!shpSave)shpSave=setTimeout(shpFlush,1200)};
+const shpFlush=()=>{shpSave=0;const ks=Object.keys(SHP);if(ks.length>2500)ks.slice(0,ks.length-2000).forEach(k=>delete SHP[k]);store.set("tb_shp",SHP)};
+addEventListener("pagehide",()=>{if(shpSave){clearTimeout(shpSave);shpFlush()}});
+const shpGet=u=>u?SHP[u.replace(/[?&]width=\d+/,"")]:null;
+// форма товара: w — горизонтальный, t — вертикальный, s — примерно квадратный, ? — ещё не знаем
+const shpClass=v=>{if(!v)return "?";const cw=(v[2]-v[0])*v[5],ch=v[3]-v[1];const a=cw/Math.max(.01,ch);return a>1.15?"w":a<.87?"t":"s"};
+// лучший снимок для сторис и «Это или это»: товар целиком (не упирается в края), фон ровный; из первых пяти
+function bestIdx(p){const L=(p.imgs||[]).slice(0,5);let bi=0,bs=-1;L.forEach((im,i)=>{const v=shpGet(im.src);if(!v)return;
+  const free=(v[0]>.01)+(v[1]>.01)+(v[2]<.99)+(v[3]<.99),sc=free*1+(v[4]?2:0)-i*.15;if(sc>bs){bs=sc;bi=i}});return bi}
+const prodClass=p=>{const im=p.imgs&&p.imgs[bestIdx(p)];return shpClass(im&&shpGet(im.src))};
+// фоновый разбор: очередь, не больше 3 загрузок одновременно; маленькие копии 400px
+const SHQ=[],SHW=new Map();let shpRun=0;
+function shpAnalyze(src,thumb){const k=src.replace(/[?&]width=\d+/,"");if(SHP[k])return Promise.resolve(SHP[k]);if(SHW.has(k))return SHW.get(k);
+  const pr=new Promise(res=>SHQ.push(()=>new Promise(done=>{const m=new Image();m.crossOrigin="anonymous";m.decoding="async";
+    // разбор — когда браузер свободен, картинка заранее раскодирована вне основного потока (без подлагиваний)
+    const fin=()=>{done();res(SHP[k]||null)},idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:800}):setTimeout(f,30);
+    m.onload=()=>{(m.decode?m.decode():Promise.resolve()).catch(()=>{}).then(()=>idle(()=>shotInfoAsync(m).then(si=>{if(si){shpPut(src,si,m.naturalWidth/m.naturalHeight);SIMEM.set(siKey(src),si)}}).catch(()=>{}).then(fin)))};m.onerror=fin;m.src=thumb||src})));
+  SHW.set(k,pr);shpPump();return pr}
+function shpPump(){while(shpRun<2&&SHQ.length){shpRun++;SHQ.shift()().then(()=>{shpRun--;shpPump()})}}
+const shpProduct=(p,n=3)=>Promise.all((p.imgs||[]).slice(0,n).map(im=>shpAnalyze(im.src,im.thumb)));
 /* Где на снимке товар: уменьшенная копия, сравнение с цветом краёв. Результат запоминается на картинке.
    bg — цвет фона, flat — фон ровный (студия), box — рамка товара в долях [x0,y0,x1,y1]; null — снимок нельзя прочитать */
-function shotInfo(im){if(im._si!==undefined)return im._si;let r=null;
-  try{const w=72,h=Math.max(8,Math.round(72*im.naturalHeight/im.naturalWidth)),c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,w,h);
+function shotCalc(src,w,h){let r=null;
+  try{const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(src,0,0,w,h);
     const d=x.getImageData(0,0,w,h).data,ed=[];for(let i=0;i<w;i++)ed.push(i,(h-1)*w+i);for(let j=1;j<h-1;j++)ed.push(j*w,j*w+w-1);
     let R=0,G=0,B=0;ed.forEach(k=>{R+=d[k*4];G+=d[k*4+1];B+=d[k*4+2]});const n=ed.length;R/=n;G/=n;B/=n;
+    // заливка полей: отдельно для левого и правого края — продолжение крайнего столбца снимка (сглаженное по высоте)
+    const col=x=>{const o=[];for(let t=0;t<=1.0001;t+=.125){const j0=Math.max(0,Math.round(t*(h-1))-2),j1=Math.min(h-1,j0+4);let a=[0,0,0],m=0;for(let j=j0;j<=j1;j++)for(let i=x;i<x+3&&i<w;i++){const k=(j*w+(x?i-2:i))*4;a[0]+=d[k];a[1]+=d[k+1];a[2]+=d[k+2];m++}o.push(`rgb(${a[0]/m|0},${a[1]/m|0},${a[2]/m|0}) ${(t*100).toFixed(1)}%`)}return "linear-gradient(to bottom,"+o.join(",")+")"};
+    const grad=col(0),gradR=col(w-1);
     // фон по бокам по высоте: цвет левого и правого края в каждой строке; ровный, если края похожи и цвет меняется плавно (студийный градиент)
     const px=k=>[d[k*4],d[k*4+1],d[k*4+2]],side=[];let lr=0,jump=0;
     for(let j=0;j<h;j++){const a=px(j*w),b=px(j*w+w-1);lr+=(Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2]))/3;side.push([(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2])}
     for(let j=2;j<h;j++){const a=side[j],b=side[j-2];jump=Math.max(jump,(Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2]))/3)}
     lr/=h;const dev=lr<10&&jump<7?0:99;
-    // заливка полей: отдельно для левого и правого края — продолжение крайнего столбца снимка (сглаженное по высоте)
-    const col=x=>{const o=[];for(let t=0;t<=1.0001;t+=.125){const j0=Math.max(0,Math.round(t*(h-1))-2),j1=Math.min(h-1,j0+4);let a=[0,0,0],m=0;for(let j=j0;j<=j1;j++)for(let i=x;i<x+3&&i<w;i++){const k=(j*w+(x?i-2:i))*4;a[0]+=d[k];a[1]+=d[k+1];a[2]+=d[k+2];m++}o.push(`rgb(${a[0]/m|0},${a[1]/m|0},${a[2]/m|0}) ${(t*100).toFixed(1)}%`)}return "linear-gradient(to bottom,"+o.join(",")+")"};
-    const grad=col(0),gradR=col(w-1);
-    // пиксель товара — заметно отличается от фона; строка/столбец считаются «с товаром», если таких пикселей больше 2%
-    const on=(i)=>Math.max(Math.abs(d[i]-R),Math.abs(d[i+1]-G),Math.abs(d[i+2]-B))>26;
+    // пиксель товара — заметно отличается от цвета краёв в этой же строке (студийный фон часто идёт градиентом сверху вниз)
     const rows=new Array(h).fill(0),cols=new Array(w).fill(0);
-    for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(on((j*w+i)*4)){rows[j]++;cols[i]++}
+    for(let j=0;j<h;j++){const c0=side[j];for(let i=0;i<w;i++){const k=(j*w+i)*4;if(Math.max(Math.abs(d[k]-c0[0]),Math.abs(d[k+1]-c0[1]),Math.abs(d[k+2]-c0[2]))>26){rows[j]++;cols[i]++}}}
     const fr=(a,len,lim)=>{let s0=0,e0=a.length-1;while(s0<a.length&&a[s0]<=lim)s0++;while(e0>s0&&a[e0]<=lim)e0--;return s0>=a.length?[0,1]:[s0/len,(e0+1)/len]};
     const [y0,y1]=fr(rows,h,w*.02),[x0,x1]=fr(cols,w,h*.02);
     r={bg:`rgb(${R|0},${G|0},${B|0})`,grad,gradR,flat:dev<9,box:[x0,y0,x1,y1]}}catch(e){r=null}
-  im._si=r;return r}
+  return r}
+const shotWH=im=>[72,Math.max(8,Math.round(72*im.naturalHeight/im.naturalWidth))];
+// полный разбор (с цветами краёв) по адресу снимка без размера: разобрали маленькую копию — большой уже не пересчитываем
+const SIMEM=new Map(),siKey=u=>String(u||"").replace(/[?&]width=\d+/,"").replace(/[?&](w|fit|auto|q)=[^&]*/g,"");
+const shotKeep=(im,r)=>{im._si=r;if(r){const u=im.currentSrc||im.src;shpPut(u,r,im.naturalWidth/im.naturalHeight);SIMEM.set(siKey(u),r);if(SIMEM.size>600)SIMEM.delete(SIMEM.keys().next().value)}return r};
+function shotInfo(im){if(im._si!==undefined)return im._si;const [w,h]=shotWH(im);return shotKeep(im,shotCalc(im,w,h))}
+// то же, но уменьшение снимка делает браузер вне основного потока — интерфейс не подлагивает
+async function shotInfoAsync(im){if(im._si!==undefined)return im._si;const [w,h]=shotWH(im),u=im.currentSrc||im.src;let src=im,bm=null;
+  try{if(window.createImageBitmap){bm=await createImageBitmap(im,{resizeWidth:w,resizeHeight:h,resizeQuality:"low"});src=bm}}catch(e){bm=null;src=im}
+  // пока уменьшали, снимок сменился (листание фото) — этот разбор уже не нужен
+  if(im._si!==undefined||(im.currentSrc||im.src)!==u){bm&&bm.close&&bm.close();return im._si}
+  const r=shotCalc(src,w,h);bm&&bm.close&&bm.close();return shotKeep(im,r)}
 /* Кадр в рамке: товар целиком и как можно крупнее; если снимок закрывает рамку — без полей, иначе края заливаются фоном снимка */
 function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!box)return;
+  if(im._si===undefined){const m0=SIMEM.get(siKey(im.currentSrc||im.src));if(m0)im._si=m0}
+  if(im._si===undefined){if(!im._siP)im._siP=shotInfoAsync(im).catch(()=>shotKeep(im,null)).then(()=>{im._siP=null;fitShot(im,box,src)});return}
   const cs=getComputedStyle(box),pt=parseFloat(cs.paddingTop)||0,pb=parseFloat(cs.paddingBottom)||0,W=box.clientWidth,H=box.clientHeight-pt-pb;if(W<10||H<10)return;
-  const si=shotInfo(im),bx=si?si.box:[0,0,1,1],res=box.closest(".pv-hero")&&box.closest(".pv-hero").querySelector(".pv-dots")?24:0,Hc=H-res;
+  const si=shotInfo(im),bx=si?si.box:[0,0,1,1],res=box.dataset.res?+box.dataset.res:box.closest(".pv-hero")&&box.closest(".pv-hero").querySelector(".pv-dots")?24:0,Hc=H-res;
   // поле вокруг товара 4% (если товар упирается в край снимка — поля не нужно)
   const cw=(bx[2]-bx[0])*w,ch=(bx[3]-bx[1])*h,mx=bx[0]<.01&&bx[2]>.99?1:.92,my=bx[1]<.01&&bx[3]>.99?1:.92;
   const sCover=Math.max(W/w,H/h),sFit=Math.min(W*mx/cw,Hc*my/ch),sc=Math.min(sCover,Math.max(sFit,Math.min(W/w,Hc/h)));
   // len — вся рамка, vis — где товар должен быть виден (над точками листания); сначала без полей, затем товар целиком
   const ax=(n,len,vis,c0,c1)=>{let t=n<=len?(vis-n)/2:Math.min(0,Math.max(len-n,vis/2-(c0+c1)/2*n));t=Math.min(t,vis-c1*n);t=Math.max(t,-c0*n);return t};
   const dw=w*sc,dh=h*sc,L=ax(dw,W,W,bx[0],bx[2]),T=ax(dh,H,Hc,bx[1],bx[3]);
-  Object.assign(im.style,{position:"absolute",left:L+"px",top:(pt+T)+"px",width:dw+"px",height:dh+"px",objectFit:"fill"});
+  Object.assign(im.style,{position:"absolute",left:L+"px",top:(pt+T)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"fill"});
   const gap=dw<W-1||dh<H-1;box.style.setProperty("--slbg",si&&si.bg||"#f3f3f3");
   // поля сверху/снизу — цветом фона; по бокам — тем же цветом по высоте (у студийных фото фон сверху и снизу разный)
   const at=g=>g.replace(/(\d+(?:\.\d+)?)%\)?(?=[,)])/g,(m,v)=>`${(pt+T+dh*v/100).toFixed(1)}px`);
   // если товар упирается в край снимка, продолжать этот край нельзя (растянется сам товар) — там ровный фон снимка
   const gl=bx[0]<.01?`linear-gradient(${si&&si.bg},${si&&si.bg})`:si&&at(si.grad),gr=bx[2]>.99?`linear-gradient(${si&&si.bg},${si&&si.bg})`:si&&at(si.gradR);
-  box.style.background=si&&dw<W-1?`${gl} left top/${Math.ceil(L+dw/2)}px 100% no-repeat,${gr} right top/${Math.ceil(W-L-dw/2)}px 100% no-repeat,${si.bg}`:"";
+  // сверху/снизу — цвет верхнего/нижнего края снимка, по бокам — продолжение левого/правого края
+  const edgeC=(g,end)=>{const m=g.match(/rgb\([^)]*\)/g)||[];return end?m[m.length-1]:m[0]};
+  const vfill=si?`linear-gradient(to bottom,${edgeC(si.grad)} ${(pt+T).toFixed(1)}px,${edgeC(si.grad,1)} ${(pt+T+dh).toFixed(1)}px)`:"";
+  box.style.background=si&&gap?(dw<W-1?`${gl} left top/${Math.ceil(L+dw/2)}px 100% no-repeat,${gr} right top/${Math.ceil(W-L-dw/2)}px 100% no-repeat,`:"")+vfill:"";
   // «живой» фон (улица, интерьер): края — размытое продолжение этого же снимка
   const b=box.querySelector(".slb");if(b){const live=gap&&!si;b.hidden=!live;if(live&&src&&!b.style.backgroundImage)b.style.backgroundImage=`url("${(src.thumb||src.src).replace(/"/g,"%22")}")`}
   // края снимка мягко растворяются в заливке — без шва
-  const fx=si&&dw<W-1?"linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)":"";im.style.webkitMaskImage=im.style.maskImage=fx;
+  const fx=!si?"":dw<W-1?"linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)":dh<H-1?"linear-gradient(transparent,#000 5%,#000 95%,transparent)":"";im.style.webkitMaskImage=im.style.maskImage=fx;
   im.classList.add("fit")}
 function edgeColor(im){try{const w=24,h=24,c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,w,h);
   const d=x.getImageData(0,0,w,h).data,px=[];for(let i=0;i<w;i++){px.push(i*4,((h-1)*w+i)*4)}for(let j=0;j<h;j++){px.push(j*w*4,(j*w+w-1)*4)}
@@ -2007,7 +2054,7 @@ function openProduct(id){
     // фото вписывается в рамку по самому товару: приближаем, но товар целиком; свободные края — фоном снимка
     const fitAll=()=>ims.forEach(im=>{if(im.complete&&im.naturalWidth)fitShot(im,im.parentNode,p.imgs[+im.dataset.zi])});
     s._fitAll=fitAll;
-    ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>im.classList.add("fit"),{once:true}))});
+    ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.addEventListener("load",go,{once:true});im.src=im.src}else im.classList.add("fit")}))});
     g.addEventListener("click",e=>{const im=e.target.closest("img[data-zi]");if(im)zoomView(p.imgs.slice(0,8),+im.dataset.zi,it.brand+" "+it.name)})}}
   const oldP=()=>p&&p.sale&&p.oldPrices?(p.oldPrices[d]??p.oldPrices.ua):0;
   const draw=()=>{const cw=cws[ci];
@@ -2281,7 +2328,10 @@ function buildAuto0(){
   const add=(o,pool)=>{if(pool.length>=(o.min||1)){salt++;const s=salt;R.push({...o,pool,build:o.build||(()=>{const l=svFresh(pool,s);return (o.intro&&pool.length>=4?[{t:"in",ps:svShuffle(pool,s+1).slice(0,4)}]:[]).concat(l.map(p=>({t:"p",p})))})})}};
   add({k:"new",name:"Новинки",tag:"NEW",intro:{k:"Только что",h:"Новинки",d:"Новое в каталоге"}},W.filter(p=>p.isNew));
   add({k:"sale",name:"Скидки",tag:"−%"},W.filter(p=>p.sale));
-  {const pool=W;if(pool.length>=4){salt++;const s=salt;R.push({k:"duel",name:"Это или это",pool,build:()=>{const a=svFresh(pool,s,8);const o=[];for(let i=0;i+1<a.length&&o.length<4;i+=2)o.push({t:"du",a:a[i],b:a[i+1]});return o}})}}
+  {const pool=W;if(pool.length>=4){salt++;const s=salt;R.push({k:"duel",name:"Это или это",pool,build:()=>{const a=svFresh(pool,s,16),used=new Set(),o=[],cl=p=>{const c=prodClass(p);return c==="w"?"w":"t"};
+      // в пару — вещи одной формы (обе вертикальные или обе горизонтальные), чтобы раскладка подходила обоим
+      for(const x of a){if(o.length>=4)break;if(used.has(x.id))continue;const y=a.find(z=>z!==x&&!used.has(z.id)&&cl(z)===cl(x))||a.find(z=>z!==x&&!used.has(z.id));if(!y)break;used.add(x.id);used.add(y.id);o.push({t:"du",a:x,b:y})}
+      return o},warm:()=>svFresh(pool,s,16).forEach(p=>shpProduct(p,3))})}}
   add({k:"colors",name:"В цветах",build:null},W.filter(p=>(p.colors||[]).filter(c=>c.idx>=0||c.image).length>=2));
   if(R.length&&R[R.length-1].k==="colors"){const r=R[R.length-1],s=salt;r.build=()=>svFresh(r.pool,s).map(p=>({t:"c",p}))}
   const TH=[["До 2 000 €",p=>pr(p)<=2000],["Для него",p=>p.g==="m"],["Для неё",p=>p.g==="w"],["Сумки",p=>p.cat==="bags"],["Обувь",p=>p.cat==="shoes"],["Аксессуары",p=>p.cat==="accessories"],["Украшения",p=>p.cat==="jewelry"],["Одежда",p=>p.cat==="clothing"],["До 1 000 €",p=>pr(p)<=1000]].map(([n,f])=>[n,W.filter(f)]).filter(t=>t[1].length>=3&&t[1].length<W.length);
@@ -2304,19 +2354,31 @@ function openAuto(ri){
   const setW=()=>host.style.setProperty("--w",host.offsetWidth+"px");setW();
   const d=prefs.dest||"ua",DUR=5500;let r=ri,list=AUTO[r].build(),i=0,t0=performance.now(),el=0,raf=0,paused=false,cb=null,busy=false,dead=false,nb=null;
   const priceH=p=>`${eur(priceFor(p,d))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[d]??p.oldPrices.ua)}</s>`:""}`;
-  const srcOf=s=>s.t==="p"||s.t==="c"?(()=>{const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;return cs?(cs[0].idx>=0&&svImg(p,cs[0].idx)?svImg(p,cs[0].idx).src:cs[0].image):svImg(p).src})():s.t==="du"?svImg(s.a).src:null;
-  const pre=s=>{const u=s&&srcOf(s);if(u){const m=new Image();m.src=u;if(s.t==="du"){const m2=new Image();m2.src=svImg(s.b).src}}};
+  const srcOf=s=>s.t==="p"||s.t==="c"?(()=>{const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;return cs?(cs[0].idx>=0&&svImg(p,cs[0].idx)?svImg(p,cs[0].idx).src:cs[0].image):svImg(p,bestIdx(p)).src})():s.t==="du"?svImg(s.a,bestIdx(s.a)).src:null;
+  // заранее: загрузка следующего слайда и разбор фото его товаров (чтобы кадр и раскладка были готовы к показу)
+  const pre=s=>{if(!s)return;[s.p,s.a,s.b].filter(Boolean).forEach(p=>shpProduct(p,3));const u=srcOf(s);if(u){const m=new Image();m.crossOrigin="anonymous";m.src=u;if(s.t==="du"){const m2=new Image();m2.crossOrigin="anonymous";m2.src=svImg(s.b,bestIdx(s.b)).src}}};
   const slideH=(R,s)=>{
     if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
-    if(s.t==="du")return `<div class="du">${[s.a,s.b].map((p,j)=>duCardH(p,j)).join("")}<span class="vs">VS</span></div><div class="duh">смахните неинтересное · тап по карточке — открыть</div>`;
+    if(s.t==="du")return `<div class="du ${duLay(s.a,s.b)}">${[s.a,s.b].map((p,j)=>duCardH(p,j)).join("")}<span class="vs">VS</span></div><div class="duh">смахните неинтересное · тап по карточке — открыть</div>`;
     const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
-    const nph=s.t==="p"?Math.min(6,(p.imgs||[]).length):0;
-    return `<div class="st"><img src="${esc(srcOf(s))}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j?"":"on"}"></i>`).join("")}</div>`:""}
+    const nph=s.t==="p"?Math.min(6,(p.imgs||[]).length):0,b0=s.t==="p"?Math.min(bestIdx(p),5):0;
+    return `<div class="st"><img crossorigin="anonymous" src="${esc(srcOf(s))}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j===b0?"on":""}"></i>`).join("")}</div>`:""}
       ${p.sale?`<span class="bg s">−${p.sale}%</span>`:p.isNew?`<span class="bg">Новинка</span>`:""}
       ${cs?`<div class="dt">${cs.map((c,j)=>`<button data-c="${j}" class="${j?"":"on"}" aria-label="${esc(c.name)}" style="background-image:url('${esc(c.idx>=0&&svImg(p,c.idx)?svImg(p,c.idx).thumb:c.image)}')"></button>`).join("")}</div>`:""}
       <div class="pn"><div class="t"><div class="br">${esc(p.brand)}</div><div class="nm">${esc(p.name)}</div><div class="pr num">${priceH(p)}</div></div>
         <button class="fv ${favs.has(p.id)?"on":""}" data-f aria-label="В избранное">${favs.has(p.id)?"♥":"♡"}</button><button class="go" data-go>Смотреть ›</button></div>`};
-  const duCardH=(p,j)=>`<button class="dc" data-v="${j}" aria-label="${esc(p.brand+" "+p.name)}"><img src="${esc(svImg(p).src)}" alt="" decoding="async"><span class="no">НЕ МОЁ</span><span class="lb"><span class="t"><small>${esc(p.brand)}</small><b>${esc(p.name)}</b></span><span class="p num">${eur(priceFor(p,d))}</span></span></button>`;
+  // раскладка пары: обе вещи горизонтальные — карточки друг под другом; иначе — рядом (высокие карточки под вертикальные фото)
+  const duLay=(a,b)=>prodClass(a)==="w"&&prodClass(b)==="w"?"col":"row";
+  const duCardH=(p,j)=>`<button class="dc" data-v="${j}" data-id="${esc(p.id)}" aria-label="${esc(p.brand+" "+p.name)}"><span class="im"><img crossorigin="anonymous" src="${esc(svImg(p,bestIdx(p)).src)}" alt="" decoding="async"></span><span class="no">НЕ МОЁ</span><span class="lb"><span class="t"><small>${esc(p.brand)}</small><b>${esc(p.name)}</b></span><span class="p num">${eur(priceFor(p,d))}</span></span></button>`;
+  // фото в карточке: товар целиком (см. fitShot); после разбора обоих снимков раскладка уточняется
+  const duFit=du=>{if(!du)return;du.querySelectorAll(".dc").forEach(b=>{const im=b.querySelector(".im img"),box=b.querySelector(".im");if(!im||!box)return;
+      box.dataset.res=du.classList.contains("col")?62:0;
+      const go=()=>{fitShot(im,box);duRelayout(du)};
+      if(!im._bound){im._bound=1;im.addEventListener("load",go);im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.src=im.src}else im.classList.add("fit")})}
+      if(im.complete&&im.naturalWidth)go()})};
+  const duRelayout=du=>{const cs=[...du.querySelectorAll(".dc .im img")].map(im=>im._si?shpClass([...im._si.box,0,im.naturalWidth/im.naturalHeight]):"?");
+    if(cs.length<2||cs.includes("?"))return;const want=cs[0]==="w"&&cs[1]==="w"?"col":"row";
+    if(!du.classList.contains(want)){du.classList.remove("row","col");du.classList.add(want);du.querySelectorAll(".dc").forEach(b=>{const box=b.querySelector(".im");box.dataset.res=want==="col"?62:0;const im=box.querySelector("img");if(im.complete&&im.naturalWidth)fitShot(im,box)})}};
   // грань куба: шапка и полоски общие для рубрики, слайд внутри меняется без перестройки
   const face=(R,L,k)=>{const f=document.createElement("div");f.className="cb";const ic=svIco(R);
     f.innerHTML=`<div class="tb0"></div><div class="bz">${L.map((_,j)=>`<i><b style="width:${j<k?100:0}%"></b></i>`).join("")}</div>
@@ -2324,16 +2386,20 @@ function openAuto(ri){
       <button class="tp l" aria-label="Назад"></button><button class="tp r" aria-label="Далее"></button>`;
     f.appendChild(slideNode(R,L[k]));return f};
   const slideNode=(R,s)=>{const n=document.createElement("div");n.className="sl";n.innerHTML=slideH(R,s);
+    const im=n.querySelector(".st img");if(im){const box=n.querySelector(".st");
+      const go=()=>{const pn=n.querySelector(".pn");box.dataset.res=pn&&pn.offsetHeight?pn.offsetHeight+24:110;fitShot(im,box)};
+      im.addEventListener("load",()=>{im._si=undefined;n.isConnected?go():requestAnimationFrame(go)});
+      im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.src=im.src}else im.classList.add("fit")})}
     return n};
   const mark=s=>{if(s.p)svMark(s.p.id);if(s.t==="du"){svMark(s.a.id);svMark(s.b.id)}};
   // фото товара внутри одной сторис: тап сбоку листает снимки этого товара, после последнего — следующий товар
   let pj=0;const phs=()=>{const s=list[i];return s&&s.t==="p"&&s.p.imgs&&s.p.imgs.length>1?s.p.imgs.slice(0,6):null};
   const showPh=()=>{const L=phs();if(!L)return;const n=[...cb.querySelectorAll(".sl")].filter(x=>!x.classList.contains("out")).pop();if(!n)return;const im=n.querySelector(".st img");if(!im)return;
-    im.src=L[pj].src;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");n.querySelectorAll(".pd i").forEach((d,k)=>d.classList.toggle("on",k===pj));
-    if(L[pj+1]){const m=new Image();m.src=L[pj+1].src}el=0;hap("light")};
+    im.removeAttribute("style");im.classList.remove("fit");im.src=L[pj].src;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");n.querySelectorAll(".pd i").forEach((d,k)=>d.classList.toggle("on",k===pj));
+    if(L[pj+1]){const m=new Image();m.crossOrigin="anonymous";m.src=L[pj+1].src}el=0;hap("light")};
   const tapR=()=>{const L=phs();if(L&&pj<L.length-1){pj++;showPh()}else next()};
   const tapL=()=>{const L=phs();if(L&&pj>0){pj--;showPh()}else prev()};
-  const enter=()=>{const s=list[i];mark(s);el=0;pj=0;{const L=phs();if(L&&L[1]){const m=new Image();m.src=L[1].src}}cb.querySelector(".hz small").textContent="сегодня";
+  const enter=()=>{const s=list[i];mark(s);el=0;pj=s&&s.t==="p"?Math.min(bestIdx(s.p),5):0;{const L=phs();if(L&&L[pj+1]){const m=new Image();m.crossOrigin="anonymous";m.src=L[pj+1].src}}cb.querySelector(".hz small").textContent="сегодня";
     cb.querySelector(".tp.l").hidden=cb.querySelector(".tp.r").hidden=s.t==="du";
     cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1]);if(s.t==="du")duPre()};
   // смена слайда внутри рубрики: как в Instagram — сразу, без мигания (новое фото уже загружено заранее)
@@ -2351,14 +2417,16 @@ function openAuto(ri){
     const f=cur.querySelector("[data-f]");if(f)f.onclick=()=>{toggleFav(s.p.id);const on=favs.has(s.p.id);f.textContent=on?"♥":"♡";f.classList.toggle("on",on);hap("light")};
     const g=cur.querySelector("[data-go]");if(g)g.onclick=()=>{const id=s.p.id;close(true);openProduct(id)};
     cur.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const cs=s.p.colors.filter(c=>c.idx>=0||c.image),c=cs[+b.dataset.c],im=cur.querySelector(".st img");
-      im.src=c.idx>=0&&svImg(s.p,c.idx)?svImg(s.p,c.idx).src:c.image;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");
+      im.removeAttribute("style");im.classList.remove("fit");im.src=c.idx>=0&&svImg(s.p,c.idx)?svImg(s.p,c.idx).src:c.image;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");
       cur.querySelectorAll("[data-c]").forEach(x=>x.classList.toggle("on",x===b));el=Math.min(el,DUR*.3);hap()});
-    if(s.t==="du")cur.querySelectorAll(".dc").forEach(b=>duWire(b,s))};
+    if(s.t==="du"){cur.querySelectorAll(".dc").forEach(b=>duWire(b,s));duFit(cur.querySelector(".du"))}};
   // «Это или это»: тап по краю экрана — листать пары, тап по карточке — открыть товар, смахнуть карточку вбок — «не моё», на её место новая вещь
   const duSeen=new Set();
   const duNext=()=>{const R=AUTO[r];if(!R||!R.pool)return null;const busyIds=new Set(list.flatMap(x=>x.t==="du"?[x.a.id,x.b.id]:x.p?[x.p.id]:[]));
-    return svShuffle(R.pool,977).find(p=>!duSeen.has(p.id)&&!busyIds.has(p.id)&&svImg(p))||null};
-  const duPre=()=>{const p=duNext();if(p){const m=new Image();m.src=svImg(p).src}};
+    const L=svShuffle(R.pool,977).filter(p=>!duSeen.has(p.id)&&!busyIds.has(p.id)&&svImg(p));
+    const keep=cb&&cb.querySelector(".sl:last-child .du"),want=keep?(keep.classList.contains("col")?"w":"t"):"t";
+    return L.slice(0,24).find(p=>{const c=prodClass(p);return want==="w"?c==="w":c!=="w"&&c!=="?"})||L[0]||null};
+  const duPre=()=>{const R=AUTO[r];if(R&&R.pool)svShuffle(R.pool,977).filter(p=>!duSeen.has(p.id)).slice(0,6).forEach(p=>shpProduct(p,3));const p=duNext();if(p){const m=new Image();m.crossOrigin="anonymous";m.src=svImg(p,bestIdx(p)).src}};
   const duWire=(b,s)=>{let x0=0,y0=0,t0=0,on=false,drag=false,pid=0;const Wd=()=>host.offsetWidth||360;
     [s.a,s.b].forEach(p=>duSeen.add(p.id));
     b.onclick=e=>e.preventDefault();
@@ -2370,13 +2438,13 @@ function openAuto(ri){
       if(drag){paused=false;if(Math.abs(dx)>Wd()*.28)return duOut(b,s,dx<0?-1:1);b.style.transform="";b.style.setProperty("--no",0);return}
       if(e.type==="pointercancel"||held>600)return;
       const x=e.clientX-host.getBoundingClientRect().left,W0=Wd();
-      if(x<W0*.2)return tapL();if(x>W0*.8)return tapR();
+      const ez=b.closest(".du.row")?.14:.2;if(x<W0*ez)return tapL();if(x>W0*(1-ez))return tapR();
       const id=(+b.dataset.v?s.b:s.a).id;close(true);openProduct(id)};
     b.addEventListener("pointerup",end);b.addEventListener("pointercancel",end)};
   const duOut=(b,s,dir)=>{const p=duNext();hap("light");b.style.transform=`translateX(${dir*130}%) rotate(${dir*18}deg)`;b.style.opacity="0";el=Math.min(el,DUR*.4);
     setTimeout(()=>{if(dead||!b.isConnected)return;if(!p){b.style.visibility="hidden";return}
       const j=+b.dataset.v;if(j)s.b=p;else s.a=p;duSeen.add(p.id);svMark(p.id);
-      const w=document.createElement("div");w.innerHTML=duCardH(p,j);const nb2=w.firstElementChild;nb2.classList.add("enter");b.replaceWith(nb2);duWire(nb2,s);duPre()},300)};
+      const w=document.createElement("div");w.innerHTML=duCardH(p,j);const nb2=w.firstElementChild;nb2.classList.add("enter");const du=b.closest(".du");b.replaceWith(nb2);duWire(nb2,s);duFit(du);duPre()},300)};
   const bindFace=f=>{f.querySelector("[data-x]").onclick=()=>close()};
   cb=face(AUTO[r],list,0);bindFace(cb);cw.append(cb);enter();
   const tick=n=>{if(dead)return;if(!paused&&!busy)el+=n-t0;t0=n;const s=list[i],dur=s&&s.t==="du"?DUR*1.4:DUR;
@@ -3092,7 +3160,8 @@ async function syncOrders(){if(!LIVE)return null;try{const r=await fetch("/api/l
 const LIVE=!/[?&]demo=1/.test(location.search);
 // адрес фото нужной ширины (как lib/images.js sized): CDN сам отдаёт уменьшенную копию
 const szU=(u,w)=>!u?u:/cdn\.sanity\.io\/images\//.test(u)?`${u}${u.includes("?")?"&":"?"}w=${w}&fit=max&auto=format&q=82`:/cdn\.shopify\.com\/|\/cdn\/shop\//.test(u)?(w>=1600?u.replace(/[?&]width=\d+/,""):`${u.replace(/[?&]width=\d+/,"")}${u.includes("?")&&!/\?width=\d+$/.test(u)?"&":"?"}width=${w}`):u;
-const imgsOf=x=>x.im?x.im.map(u=>({src:szU(u,1000),thumb:szU(u,400),big:szU(u,1600)})):(x.images||[]);
+const XU=u=>typeof u==="string"&&u[0]==="~"?"https://cdn.shopify.com/s/files/"+u.slice(1):u;
+const imgsOf=x=>x.im?x.im.map(u=>{u=XU(u);return {src:szU(u,1000),thumb:szU(u,400),big:szU(u,1600)}}):(x.images||[]);
 function applyLive(list,fresh){PV++;
   const shapeByCat={bags:"bag",shoes:"loafer",clothing:"coat",eyewear:"glasses",accessories:"wallet",jewelry:"bracelet",watches:"watch",fragrance:"wallet",other:"bag"};
   P.length=0;
@@ -3101,7 +3170,7 @@ function applyLive(list,fresh){PV++;
     // скидка закончилась, а каталог ещё из кэша — показываем обычную цену
     const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn?x.oldPrice:x.price;
     P.push({id:x.id,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
-      shape:(()=>{const u=x.im?x.im[0]&&szU(x.im[0],400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),get imgs(){return this._im||(this._im=imgsOf(x))},colors:x.colors||[],sizes:x.sizes||[],
+      shape:(()=>{const u=x.im?x.im[0]&&szU(XU(x.im[0]),400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),get imgs(){return this._im||(this._im=imgsOf(x))},colors:(x.colors||[]).map(c=>c.image&&c.image[0]==="~"?{...c,image:XU(c.image)}:c),sizes:x.sizes||[],
       orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null})});
   NEWS.length=0;RESALE.length=0;ICONS.length=0;
   BRANDS=[...new Map(P.map(p=>[p.bk,p.brand])).entries()];
@@ -3132,12 +3201,28 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act=watch-
   if(b.dataset.act==="watch-open")openExternal(b.dataset.url);else{store.set("tb_watch","");$("#watchSec").hidden=true}},true);
 {let t=null;const h=document.querySelector("#t-feed .bigtitle h1");if(h){const start=()=>{t=setTimeout(async()=>{const c=(prompt("Код доступа к «Мониторингу»")||"").trim();if(/^\d{6}$/.test(c)){store.set("tb_watch",c);await loadWatch();if($("#watchSec").hidden)alert("Код не подошёл")}},1800)},stop=()=>clearTimeout(t);
   h.addEventListener("touchstart",start,{passive:true});h.addEventListener("mousedown",start);["touchend","touchmove","mouseup","mouseleave"].forEach(ev=>h.addEventListener(ev,stop))}}
+/* Быстрый старт: последний каталог хранится на телефоне (Cache Storage) — витрина открывается сразу,
+   свежий каталог догружается в фоне и подменяет старый, когда покупатель не смотрит товар/сторис */
+const CATK="/api/catalog?v=2",CATSTO="tb-cat-1";
+async function catLocal(){try{if(!window.caches)return null;const c=await caches.open(CATSTO),r=await c.match(CATK);return r?await r.json():null}catch(e){return null}}
+async function catSave(txt){try{if(!window.caches)return;const c=await caches.open(CATSTO);await c.put(CATK,new Response(txt,{headers:{"content-type":"application/json"}}))}catch(e){}}
+async function catNet(){const r=await fetch(CATK);const t=await r.text();const j=JSON.parse(t);const ok=r.ok&&Array.isArray(j.products);if(ok&&j.products.length)catSave(t);return {j,ok}}
+const catSig=l=>(l||[]).length+":"+(l||[]).reduce((a,x)=>(a+((x.price&&x.price.ua)||0)+x.id.length*7+(x.stock?1:0))%1e9,0);
+function catApply(j,fresh){if(j.content)CMS={banners:[],stories:[],news:[],rails:[],site:null,...j.content};applySite(CMS.site);applyLive(j.products||[],fresh)}
+function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();renderCatHome();if(LIVE)renderBanners()}catch(e){}}
 (async()=>{
   loadWatch();
-  if(LIVE){try{const r=await fetch("/api/catalog?v=2");const j=await r.json();if(j.content)CMS={banners:[],stories:[],news:[],rails:[],site:null,...j.content};applySite(CMS.site);applyLive(j.products||[],r.ok&&Array.isArray(j.products))}catch(e){applyLive([],false)}}
+  let net=null,local=null;
+  if(LIVE){net=catNet().catch(()=>null);local=await catLocal();
+    if(local&&Array.isArray(local.products)&&local.products.length)catApply(local,false);
+    else{const n=await net;if(n)catApply(n.j,n.ok);else applyLive([],false);local=null}}
   try{authGate()}catch(e){}
   init();
   window.hideSplash&&hideSplash();
+  // свежий каталог после быстрого старта: применяем, только если он отличается и экран свободен (не мешаем листать)
+  if(local){const n=await net;if(n&&n.ok&&catSig(n.j.products)!==catSig(local.products)){const go=()=>{const busy=document.querySelector(".pushed,.sv2,.sv,.zv,.sheet.in");if(busy)return setTimeout(go,1500);catApply(n.j,true);catRefreshUI()};go()}}
+  // заранее разобрать фото для «Это или это» (в фоне, когда приложение уже открыто)
+  setTimeout(()=>{try{const d=AUTO.find(r=>r.k==="duel");d&&d.warm&&d.warm()}catch(e){}},2500);
 })();
 </script>
 <script>

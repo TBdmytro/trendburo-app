@@ -3,6 +3,28 @@ import { getStore } from "../lib/store.js";
 import { toStorefront } from "../lib/catalog.js";
 import { publicContent } from "../lib/cms.js";
 
+/* Каталог собирается не чаще раза в 20 с на экземпляр сервера; одновременные запросы ждут одну сборку (база не получает толпу одинаковых запросов) */
+const MEMO = [null, null];
+const TTL = 20000;
+export function _resetCatalogMemo() { MEMO[0] = MEMO[1] = null; }
+async function catalogBody(compact) {
+  const k = compact ? 1 : 0, m = MEMO[k];
+  if (m && m.body && Date.now() - m.at < TTL) return m.body;
+  if (m && m.wait) return m.wait;
+  const wait = (async () => {
+    const store = getStore();
+    const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 5000,
+      fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos" });
+    const now = Date.now();
+    const products = list.map(p => toStorefront(p, now, { compact })).filter(Boolean);
+    let content = null; try { content = await publicContent(store, new Date(now)); } catch { content = null; }
+    return JSON.stringify({ products, content, generatedAt: new Date(now).toISOString(), demo: !!store.demo });
+  })();
+  MEMO[k] = { ...(m || {}), wait };
+  try { const body = await wait; MEMO[k] = { body, at: Date.now() }; return body; }
+  catch (e) { MEMO[k] = m && m.body ? { body: m.body, at: m.at } : null; throw e; }
+}
+
 export default async function handler(req, res) {
   // Личный раздел «Мониторинг»: плитки отдаются только по коду владельца
   const wm = String(req.url || "").match(/[?&]watch=(\d{6})/);
@@ -14,20 +36,17 @@ export default async function handler(req, res) {
       res.statusCode = 200; return res.end(JSON.stringify({ tiles: w.tiles || [] }));
     } catch (e) { res.statusCode = 503; return res.end(JSON.stringify({ error: "Недоступно" })); }
   }
+  const compact = /[?&]v=2\b/.test(String(req.url || ""));
   try {
-    const store = getStore();
-    const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 5000,
-      fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos" });
-    const now = Date.now();
-    const compact = /[?&]v=2\b/.test(String(req.url || ""));
-    const products = list.map(p => toStorefront(p, now, { compact })).filter(Boolean);
-    let content = null; try { content = await publicContent(store, new Date(now)); } catch { content = null; }
+    const body = await catalogBody(compact);
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     // кэш на CDN: свежий 30 с, дальше отдаётся сразу из кэша, а обновление идёт в фоне (без ожидания базы)
     res.setHeader("Cache-Control", "public, s-maxage=30, stale-while-revalidate=600");
     res.statusCode = 200;
-    res.end(JSON.stringify({ products, content, generatedAt: new Date(now).toISOString(), demo: !!store.demo }));
+    res.end(body);
   } catch (e) {
+    const last = MEMO[compact ? 1 : 0];
+    if (last && last.body) { res.statusCode = 200; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "public, s-maxage=10"); return res.end(last.body); }
     res.statusCode = 503; res.setHeader("Content-Type", "application/json; charset=utf-8");
     // Код причины без секретов — чтобы по ответу было видно, что чинить
     const m = String(e && e.message || "");

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { MemoryStore, setStore } from "../lib/store.js";
 import { setDnsCheck } from "../lib/http.js";
 import handler from "../api/admin.js";
-import catalog from "../api/catalog.js";
+import catalog, { _resetCatalogMemo } from "../api/catalog.js";
 
 setDnsCheck(false);
 process.env.ADMIN_PASSWORD = "test-password-123";
@@ -42,11 +42,13 @@ test("после входа: без защитного заголовка зап
 test("публичный каталог не отдаёт черновики и закупку", async () => {
   await store.put({ _id: "product.t", _type: "product", status: "draft", brand: "Dior", title: "X", pricing: { ua: 100 }, images: [], variants: [], offers: [] });
   await store.put({ _id: "product.p", _type: "product", status: "published", brand: "Dior", title: "Y", pricing: { ua: 1100, eu: 1080, dxb: 1080, purchase: 700, offerKey: "k" }, images: [{ url: "https://cdn.sanity.io/images/p/d/a.jpg" }], variants: [], offers: [{ _key: "k", purchase: 700, checkedAt: new Date().toISOString(), availability: {} }] });
-  const r = await call(catalog);
+  _resetCatalogMemo(); const r = await call(catalog);
   assert.equal(r.body.products.length, 1);
   assert.ok(!JSON.stringify(r.body).includes("700"));
   // лёгкий формат для витрины: только исходные адреса фото, без трёх копий каждой ссылки
   const c = await call(catalog, { query: { v: "2" } });
+  // повторный запрос в течение 20 с — из памяти, без нового запроса к базе
+  const c2 = await call(catalog, { query: { v: "2" } }); assert.deepEqual(c2.body, c.body);
   assert.deepEqual(c.body.products[0].im, ["https://cdn.sanity.io/images/p/d/a.jpg"]);
   assert.equal(c.body.products[0].images, undefined);
   assert.ok(!JSON.stringify(c.body).includes("700"));
@@ -68,7 +70,7 @@ test("витрина из админки: баннеры, сторис, ново
   await post("cmsSave", { kind: "story", item: { title: "LV", slides: [{ image: "https://cdn.sanity.io/images/x/y/2.jpg", title: "Новинка" }] } });
   await post("cmsSave", { kind: "news", item: { title: "Новая коллекция", tag: "Новинка", text: "Текст", action: { type: "url", value: "javascript:alert(1)" } } });
   await post("cmsSave", { kind: "rail", item: { title: "Сумки", rule: "category", value: "bags" } });
-  let c = (await call(catalog, { url: "/api/catalog" })).body.content;
+  let c = (_resetCatalogMemo(), await call(catalog, { url: "/api/catalog" })).body.content;
   assert.deepEqual(c.banners.map(x => x.title), ["Осень"]); // будущий и выключенный не показываются
   assert.equal(c.banners[0].action.type, "category");
   assert.equal(c.stories[0].slides.length, 1); assert.equal(c.news[0].action.type, "none"); // небезопасная ссылка отброшена
@@ -76,11 +78,11 @@ test("витрина из админки: баннеры, сторис, ново
   // правка, включение, порядок, удаление
   await post("cmsSave", { kind: "banner", item: { ...b3, title: "Включён", active: true } });
   await post("cmsReorder", { kind: "banner", ids: [b3._id, b1._id, b2._id] });
-  c = (await call(catalog, { url: "/api/catalog" })).body.content;
+  c = (_resetCatalogMemo(), await call(catalog, { url: "/api/catalog" })).body.content;
   assert.deepEqual(c.banners.map(x => x.title), ["Включён", "Осень"]);
   await post("cmsActive", { ids: [b1._id], active: false });
   await post("cmsDelete", { ids: [b3._id] });
-  c = (await call(catalog, { url: "/api/catalog" })).body.content;
+  c = (_resetCatalogMemo(), await call(catalog, { url: "/api/catalog" })).body.content;
   assert.equal(c.banners.length, 0);
   const s = (await post("siteSave", { site: { shipWeekday: 3, contacts: [{ label: "Менеджер", handle: "@m", url: "https://t.me/m" }], announce: { on: true, text: "Скидки" } } })).body.site;
   assert.equal(s.shipWeekday, 3); assert.equal(s.contacts.length, 1);
@@ -150,4 +152,23 @@ test("регистрация и вход: один Telegram — одна учё�
   r = await call(me, { method: "POST", body: { initData: "dev:900:Олег", a: "register", name: "Повторно" } });
   assert.equal((await store.list("customer", {})).filter(c => c.tg.id === 900).length, 1); // дубля нет
   delete process.env.DEV_AUTH;
+});
+
+test("каталог под нагрузкой: одновременные запросы — одна сборка; база упала — отдаётся последний удачный каталог", async () => {
+  _resetCatalogMemo();
+  let calls = 0; const orig = store.list.bind(store);
+  store.list = async (...a) => { if (a[0] === "product") calls++; await new Promise(r => setTimeout(r, 30)); return orig(...a); };
+  const rs = await Promise.all(Array.from({ length: 50 }, () => call(catalog, { query: { v: "2" } })));
+  assert.equal(calls, 1);
+  assert.ok(rs.every(r => r.status === 200 && r.body.products.length === rs[0].body.products.length));
+  // база недоступна, память устарела — витрина всё равно получает последний каталог
+  store.list = async () => { throw new Error("Sanity query 503"); };
+  _resetCatalogMemo(); // без памяти — честная ошибка 503
+  const bad = await call(catalog, { query: { v: "2" } }); assert.equal(bad.status, 503);
+  store.list = orig;
+  const ok = await call(catalog, { query: { v: "2" } }); assert.equal(ok.status, 200);
+  store.list = async () => { throw new Error("Sanity query 503"); };
+  const realNow = Date.now; Date.now = () => realNow() + 60000; // память старше 20 с
+  try { const st = await call(catalog, { query: { v: "2" } }); assert.equal(st.status, 200); assert.deepEqual(st.body.products, ok.body.products); }
+  finally { Date.now = realNow; store.list = orig; _resetCatalogMemo(); }
 });
