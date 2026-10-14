@@ -45,6 +45,11 @@ test("публичный каталог не отдаёт черновики и 
   const r = await call(catalog);
   assert.equal(r.body.products.length, 1);
   assert.ok(!JSON.stringify(r.body).includes("700"));
+  // лёгкий формат для витрины: только исходные адреса фото, без трёх копий каждой ссылки
+  const c = await call(catalog, { query: { v: "2" } });
+  assert.deepEqual(c.body.products[0].im, ["https://cdn.sanity.io/images/p/d/a.jpg"]);
+  assert.equal(c.body.products[0].images, undefined);
+  assert.ok(!JSON.stringify(c.body).includes("700"));
 });
 
 async function adminCookie() {

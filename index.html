@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-14-live-v54">
+<meta name="trendburo-build" content="2026-10-14-live-v55">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -1661,12 +1661,14 @@ function renderCatalog(){
 /* «Популярное» (по умолчанию): сначала бестселлеры бренда в его порядке, дальше — вперемешку по категориям
    (одежда, обувь, сумки… по очереди), чтобы первыми не шли подряд аксессуары, бельё или косметика; порядок меняется раз в день */
 const CAT_TURN=["clothing","shoes","bags","accessories","jewelry","eyewear","watches","fragrance"];
-const dayHash=id=>{let h=+new Date().toISOString().slice(0,10).replace(/-/g,"");for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;return h};
+const DH={d:"",m:new Map()};
+const dayHash=id=>{const d=new Date().toISOString().slice(0,10);if(DH.d!==d){DH.d=d;DH.m.clear()}let h=DH.m.get(id);if(h===undefined){h=+d.replace(/-/g,"");for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;DH.m.set(id,h)}return h};
 function popOrder(list){const best=list.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best),rest=list.filter(p=>p.best==null);
-  const G={};rest.forEach(p=>(G[p.cat]=G[p.cat]||[]).push(p));Object.values(G).forEach(g=>g.sort((a,b)=>(!!b.st-!!a.st)||(dayHash(a.id)-dayHash(b.id))));
-  const turn=[...CAT_TURN.filter(c=>G[c]),...Object.keys(G).filter(c=>!CAT_TURN.includes(c))],out=[];
+  const G={};rest.forEach(p=>(G[p.cat]=G[p.cat]||[]).push(p));
+  Object.values(G).forEach(g=>{const k=new Map(g.map(p=>[p,dayHash(p.id)]));g.sort((a,b)=>(!!b.st-!!a.st)||(k.get(a)-k.get(b)))});
+  const turn=[...CAT_TURN.filter(c=>G[c]),...Object.keys(G).filter(c=>!CAT_TURN.includes(c))],at={},out=[];
   // «Другое» (книги, коврики, косметика) — реже: одна позиция на три круга
-  for(let k=0;out.length<rest.length;k++)for(const c of turn){if(c==="other"&&k%3)continue;const g=G[c];if(g&&g.length)out.push(g.shift())}
+  for(let k=0;out.length<rest.length;k++)for(const c of turn){if(c==="other"&&k%3)continue;const g=G[c],j=at[c]||0;if(j<g.length){out.push(g[j]);at[c]=j+1}}
   return [...best,...out]}
 function sorted(list){const s=F.sort;if(s==="pop")return popOrder(list);return list.sort((a,b)=>s==="asc"?a.price-b.price:s==="desc"?b.price-a.price:(!!b.st-!!a.st)||(b.isNew-a.isNew)||(a.price-b.price))}
 let gridList=[],gridShown=0,gridIO=null;const GRID_STEP=24;
@@ -2198,10 +2200,16 @@ const svSeen=id=>SVSEEN[id]&&SVSEEN[id]<svDay0()&&SVSEEN[id]>Date.now()-7*864e5;
 const svToday=id=>SVSEEN[id]&&SVSEEN[id]>=svDay0();
 const svMark=id=>{SVSEEN[id]=Date.now();store.set("tb_svseen",SVSEEN)};
 const daySeed=()=>+new Date().toISOString().slice(0,10).replace(/-/g,"");
-function svShuffle(a,salt){let x=(daySeed()+salt*7919)%2147483647||1;const r=()=>(x=(x*16807)%2147483647)/2147483647;return a.map(v=>[r(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1])}
-const svFresh=(list,salt,n=10)=>{const a=svShuffle(list,salt);return [...a.filter(p=>!svSeen(p.id)),...a.filter(p=>svSeen(p.id))].slice(0,n)};
+// перемешивание дня запоминается (на тысячах товаров пересчёт при каждом открытии сторис давал подлагивание)
+const SVMEMO=new WeakMap();
+function svShuffle(a,salt){const key=daySeed()+":"+salt;let m=SVMEMO.get(a);if(!m){m=new Map();SVMEMO.set(a,m)}const hit=m.get(key);if(hit)return hit;
+  let x=(daySeed()+salt*7919)%2147483647||1;const r=()=>(x=(x*16807)%2147483647)/2147483647;const out=a.map(v=>[r(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1]);m.set(key,out);return out}
+const svFresh=(list,salt,n=10)=>{const a=svShuffle(list,salt),o=[],late=[];for(const p of a){if(svSeen(p.id)){if(late.length<n)late.push(p)}else{o.push(p);if(o.length>=n)break}}return o.concat(late).slice(0,n)};
 const svImg=(p,j=0)=>p.imgs&&p.imgs[j]?p.imgs[j]:null;
-function buildAuto(){
+let PV=0,AUTOC=null;
+function buildAuto(){const key=PV+"|"+daySeed()+"|"+(prefs.dest||"ua");if(AUTOC&&AUTOC.key===key){autoSeen(AUTOC.R);return AUTOC.R}const R=buildAuto0();AUTOC={key,R};return R}
+const autoSeen=R=>R.forEach(r=>{r.seen=r.build().every(s=>s.t==="in"||(s.p?svToday(s.p.id):s.t==="du"?svToday(s.a.id)&&svToday(s.b.id):true))});
+function buildAuto0(){
   const W=P.filter(p=>svImg(p)),d=prefs.dest||"ua",pr=p=>priceFor(p,d);if(W.length<2)return[];
   const R=[];let salt=0;
   const add=(o,pool)=>{if(pool.length>=(o.min||1)){salt++;const s=salt;R.push({...o,pool,build:o.build||(()=>{const l=svFresh(pool,s);return (o.intro&&pool.length>=4?[{t:"in",ps:svShuffle(pool,s+1).slice(0,4)}]:[]).concat(l.map(p=>({t:"p",p})))})})}};
@@ -2214,7 +2222,7 @@ function buildAuto(){
   if(TH.length){const t=TH[daySeed()%TH.length];add({k:"day:"+t[0],name:t[0],intro:{k:"Подборка дня",h:t[0],d:"Каждый день новая тема"}},t[1])}
   const cnt={};W.forEach(p=>cnt[p.bk]=(cnt[p.bk]||0)+1);
   Object.keys(cnt).filter(k=>cnt[k]>=2).sort((a,b)=>cnt[b]-cnt[a]).slice(0,8).forEach(k=>{const pool=W.filter(p=>p.bk===k);add({k:"b:"+k,name:pool[0].brand,brand:k},pool)});
-  R.forEach(r=>{const c=svFresh(r.pool,1,1)[0]||r.pool[0];r.cover=svImg(c).thumb;r.seen=r.build().every(s=>s.t==="in"||(s.p?svToday(s.p.id):s.t==="du"?svToday(s.a.id)&&svToday(s.b.id):true))});
+  R.forEach(r=>{const c=svFresh(r.pool,1,1)[0]||r.pool[0];r.cover=svImg(c).thumb});autoSeen(R);
   return R}
 const SVIC={new:'<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1-5.1-1.9 5.1-1.9z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
   sale:'<path d="M3.5 12.6V4.5a1 1 0 0 1 1-1h8.1l8 8a1.4 1.4 0 0 1 0 2l-6.6 6.6a1.4 1.4 0 0 1-2 0z"/><circle class="f" cx="8.2" cy="8.2" r="1.5"/>',
@@ -2993,7 +3001,10 @@ async function syncOrders(){if(!LIVE)return null;try{const r=await fetch("/api/l
 
 /* ===== Запуск: живой каталог из /api/catalog; демо-данные только с ?demo=1 ===== */
 const LIVE=!/[?&]demo=1/.test(location.search);
-function applyLive(list,fresh){
+// адрес фото нужной ширины (как lib/images.js sized): CDN сам отдаёт уменьшенную копию
+const szU=(u,w)=>!u?u:/cdn\.sanity\.io\/images\//.test(u)?`${u}${u.includes("?")?"&":"?"}w=${w}&fit=max&auto=format&q=82`:/cdn\.shopify\.com\/|\/cdn\/shop\//.test(u)?(w>=1600?u.replace(/[?&]width=\d+/,""):`${u.replace(/[?&]width=\d+/,"")}${u.includes("?")&&!/\?width=\d+$/.test(u)?"&":"?"}width=${w}`):u;
+const imgsOf=x=>x.im?x.im.map(u=>({src:szU(u,1000),thumb:szU(u,400),big:szU(u,1600)})):(x.images||[]);
+function applyLive(list,fresh){PV++;
   const shapeByCat={bags:"bag",shoes:"loafer",clothing:"coat",eyewear:"glasses",accessories:"wallet",jewelry:"bracelet",watches:"watch",fragrance:"wallet",other:"bag"};
   P.length=0;
   const endOf=d=>Date.parse(String(d).length===10?d+"T23:59:59":d);
@@ -3001,7 +3012,7 @@ function applyLive(list,fresh){
     // скидка закончилась, а каталог ещё из кэша — показываем обычную цену
     const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn?x.oldPrice:x.price;
     P.push({id:x.id,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
-      shape:x.images&&x.images[0]?"img:"+x.images[0].thumb:(shapeByCat[x.cat]||"bag"),imgs:x.images||[],colors:x.colors||[],sizes:x.sizes||[],
+      shape:(()=>{const u=x.im?x.im[0]&&szU(x.im[0],400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),get imgs(){return this._im||(this._im=imgsOf(x))},colors:x.colors||[],sizes:x.sizes||[],
       orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null})});
   NEWS.length=0;RESALE.length=0;ICONS.length=0;
   BRANDS=[...new Map(P.map(p=>[p.bk,p.brand])).entries()];
@@ -3034,7 +3045,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act=watch-
   h.addEventListener("touchstart",start,{passive:true});h.addEventListener("mousedown",start);["touchend","touchmove","mouseup","mouseleave"].forEach(ev=>h.addEventListener(ev,stop))}}
 (async()=>{
   loadWatch();
-  if(LIVE){try{const r=await fetch("/api/catalog");const j=await r.json();if(j.content)CMS={banners:[],stories:[],news:[],rails:[],site:null,...j.content};applySite(CMS.site);applyLive(j.products||[],r.ok&&Array.isArray(j.products))}catch(e){applyLive([],false)}}
+  if(LIVE){try{const r=await fetch("/api/catalog?v=2");const j=await r.json();if(j.content)CMS={banners:[],stories:[],news:[],rails:[],site:null,...j.content};applySite(CMS.site);applyLive(j.products||[],r.ok&&Array.isArray(j.products))}catch(e){applyLive([],false)}}
   try{authGate()}catch(e){}
   init();
   window.hideSplash&&hideSplash();

@@ -19,10 +19,12 @@ export default async function handler(req, res) {
     const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 5000,
       fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos" });
     const now = Date.now();
-    const products = list.map(p => toStorefront(p, now)).filter(Boolean);
+    const compact = /[?&]v=2\b/.test(String(req.url || ""));
+    const products = list.map(p => toStorefront(p, now, { compact })).filter(Boolean);
     let content = null; try { content = await publicContent(store, new Date(now)); } catch { content = null; }
     res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.setHeader("Cache-Control", "public, s-maxage=10, stale-while-revalidate=30");
+    // кэш на CDN: свежий 30 с, дальше отдаётся сразу из кэша, а обновление идёт в фоне (без ожидания базы)
+    res.setHeader("Cache-Control", "public, s-maxage=30, stale-while-revalidate=600");
     res.statusCode = 200;
     res.end(JSON.stringify({ products, content, generatedAt: new Date(now).toISOString(), demo: !!store.demo }));
   } catch (e) {
