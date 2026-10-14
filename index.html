@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="trendburo-build" content="2026-10-14-live-v60">
+<meta name="trendburo-build" content="2026-10-14-live-v61">
 <meta name="theme-color" content="#ffffff">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
@@ -2515,9 +2515,12 @@ function openAuto(ri){
   a.addEventListener("click",()=>{try{hap("light")}catch(e){}});
   // жест начался вбок — страница не едет вверх-вниз; начался вертикально — лента не дёргается вбок
   const SEL=".bnr-track,.stories,.hrail,.chips,.gal,.pv-gal,.cw,.st-prefs,.o-brands,.tops";let rail=null,sx=0,sy=0,lock="",page=null;
-  document.addEventListener("touchstart",e=>{rail=e.target.closest&&e.target.closest(SEL);if(!rail)return;const t=e.touches[0];sx=t.clientX;sy=t.clientY;lock="";page=rail.parentElement&&rail.parentElement.closest(".scroll,.pushed .scroll,[data-scroll]")},{passive:true});
-  document.addEventListener("touchmove",e=>{if(!rail||lock)return;const t=e.touches[0],dx=Math.abs(t.clientX-sx),dy=Math.abs(t.clientY-sy);if(dx<6&&dy<6)return;
-    lock=dx>dy?"x":"y";if(lock==="x"&&page)page.classList.add("xlock");if(lock==="y")rail.classList.add("ylock")},{passive:true});
+  // на iPhone прокрутку по осям браузер разводит сам, а смена overflow посреди жеста останавливает ленту — там замок не нужен
+  const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  document.addEventListener("touchstart",e=>{if(IOS)return;rail=e.target.closest&&e.target.closest(SEL);if(!rail)return;const t=e.touches[0];sx=t.clientX;sy=t.clientY;lock="";page=rail.parentElement&&rail.parentElement.closest(".scroll,.pushed .scroll,[data-scroll]")},{passive:true});
+  document.addEventListener("touchmove",e=>{if(!rail||lock)return;const t=e.touches[0],dx=Math.abs(t.clientX-sx),dy=Math.abs(t.clientY-sy);if(dx<10&&dy<10)return;
+    // решаем только при явном направлении; вертикальный жест ленту не блокирует (иначе наискосок лента «не двигается»)
+    if(dx>dy*1.2){lock="x";if(page)page.classList.add("xlock")}else if(dy>dx*1.2)lock="y"},{passive:true});
   const end=()=>{if(page)page.classList.remove("xlock");if(rail)rail.classList.remove("ylock");rail=null;page=null;lock=""};
   document.addEventListener("touchend",end,{passive:true});document.addEventListener("touchcancel",end,{passive:true});
 })();
