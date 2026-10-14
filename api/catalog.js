@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   try {
     const store = getStore();
     const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 5000,
-      fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock" });
+      fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos" });
     const now = Date.now();
     const products = list.map(p => toStorefront(p, now)).filter(Boolean);
     let content = null; try { content = await publicContent(store, new Date(now)); } catch { content = null; }
