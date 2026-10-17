@@ -117,7 +117,7 @@ export default async function handler(req, res) {
             lastSync: settings?.lastSync || null, check: settings?.check || null, home: src.home || null, lastJob: slim(last), running: jobs.some(j => j.sourceId === id && ACTIVE.includes(j.status)),
             stats: { found: mine.length, published: mine.filter(p => p.status === "published").length },
             categories: [...new Set(mine.map(p => p.category).filter(Boolean))],
-            custom: !!src.custom, catalog: !!src.catalog, shopCurrency: src.shopCurrency || null, market: src.market || "", factor: src.factor || 1, brands: src.brands || [], cats: src.cats || [],
+            custom: !!src.custom, catalog: !!src.catalog, shopCurrency: src.shopCurrency || null, market: src.market || "", geoEu: !!src.geoEu, factor: src.factor || 1, brands: src.brands || [], cats: src.cats || [],
             fx: src.shopCurrency && src.shopCurrency !== "EUR" ? fx.rates[src.shopCurrency] : null
           });
         }

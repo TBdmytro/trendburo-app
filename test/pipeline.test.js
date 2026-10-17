@@ -525,6 +525,57 @@ test("поставщик в долларах с европейским разд�
   assert.ok(!String(p.offers[0].url || p.url || "").includes("/en-de"), "адрес товара прежний — без дублей");
 });
 
+test("поставщик в долларах, Европа по стране посетителя (Sporty & Rich): выбираем Германию, цены в евро", async () => {
+  const store = new MemoryStore(); const st = { de: true, seen: [] };
+  const eu = fx => fx.map(p => ({ ...p, variants: p.variants.map(v => ({ ...v, price: "230.00" })) }));
+  const f = (url, opts) => { const c = opts?.headers?.Cookie || ""; st.seen.push(c); return fakeFetch(u => {
+    const de = st.de && c.includes("localization=DE");
+    if (u.endsWith("/robots.txt")) return { body: "User-agent: *\nDisallow: /cart\n", type: "text/plain" };
+    if (u.includes("/meta.json")) return { body: JSON.stringify({ name: "Sporty & Rich", currency: "USD" }), type: "application/json" };
+    if (/\/products\/hoodie-1$/.test(u)) return { body: de ? '<meta property="og:price:amount" content="230,00"><script>Shopify.currency = {"active":"EUR","rate":"0.9"};</script>' : '<meta property="og:price:amount" content="190.00"><script>Shopify.currency = {"active":"USD","rate":"1.0"};</script>', type: "text/html" };
+    if (/\/$/.test(u)) return { body: de ? '<script>Shopify.currency = {"active":"EUR","rate":"0.9"};</script>' : '<script>Shopify.currency = {"active":"USD","rate":"1.0"};</script>', type: "text/html" };
+    const m = u.match(/\/products\.json\?limit=(\d+)(?:&page=(\d+))?/);
+    if (m) { const page = Number(m[2] || 1), lim = Number(m[1]), all = de ? eu(shopFixture(2)) : shopFixture(2); return { body: JSON.stringify({ products: all.slice((page - 1) * lim, page * lim) }), type: "application/json" }; }
+    return null;
+  })(url, opts); };
+  const det = await detectSupplier("sportyandrich.com", { fetchImpl: f });
+  assert.ok(det.ok, det.reason); assert.equal(det.geoEu, true); assert.equal(det.currency, "EUR"); assert.equal(det.market, "");
+  const { id, source } = await addSupplier(store, { url: "https://sportyandrich.com" }, { fetchImpl: f });
+  assert.equal(source.custom.region, "EU"); assert.equal(source.custom.shopCurrency, "EUR"); assert.equal(source.custom.geoEu, true);
+  await createJob(store, { sourceId: id, mode: "full" });
+  for (let i = 0; i < 10; i++) { const r = await tick(store, { fetchImpl: f, sleep: noSleep }); if (!r.jobId) break; }
+  const p = (await store.list("product")).find(x => x.title.includes("Hoodie 1"));
+  assert.equal(p.offers[0].boutique, 230, "цена Германии в евро, без пересчёта долларов по курсу");
+  // магазин перестал отдавать евро — загрузка останавливается, витрина не трогается
+  st.de = false;
+  const j = await createJob(store, { sourceId: id, mode: "full" });
+  const r = await tick(store, { fetchImpl: f, sleep: noSleep });
+  assert.equal(r.status, "failed");
+  assert.match((await store.get(j._id || j.id || r.jobId)).errors.at(-1).text, /не в евро/);
+});
+
+test("поставщик в долларах без цен Европы: предупреждение, автопубликация выключена", async () => {
+  const store = new MemoryStore(); const state = { n: 2 };
+  await saveManualFx(store, { USD: 1.17 });
+  const det = await detectSupplier("kith.com", { fetchImpl: shopFetch(state) });
+  assert.ok(det.ok); assert.equal(det.euPrices, false); assert.equal(det.geoEu, false);
+  const { id, source } = await addSupplier(store, { url: "https://kith.com" }, { fetchImpl: shopFetch(state) });
+  assert.ok(source.custom.checks.some(c => /Европейских цен нет/.test(c)));
+  const doc = await store.get("source." + id); await store.put({ ...doc, autoPublish: true });
+  await createJob(store, { sourceId: id, mode: "full" });
+  for (let i = 0; i < 10; i++) { const r = await tick(store, { fetchImpl: shopFetch(state), sleep: noSleep }); if (!r.jobId) break; }
+  const prods = await store.list("product");
+  assert.ok(prods.length > 0); assert.ok(prods.every(p => p.status !== "published"), "цены США на витрину сами не попадают");
+});
+
+test("цена на странице товара: разные форматы", async () => {
+  const { pagePrice } = await import("../lib/suppliers.js");
+  assert.equal(pagePrice('<meta property="og:price:amount" content="1.234,50">'), 1234.5);
+  assert.equal(pagePrice('<meta property="og:price:amount" content="1,234.50">'), 1234.5);
+  assert.equal(pagePrice('<meta property="og:price:amount" content="230,00">'), 230);
+  assert.equal(pagePrice('<meta property="og:price:amount" content="230">'), 230);
+});
+
 test("поставщик: загрузка выбранных разделов не помечает остальные товары «нет в наличии»", async () => {
   const store = new MemoryStore(); const state = { n: 3 };
   await saveManualFx(store, { USD: 1.17 });
@@ -542,4 +593,15 @@ test("поставщик: загрузка выбранных разделов �
   assert.equal(j.status, "done", JSON.stringify(j.errors)); assert.ok(j.partial); assert.ok(!j.gone, "ничего не помечено исчезнувшим");
   const p3 = (await store.list("product")).find(p => p.title.includes("Hoodie 3"));
   assert.ok(Object.values(p3.offers[0].availability).some(a => a.status !== "out"));
+});
+
+test("магазины: запросы просят английский язык, Германия выбирается только для «Европы по стране»", async () => {
+  const { makeNet } = await import("../lib/sources.js");
+  const seen = [];
+  const f = async (url, opts) => { seen.push(opts.headers); return new Response(url.endsWith("robots.txt") ? "" : "{}", { status: 200, headers: { "content-type": url.endsWith("robots.txt") ? "text/plain" : "application/json" } }); };
+  const net = makeNet({ fetchImpl: f, sleep: async () => {} });
+  await net.get({ id: "a", adapter: "shopify", domains: ["shop.example"], geoEu: true }, "https://shop.example/products.json", { types: ["application/json"] });
+  const h = seen.at(-1); assert.match(h["Accept-Language"], /^en/); assert.match(h.Cookie, /localization=DE/);
+  await net.get({ id: "b", adapter: "shopify", domains: ["eur.example"] }, "https://eur.example/products.json", { types: ["application/json"] });
+  assert.equal(seen.at(-1).Cookie, undefined, "магазинам в евро страну не меняем");
 });

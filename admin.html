@@ -1370,10 +1370,10 @@ function supplierCard(s) {
   return `<article class="card pad sup" data-id="${esc(s.id)}" style="display:flex;flex-direction:column;gap:14px">
     <div class="row"><div><div class="wm" style="font-size:17px">${esc(s.name)}</div><div class="hint">${esc((s.home || "").replace("https://", ""))} · ${s.kind === "eyewear-supplier" ? "поставщик очков" : "магазин"} · ${s.stats.found} ${plural(s.stats.found, ["товар", "товара", "товаров"])}, на витрине ${s.stats.published}</div></div><span class="sp"></span>${ck ? `<span class="pill ${ck[1]}"><span class="dot"></span>${ck[0]}</span>` : ""}</div>
     ${s.lastSync ? `<div class="hint">Последняя загрузка ${dt(s.lastSync.at)}: ${esc(STATUS[s.lastSync.status]?.[0] || s.lastSync.status)}${s.running ? " · идёт загрузка" : ""}</div>` : ""}
-    ${s.market ? `<div class="hint">Цены Европы, в евро (раздел магазина ${esc(s.market)})</div>` : ""}
+    ${s.market ? `<div class="hint">Цены Европы, в евро (раздел магазина ${esc(s.market)})</div>` : s.geoEu ? `<div class="hint">Цены Европы, в евро (выбрана страна Германия)</div>` : ""}
     <div class="row" style="align-items:center"><div class="hint" style="flex:1">Что загружать: <b style="color:var(--fg)">${s.collections?.length ? esc(s.collections.map(secName).join(", ")) : "весь каталог"}</b></div><button class="btn ghost sm" data-supsec="${esc(s.id)}">Выбрать разделы</button></div>
     ${s.shopCurrency && s.shopCurrency !== "EUR" ? `<button class="btn sm" data-supeu="${esc(s.id)}">Перевести на цены Европы (€)</button>` : ""}
-    ${s.shopCurrency && s.shopCurrency !== "EUR" ? `<div class="note-box">${svg("info")}<div>Цены в ${esc(s.shopCurrency)}. Курс: 1 € = ${s.fx ? s.fx.rate : "?"} ${esc(s.shopCurrency)} (${esc(s.fx?.source || "")}). Изменить — в «Цены».</div></div>` : ""}
+    ${s.shopCurrency && s.shopCurrency !== "EUR" ? `<div class="note-box warn">${svg("info")}<div><b>Не европейские цены.</b> Цены в ${esc(s.shopCurrency)} пересчитаны по курсу — товары сами на витрину не попадают и не обновляются. Курс: 1 € = ${s.fx ? s.fx.rate : "?"} ${esc(s.shopCurrency)} (${esc(s.fx?.source || "")}). Изменить — в «Цены».</div></div>` : ""}
     <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:130px">Коэффициент к цене<input type="number" data-f="factor" value="${esc(s.factor)}" step="0.01" min="0.5" max="3"></label>
     <label class="f" style="flex:2;min-width:200px">Только бренды <span class="hint" style="font-weight:400">пусто — все</span><input type="text" data-f="brands" value="${esc(s.brands.join(", "))}"></label></div>
     <div class="chips">${LOADCATS.map(c => `<button type="button" class="chip" data-scat="${c}" aria-pressed="${s.cats.includes(c)}">${CATS[c]}</button>`).join("")}</div>
@@ -1674,7 +1674,7 @@ async function vSources() {
       eu.disabled = true; eu.innerHTML = '<span class="spin"></span> Ищем европейский раздел…';
       try {
         const det = (await api("supplierDetect", { method: "POST", body: { url: s0.home } })).result;
-        if (!det.ok || !det.market) { toast(det.reason || "У этого магазина нет европейского раздела с ценами в € — цены пересчитываются по курсу"); eu.disabled = false; eu.textContent = "Перевести на цены Европы (€)"; return; }
+        if (!det.ok || !(det.market || det.geoEu)) { toast(det.reason || "Цены Европы в € у этого магазина не найдены — товары остаются на проверке, сами на витрину не попадают"); eu.disabled = false; eu.textContent = "Перевести на цены Европы (€)"; return; }
         const { id } = await api("supplierAdd", { method: "POST", body: { url: s0.home, name: s0.name, kind: s0.kind, factor: 1, brands: s0.brands, cats: s0.cats } });
         sources = null; await getSources(true); toast("Готово: цены Европы в €. Загружаем каталог заново"); return openHubLoad(id);
       } catch (err) { toast(err.message); eu.disabled = false; eu.textContent = "Перевести на цены Европы (€)"; }
