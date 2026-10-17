@@ -377,6 +377,8 @@ export default async function handler(req, res) {
           { kind: "official", boutique: 50, dest: "ua", category: "clothing" }, { kind: "official", boutique: 340, dest: "ua", category: "clothing" },
           { kind: "official", boutique: 200, dest: "ua", category: "shoes" }, { kind: "official", boutique: 500, dest: "ua", category: "shoes" },
           { kind: "official", boutique: 20, dest: "ua", category: "accessories" }, { kind: "official", boutique: 95, dest: "ua", category: "other" }, { kind: "official", boutique: 338, dest: "ua", category: "clothing" },
+          { kind: "official", retailer: true, boutique: 270, dest: "ua", category: "clothing" }, { kind: "official", retailer: true, boutique: 100, dest: "ua", category: "clothing" },
+          { kind: "official", retailer: true, boutique: 450, dest: "ua", category: "clothing" }, { kind: "official", retailer: true, boutique: 270, dest: "ua", category: "shoes" },
           { kind: "eyewear-supplier", boutique: 330, purchase: 240 }, { kind: "eyewear-supplier", boutique: 400, purchase: 300 },
           { kind: "eyewear-supplier", boutique: 460, purchase: 300 }, { kind: "eyewear-supplier", boutique: 1000, purchase: 800 },
           { kind: "eyewear-supplier", boutique: 1000, purchase: 900 }, { kind: "official", boutique: null }

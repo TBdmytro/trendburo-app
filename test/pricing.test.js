@@ -105,8 +105,23 @@ test("минимальная комиссия за единицу: одежда 
 test("магазины-поставщики (Alo Yoga): +10% и минимумы одинаково во все регионы", async () => {
   const { priceFor } = await import("../lib/pipeline.js");
   const p = (boutique, category) => priceFor({ sourceKind: "retailer", boutique }, null, null, category);
-  assert.deepEqual([p(338, "clothing").ua, p(338, "clothing").eu, p(338, "clothing").dxb], [375, 375, 375]);
-  assert.deepEqual([p(50, "clothing").eu, p(200, "shoes").eu, p(450, "shoes").dxb, p(20, "accessories").eu], [65, 240, 495, 35]);
+  // без доставки от магазина — чтобы проверить только наценку
+  const p0 = (b, c) => priceFor({ sourceKind: "retailer", boutique: b }, { shipping: { add: 0 } }, null, c);
+  assert.deepEqual([p0(338, "clothing").ua, p0(338, "clothing").eu, p0(338, "clothing").dxb], [375, 375, 375]);
+  assert.deepEqual([p0(50, "clothing").eu, p0(200, "shoes").eu, p0(450, "shoes").dxb, p0(20, "accessories").eu], [75, 240, 495, 35]);
   // официальные сайты брендов — как раньше: Европа и Дубай +8%
   assert.equal(priceFor({ sourceKind: "official", boutique: 3000 }, null, null, "bags").eu, 3240);
+});
+
+test("магазины: доставка +10 € для вещей дешевле 400 € (кроме обуви), после наценки, до округления", async () => {
+  const { priceFor } = await import("../lib/pipeline.js");
+  const p = (b, cat, kind = "retailer", cfg = null) => priceFor({ boutique: b, sourceKind: kind, currency: "EUR", region: "EU" }, cfg, null, cat);
+  assert.equal(p(270, "clothing").ua, 310);   // 297 + 10 = 307 → 310
+  assert.equal(p(100, "clothing").ua, 135);   // 100 + 25 (минимум за одежду в магазинах) + 10
+  assert.equal(p(400, "clothing").ua, 440);   // от 400 € — без доставки
+  assert.equal(p(270, "shoes").ua, 310);      // обувь: +40 €, без доставки
+  assert.equal(p(20, "accessories").ua, 45);  // 20 + 15 + 10
+  assert.equal(p(270, "clothing", "official").ua, 300, "сайты брендов — без доставки от магазина");
+  assert.equal(p(270, "clothing", "retailer", { shipping: { add: 0 } }).ua, 300, "0 — выключено");
+  assert.ok(p(270, "clothing").steps.some(s => /Доставка от магазина/.test(s.label)));
 });

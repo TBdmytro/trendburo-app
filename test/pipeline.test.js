@@ -381,7 +381,7 @@ test("поставщик по ссылке: проверка, подключен
   let prods = await store.list("product");
   assert.equal(prods.length, 3); assert.ok(prods.every(p => p.status === "draft"), "новые товары скрыты с витрины");
   const p1 = prods.find(p => p.title.includes("Hoodie 1"));
-  assert.equal(p1.offers[0].boutique, 200, "234 $ / 1.17 = 200 €"); assert.equal(p1.pricing.ua, 220, "Украина ×1,10");
+  assert.equal(p1.offers[0].boutique, 200, "234 $ / 1.17 = 200 €"); assert.equal(p1.pricing.ua, 235, "магазин: 200 + минимум 25 € за одежду + 10 € доставки");
   assert.equal(p1.category, "clothing"); assert.equal(p1.gender, "m"); assert.deepEqual(p1.sizes, ["S", "M"]);
   assert.equal((await store.list("importItem")).length, 0, "каталог не засоряет предпросмотр");
   // показываем один товар, затем поставщик убрал товар 3 и добавил 4
@@ -395,7 +395,7 @@ test("поставщик по ссылке: проверка, подключен
   assert.equal((await store.get(p1._id)).status, "published", "показанный товар остаётся на витрине");
   const gone = prods.find(p => p.title.includes("Hoodie 3"));
   assert.ok(Object.values(gone.offers[0].availability).every(a => a.status === "out"), "исчезнувший товар — нет в наличии");
-  assert.equal(toStorefront(await store.get(p1._id)).price.ua, 220);
+  assert.equal(toStorefront(await store.get(p1._id)).price.ua, 235);
   // отключение: показанные товары скрываются
   await removeSupplier(store, id);
   assert.equal((await store.get(p1._id)).status, "draft");

@@ -1476,6 +1476,10 @@ async function vPrices() {
      <label class="f">Округление до 5 €<select id="cRound">${[["nearest", "до ближайших (середина вверх)"], ["up", "всегда вверх"], ["down", "всегда вниз"]].map(([k, v]) => `<option value="${k}" ${config.rounding === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
      <div class="row"><label class="f" style="flex:1">Минимум за обувь, € ${n("cMinSh", config.official.minAdd?.shoes ?? 40, "1")}</label><label class="f" style="flex:1">Минимум за одежду, € ${n("cMinCl", config.official.minAdd?.clothing ?? 15, "1")}</label></div>
      <p class="hint" style="margin:0">0.10 = +10%. Пример: бутик 3000 € → Украина 3300 €. Минимум — за каждую единицу: если процент меньше, берём минимум (майка 50 € → 65 €, обувь 200 € → 240 €).</p></div>
+   <div class="card pad" style="display:flex;flex-direction:column;gap:14px"><h2 style="margin:0;font-size:16px">Магазины (Sporty &amp; Rich, Alo …)</h2>
+     <div class="row"><label class="f" style="flex:1">Доставка от магазина, € ${n("cShip", config.shipping?.add ?? 10, "1")}</label><label class="f" style="flex:1">Бесплатно от, € ${n("cShipFree", config.shipping?.freeFrom ?? 400, "1")}</label></div>
+     <label class="f">Минимальная наценка за одежду, € ${n("cRMinCl", config.official.retailerMinAdd?.clothing ?? 25, "1")}</label>
+     <p class="hint" style="margin:0">Наценка +10%, но не меньше минимума; доставка — к вещам дешевле порога, кроме обуви (у обуви минимум 40 €). Худи 270 € → 297 + 10 → 310 €; футболка 100 € → 125 + 10 = 135 €. 0 — выключить.</p></div>
    <div class="card pad" style="display:flex;flex-direction:column;gap:14px"><h2 style="margin:0;font-size:16px">Очки от поставщиков</h2>
      <label class="f">Порог большой скидки поставщика ${n("cThr", config.eyewear.bigDiscountThreshold)}</label>
      <label class="f">Граница цены бутика, € ${n("cCap", config.eyewear.capBoutique, "1")}</label>
@@ -1497,14 +1501,14 @@ async function vPrices() {
     $("#fxRef").onclick = async () => { const r = await api("fxRefresh", { method: "POST", body: {} }); drawFx(r); toast(r.refresh?.ok ? "Курсы ЕЦБ обновлены" : "ЕЦБ не ответил: " + (r.refresh?.error || "")); };
   };
   api("fxGet").then(drawFx).catch(() => { $("#fxBox").textContent = "Не удалось загрузить курсы"; });
-  const read = () => ({ rounding: $("#cRound").value, official: { markup: { ua: +$("#cUa").value, eu: +$("#cEu").value, dxb: +$("#cDxb").value }, minAdd: { shoes: +$("#cMinSh").value || 0, clothing: +$("#cMinCl").value || 0 } },
+  const read = () => ({ rounding: $("#cRound").value, official: { markup: { ua: +$("#cUa").value, eu: +$("#cEu").value, dxb: +$("#cDxb").value }, minAdd: { shoes: +$("#cMinSh").value || 0, clothing: +$("#cMinCl").value || 0 }, retailerMinAdd: { clothing: +$("#cRMinCl").value || 0 } }, shipping: { add: +$("#cShip").value || 0, freeFrom: +$("#cShipFree").value || 0 },
     eyewear: { bigDiscountThreshold: +$("#cThr").value, capBoutique: +$("#cCap").value, flatAdd: +$("#cFlat").value, pctAdd: +$("#cPct").value, clientDiscount: +$("#cDisc").value, smallMarkup: +$("#cSm").value, smallFactor: +$("#cSf").value } });
   $("#main").oninput = e => { if (e.target.closest(".card") && !e.target.closest("#fxBox")) { previewed = false; $("#cSave").disabled = true; } };
   $("#cPrev").onclick = async () => {
     const { results, changes } = await api("pricingPreview", { method: "POST", body: { config: read() } });
-    const KIND = { official: "Сайт бренда", "eyewear-supplier": "Очки" }, DEST = { ua: "Украина", eu: "Европа", dxb: "Дубай" };
+    const KIND = { official: "Сайт бренда", "eyewear-supplier": "Очки" }, KN = r => r.input.retailer ? "Магазин" : (KIND[r.input.kind] || r.input.kind), DEST = { ua: "Украина", eu: "Европа", dxb: "Дубай" };
     $("#cOut").innerHTML = `<div class="card tw"><table><thead><tr><th>Пример</th><th>Бутик</th><th>Закупка</th><th>Правило</th><th>Итог</th><th>Замечания</th></tr></thead><tbody>
-      ${results.map(r => `<tr><td>${esc(KIND[r.input.kind] || r.input.kind)}${r.input.category ? " · " + ({ shoes: "обувь", clothing: "одежда" }[r.input.category] || r.input.category) : ""}${r.input.dest ? " · " + DEST[r.input.dest] : ""}</td><td class="num">${eur(r.input.boutique)}</td><td class="num">${eur(r.input.purchase)}</td><td>${esc(r.rule || "—")}</td>
+      ${results.map(r => `<tr><td>${esc(KN(r))}${r.input.category ? " · " + ({ shoes: "обувь", clothing: "одежда" }[r.input.category] || r.input.category) : ""}${r.input.dest ? " · " + DEST[r.input.dest] : ""}</td><td class="num">${eur(r.input.boutique)}</td><td class="num">${eur(r.input.purchase)}</td><td>${esc(r.rule || "—")}</td>
       <td class="num"><b>${eur(r.final)}</b></td><td>${r.reasons.map(x => `<span class="pill ${r.blocked ? "err" : "warn"}">${esc(x)}</span>`).join(" ")}</td></tr>`).join("")}
       </tbody></table></div>
       <div class="sec"><h2>Изменятся цены на витрине: ${changes.length}</h2>

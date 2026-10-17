@@ -155,7 +155,7 @@ test("раскладка по разделам магазина: вкладки 
   assert.equal((await loadState(store, id)).status, "done");
 });
 
-test("пересчёт цен по правилу владельца: обувь +40 € до 400 €, остальное +15 €, дальше 10%, округление вверх; витрину без предпросмотра не трогаем", { timeout: 120000 }, async () => {
+test("пересчёт цен по правилу владельца (магазины): обувь +40 €, одежда минимум +25 €, остальное +15 €, дальше 10%, доставка +10 € до 400 € (кроме обуви), округление вверх; витрину без предпросмотра не трогаем", { timeout: 120000 }, async () => {
   const { fs, store } = await setup({ oldBloated: 0, oldClean: 0 });
   const offer = boutique => [{ _key: "o", sourceId: "s", sourceKind: "retailer", region: "EU", currency: "EUR", boutique, purchase: null, availability: {} }];
   const mk = (id, category, boutique, status = "draft", extra = {}) => fs.db.set(id, { _id: id, _type: "product", _rev: "x", title: id, category, status, overrides: {}, offers: offer(boutique), pricing: { ua: 1 }, ...extra });
@@ -167,10 +167,10 @@ test("пересчёт цен по правилу владельца: обувь
   const ua = async id => (await store.get(id)).pricing.ua;
   assert.equal(await ua("product.shoe200"), 240);
   assert.equal(await ua("product.shoe450"), 495);
-  assert.equal(await ua("product.tee50"), 65);
-  assert.equal(await ua("product.coat338"), 375);
-  assert.equal(await ua("product.socks20"), 35);
-  assert.equal(await ua("product.book95"), 110);
+  assert.equal(await ua("product.tee50"), 85);   // 50 + 25 (одежда, магазин) + 10 доставка
+  assert.equal(await ua("product.coat338"), 385); // 371,8 + 10 → 385
+  assert.equal(await ua("product.socks20"), 45);  // 20 + 15 + 10
+  assert.equal(await ua("product.book95"), 120);
   assert.equal(await ua("product.bag1200"), 1320);
   assert.equal(await ua("product.live"), 1, "товар на витрине без предпросмотра не пересчитывается");
   // повторный вызов ничего не делает
