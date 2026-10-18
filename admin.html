@@ -824,7 +824,7 @@ function go(v) {
   $("#main").innerHTML = `<div class="empty"><span class="spin"></span></div>`; $("#main").onclick = $("#main").oninput = $("#main").onchange = null; $(".actbar")?.remove();
   document.querySelectorAll(".drawer").forEach(x => x.remove()); tgBack.stack = [];
   window.scrollTo(0, 0); navSync();
-  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, customers: vCustomers, screens: vScreens, finance: vFinance, more: vMore, bot: vBot }[k] || vHome2;
+  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, customers: vCustomers, screens: vScreens, finance: vFinance, more: vMore, bot: vBot, stock: vStock }[k] || vHome2;
   fn(v.split(":")[1]).catch(e => { $("#main").innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(e.message)}</div></div>`; });
 }
 async function getSources(force) { if (!sources || force) sources = (await api("sources")).sources; return sources; }
@@ -1021,6 +1021,9 @@ const BRAND_LIST = ["Louis Vuitton", "Dior", "Gucci", "Hermès", "Chanel", "Prad
 const SIZE_PRESETS = { clothing: ["XS", "S", "M", "L", "XL"], shoes: ["35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45"], jewelry: ["15", "16", "17", "18"] };
 async function vAdd(editId) {
   const F = { id: null, brand: "", title: "", category: "bags", gender: "w", boutique: "", sizes: [], color: "", colors: [], availability: "online", images: [], url: "", status: "published", stock: { loc: "", city: "", size: "" } };
+  // «add:stock-ua» / «add:stock-eu» — новая вещь, которая уже лежит у нас (из раздела «В наличии»)
+  const stockPre = /^stock-(ua|eu)$/.exec(editId || "");
+  if (stockPre) { F.stock.loc = stockPre[1]; F.stock.city = stockPre[1] === "ua" ? "Киев" : ""; editId = null; }
   if (editId) {
     const { product: p } = await api("product", { query: { id: editId } });
     Object.assign(F, { id: p._id, brand: p.brand, title: p.title, category: p.category, gender: p.gender, boutique: p.offers?.[0]?.boutique || "", sizes: p.sizes || [], color: (p.colors || [])[0] || "", availability: Object.values(p.offers?.[0]?.availability || {})[0]?.status || "online", images: (p.images || []).map(i => i.url), url: p.sourceUrl || "", stock: { loc: p.stock?.loc || "", city: p.stock?.city || "", size: p.stock?.size || "" } });
@@ -2328,7 +2331,7 @@ Object.assign(IC, {
   out: '<path d="M14 4h5v16h-5"/><path d="M10 16l4-4-4-4M14 12H4"/>'
 });
 const NAV_MAIN = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"]];
-const NAV_MORE = [["customers", "Клиенты", "users", "кто заходил, доставка, история заказов"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
+const NAV_MORE = [["customers", "Клиенты", "users", "кто заходил, доставка, история заказов"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["stock", "В наличии", "van", "уже выкуплено: Украина и Европа · блок в приложении"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
 const chevSvg = '<svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
 const backSvg = '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>';
 const isMainView = v => { const [k, s] = v.split(":"); return ["home", "products", "leads", "more"].includes(k) || (k === "show" && (!s || s === "feed")); };
@@ -2414,6 +2417,33 @@ async function vMore() {
     <button data-go="show:site">${svg("gear")}<span class="tx">Контакты и настройки<small>менеджер, день отправки, OPTIX</small></span>${chevSvg}</button></div>
     <div class="menu" style="margin-top:14px"><button data-out>${svg("out")}<span class="tx">Выйти</span></button></div>`;
   $("#main").onclick = e => { const b = e.target.closest("button"); if (!b) return; if ("out" in b.dataset) return $("#logout").click(); if (b.dataset.go) go(b.dataset.go); };
+}
+
+/* ---------- В наличии: вещи, которые уже выкуплены и лежат у нас; блок в приложении включается здесь ---------- */
+async function vStock(loc) {
+  loc = loc === "eu" ? "eu" : "ua";
+  const [{ site }, r] = await Promise.all([api("siteGet"), api("products", { query: { stock: loc, limit: 300 } })]);
+  const list = r.products || [], live = list.filter(p => p.status === "published").length, on = !!site.stockUa;
+  const PL = { ua: "в Украине", eu: "в Европе" };
+  $("#main").innerHTML = head("В наличии", "Вещи, которые уже выкуплены и лежат у нас — клиент получает их быстро", `<button class="btn" data-addst>${svg("add")}Добавить вещь</button>`) + `
+    <div class="card pad" style="display:flex;flex-direction:column;gap:10px;max-width:760px">
+      <label class="toggle"><input type="checkbox" id="stUa" ${on ? "checked" : ""}>Показывать блок «В наличии» в приложении</label>
+      <div class="note-box ${on ? "ok" : "warn"}">${svg(on ? "ok" : "info")}<div>${on ? `Блок включён: клиенты видят ${live} ${plural(live, ["вещь", "вещи", "вещей"])} на витрине и фильтр «В наличии».` : "Блок скрыт — клиенты его не видят. Добавьте вещи с фото, проверьте и включите, когда будете готовы."}</div></div>
+    </div>
+    <div class="seg" style="margin:18px 0 12px">${[["ua", "В Украине"], ["eu", "В Европе"]].map(([k, v]) => `<button data-loc="${k}" aria-pressed="${k === loc}">${v}</button>`).join("")}</div>
+    ${list.length ? `<div style="display:flex;flex-direction:column;gap:8px;max-width:760px">${list.map(p => `<button class="row2" data-ed="${esc(p._id)}"><span class="ic" style="overflow:hidden">${p.cover ? `<img src="${esc(p.cover)}" alt="" style="width:100%;height:100%;object-fit:cover">` : svg("img")}</span><span class="tx"><b>${esc(p.brand || "")} · ${esc(p.title || "")}</b><span>${p.price?.ua ? eur(p.price.ua) + " · " : ""}${p.status === "published" ? "на витрине" : "скрыт"}</span></span>${chevSvg}</button>`).join("")}</div>`
+      : `<div class="empty"><b>Пока пусто</b>Нажмите «Добавить вещь»: фото, бренд, цена и размер — она сразу попадёт в этот список ${PL[loc]}.<br><br><button class="btn" data-addst>Добавить вещь</button></div>`}
+    <p class="hint" style="max-width:760px;margin-top:14px">Отметить уже загруженный товар можно и в его карточке: «В наличии у нас» → «Лежит в Украине».</p>`;
+  $("#main").onchange = async e => {
+    if (e.target.id !== "stUa") return;
+    try { await api("siteSave", { method: "POST", body: { site: { ...site, stockUa: e.target.checked } } }); toast(e.target.checked ? "Блок «В наличии» включён" : "Блок скрыт"); vStock(loc); }
+    catch (err) { toast(err.message); e.target.checked = !e.target.checked; }
+  };
+  $("#main").onclick = e => {
+    if (e.target.closest("[data-addst]")) return go("add:stock-" + loc);
+    const l = e.target.closest("[data-loc]"); if (l) return go("stock:" + l.dataset.loc);
+    const ed = e.target.closest("[data-ed]"); if (ed) return editor(ed.dataset.ed, () => vStock(loc));
+  };
 }
 
 /* ---------- Витрина: конструктор Ленты ---------- */

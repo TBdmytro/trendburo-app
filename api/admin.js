@@ -224,13 +224,15 @@ export default async function handler(req, res) {
       }
 
       case "products": {
-        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, createdAt, issues, gender, sections, secPos, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}" });
+        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, createdAt, issues, gender, sections, secPos, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}, stock" });
         const Q = req.query, q = String(Q.q || "").toLowerCase();
         const cat = p => p.overrides?.category || p.category;
         // фильтры применяются по очереди; списки для выпадающих меню строятся по остальным фильтрам
         const base = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q))
           && (!Q.status || p.status === Q.status) && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source))
-          && (!Q.avail || (p.offers || []).some(o => o.onlineOrder)));
+          && (!Q.avail || (p.offers || []).some(o => o.onlineOrder))
+          // «В наличии»: вещь уже выкуплена и лежит у нас (ua — Украина, eu — Европа, any — любая)
+          && (!Q.stock || (l => Q.stock === "any" ? !!l : l === Q.stock)((p.overrides?.stock || p.stock)?.loc || "")));
         // вкладка раздела магазина (Бестселлеры, Женское…) — в том же порядке, что на сайте бренда
         const pos = p => (p.secPos || []).find(x => x.s === Q.sec)?.p ?? 1e9;
         const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat) && (!Q.sec || (p.sections || []).includes(Q.sec)));
@@ -242,7 +244,7 @@ export default async function handler(req, res) {
         return send(res, 200, { total: list.length, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId) },
           shown: list.filter(p => p.status === "published").length,
-          products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), gender: p.gender || null, sizes: sizeList(p), createdAt: p.createdAt || null })) });
+          products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), gender: p.gender || null, sizes: sizeList(p), createdAt: p.createdAt || null })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });

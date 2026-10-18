@@ -605,3 +605,16 @@ test("магазины: запросы просят английский язы�
   await net.get({ id: "b", adapter: "shopify", domains: ["eur.example"] }, "https://eur.example/products.json", { types: ["application/json"] });
   assert.equal(seen.at(-1).Cookie, undefined, "магазинам в евро страну не меняем");
 });
+
+test("админка: список «В наличии» — фильтр товаров по месту (Украина / Европа)", async () => {
+  const { saveManualProduct } = await import("../lib/manual.js");
+  const store = new MemoryStore();
+  const imgs = ["https://cdn.sanity.io/a.jpg"];
+  const a = await saveManualProduct(store, { brand: "Louis Vuitton", title: "Speedy 25", category: "bags", boutique: 1500, images: imgs, stock: { loc: "ua", city: "Киев" } });
+  await saveManualProduct(store, { brand: "Dior", title: "Saddle", category: "bags", boutique: 3000, images: imgs, stock: { loc: "eu" } });
+  await saveManualProduct(store, { brand: "Gucci", title: "Jackie", category: "bags", boutique: 2800, images: imgs });
+  assert.equal(a.stock.loc, "ua");
+  const all = await store.list("product", {}, {});
+  const pick = loc => all.filter(p => (l => loc === "any" ? !!l : l === loc)((p.overrides?.stock || p.stock)?.loc || "")).map(p => p.brand);
+  assert.deepEqual(pick("ua"), ["Louis Vuitton"]); assert.deepEqual(pick("eu"), ["Dior"]); assert.equal(pick("any").length, 2);
+});

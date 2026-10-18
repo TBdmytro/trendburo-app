@@ -1718,7 +1718,7 @@ function filtersSheet(){
     <div class="fg"><h4>Бюджет по категориям</h4><div class="bud">${cats.map(c=>{const mx=catMax(c),v=F.budgets[c];return `<div class="r"><div><label for="b-${c}">${CATS[c]}</label><b class="num" id="bv-${c}">${v>=mx?"любой":"до "+eur(v)}</b></div><input type="range" id="b-${c}" data-bud="${c}" min="100" max="${mx}" step="50" value="${v}"></div>`}).join("")}</div></div>
     <div class="fg"><h4>Бренды <button data-fs="clearBrands">Сбросить</button></h4><div class="blist">${BRANDS.slice().sort((a,b)=>a[1].localeCompare(b[1])).map(([k,n])=>`<label><input type="checkbox" data-brand="${k}" ${F.brands.has(k)?"checked":""}>${esc(n)}<span class="c num">${fb.filter(p=>p.bk===k).length}</span></label>`).join("")}</div></div>
     <div class="fg"><h4>Где выкупаем</h4><div class="chips wrap">${Object.entries(CITIES).map(([k,v])=>`<button class="chip" data-fs="city" data-v="${k}" aria-pressed="${F.cities.has(k)}">${v}</button>`).join("")}</div></div>
-    <div class="fg"><h4>Наличие</h4><div class="chips wrap">${[["","Все"],["any","В наличии"],["ua","В Украине"],["eu","В Европе"]].map(([k,v])=>`<button class="chip" data-fs="stock" data-v="${k}" aria-pressed="${F.stock===k}">${v}</button>`).join("")}</div></div>
+    <div class="fg" ${LIVE&&CMS.site&&!CMS.site.stockUa?"hidden":""}><h4>Наличие</h4><div class="chips wrap">${[["","Все"],["any","В наличии"],["ua","В Украине"],["eu","В Европе"]].map(([k,v])=>`<button class="chip" data-fs="stock" data-v="${k}" aria-pressed="${F.stock===k}">${v}</button>`).join("")}</div></div>
     <div class="fg"><h4>Показать</h4><div class="chips wrap"><button class="chip" data-fs="new" aria-pressed="${F.onlyNew}">Только новинки</button><button class="chip" data-fs="fav" aria-pressed="${F.onlyFav}">Избранное</button></div></div>`};
   const foot=()=>{const n=baseSet().length;return `<button class="btn soft" data-fs="reset">Сбросить</button><button class="btn block" data-fs="done">Показать ${n} ${plural(n,["товар","товара","товаров"])}</button>`};
   const sh=openSheet("Фильтры",body(),foot());
@@ -2237,7 +2237,9 @@ function renderCatHome(){renderStockBan();{const bx=$("#catBn"),L=bnFor("catalog
 function renderStockBan(){const l=P.filter(p=>p.st&&(F.g==="all"||(p.g===F.g||p.g==="u"))),ua=l.filter(p=>p.st.loc==="ua").length;
   const html=`<span class="tx"><b><span class="gdot"></span>В наличии</b><span class="num">${l.length} ${plural(l.length,["вещь","вещи","вещей"])} · отправим сразу</span></span><span class="th">${l.slice(0,3).map(p=>`<i>${shapeSVG(p.shape,p.c,"")}</i>`).join("")}</span><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:rgba(255,255,255,.5);fill:none;stroke-width:2;flex:none"><path d="M9 6l6 6-6 6"/></svg>`;
   ["#stockBan","#stockBanFeed"].forEach(id=>{const el=$(id);if(el){el.hidden=!l.length;el.innerHTML=html}});
-  if(LIVE&&CMS.site&&!CMS.site.stockBlock)$("#stockBanFeed").hidden=true}
+  if(LIVE&&CMS.site&&!CMS.site.stockBlock)$("#stockBanFeed").hidden=true;
+  // блок «В наличии» включается в админке (раздел «В наличии»); пока выключен — нигде не показываем
+  if(LIVE&&CMS.site&&!CMS.site.stockUa)["#stockBan","#stockBanFeed"].forEach(id=>{const el=$(id);if(el)el.hidden=true})}
 function btileHTML(bk){const l=bItems(bk).filter(p=>F.g==="all"||(p.g===F.g||p.g==="u")).sort((a,b)=>b.isNew-a.isNew);
   return `<button class="btile press" data-act="brand" data-bk="${bk}"><b>${esc(bname(bk))}</b><span class="mini3">${l.slice(0,3).map(p=>`<i style="--c:${p.c}">${shapeSVG(p.shape,p.c,"")}</i>`).join("")}</span><span class="num">${l.length} ${plural(l.length,["товар","товара","товаров"])}</span></button>`}
 $("#hg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;F.g=b.dataset.g;renderCatHome();renderCatalog()});

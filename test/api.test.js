@@ -86,6 +86,12 @@ test("витрина из админки: баннеры, сторис, ново
   assert.equal(c.banners.length, 0);
   const s = (await post("siteSave", { site: { shipWeekday: 3, contacts: [{ label: "Менеджер", handle: "@m", url: "https://t.me/m" }], announce: { on: true, text: "Скидки" } } })).body.site;
   assert.equal(s.shipWeekday, 3); assert.equal(s.contacts.length, 1);
+  // блок «В наличии»: по умолчанию скрыт, включается из раздела «В наличии» и сохраняется при других правках
+  assert.equal(s.stockUa, false, "блок «В наличии» скрыт, пока его не включат");
+  const s2 = (await post("siteSave", { site: { ...s, stockUa: true } })).body.site; assert.equal(s2.stockUa, true);
+  const s3 = (await post("siteSave", { site: { ...s2, announce: { on: false, text: "" } } })).body.site; assert.equal(s3.stockUa, true);
+  _resetCatalogMemo(); assert.equal((await call(catalog, { url: "/api/catalog" })).body.content.site.stockUa, true);
+  await post("siteSave", { site: { ...s3, stockUa: false } });
 });
 
 test("заявки: витрина отправляет, клиент видит статус, админ меняет статус; чужой ключ не видит", async () => {
