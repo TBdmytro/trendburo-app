@@ -92,6 +92,14 @@ test("витрина из админки: баннеры, сторис, ново
   const s3 = (await post("siteSave", { site: { ...s2, announce: { on: false, text: "" } } })).body.site; assert.equal(s3.stockUa, true);
   _resetCatalogMemo(); assert.equal((await call(catalog, { url: "/api/catalog" })).body.content.site.stockUa, true);
   await post("siteSave", { site: { ...s3, stockUa: false } });
+  // новый каталог: фото кружков и афиши, список спортивных брендов; мусорные ключи и не-https отбрасываются
+  const s4 = (await post("siteSave", { site: { ...s3, sportBrands: ["Alo Yoga", " Nike "], circles: { "sport:w:legg": "https://cdn.sanity.io/a.jpg", "bad key": "https://x.y/z.jpg", "ward:m:bags": "http://insecure/x.jpg" },
+    heroes: { "sport:w": { img: "https://cdn.sanity.io/h.jpg", title: "Движение" }, "evil:x": { img: "https://a/b.jpg" } } } })).body.site;
+  assert.deepEqual(s4.sportBrands, ["Alo Yoga", "Nike"]);
+  assert.deepEqual(s4.circles, { "sport:w:legg": "https://cdn.sanity.io/a.jpg" });
+  assert.deepEqual(s4.heroes, { "sport:w": { img: "https://cdn.sanity.io/h.jpg", title: "Движение" } });
+  const s5 = (await post("siteSave", { site: { ...s4, announce: { on: true, text: "x" } } })).body.site;
+  assert.deepEqual(s5.circles, s4.circles, "другие правки настроек не стирают фото каталога");
 });
 
 test("заявки: витрина отправляет, клиент видит статус, админ меняет статус; чужой ключ не видит", async () => {
