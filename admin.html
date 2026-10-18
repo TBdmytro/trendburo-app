@@ -2446,75 +2446,13 @@ async function vStock(loc) {
   };
 }
 
-/* ---------- Витрина → Каталог: фото афиши и кружков «Что ищете», спортивные бренды ---------- */
-const NC_ADMIN = {
-  sport: [["legg", "Леггинсы", "Тайтсы"], ["bra", "Топы и бра", "Майки"], ["tee", "Футболки", "Футболки и поло"], ["hood", "Худи и свитшоты"], ["jacket", "Куртки"], ["pant", "Брюки", "Брюки и джоггеры"], ["short", "Шорты"], ["dress", "Платья и юбки", ""], ["cloth", "Другая одежда"], ["shoes", "Обувь"], ["bags", "Сумки"], ["acc", "Аксессуары"]],
-  ward: [["bags", "Сумки"], ["shoes", "Обувь"], ["cloth", "Одежда"], ["acc", "Аксессуары"], ["jewel", "Украшения"], ["watch", "Часы"], ["eyes", "Очки"]]
-};
-const NC_HERO_DEF = { sport: { w: "Движение в каждом дне", m: "Сила в каждом дне" }, ward: { w: "Сумки сезона", m: "Классика сезона" }, optix: { w: "OPTIX", m: "OPTIX" } };
-async function vCatalogSet() {
-  const { site } = await api("siteGet");
-  const S = { g: "w", circles: { ...(site.circles || {}) }, heroes: JSON.parse(JSON.stringify(site.heroes || {})), sport: (site.sportBrands || []).join("\n"), dirty: false };
-  const pic = (u, round) => u ? `<img src="${esc(u)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span class="hint" style="font-size:11px;text-align:center;padding:4px">авто</span>`;
-  const draw = () => {
-    const g = S.g, lbl = (d) => (g === "m" ? (d[2] ?? d[1]) : d[1]);
-    $("#main").innerHTML = head("Витрина", "Как выглядит каталог в приложении") + `<button class="back" data-show="feed">${backSvg}Витрина</button>` + showTabs("catalog") + `
-    <div class="card pad form" style="max-width:820px">
-      <h3 style="margin:0">Два мира каталога</h3>
-      <p class="hint" style="margin:0">Бренды из списка — в «Спорте», все остальные — в «Гардеробе». По одному в строке, как бренд называется в каталоге.</p>
-      <textarea id="ncSport" style="min-height:120px">${esc(S.sport)}</textarea>
-    </div>
-    <div class="seg" style="margin:18px 0 12px">${[["w", "Женщинам"], ["m", "Мужчинам"]].map(([k, v]) => `<button data-ncg="${k}" aria-pressed="${g === k}">${v}</button>`).join("")}</div>
-    <div class="card pad" style="max-width:820px;display:flex;flex-direction:column;gap:12px">
-      <h3 style="margin:0">Афиша — большие фото вверху каталога</h3>
-      <p class="hint" style="margin:0">Без своего фото система берёт фото самого популярного товара. Лучше всего — вертикальное фото с моделью.</p>
-      ${["sport", "ward", "optix"].map(w => { const k = w + ":" + g, h = S.heroes[k] || {}; return `<div class="row" style="align-items:center;gap:12px;flex-wrap:nowrap">
-        <span style="width:64px;height:96px;border-radius:14px;overflow:hidden;background:var(--soft);display:grid;place-items:center;flex:none">${pic(h.img)}</span>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px"><b>${{ sport: "Спорт", ward: "Гардероб", optix: "OPTIX" }[w]}</b>
-          <input type="text" data-ht="${k}" value="${esc(h.title || "")}" placeholder="${esc(NC_HERO_DEF[w][g])}" maxlength="60">
-          <div class="row" style="gap:6px"><button class="btn sm soft" data-up="h|${k}">Загрузить фото</button>${h.img ? `<button class="btn sm ghost" data-clr="h|${k}">Убрать фото</button>` : ""}</div></div></div>`; }).join("")}
-    </div>
-    ${["sport", "ward"].map(w => `<div class="card pad" style="max-width:820px;margin-top:12px">
-      <h3 style="margin:0 0 4px">Кружки «Что ищете» — ${w === "sport" ? "Спорт" : "Гардероб"}</h3>
-      <p class="hint" style="margin:0 0 12px">Нажмите на кружок, чтобы поставить своё фото. Пустой раздел в приложении не показывается.</p>
-      <div style="display:flex;flex-wrap:wrap;gap:14px">${NC_ADMIN[w].filter(d => lbl(d)).map(d => { const k = w + ":" + g + ":" + d[0], u = S.circles[k]; return `<div style="width:88px;display:flex;flex-direction:column;align-items:center;gap:6px">
-        <button data-up="c|${k}" aria-label="Фото: ${esc(lbl(d))}" style="width:72px;height:72px;border-radius:50%;overflow:hidden;border:1px dashed var(--line);background:var(--soft);display:grid;place-items:center;padding:0;cursor:pointer">${pic(u)}</button>
-        <span style="font-size:12.5px;text-align:center;line-height:1.2">${esc(lbl(d))}</span>${u ? `<button class="hint" data-clr="c|${k}" style="border:0;background:none;cursor:pointer;text-decoration:underline">авто</button>` : ""}</div>`; }).join("")}</div></div>`).join("")}
-    <div class="row" style="margin:18px 0"><button class="btn" id="ncSave">Сохранить</button><span class="hint" id="ncDirty">${S.dirty ? "Есть несохранённые изменения" : ""}</span></div>
-    <input type="file" id="ncFile" accept="image/*" hidden>`;
-  };
-  draw();
-  let target = null;
-  const mark = () => { S.dirty = true; const d = $("#ncDirty"); if (d) d.textContent = "Есть несохранённые изменения"; };
-  $("#main").oninput = e => { if (e.target.id === "ncSport") { S.sport = e.target.value; mark(); } const k = e.target.dataset.ht; if (k) { S.heroes[k] = { ...(S.heroes[k] || {}), title: e.target.value }; mark(); } };
-  $("#main").onclick = async e => {
-    const sh = e.target.closest("[data-show]"); if (sh) return go("show:" + sh.dataset.show);
-    const g = e.target.closest("[data-ncg]"); if (g) { S.g = g.dataset.ncg; return draw(); }
-    const up = e.target.closest("[data-up]"); if (up) { target = up.dataset.up; return $("#ncFile").click(); }
-    const cl = e.target.closest("[data-clr]"); if (cl) { const [t, k] = cl.dataset.clr.split("|"); if (t === "c") delete S.circles[k]; else S.heroes[k] = { ...(S.heroes[k] || {}), img: null }; mark(); return draw(); }
-    if (e.target.id === "ncSave") {
-      const sportBrands = S.sport.split(/\n|,/).map(x => x.trim()).filter(Boolean);
-      try { const r = await api("siteSave", { method: "POST", body: { site: { ...site, sportBrands, circles: S.circles, heroes: S.heroes } } }); Object.assign(site, r.site); S.dirty = false; toast("Сохранено — в приложении обновится в течение минуты"); draw(); }
-      catch (err) { toast(err.message); }
-    }
-  };
-  $("#main").onchange = async e => {
-    if (e.target.id !== "ncFile" || !e.target.files[0] || !target) return;
-    const [t, k] = target.split("|"), f = e.target.files[0]; e.target.value = "";
-    toast("Загружаем фото…");
-    try { const url = await uploadPhoto(f, 1400); if (t === "c") S.circles[k] = url; else S.heroes[k] = { ...(S.heroes[k] || {}), img: url }; mark(); draw(); }
-    catch (err) { toast(err.message); }
-  };
-}
-
 /* ---------- Витрина: конструктор Ленты ---------- */
 const WD_RU = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
-const showTabs = cur => `<div class="seg" style="margin:4px 0 16px">${[["feed", "Лента"], ["catalog", "Каталог"], ["texts", "Тексты"], ["site", "Настройки"]].map(([k, v]) => `<button data-tab="${k}" data-show="${k}" aria-pressed="${cur === k}">${v}</button>`).join("")}</div>`;
+const showTabs = cur => `<div class="seg" style="margin:4px 0 16px">${[["feed", "Лента"], ["texts", "Тексты"], ["site", "Настройки"]].map(([k, v]) => `<button data-tab="${k}" data-show="${k}" aria-pressed="${cur === k}">${v}</button>`).join("")}</div>`;
 async function vShow(sub) {
   if (["banner", "story", "news", "rail"].includes(sub)) return vShowList(sub);
   if (sub === "site") return vSite(`<button class="back" data-show="feed">${backSvg}Витрина</button>${showTabs("site")}`);
   if (sub === "texts") return vTexts();
-  if (sub === "catalog") return vCatalogSet();
   const [{ site, blocks }, ...lists] = await Promise.all([api("siteGet"), ...["story", "banner", "news", "rail"].map(k => api("cmsList", { query: { kind: k }, silent: true }))]);
   const [stories, banners, news, rails] = lists.map(l => l.items);
   const act = a => a.filter(x => x.active).length;
