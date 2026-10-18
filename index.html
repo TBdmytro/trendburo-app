@@ -22,7 +22,7 @@ html.fs .tglogo{display:flex}
 html.pvtop .tglogo i{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);-webkit-backdrop-filter:blur(10px) saturate(1.3);backdrop-filter:blur(10px) saturate(1.3);text-shadow:0 1px 2px rgba(0,0,0,.25)}
 html.pvtop .tglogo i::before{background:conic-gradient(from 0deg,rgba(255,255,255,.8) 0 18%,transparent 18% 50%,rgba(255,255,255,.8) 50% 68%,transparent 68%)}
 .tglogo i{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em}
-.tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);animation:tgspin 6s linear infinite}
+.tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);will-change:transform;animation:tgspin 6s linear infinite}
 @keyframes tgspin{to{transform:rotate(360deg)}}
 body:has(.sv) .tglogo,body:has(.splash) .tglogo,body:has(.oxa.in) .tglogo,body:has(.oxi) .tglogo{opacity:0}
 .splash{position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;cursor:pointer;overflow:hidden}
@@ -236,6 +236,7 @@ button{cursor:pointer}
 /* product card */
 .pc{border:0;background:none;padding:0;text-align:left;display:flex;flex-direction:column;gap:10px;min-width:0}
 .pc .art{position:relative;aspect-ratio:4/5;border-radius:14px;background:var(--studio);display:grid;place-items:center;overflow:hidden;max-width:100%}
+.grid2>.pc{content-visibility:auto;contain-intrinsic-size:auto 300px}
 .pc .art::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(20,22,25,.04);pointer-events:none}
 .pc .art svg.sh{width:66%;height:66%;transition:transform .6s var(--ease)}
 .pc .art.s-flat svg.sh,.pc .art.s-loafer svg.sh,.pc .art.s-sneaker svg.sh,.pc .art.s-sandal svg.sh,.pc .art.s-belt svg.sh{width:86%;height:86%}
@@ -682,8 +683,8 @@ textarea{min-height:88px;resize:vertical}
 .ship{margin:0 18px;box-shadow:var(--ink-hi);background:var(--ink-grad);color:var(--ink-fg);border-radius:var(--r);padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .ship small{color:rgba(255,255,255,.6);font-size:12px;display:block}
 .ship b{font-size:16px;font-weight:600}
-.pulse{width:8px;height:8px;border-radius:50%;background:#7fd1a4;box-shadow:0 0 0 0 rgba(127,209,164,.6);animation:pl 2.2s infinite}
-@keyframes pl{70%{box-shadow:0 0 0 9px rgba(127,209,164,0)}100%{box-shadow:0 0 0 0 rgba(127,209,164,0)}}
+.pulse{position:relative;flex:none;width:8px;height:8px;border-radius:50%;background:#7fd1a4}.pulse::after{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(127,209,164,.6);animation:pl 2.2s infinite;will-change:transform,opacity}
+@keyframes pl{0%{transform:scale(1);opacity:1}70%,100%{transform:scale(3.25);opacity:0}}
 
 /* stylist */
 .chat{flex:1;display:flex;flex-direction:column;min-height:0}
@@ -799,7 +800,7 @@ textarea{min-height:88px;resize:vertical}
 @media (prefers-reduced-motion:reduce){.sv2 *,.sv2{animation:none!important;transition:none!important}}
 
 /* чат с менеджером: слева над меню; в Telegram открывает чат, приложение остаётся свёрнутым */
-.mchat{position:absolute;left:14px;bottom:calc(84px + var(--sb));z-index:19;display:flex;align-items:center;gap:8px;height:46px;padding:0 15px 0 12px;border-radius:23px;background:linear-gradient(160deg,rgba(52,55,61,.94),rgba(27,28,31,.94));color:#fff;text-decoration:none;font-size:14px;font-weight:600;box-shadow:0 8px 22px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);transition:transform .45s var(--ease),opacity .25s,padding .4s var(--ease),gap .4s var(--ease)}
+.mchat{position:absolute;left:14px;bottom:calc(84px + var(--sb));z-index:19;display:flex;align-items:center;gap:8px;height:46px;padding:0 15px 0 12px;border-radius:23px;background:linear-gradient(160deg,#34373d,#1b1c1f);color:#fff;text-decoration:none;font-size:14px;font-weight:600;box-shadow:0 8px 22px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .45s var(--ease),opacity .25s,padding .4s var(--ease),gap .4s var(--ease)}
 .mchat svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .mchat span{max-width:90px;overflow:hidden;white-space:nowrap;transition:max-width .4s var(--ease),opacity .3s}
 .mchat.mini{padding:0 12px;gap:0}.mchat.mini span{max-width:0;opacity:0}
@@ -872,8 +873,8 @@ img.acc-av{object-fit:cover}
 .ot-st i{width:12px;height:12px;border-radius:50%;border:2px solid #c7c8cc;background:var(--soft);margin-top:4px;flex:none;position:relative;z-index:1}
 .ot-st:not(:last-child)::before{content:"";position:absolute;left:5px;top:16px;bottom:0;width:2px;background:#d9dadd}
 .ot-st.s-dn i{background:var(--fg);border-color:var(--fg)}.ot-st.s-dn::before{background:var(--fg)!important}
-.ot-st.s-cur i{border-color:var(--fg);box-shadow:0 0 0 5px rgba(31,33,37,.12);animation:otpulse 1.8s ease-in-out infinite}
-@keyframes otpulse{50%{box-shadow:0 0 0 8px rgba(31,33,37,.05)}}
+.ot-st.s-cur i{border-color:var(--fg);box-shadow:0 0 0 5px rgba(31,33,37,.12)}.ot-st.s-cur i::after{content:"";position:absolute;inset:-7px;border-radius:50%;background:rgba(31,33,37,.06);animation:otpulse 1.8s ease-in-out infinite;will-change:transform,opacity}
+@keyframes otpulse{0%,100%{transform:scale(.6);opacity:0}50%{transform:scale(1.15);opacity:1}}
 .ot-st b{font-size:14.5px;font-weight:600;display:block}.ot-st:not(.s-dn):not(.s-cur) b{color:var(--g2);font-weight:500}
 .ot-st small{font-size:12.5px;color:var(--g2)}
 .ot-ttn{margin:12px 18px 0;padding:14px 16px;border-radius:20px;border:1px solid var(--line);display:flex;align-items:center;gap:8px}
@@ -894,8 +895,8 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .olv-th img{width:94%!important;height:94%!important;object-fit:contain}
 .olv-tx{flex:1;min-width:0}
 .olv-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.12)}
-.olv-chip i{width:6px;height:6px;border-radius:50%;background:var(--acc2);animation:olvpl 1.8s infinite}
-@keyframes olvpl{0%{box-shadow:0 0 0 0 var(--acc2)}70%,100%{box-shadow:0 0 0 7px transparent}}
+.olv-chip i{position:relative;width:6px;height:6px;border-radius:50%;background:var(--acc2)}.olv-chip i::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--acc2);animation:olvpl 1.8s infinite;will-change:transform,opacity}
+@keyframes olvpl{0%{transform:scale(1);opacity:1}70%,100%{transform:scale(3.3);opacity:0}}
 .olv-l1 h2{font-size:19px;margin-top:6px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .olv-cd{text-align:right;flex:none}.olv-cd .n{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.15;white-space:nowrap;animation:olvroll .7s cubic-bezier(.34,1.56,.64,1) .3s both}
 @keyframes olvroll{from{transform:translateY(60%);opacity:0}}

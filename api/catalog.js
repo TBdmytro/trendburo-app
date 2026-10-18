@@ -40,8 +40,8 @@ export default async function handler(req, res) {
   try {
     const body = await catalogBody(compact);
     res.setHeader("Content-Type", "application/json; charset=utf-8");
-    // кэш на CDN: свежий 30 с, дальше отдаётся сразу из кэша, а обновление идёт в фоне (без ожидания базы)
-    res.setHeader("Cache-Control", "public, s-maxage=30, stale-while-revalidate=600");
+    // кэш на CDN: свежий 30 с; дальше (до суток) отдаётся сразу из кэша, а обновление идёт в фоне — первый покупатель после простоя не ждёт сборку каталога
+    res.setHeader("Cache-Control", "public, s-maxage=30, stale-while-revalidate=86400");
     res.statusCode = 200;
     res.end(body);
   } catch (e) {
