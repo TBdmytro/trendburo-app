@@ -115,6 +115,8 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 [data-off]{display:none!important}
 </style>
 <title>Trend Büro</title>
+<link rel="preload" href="/api/catalog?v=2" as="fetch" crossorigin>
+<link rel="preconnect" href="https://cdn.shopify.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Prata&family=IBM+Plex+Mono:wght@600&display=swap">
@@ -1271,15 +1273,15 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
   if(mob&&tg.requestFullscreen&&tg.isVersionAtLeast&&tg.isVersionAtLeast("8.0")&&!tg.isFullscreen){try{tg.requestFullscreen()}catch(x){}}
   setTimeout(ins,300);setTimeout(ins,1200);
 })();
-/* Заставка: при первом открытии ~2,5 с (пока грузится каталог), при повторном за сессию — 1,2 с.
+/* Заставка: при первом открытии ~1,6 с (пока грузится каталог), при повторном за сессию — 0,8 с.
    Уходит не раньше минимума и не позже 6 с; по тапу — сразу. Потом приложение плавно проявляется. */
 window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s.dataset.h)return;s.dataset.h=1;
-  var w=Math.max(0,(min==null?(window.__spMin||2500):min)-(performance.now()-(window.__sp0||0)));
+  var w=Math.max(0,(min==null?(window.__spMin||1600):min)-(performance.now()-(window.__sp0||0)));
   setTimeout(function(){s.classList.add("out");var R=document.documentElement;setTimeout(function(){R.classList.add("appin")},180);
     setTimeout(function(){s.remove();setTimeout(function(){R.classList.remove("appin")},700)},620)},w)};
 (function(){var s=document.getElementById("splash");if(!s)return;window.__sp0=performance.now();var seen=false;
   try{seen=!!sessionStorage.getItem(window.__spKey||"tb_sp");sessionStorage.setItem(window.__spKey||"tb_sp","1")}catch(x){}
-  window.__spMin=seen?1200:2500;if(seen)s.classList.add("quick");s.style.setProperty("--spd",(window.__spMin-100)+"ms");
+  window.__spMin=seen?800:1600;if(seen)s.classList.add("quick");s.style.setProperty("--spd",(window.__spMin-100)+"ms");
   s.addEventListener("click",function(){window.hideSplash(0)});setTimeout(function(){window.hideSplash(0)},6000)})();
 </script>
 <div id="app">
@@ -3255,7 +3257,8 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
   init();
   window.hideSplash&&hideSplash();
   // свежий каталог после быстрого старта: применяем, только если он отличается и экран свободен (не мешаем листать)
-  if(local){const n=await net;if(n&&n.ok&&catSig(n.j.products)!==catSig(local.products)){const go=()=>{const busy=document.querySelector(".pushed,.sv2,.sv,.zv,.sheet.in");if(busy)return setTimeout(go,1500);catApply(n.j,true);catRefreshUI()};go()}}
+  if(local){let touched=false;const mark=()=>{touched=true};["touchstart","pointerdown","wheel","keydown"].forEach(ev=>addEventListener(ev,mark,{once:true,passive:true,capture:true}));
+    const n=await net;if(n&&n.ok&&!touched&&catSig(n.j.products)!==catSig(local.products)){catApply(n.j,true);catRefreshUI()}}
   // заранее разобрать фото для «Это или это» (в фоне, когда приложение уже открыто)
   setTimeout(()=>{try{const d=AUTO.find(r=>r.k==="duel");d&&d.warm&&d.warm()}catch(e){}},2500);
 })();
@@ -3274,7 +3277,7 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
 document.addEventListener("DOMContentLoaded",function(){
   var M=window.Motion;if(!M||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
   var animate=M.animate,inView=M.inView,EASE=[.22,1,.36,1];
-  var SEL="#t-feed .sec,#bnr,.story,.pc,.newsrow,.lead-news,.ctile,.btile,.icard,.svc-card,.cartrow,.ord";
+  var SEL="#t-feed .sec,#bnr,.newsrow,.lead-news,.ctile,.btile,.icard,.svc-card,.cartrow,.ord";
   var done=new WeakSet(),q=0,qt=0;
   function slot(){if(!qt)qt=requestAnimationFrame(function(){q=0;qt=0});return Math.min(q++,8)*0.045}
   function reveal(el){
