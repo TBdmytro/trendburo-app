@@ -1248,6 +1248,54 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .sv .bars i.run b{animation:fill 5s linear forwards!important}
 }
+
+/* ===== Каталог: Для неё / Для него + «Новое» сторис по брендам ===== */
+.gb2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 18px 0}
+.gb2 button{position:relative;height:50px;border-radius:14px;background:var(--ink-grad);color:#fff;padding:0 16px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;font:600 15px/1 var(--f);border:0;box-shadow:var(--ink-hi)}
+.gb2 .chev,.nall .chev{display:inline-block;width:8px;height:8px;border-right:2px solid currentColor;border-top:2px solid currentColor;transform:rotate(45deg);opacity:.5}
+.nrings{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:2px 18px 4px}
+.nrings::-webkit-scrollbar{display:none}
+.nrg{flex:none;width:66px;display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;color:inherit}
+.nrg .o{position:relative;width:62px;height:62px;border-radius:50%;padding:2.5px;background:conic-gradient(var(--fg) calc(var(--p,0)*1%),#d7d8db 0)}
+.nrg .o img{display:block;width:100%;height:100%;border-radius:50%;border:2.5px solid #fff;object-fit:cover;object-position:center top;background:var(--soft)}
+.nrg .o .mono{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;border:2.5px solid #fff;background:var(--soft);font-size:15px;font-weight:600}
+.nrg.seen .o{background:#d7d8db}
+.nrg small{font-size:11px;font-weight:500;color:var(--g2);max-width:66px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nrg.on small{color:var(--fg);font-weight:600}
+.nrg em{position:absolute;right:-4px;top:-2px;font-style:normal;font-size:10px;font-weight:700;background:var(--fg);color:#fff;border:2px solid #fff;border-radius:10px;padding:1px 5px}
+.nsto{display:grid;grid-template-columns:62% 1fr;gap:10px;margin:12px 18px 0}
+.nfr{position:relative;aspect-ratio:2/3;border-radius:20px;overflow:hidden;cursor:pointer;background:var(--soft);user-select:none}
+#nIms img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;transition:opacity .5s var(--ease)}
+#nIms img.off{opacity:0}
+.nfr::after{content:"";position:absolute;inset:0 0 72%;background:linear-gradient(rgba(0,0,0,.28),transparent);z-index:2;pointer-events:none}
+.nbars{position:absolute;left:10px;right:10px;top:10px;display:flex;gap:3px;z-index:3}
+.nbars .nb{flex:1 1 0;display:block;position:static;width:auto;height:2.5px;border-radius:2px;background:rgba(255,255,255,.45);overflow:hidden}
+.nbars .nbf{display:block;position:static;height:100%;width:0;background:#fff}
+.nbars .nb.nwd .nbf{width:100%}.nbars .nb.nwr .nbf{animation:nbar 3.6s linear forwards}
+.nfr.pz .nbars .nb.nwr .nbf{animation-play-state:paused}
+@keyframes nbar{to{width:100%}}
+.nfh{position:absolute;left:10px;right:10px;top:20px;z-index:3;display:flex;justify-content:space-between;color:#fff;font-size:12px;font-weight:600;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.nfh span:last-child{font-weight:500}
+.ncap{position:absolute;left:10px;right:10px;bottom:10px;z-index:3;border-radius:14px;padding:9px 11px;background:rgba(255,255,255,.93);font-size:12.5px;line-height:1.3}
+.ncap b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nend{position:absolute;inset:0;z-index:4;background:var(--ink-grad);color:#fff;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;opacity:0;pointer-events:none;transition:opacity .4s}
+.nend.on{opacity:1;pointer-events:auto}
+.nend .mos{position:absolute;left:14px;right:14px;top:38px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.nend .mos img{width:100%;aspect-ratio:2/3;border-radius:10px;object-fit:cover;object-position:center top}
+.nend b{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.nend small{display:block;margin-top:4px;font-size:12.5px;opacity:.7}
+.nend button{margin-top:12px;height:40px;border-radius:20px;border:0;background:#fff;color:var(--fg);font:600 14px/1 var(--f)}
+.nside{display:flex;flex-direction:column;gap:8px;min-height:0}
+.nside button{position:relative;flex:1;border:0;padding:0;border-radius:14px;overflow:hidden;opacity:.62;background:var(--soft);font:inherit;color:inherit}
+.nside img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
+.nside small{position:absolute;left:5px;bottom:5px;font-size:10px;font-weight:600;background:#fff;border-radius:6px;padding:2px 5px}
+.nside .nmore{opacity:1;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:12px;font-weight:600;color:var(--g2);line-height:1.2}
+.nside .nmore b{font-size:20px;color:var(--fg)}
+.nall{display:flex;justify-content:space-between;align-items:center;margin:10px 18px 0;width:calc(100% - 36px);height:50px;padding:0 16px;border:0;border-radius:16px;background:var(--soft);font:600 14.5px/1 var(--f);color:var(--fg)}
+.nall small{color:var(--muted);font-weight:500;margin-left:6px}
+.smartq{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:4px 0 8px}
+.smartq span.c{height:28px;padding:0 11px;border-radius:14px;background:var(--fg);color:#fff;font-size:12.5px;font-weight:500;display:inline-flex;align-items:center}
+@media (prefers-reduced-motion:reduce){.nbars .nb.nwr .nbf{animation:none;width:100%}}
 </style>
 </head>
 <body>
@@ -1333,10 +1381,15 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
     <div class="scroll">
       <div id="catHome">
         <div class="bigtitle"><h1>Каталог</h1><div class="topicons"></div></div>
-        <label class="searchf"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input type="search" id="uq" placeholder="Бренд или модель, например Birkin" autocomplete="off" aria-label="Поиск по каталогу"></label>
+        <label class="searchf"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input type="search" id="uq" placeholder="Бренд, вещь или «кроссовки 41 до 1000 €»" autocomplete="off" aria-label="Поиск по каталогу"></label>
         <div id="sres" hidden></div>
         <div id="homeBody">
-          <div class="pad" style="margin-top:12px"><div class="seg" role="group" aria-label="Для кого" id="hg"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button></div></div>
+          <div class="gb2"><button class="press" data-act="gopen" data-g="w">Для неё<i class="chev"></i></button><button class="press" data-act="gopen" data-g="m">Для него<i class="chev"></i></button></div>
+          <div class="sec" id="nwSec" hidden><div class="sech"><h2>Новое</h2><button class="more" data-act="allnew">Все бренды</button></div>
+            <div class="nrings" id="nRings"></div>
+            <div class="nsto"><div class="nfr" id="nFr"><div class="nbars" id="nBars"></div><div class="nfh"><span id="nB"></span><span id="nN"></span></div><div id="nIms"></div><div class="ncap" id="nCap"></div><div class="nend" id="nEnd"></div></div><div class="nside" id="nSide"></div></div>
+            <button class="nall press" id="nAll"></button></div>
+          <div class="pad" hidden style="margin-top:12px"><div class="seg" role="group" aria-label="Для кого" id="hg"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button></div></div>
           <div class="sec" style="padding-top:16px"><button class="stockban press" data-act="stock-all" id="stockBan"></button></div>
           <div class="sec cbwrap" id="catBn" hidden></div>
           <div class="sec"><div class="sech"><h2>Категории</h2><button class="more" data-act="allitems">Все товары</button></div><div class="catgrid" id="catGrid"></div></div>
@@ -2220,7 +2273,7 @@ function applyTheme(t){if(!t)return;try{const a=/^#[0-9a-f]{6}$/i.test(t.accent)
   if(a!=="#1f2125"){R.setProperty("--ink-grad",`linear-gradient(180deg,${mixHex(a,"#ffffff",.16)} 0%,${a} 52%,${mixHex(a,"#000000",.2)} 100%)`)}
   Object.entries(t.cats||{}).forEach(([k,v])=>{if(CATC[k]&&Array.isArray(v))CATC[k]=v})}catch(e){}}
 /* Каталог: главный экран */
-function renderCatHome(){renderStockBan();{const bx=$("#catBn"),L=bnFor("catalog");bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}
+function renderCatHome(){renderStockBan();try{renderNew()}catch(e){}{const bx=$("#catBn"),L=bnFor("catalog");bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}
   $$("#hg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
   const pool=P.filter(p=>F.g==="all"||(p.g===F.g||p.g==="u"));
   const oxTile=OPTIX_ON?`<button class="ctile ox press" data-act="optixapp" aria-label="Очки OPTIX — открыть"><span class="t"><small>Очки</small><span class="wordmark">OPTIX</span><span class="br">Cartier · Gucci · Miu Miu · Saint Laurent</span></span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`:"";
@@ -2247,7 +2300,7 @@ function btileHTML(bk){const l=bItems(bk).filter(p=>F.g==="all"||(p.g===F.g||p.g
   return `<button class="btile press" data-act="brand" data-bk="${bk}"><b>${esc(bname(bk))}</b><span class="mini3">${l.slice(0,3).map(p=>`<i style="--c:${p.c}">${shapeSVG(p.shape,p.c,"")}</i>`).join("")}</span><span class="num">${l.length} ${plural(l.length,["товар","товара","товаров"])}</span></button>`}
 $("#hg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;F.g=b.dataset.g;renderCatHome();renderCatalog()});
 function showItems(title){$("#catHome").hidden=true;$("#catItems").hidden=false;{let bx=$("#catItemsBn");if(!bx){bx=document.createElement("div");bx.id="catItemsBn";bx.className="cbwrap";bx.style.margin="4px 0 14px";$("#catItems .itemshead").after(bx)}const c=F.cats.size===1?[...F.cats][0]:"",L=c?bnFor("cat:"+c):[];bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}$("#itemsTitle").textContent=title;$("#catBarT").textContent=title;renderCatalog();$("#t-catalog .scroll").scrollTop=0}
-function showCatHome(){$("#catItems").hidden=true;$("#catHome").hidden=false;$("#catBarT").textContent="Каталог";renderCatHome();$("#t-catalog .scroll").scrollTop=0}
+function showCatHome(){F.g="all";$("#catItems").hidden=true;$("#catHome").hidden=false;$("#catBarT").textContent="Каталог";renderCatHome();$("#t-catalog .scroll").scrollTop=0}
 function clearFilters(){F.ids=null;F.stock="";F.cats.clear();F.brands.clear();F.cities.clear();F.onlyNew=F.onlyFav=false;F.sort="pop";resetBudgets()}
 
 /* Общий поиск */
@@ -2267,6 +2320,75 @@ function runSearch(raw){const q=norm(raw.trim());const box=$("#sres"),body=$("#h
   if(!h)h=`<div class="empty" style="margin-top:16px"><h3>Ничего не нашли</h3><p>Напишите, что ищете — найдём в бутиках Европы.</p><button class="btn sm" data-act="askany" style="margin-top:8px">Написать менеджеру</button></div>`;
   box.innerHTML=h}
 $("#uq").addEventListener("input",e=>runSearch(e.target.value));
+
+/* ===== «Новое»: сторис по брендам. Новинка = отметка isNew в каталоге; бренды по свежести, просмотренные — в конце ===== */
+const NW={G:[],gi:0,ii:0,t:0,SHOW:10};
+const nImg=p=>{const im=p.imgs&&p.imgs[0];return im?im:null};
+function nwGroups(){const m=new Map();P.filter(p=>p.isNew&&nImg(p)).forEach(p=>{if(!m.has(p.bk))m.set(p.bk,[]);m.get(p.bk).push(p)});
+  const seen=store.get("tb_nseen",{}),wk=Math.floor(Date.now()/6048e5);
+  return [...m.entries()].map(([bk,L])=>({bk,name:bname(bk),all:L,seen:seen[bk]===wk})).sort((a,b)=>(a.seen-b.seen)||(b.all.length-a.all.length))}
+function nwBusy(){return !$("#t-catalog").classList.contains("on")||$("#catHome").hidden||(typeof stack!=="undefined"&&stack.length)||!!document.querySelector(".sv,.sheet.in,.zv")||document.hidden}
+function nwItems(){return NW.G[NW.gi].all.slice(0,NW.SHOW)}
+function nwRings(){$("#nRings").innerHTML=NW.G.map((g,i)=>{const im=nImg(g.all[0]);return `<button class="nrg${i===NW.gi?" on":""}${g.seen&&i!==NW.gi?" seen":""}" data-ngi="${i}"><span class="o">${im?`<img src="${esc(im.thumb)}" alt="" loading="lazy" decoding="async">`:`<span class="mono">${initials(g.name)}</span>`}<em>${g.all.length>99?"99+":g.all.length}</em></span><small>${esc(g.name)}</small></button>`}).join("")}
+function nwGroup(){const g=NW.G[NW.gi],L=nwItems(),extra=g.all.length-L.length;
+  $("#nIms").innerHTML=L.map((p,i)=>`<img class="${i?"off":""}" src="${esc(nImg(p).src)}" alt="${esc(p.brand+" "+p.name)}" ${i>1?'loading="lazy"':""} decoding="async">`).join("");
+  $("#nBars").innerHTML=L.map(()=>'<span class="nb"><span class="nbf"></span></span>').join("")+(extra>0?'<span class="nb"><span class="nbf"></span></span>':"");
+  $("#nB").textContent=g.name;$("#nAll").innerHTML=`<span>Все новинки ${esc(g.name)}<small class="num">${g.all.length}</small></span><i class="chev"></i>`;
+  $("#nEnd").innerHTML=extra>0?`<div class="mos">${g.all.slice(NW.SHOW,NW.SHOW+3).map(p=>`<img src="${esc(nImg(p).thumb)}" alt="" loading="lazy">`).join("")}</div><b>Ещё ${extra} ${plural(extra,["новинка","новинки","новинок"])}</b><small>${esc(g.name)}</small><button data-nall="1">Смотреть все ${g.all.length}</button>`:"";
+  $$("#nRings .nrg").forEach((r,i)=>{r.classList.toggle("on",i===NW.gi);r.classList.toggle("seen",NW.G[i].seen&&i!==NW.gi)});
+  const on=$(`#nRings [data-ngi="${NW.gi}"]`),rs=$("#nRings");if(on)rs.scrollTo({left:on.offsetLeft-rs.clientWidth/2+33,behavior:"smooth"});
+  nwShow(0)}
+function nwShow(i){const g=NW.G[NW.gi],L=nwItems(),extra=g.all.length-L.length,last=L.length-1+(extra>0?1:0);NW.ii=i;const end=i>=L.length;
+  $("#nEnd").classList.toggle("on",end);$$("#nIms img").forEach((m,j)=>m.classList.toggle("off",j!==Math.min(i,L.length-1)));
+  $$("#nBars .nb").forEach((b,j)=>{b.className="nb"+(j<i?" nwd":j===i?" nwr":"");const x=b.firstChild;x.style.animation="none";void x.offsetWidth;x.style.animation=""});
+  const p=L[Math.min(i,L.length-1)];$("#nN").textContent=end?"":`${i+1} из ${g.all.length}`;
+  $("#nCap").hidden=end;$("#nCap").innerHTML=`<b>${esc(p.name)}</b><span class="num">${eur(p.price)}</span>`;
+  const nx=[];for(let o=1;o<=3&&nx.length<3;o++){const j=i+o;if(j<L.length)nx.push(`<button data-nj="${j}"><img src="${esc(nImg(L[j]).thumb)}" alt="" loading="lazy"><small class="num">${eur(L[j].price)}</small></button>`)}
+  if(nx.length<3&&extra>0&&!end)nx.push(`<button class="nmore" data-nj="${L.length}"><b class="num">+${extra}</b>новинок</button>`);
+  if(nx.length<3&&NW.G.length>1){const ng=NW.G[(NW.gi+1)%NW.G.length],im=nImg(ng.all[0]);nx.push(`<button data-nnext="1">${im?`<img src="${esc(im.thumb)}" alt="" loading="lazy">`:""}<small>${esc(ng.name)}</small></button>`)}
+  $("#nSide").innerHTML=nx.join("");
+  const r=$(`#nRings [data-ngi="${NW.gi}"]`);if(r)r.querySelector(".o").style.setProperty("--p",Math.round((i+1)/(last+1)*100));
+  nwTick(end?5200:3600)}
+function nwSeen(){const s=store.get("tb_nseen",{});s[NW.G[NW.gi].bk]=Math.floor(Date.now()/6048e5);store.set("tb_nseen",s);NW.G[NW.gi].seen=true}
+function nwStep(d){const L=nwItems(),extra=NW.G[NW.gi].all.length-L.length,last=L.length-1+(extra>0?1:0);
+  if(d>0&&NW.ii>=last){nwSeen();NW.gi=(NW.gi+1)%NW.G.length;nwGroup();return}if(d<0&&NW.ii===0){NW.gi=(NW.gi-1+NW.G.length)%NW.G.length;nwGroup();return}nwShow(NW.ii+d)}
+function nwTick(ms){clearTimeout(NW.t);if(RM.matches)return;NW.t=setTimeout(()=>{if(nwBusy()||NW.hold){$("#nFr").classList.add("pz");return nwTick(1200)}$("#nFr").classList.remove("pz");nwStep(1)},ms)}
+function nwOpenAll(bk){clearFilters();if(bk)F.brands.add(bk);F.onlyNew=true;showItems(bk?"Новое · "+bname(bk):"Новое")}
+function renderNew(){const sec=$("#nwSec");if(!sec)return;NW.G=nwGroups();sec.hidden=!NW.G.length;if(!NW.G.length)return;if(NW.gi>=NW.G.length)NW.gi=0;nwRings();nwGroup()}
+$("#nRings").addEventListener("click",e=>{const r=e.target.closest("[data-ngi]");if(!r)return;e.stopPropagation();NW.gi=+r.dataset.ngi;nwGroup()});
+$("#nFr").addEventListener("click",e=>{e.stopPropagation();if(e.target.closest("[data-nall]")){nwOpenAll(NW.G[NW.gi].bk);return}const r=$("#nFr").getBoundingClientRect(),x=e.clientX-r.left;
+  if(x<r.width*.3)nwStep(-1);else if(x>r.width*.7)nwStep(1);else{const L=nwItems();if(NW.ii<L.length)openProduct(L[NW.ii].id)}});
+{let h=0;$("#nFr").addEventListener("pointerdown",()=>{h=setTimeout(()=>{NW.hold=true;$("#nFr").classList.add("pz")},220)});addEventListener("pointerup",()=>{clearTimeout(h);if(NW.hold){NW.hold=false;$("#nFr").classList.remove("pz")}})}
+$("#nSide").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;e.stopPropagation();if(b.dataset.nnext){nwSeen();NW.gi=(NW.gi+1)%NW.G.length;nwGroup()}else nwShow(+b.dataset.nj)});
+$("#nAll").addEventListener("click",e=>{e.stopPropagation();nwOpenAll(NW.G[NW.gi].bk)});
+
+/* ===== Умный поиск: понимает цену, цвет, размер, тип вещи, «для неё/него», «новинки» в обычной фразе ===== */
+const SQ_CAT=[[/сумк|рюкзак|клатч|тоут|bag/,"bags"],[/обув|кросс|кед|лофер|ботин|туфл|сандал|мюл|sneak/,"shoes"],[/одежд|худи|легг|леггин|футбол|кофт|свитш|куртк|пальт|брюк|джинс|плать|юбк|рубаш|топ\b|костюм/,"clothing"],[/аксесс|ремен|ремн|кошел|платок|шарф|кепк|шапк/,"accessories"],[/очк|eyewear/,"eyewear"],[/украш|серьг|браслет|кольц|колье/,"jewelry"],[/часы|часов/,"watches"]];
+const SQ_COL=[[/чёрн|черн|black/,"black"],[/бел|white/,"white"],[/беж|beige|sand|nude/,"beige"],[/коричн|brown|camel|кэмел|cognac/,"brown"],[/сер[ыоа]|grey|gray/,"grey"],[/зел|олив|green|olive|khaki/,"green"],[/роз|pink/,"pink"],[/син|голуб|blue|navy/,"blue"],[/красн|бордо|red|burgundy/,"red"],[/молоч|крем|ivory|cream|ecru/,"ivory"]];
+const SQ_ITEM=[[/леггин|легин/,/legging|tight/],[/худи/,/hood/],[/свитш/,/sweat|crew/],[/футболк/,/t-?shirt|tee/],[/кроссов/,/sneak|trainer|runner|cloud/],[/лофер/,/loafer/],[/ботин|сапог/,/boot/],[/шопер|тоут/,/tote|shopper/],[/рюкзак/,/backpack/],[/кепк/,/cap\b|hat/],[/юбк/,/skirt/],[/плать/,/dress/],[/брюк|штан/,/pant|trouser|jogger/],[/куртк/,/jacket|puffer|coat/],[/шорт/,/short/],[/бра\b|топ\b/,/bra|tank|top/]];
+function smartParse(raw){const q=raw.toLowerCase(),f={max:0,min:0,cats:[],cols:[],size:"",g:"",nw:false,any:false,item:null};SQ_ITEM.forEach(([re,en])=>{if(!f.item&&re.test(q))f.item=en});
+  const m=q.match(/(?:до|не дороже|under|<)\s*€?\s*(\d[\d\s]*)\s*(к|k|тыс)?/);if(m){f.max=+m[1].replace(/\s/g,"")*(m[2]?1000:1)}
+  const n=q.match(/(?:от|from)\s*€?\s*(\d[\d\s]*)/);if(n)f.min=+n[1].replace(/\s/g,"");
+  const s=q.match(/(?:размер[а-я]*\s*|size\s*)([a-z0-9]{1,4})/i)||q.replace(/(?:до|от|не дороже)\s*\d[\d\s]*/g,"").match(/\b(3[4-9]|4[0-7])\b/)||raw.match(/\b(XXS|XS|S|M|L|XL|XXL)\b/);if(s)f.size=s[1].toUpperCase();
+  SQ_CAT.forEach(([re,k])=>{if(re.test(q)&&CATS[k]&&!f.cats.includes(k))f.cats.push(k)});SQ_COL.forEach(([re,k])=>{if(re.test(q))f.cols.push(k)});
+  if(/женск|для не[её]|девушк/.test(q))f.g="w";if(/мужск|для него|мужчин/.test(q))f.g="m";if(/новинк|новое|new/.test(q))f.nw=true;
+  f.any=!!(f.max||f.min||f.cats.length||f.cols.length||f.size||f.g||f.nw||f.item);return f}
+function smartMatch(f,brands){const colOk=p=>{const names=(p.colors||[]).map(c=>norm(c.name||"")).join(" ");return f.cols.some(k=>SQ_COL.find(x=>x[1]===k)[0].test(names))};
+  const base=P.filter(p=>(!f.max||p.price<=f.max)&&(!f.min||p.price>=f.min)&&(!f.cats.length||f.cats.includes(p.cat))&&(!f.g||p.g===f.g||p.g==="u")&&(!f.nw||p.isNew)&&(!brands.length||brands.includes(p.bk))&&(!f.cols.length||colOk(p))&&(!f.size||(p.sizes||[]).some(z=>String(z.size).toUpperCase()===f.size)));if(!f.item)return base;const it=base.filter(p=>f.item.test(norm(p.name)));return it.length?it:base}
+function smartChips(f,brands){const c=[];brands.forEach(b=>c.push(bname(b)));f.cats.forEach(k=>c.push(CATS[k]));if(f.g)c.push(f.g==="w"?"Для неё":"Для него");
+  const CN={black:"Чёрный",white:"Белый",beige:"Бежевый",brown:"Коричневый",grey:"Серый",green:"Зелёный",pink:"Розовый",blue:"Синий",red:"Красный",ivory:"Молочный"};f.cols.forEach(k=>c.push(CN[k]));
+  if(f.size)c.push("Размер "+f.size);if(f.min)c.push("от "+eur(f.min));if(f.max)c.push("до "+eur(f.max));if(f.nw)c.push("Новинки");return c}
+let SQ=null;
+$("#uq").addEventListener("input",e=>{const raw=e.target.value.trim(),box=$("#sres");$("#smartBox")&&$("#smartBox").remove();if(!raw)return;const f=smartParse(raw);if(!f.any)return;
+  const nq=norm(raw),brands=BRANDS.map(b=>b[0]).filter(bk=>nq.includes(norm(bname(bk)).split(" ")[0])||(RU[bk]&&nq.includes(RU[bk])));
+  const L=smartMatch(f,brands);SQ={f,brands,ids:L.map(p=>p.id),t:smartChips(f,brands).join(" · ")};
+  const h=`<div class="sgroup" id="smartBox"><h4>Подбор по запросу</h4><div class="smartq">${smartChips(f,brands).map(c=>`<span class="c">${esc(c)}</span>`).join("")}</div>
+    ${L.slice(0,4).map(p=>`<button class="srow" data-act="product" data-id="${p.id}"><span class="th" style="--c:${p.c}">${shapeSVG(p.shape,p.c,"")}</span><span class="tx"><b>${esc(p.brand+" "+p.name)}</b><span>${CATS[p.cat]}${p.isNew?" · новинка":""}</span></span><span class="rt num">${eur(p.price)}</span></button>`).join("")}
+    ${L.length?`<button class="btn sm block" data-act="smartall" style="margin-top:10px">Показать все ${L.length}</button>`:`<p class="muted" style="font-size:14px;margin:6px 0">Под такой запрос пока ничего нет.</p><button class="btn sm" data-act="askany">Найти под заказ</button>`}</div>`;
+  box.hidden=false;$("#homeBody").hidden=true;
+  const empty=box.querySelector(".empty");if(empty)empty.remove();
+  box.insertAdjacentHTML("afterbegin",h)});
+
 
 /* Все бренды A–Z */
 function openAllBrands(){const st={q:"",g:"all",cat:""};
@@ -3061,6 +3183,9 @@ $("#app").addEventListener("click",e=>{
   else if(a==="icon")openIcon(t.dataset.id);
   else if(a==="catopen"){clearFilters();F.cats.add(t.dataset.cat);showItems(CATS[t.dataset.cat])}
   else if(a==="allitems"){clearFilters();showItems("Все товары")}
+  else if(a==="gopen"){clearFilters();F.g=t.dataset.g;showItems(t.dataset.g==="w"?"Для неё":"Для него")}
+  else if(a==="allnew")nwOpenAll("");
+  else if(a==="smartall"&&SQ){clearFilters();F.ids=new Set(SQ.ids);showItems("Подбор");}
   else if(a==="cathome")showCatHome();
   else if(a==="askany")orderSheet("Запрос менеджеру",`Здравствуйте! Ищу: ${$("#uq").value.trim()}\nЦвет / размер: \nБюджет: \nДоставка: Украина`);
   else if(a==="tab")goTab(t.dataset.tab,e);
