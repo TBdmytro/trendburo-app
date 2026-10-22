@@ -417,6 +417,12 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .navbar.clear .round{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .intg .navbar.clear [data-back]{visibility:hidden}
 .navbar.clear .dotn{box-shadow:0 0 0 2px #fff}
+/* карточка товара в Telegram: зона «чёлки» и кнопок Telegram — графитовая полоса бренда (кнопки Telegram слева и справа, логотип TB по центру); фото начинается под ней */
+.intg .pushed:has(.pv-hero.ph) .navbar.clear::before{opacity:1;height:var(--st);background:var(--ink-grad);box-shadow:inset 0 -1px 0 rgba(255,255,255,.06)}
+.intg .pushed:has(.pv-hero.ph) .scroll.under{padding-top:var(--st)}
+.intg .pushed:has(.pv-hero.ph) .pv-hero.ph::after{height:64px;background:linear-gradient(rgba(0,0,0,.14),transparent)}
+.intg .pushed:has(.pv-hero.ph) .navbar.clear{padding-top:calc(var(--st) + 10px);height:calc(62px + var(--st))}
+.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .newp{top:calc(var(--st) + 56px)}
 .pv-hero.ph .newp{left:18px;transform:none;top:calc(var(--st) + 60px);z-index:2}
 .pv-hero.ph .pv-n{position:absolute;right:18px;top:calc(var(--st) + 60px);z-index:2;font-size:11px;font-weight:600;background:rgba(255,255,255,.9);padding:4px 9px;border-radius:99px;color:var(--fg)}
 .zv{position:fixed;inset:0;z-index:90;background:#fff;display:flex;flex-direction:column;opacity:0;transition:opacity .25s}
@@ -1862,7 +1868,8 @@ function backLayer(){
   return false}
 // логотип TB поверх фото карточки товара — стеклянный; когда карточку листают и появилась плашка — обычный
 function updTop(){requestAnimationFrame(()=>{const L=typeof stack!=="undefined"&&stack.length?stack[stack.length-1]:null;
-  document.documentElement.classList.toggle("pvtop",!!(L&&L.querySelector(".pv-hero.ph")&&!L.querySelector(".navbar.moved")))})}
+  const pv=!!(L&&L.querySelector(".pv-hero.ph"));document.documentElement.classList.toggle("pvtop",pv);
+  if(TGW&&!OXA&&updTop.last!==pv){updTop.last=pv;try{TGW.setHeaderColor&&TGW.setHeaderColor(pv?"#25272b":"#ffffff")}catch(e){}}})}
 function syncBack(){updTop();if(!TGW||!TGW.BackButton)return;requestAnimationFrame(()=>{const need=!!(OXA||document.querySelector(".zv,.sv")||sheetEl||stack.length||$("#app").classList.contains("in-optix"));try{need?TGW.BackButton.show():TGW.BackButton.hide()}catch(e){}})}
 if(TGW&&TGW.BackButton){try{TGW.BackButton.onClick(()=>{backLayer();setTimeout(syncBack,60)})}catch(e){}
   new MutationObserver(syncBack).observe(document.getElementById("app")||document.body,{childList:true,attributes:true,attributeFilter:["class"]});
