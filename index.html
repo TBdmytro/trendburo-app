@@ -493,6 +493,8 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero.ph .pv-bdg{top:calc(var(--st) + 58px);left:auto;right:16px;flex-direction:column;align-items:flex-end}
 .pv-bdg span{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:var(--fg);padding:5px 10px;border-radius:99px}
 .pv-bdg .sale,.pc .salb{background:#b3261e;color:#fff;letter-spacing:.02em}
+/* невидимые вкладки не рисуются: телефон не держит их фото в памяти (на iPhone это давало белые «дыры» и подвисания) — внешне ничего не меняется */
+.tab:not(.on){content-visibility:hidden}
 /* ===== Каталог как в концепте: иконки над заголовком, ниже поиск, «Для неё / Для него», «Новое», баннеры OPTIX и «Подарки» ===== */
 #homeBody>.nwhide{display:none!important}
 #catHome>.bigtitle{flex-direction:column-reverse;align-items:stretch;gap:10px;padding-top:calc(12px + var(--st))}
@@ -2398,6 +2400,7 @@ $("#uq").addEventListener("input",e=>runSearch(e.target.value));
 /* ===== «Новое»: сторис по брендам. Новинка = отметка isNew в каталоге; бренды по свежести, просмотренные — в конце ===== */
 const NW={G:[],gi:0,ii:0,t:0,SHOW:10};
 const nImg=p=>{const im=p.imgs&&p.imgs[0];return im?im:null};
+const nMid=p=>{const im=nImg(p);if(!im)return "";const m=String(im.src).match(/[?&](width|w)=1000/);return m?im.src.replace(/([?&](?:width|w)=)1000/,"$1800"):im.src};
 // «Новое»: отмеченные новинки (админка или раздел «Новинки» у бренда); если таких пока нет — последние добавленные в каталог вещи (каталог приходит от новых к старым), чтобы блок не пустовал
 function nwPool(){const a=P.filter(p=>p.isNew&&nImg(p));NW.fb=!a.length;if(a.length)return a;const c={},o=[];for(const p of P){if(!p.live||!nImg(p)||(c[p.bk]=(c[p.bk]||0)+1)>15)continue;o.push(p);if(o.length>=150)break}return o}
 function nwGroups(){const m=new Map();nwPool().forEach(p=>{if(!m.has(p.bk))m.set(p.bk,[]);m.get(p.bk).push(p)});
@@ -2407,7 +2410,8 @@ function nwBusy(){return !$("#t-catalog").classList.contains("on")||$("#catHome"
 function nwItems(){return NW.G[NW.gi].all.slice(0,NW.SHOW)}
 function nwRings(){$("#nRings").innerHTML=NW.G.map((g,i)=>{const im=nImg(g.all[0]);return `<button class="nrg${i===NW.gi?" on":""}${g.seen&&i!==NW.gi?" seen":""}" data-ngi="${i}"><span class="o">${im?`<img src="${esc(im.thumb)}" alt="" loading="lazy" decoding="async">`:`<span class="mono">${initials(g.name)}</span>`}<em>${g.all.length>99?"99+":g.all.length}</em></span><small>${esc(g.name)}</small></button>`}).join("")}
 function nwGroup(){const g=NW.G[NW.gi],L=nwItems(),extra=g.all.length-L.length;
-  $("#nIms").innerHTML=L.map((p,i)=>`<img class="${i?"off":""}" src="${esc(nImg(p).src)}" alt="${esc(p.brand+" "+p.name)}" ${i>1?'loading="lazy"':""} decoding="async">`).join("");
+  // кадры сторис: среднего размера (800 px) и с адресом только у текущего и следующих — остальные не грузятся и не держатся в памяти телефона
+  $("#nIms").innerHTML=L.map((p,i)=>`<img class="${i?"off":""}" ${i>1?"data-":""}src="${esc(nMid(p))}" alt="${esc(p.brand+" "+p.name)}" decoding="async">`).join("");
   $("#nBars").innerHTML=L.map(()=>'<span class="nb"><span class="nbf"></span></span>').join("")+(extra>0?'<span class="nb"><span class="nbf"></span></span>':"");
   $("#nB").textContent=g.name;$("#nAll").innerHTML=`<span>Все новинки ${esc(g.name)}<small class="num">${g.all.length}</small></span><i class="chev"></i>`;
   $("#nEnd").innerHTML=extra>0?`<div class="mos">${g.all.slice(NW.SHOW,NW.SHOW+3).map(p=>`<img src="${esc(nImg(p).thumb)}" alt="" loading="lazy">`).join("")}</div><b>Ещё ${extra} ${plural(extra,["новинка","новинки","новинок"])}</b><small>${esc(g.name)}</small><button data-nall="1">Смотреть все ${g.all.length}</button>`:"";
@@ -2418,7 +2422,7 @@ function nwGroup(){const g=NW.G[NW.gi],L=nwItems(),extra=g.all.length-L.length;
 function nwShow(i){const g=NW.G[NW.gi],L=nwItems(),extra=g.all.length-L.length,last=L.length-1+(extra>0?1:0);NW.ii=i;const end=i>=L.length;
   $("#nEnd").classList.toggle("on",end);{const ims=$$("#nIms img"),c=Math.min(i,L.length-1);ims.forEach((m,j)=>m.classList.toggle("off",j!==c));
     // следующий кадр сторис грузим и раскодируем заранее — смена кадра без серой пустоты и без подвисания
-    [c,c+1,c+2].forEach(j=>{const m=ims[j];if(m&&!m._pre){m._pre=1;m.loading="eager";m.decode&&m.decode().catch(()=>{})}})}
+    [c,c+1,c+2].forEach(j=>{const m=ims[j];if(m&&!m._pre){m._pre=1;if(m.dataset.src){m.src=m.dataset.src;m.removeAttribute("data-src")}m.decode&&m.decode().catch(()=>{})}})}
   $$("#nBars .nb").forEach((b,j)=>{b.className="nb"+(j<i?" nwd":j===i?" nwr":"");const x=b.firstChild;x.style.animation="none";void x.offsetWidth;x.style.animation=""});
   const p=L[Math.min(i,L.length-1)];$("#nN").textContent=end?"":`${i+1} из ${g.all.length}`;
   $("#nCap").hidden=end;$("#nCap").innerHTML=`<b>${esc(p.name)}</b><span class="num">${eur(p.price)}</span>`;
@@ -2434,7 +2438,7 @@ function nwStep(d){const L=nwItems(),extra=NW.G[NW.gi].all.length-L.length,last=
 function nwTick(ms){clearTimeout(NW.t);if(RM.matches)return;NW.t=setTimeout(()=>{if(nwBusy()||NW.hold){$("#nFr").classList.add("pz");return nwTick(1200)}$("#nFr").classList.remove("pz");nwStep(1)},ms)}
 function nwOpenAll(bk){clearFilters();if(bk)F.brands.add(bk);if(NW.fb)F.ids=new Set(nwPool().map(p=>p.id));else F.onlyNew=true;showItems(bk?"Новое · "+bname(bk):"Новое")}
 function giftPic(){const el=$("#giftIm");if(!el||el.style.backgroundImage)return;const p=P.find(p=>(p.cat==="jewelry"||p.cat==="accessories"||p.cat==="bags")&&p.imgs&&p.imgs.length);if(p){const u=p.imgs[0].thumb||p.imgs[0].src;el.style.backgroundImage=`url("${String(u).replace(/"/g,"%22")}")`}else el.remove()}
-function renderNew(){giftPic();const sec=$("#nwSec");if(!sec)return;NW.G=nwGroups();sec.hidden=!NW.G.length;if(!NW.G.length)return;if(NW.gi>=NW.G.length)NW.gi=0;nwRings();nwGroup()}
+function renderNew(){if(!$("#t-catalog").classList.contains("on")){NW.need=1;return}NW.need=0;giftPic();const sec=$("#nwSec");if(!sec)return;NW.G=nwGroups();sec.hidden=!NW.G.length;if(!NW.G.length)return;if(NW.gi>=NW.G.length)NW.gi=0;nwRings();nwGroup()}
 $("#nRings").addEventListener("click",e=>{const r=e.target.closest("[data-ngi]");if(!r)return;e.stopPropagation();NW.gi=+r.dataset.ngi;nwGroup()});
 $("#nFr").addEventListener("click",e=>{e.stopPropagation();if(e.target.closest("[data-nall]")){nwOpenAll(NW.G[NW.gi].bk);return}const r=$("#nFr").getBoundingClientRect(),x=e.clientX-r.left;
   if(x<r.width*.3)nwStep(-1);else if(x>r.width*.7)nwStep(1);else{const L=nwItems();if(NW.ii<L.length)openProduct(L[NW.ii].id)}});
@@ -3199,7 +3203,7 @@ let stylistRemote=false;
 
 /* ===== Навигация ===== */
 const TABS=["feed","catalog","optix","services","stylist"];
-function tab(t){if(!TABS.includes(t))t="feed";popAll();closeSheet(true);if(t!=="optix")lastMain=t;
+function tab(t){if(!TABS.includes(t))t="feed";if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
   $$(".tab").forEach(s=>s.classList.toggle("on",s.id==="t-"+t));
   const hl=t;
   $$("#tabbar button").forEach(b=>b.dataset.tab===hl?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
