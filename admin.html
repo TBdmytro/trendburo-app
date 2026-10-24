@@ -716,6 +716,9 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
 <div class="toast" id="toast" role="status"></div><div id="busy"></div>
 
 <script>
+// вещь стоит в разделе «Новинки» на сайте бренда — на витрине она новинка сама (снять можно галочкой)
+const SUPNEW = /new.?arriv|new.?in\b|^new$|^new-|just.?in|whats.?new|novelt|neuheit|nouveaut|новинк/i, supNew = p => (p.sections || []).some(s => SUPNEW.test(String(s)));
+
 const $ = s => document.querySelector(s);
 /* высота верхней плашки → отступ страницы; тень, когда страница прокручена под плашку */
 function syncAppbar() { const b = document.getElementById("appbar"); if (!b) return; document.documentElement.style.setProperty("--abh", b.offsetHeight + "px"); b.classList.toggle("sh", scrollY > 4); }
@@ -1411,7 +1414,7 @@ async function editor(id, reload) {
       <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:150px">Для кого<select id="eG"><option value="">${esc({ w: "Женское", m: "Мужское", u: "Унисекс" }[p.gender] || "как на сайте")}</option><option value="w" ${o.gender === "w" ? "selected" : ""}>Женское</option><option value="m" ${o.gender === "m" ? "selected" : ""}>Мужское</option><option value="u" ${o.gender === "u" ? "selected" : ""}>Унисекс</option></select></label>
       <span style="flex:1;min-width:150px"></span></div>
       <div class="badgebox">
-        <div class="row" style="align-items:flex-end"><label class="toggle" style="flex:1;min-width:150px;padding-bottom:10px"><input type="checkbox" id="eNew" ${o.isNew === "on" ? "checked" : ""}>Метка «Новинка»</label>
+        <div class="row" style="align-items:flex-end"><label class="toggle" style="flex:1;min-width:150px;padding-bottom:10px"><input type="checkbox" id="eNew" ${o.isNew === "on" || (o.isNew !== "off" && supNew(p)) ? "checked" : ""}>Метка «Новинка»${supNew(p) ? ' <small class="muted">· у бренда в «Новинках»</small>' : ""}</label>
         <label class="f" style="flex:1;min-width:150px">Показывать до<input type="date" id="eNewTo" value="${esc(o.newUntil || "")}"></label></div>
         <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:120px">Скидка, %<input type="number" id="eSale" min="0" max="90" step="1" value="${esc(o.sale?.pct || "")}" placeholder="нет"></label>
         <label class="f" style="flex:1;min-width:180px">Скидка до<input type="datetime-local" id="eSaleTo" value="${esc(o.sale?.until || "")}"></label></div>
@@ -1457,7 +1460,7 @@ async function editor(id, reload) {
     if (b.dataset.st) { await api("status", { method: "POST", body: { ids: [id], status: b.dataset.st } }); toast(b.dataset.st === "published" ? "Опубликовано — на витрине через ~10 секунд" : "Снято с витрины"); close(); reload(); return; }
     if ("save" in b.dataset) {
       const changes = { title: $("#eTitle").value.trim() || null, category: $("#eCat").value || null, pinnedPrice: Number($("#ePin").value) || null, hidden: $("#eHide").checked || null,
-        gender: $("#eG").value || null, isNew: $("#eNew").checked ? "on" : null, newUntil: $("#eNew").checked ? ($("#eNewTo").value || null) : null,
+        gender: $("#eG").value || null, isNew: $("#eNew").checked ? "on" : (supNew(p) ? "off" : null), newUntil: $("#eNew").checked ? ($("#eNewTo").value || null) : null,
         sale: Number($("#eSale").value) > 0 ? { pct: Number($("#eSale").value), until: $("#eSaleTo").value || null } : null,
         dims: $("#eDims").value.trim() || null, material: $("#eMat").value.trim() || null, stock: $("#eSt").value ? { loc: $("#eSt").value, city: $("#eStCity").value.trim(), size: $("#eStSize").value.trim() } : (p.stock ? { loc: "" } : null) };
       if (cover !== cover0) changes.cover = cover;

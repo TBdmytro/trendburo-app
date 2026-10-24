@@ -618,3 +618,15 @@ test("админка: список «В наличии» — фильтр тов
   const pick = loc => all.filter(p => (l => loc === "any" ? !!l : l === loc)((p.overrides?.stock || p.stock)?.loc || "")).map(p => p.brand);
   assert.deepEqual(pick("ua"), ["Louis Vuitton"]); assert.deepEqual(pick("eu"), ["Dior"]); assert.equal(pick("any").length, 2);
 });
+
+test("новинка: отметка админки или раздел «Новинки» у бренда; «off» снимает", () => {
+  const base = { _id: "n1", brand: "Alo", title: "X", category: "clothing", images: [{ url: "https://cdn.shopify.com/x.jpg" }], variants: [], offers: [], pricing: { ua: 100, eu: 100, dxb: 100 }, status: "published" };
+  const nw = (overrides, secPos) => toStorefront({ ...base, overrides, secPos }, Date.now(), { compact: true }).isNew;
+  assert.equal(nw({}, []), false);
+  assert.equal(nw({}, [{ s: "new-arrivals", p: 1 }]), true);
+  assert.equal(nw({}, [{ s: "womens-whats-new", p: 3 }]), true);
+  assert.equal(nw({}, [{ s: "bestsellers", p: 1 }]), false);
+  assert.equal(nw({ isNew: "off" }, [{ s: "new-arrivals", p: 1 }]), false);
+  assert.equal(nw({ isNew: "on" }, []), true);
+  assert.equal(nw({ isNew: "on", newUntil: "2000-01-01" }, [{ s: "new-arrivals", p: 1 }]), false);
+});

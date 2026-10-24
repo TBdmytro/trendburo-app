@@ -2174,7 +2174,7 @@ function openProduct(id){
   const showDl=!r&&!(st&&st.loc==="ua");
   const btnLabel=()=>r?"Купить":"В корзину · "+eur(priceFor(it,d));
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
-  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img src="${esc(im.src)}"${im.big?` srcset="${esc(im.src)} 1000w, ${esc(im.big)} 1600w" sizes="100vw"`:""} crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
+  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img style="background:url(&quot;${esc(im.thumb||im.src)}&quot;) center/contain no-repeat" src="${esc(im.src)}"${im.big?` srcset="${esc(im.src)} 1000w, ${esc(im.big)} 1600w" sizes="100vw"`:""} crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:14px"></div>
    ${showDl?`<div id="pvd"></div>`:""}
    <div id="pvx" style="display:flex;flex-direction:column;gap:18px"></div>
@@ -2332,7 +2332,10 @@ function applyTheme(t){if(!t)return;try{const a=/^#[0-9a-f]{6}$/i.test(t.accent)
   if(a!=="#1f2125"){R.setProperty("--ink-grad",`linear-gradient(180deg,${mixHex(a,"#ffffff",.16)} 0%,${a} 52%,${mixHex(a,"#000000",.2)} 100%)`)}
   Object.entries(t.cats||{}).forEach(([k,v])=>{if(CATC[k]&&Array.isArray(v))CATC[k]=v})}catch(e){}}
 /* Каталог: главный экран */
-function renderCatHome(){renderStockBan();try{renderNew()}catch(e){}{const bx=$("#catBn"),L=bnFor("catalog");bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}
+function renderCatHome(){try{renderNew()}catch(e){}$$("#hg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
+  // старые блоки (категории, бренды, культовые модели) скрыты по концепту — не тратим время телефона на их сборку
+  if(document.querySelector("#homeBody>.nwhide"))return;
+  renderStockBan();{const bx=$("#catBn"),L=bnFor("catalog");bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}
   $$("#hg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
   const pool=P.filter(p=>F.g==="all"||(p.g===F.g||p.g==="u"));
   const oxTile=OPTIX_ON?`<button class="ctile ox press" data-act="optixapp" aria-label="Очки OPTIX — открыть"><span class="t"><small>Очки</small><span class="wordmark">OPTIX</span><span class="br">Cartier · Gucci · Miu Miu · Saint Laurent</span></span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`:"";
