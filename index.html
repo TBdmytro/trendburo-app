@@ -493,6 +493,25 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero.ph .pv-bdg{top:calc(var(--st) + 58px);left:auto;right:16px;flex-direction:column;align-items:flex-end}
 .pv-bdg span{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:var(--fg);padding:5px 10px;border-radius:99px}
 .pv-bdg .sale,.pc .salb{background:#b3261e;color:#fff;letter-spacing:.02em}
+/* ===== Каталог как в концепте: иконки над заголовком, ниже поиск, «Для неё / Для него», «Новое», баннеры OPTIX и «Подарки» ===== */
+#homeBody>.nwhide{display:none!important}
+#catHome>.bigtitle{flex-direction:column-reverse;align-items:stretch;gap:10px;padding-top:calc(12px + var(--st))}
+#catHome>.bigtitle .topicons{align-self:flex-end}
+#t-catalog .bar{justify-content:space-between;padding-left:18px;padding-right:12px;background:#fff}
+.cbn2{margin-bottom:28px!important}
+#t-catalog .bar b{font-size:18px;font-weight:700;letter-spacing:-.01em}
+#t-catalog .bar .topicons .round{width:34px;height:34px}
+#t-catalog .bar:has(~.scroll #catItems:not([hidden])) .topicons{display:none}
+.cbn2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:22px 18px 8px}
+.cbn2 button{position:relative;border:0;border-radius:22px;aspect-ratio:1/1.08;padding:16px;text-align:left;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;font:inherit;color:#fff}
+.cbn2 .cap{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;opacity:.6;position:relative}
+.cbn2 b{font-size:18px;font-weight:600;line-height:1.15;margin-top:4px;position:relative}
+.cbn2 small{font-size:12px;opacity:.65;margin-top:4px;position:relative;line-height:1.3}
+.cbn2 .chev{position:absolute;right:14px;top:16px;opacity:.7}
+.cbo{background:radial-gradient(90% 70% at 30% 20%,#2c4a63,#12293e 72%)}
+.cbo b{font:400 24px/1 "Prata",Georgia,serif;letter-spacing:.2em;margin-top:8px}
+.cbg{background:linear-gradient(180deg,#3d4046 0%,#282a2e 52%,#1d1f22 100%)}
+.cbg-im{position:absolute;left:14px;right:14px;top:14px;bottom:44%;border-radius:14px;background:#f3f3f3 center/contain no-repeat;opacity:.96}
 /* ===== Карточка товара v3: белый верх (назад · TB · корзина), фото целиком в рамке, по краям соседние фото ===== */
 .pushed:has(.pv-hero.ph){--nbh:calc(52px + var(--st))}
 .fs .pushed:has(.pv-hero.ph){--nbh:calc(var(--st) + 2px)}
@@ -1411,7 +1430,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
 
   <!-- CATALOG -->
   <div class="screen tab" id="t-catalog">
-    <div class="bar"><b id="catBarT">Каталог</b></div>
+    <div class="bar"><b id="catBarT">Каталог</b><div class="topicons"></div></div>
     <div class="scroll">
       <div id="catHome">
         <div class="bigtitle"><h1>Каталог</h1><div class="topicons"></div></div>
@@ -1423,13 +1442,14 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
             <div class="nrings" id="nRings"></div>
             <div class="nsto"><div class="nfr" id="nFr"><div class="nbars" id="nBars"></div><div class="nfh"><span id="nB"></span><span id="nN"></span></div><div id="nIms"></div><div class="ncap" id="nCap"></div><div class="nend" id="nEnd"></div></div><div class="nside" id="nSide"></div></div>
             <button class="nall press" id="nAll"></button></div>
+          <div class="cbn2"><button class="press cbo" data-act="optixapp"><span class="cap">Очки</span><b>OPTIX</b><small>Солнцезащитные очки под заказ</small><i class="chev"></i></button><button class="press cbg" data-act="gifts"><span class="cbg-im" id="giftIm"></span><span class="cap">Идеи</span><b>Подарки любимым</b><small>Для неё и для него</small><i class="chev"></i></button></div>
           <div class="pad" hidden style="margin-top:12px"><div class="seg" role="group" aria-label="Для кого" id="hg"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button></div></div>
-          <div class="sec" style="padding-top:16px"><button class="stockban press" data-act="stock-all" id="stockBan"></button></div>
-          <div class="sec cbwrap" id="catBn" hidden></div>
-          <div class="sec"><div class="sech"><h2>Категории</h2><button class="more" data-act="allitems">Все товары</button></div><div class="catgrid" id="catGrid"></div></div>
-          <div id="myBrands"></div>
-          <div class="sec"><div class="sech"><h2>Бренды</h2><button class="more num" data-act="allbrands" id="allBrandsBtn">Все</button></div><div class="bgrid" id="brandGrid"></div></div>
-          <div class="sec"><div class="sech"><h2>Культовые модели</h2><span class="muted" style="font-size:13px">под заказ</span></div><div class="hrail" id="iconRail"></div>
+          <div class="sec nwhide" style="padding-top:16px"><button class="stockban press" data-act="stock-all" id="stockBan"></button></div>
+          <div class="sec cbwrap nwhide" id="catBn" hidden></div>
+          <div class="sec nwhide"><div class="sech"><h2>Категории</h2><button class="more" data-act="allitems">Все товары</button></div><div class="catgrid" id="catGrid"></div></div>
+          <div id="myBrands" class="nwhide"></div>
+          <div class="sec nwhide"><div class="sech"><h2>Бренды</h2><button class="more num" data-act="allbrands" id="allBrandsBtn">Все</button></div><div class="bgrid" id="brandGrid"></div></div>
+          <div class="sec nwhide"><div class="sech"><h2>Культовые модели</h2><span class="muted" style="font-size:13px">под заказ</span></div><div class="hrail" id="iconRail"></div>
             <p class="foot-note" style="text-align:left;padding:10px 18px 0">Цены — ориентир. Точную цену и срок назовёт менеджер.</p></div>
         </div>
       </div>
@@ -2394,7 +2414,8 @@ function nwStep(d){const L=nwItems(),extra=NW.G[NW.gi].all.length-L.length,last=
   if(d>0&&NW.ii>=last){nwSeen();NW.gi=(NW.gi+1)%NW.G.length;nwGroup();return}if(d<0&&NW.ii===0){NW.gi=(NW.gi-1+NW.G.length)%NW.G.length;nwGroup();return}nwShow(NW.ii+d)}
 function nwTick(ms){clearTimeout(NW.t);if(RM.matches)return;NW.t=setTimeout(()=>{if(nwBusy()||NW.hold){$("#nFr").classList.add("pz");return nwTick(1200)}$("#nFr").classList.remove("pz");nwStep(1)},ms)}
 function nwOpenAll(bk){clearFilters();if(bk)F.brands.add(bk);F.onlyNew=true;showItems(bk?"Новое · "+bname(bk):"Новое")}
-function renderNew(){const sec=$("#nwSec");if(!sec)return;NW.G=nwGroups();sec.hidden=!NW.G.length;if(!NW.G.length)return;if(NW.gi>=NW.G.length)NW.gi=0;nwRings();nwGroup()}
+function giftPic(){const el=$("#giftIm");if(!el||el.style.backgroundImage)return;const p=P.find(p=>(p.cat==="jewelry"||p.cat==="accessories"||p.cat==="bags")&&p.imgs&&p.imgs.length);if(p){const u=p.imgs[0].thumb||p.imgs[0].src;el.style.backgroundImage=`url("${String(u).replace(/"/g,"%22")}")`}else el.remove()}
+function renderNew(){giftPic();const sec=$("#nwSec");if(!sec)return;NW.G=nwGroups();sec.hidden=!NW.G.length;if(!NW.G.length)return;if(NW.gi>=NW.G.length)NW.gi=0;nwRings();nwGroup()}
 $("#nRings").addEventListener("click",e=>{const r=e.target.closest("[data-ngi]");if(!r)return;e.stopPropagation();NW.gi=+r.dataset.ngi;nwGroup()});
 $("#nFr").addEventListener("click",e=>{e.stopPropagation();if(e.target.closest("[data-nall]")){nwOpenAll(NW.G[NW.gi].bk);return}const r=$("#nFr").getBoundingClientRect(),x=e.clientX-r.left;
   if(x<r.width*.3)nwStep(-1);else if(x>r.width*.7)nwStep(1);else{const L=nwItems();if(NW.ii<L.length)openProduct(L[NW.ii].id)}});
@@ -3230,6 +3251,7 @@ $("#app").addEventListener("click",e=>{
   else if(a==="allitems"){clearFilters();showItems("Все товары")}
   else if(a==="gopen"){clearFilters();F.g=t.dataset.g;showItems(t.dataset.g==="w"?"Для неё":"Для него")}
   else if(a==="allnew")nwOpenAll("");
+  else if(a==="gifts"){clearFilters();["accessories","jewelry","bags"].forEach(c=>F.cats.add(c));showItems("Подарки любимым")}
   else if(a==="smartall"&&SQ){clearFilters();F.ids=new Set(SQ.ids);showItems("Подбор");}
   else if(a==="cathome")showCatHome();
   else if(a==="askany")orderSheet("Запрос менеджеру",`Здравствуйте! Ищу: ${$("#uq").value.trim()}\nЦвет / размер: \nБюджет: \nДоставка: Украина`);

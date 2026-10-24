@@ -55,6 +55,12 @@ async def main():
     t=await pg.evaluate("(async()=>{openBrand(Object.keys(P.reduce((m,p)=>(m[p.bk]=(m[p.bk]||0)+1,m),{})).sort((a,b)=>P.filter(p=>p.bk===b).length-P.filter(p=>p.bk===a).length)[0]);const t=performance.now();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return [Math.round(performance.now()-t),document.querySelectorAll('#bgrid .pc').length]})()")
     ok("страница бренда открывается быстро и порциями",t[1]<=48,t)
     await pg.evaluate("popAll()")
+    await pg.evaluate("popAll();tab('catalog');showCatHome()");await pg.wait_for_timeout(600)
+    r3=await pg.evaluate("(()=>{const v=s=>{const e=document.querySelector(s);return !!e&&e.offsetParent!==null};return {optix:v('#homeBody [data-act=optixapp]'),gifts:v('#homeBody [data-act=gifts]'),legacy:[...document.querySelectorAll('#homeBody>.nwhide')].some(e=>e.offsetParent!==null)}})()")
+    ok("каталог как в концепте: баннеры OPTIX и «Подарки», старых блоков нет",r3["optix"] and r3["gifts"] and not r3["legacy"],r3)
+    await pg.evaluate("document.querySelector('#homeBody [data-act=gifts]').click()");await pg.wait_for_timeout(800)
+    ok("«Подарки любимым» открывают подборку",await pg.evaluate("document.querySelector('#itemsTitle').textContent==='Подарки любимым'&&document.querySelectorAll('#grid .pc').length>0"))
+    await pg.evaluate("showCatHome()")
     ok("нет ошибок JavaScript",not errs,errs[:3])
     await b.close()
   bad=[r for r in RULES if not r[1]]
