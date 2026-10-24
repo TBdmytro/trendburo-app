@@ -630,3 +630,48 @@ test("новинка: отметка админки или раздел «Нов
   assert.equal(nw({ isNew: "on" }, []), true);
   assert.equal(nw({ isNew: "on", newUntil: "2000-01-01" }, [{ s: "new-arrivals", p: 1 }]), false);
 });
+
+test("магазин в долларах, products.json всегда в долларах (как у Sporty & Rich): цены Германии берутся по каждому товару, без курса", async () => {
+  const store = new MemoryStore(); await saveManualFx(store, { USD: 1.17 });
+  const withIds = () => shopFixture(3).map(p => ({ ...p, variants: p.variants.map((v, j) => ({ ...v, id: p.id * 100 + j, price: "100.00" })) }));
+  const f = (url, opts) => { const c = opts?.headers?.Cookie || ""; return fakeFetch(u => {
+    const de = c.includes("localization=DE");
+    if (u.endsWith("/robots.txt")) return { body: "User-agent: *\nDisallow: /cart\n", type: "text/plain" };
+    if (u.includes("/meta.json")) return { body: JSON.stringify({ name: "Sporty & Rich", currency: "USD" }), type: "application/json" };
+    const js = u.match(/\/products\/hoodie-(\d+)\.js$/);
+    if (js) { const n = Number(js[1]); if (n === 3) return null; return { body: JSON.stringify({ variants: [{ id: n * 100, price: de ? 8500 : 10000 }, { id: n * 100 + 1, price: de ? 8500 : 10000 }] }), type: "application/json" }; }
+    if (/\/products\/hoodie-1$/.test(u)) return { body: de ? '<meta property="og:price:amount" content="85,00"><script>Shopify.currency = {"active":"EUR","rate":"0.9"};</script>' : '<meta property="og:price:amount" content="100.00"><script>Shopify.currency = {"active":"USD","rate":"1.0"};</script>', type: "text/html" };
+    if (/\/$/.test(u)) return { body: de ? '<script>Shopify.currency = {"active":"EUR"};</script>' : '<script>Shopify.currency = {"active":"USD"};</script>', type: "text/html" };
+    const m = u.match(/\/products\.json\?limit=(\d+)(?:&page=(\d+))?/);
+    if (m) { const page = Number(m[2] || 1), lim = Number(m[1]); return { body: JSON.stringify({ products: withIds().slice((page - 1) * lim, page * lim) }), type: "application/json" }; }
+    return null;
+  })(url, opts); };
+  const det = await detectSupplier("sportyandrich.com", { fetchImpl: f });
+  assert.ok(det.ok, det.reason); assert.equal(det.currency, "EUR"); assert.equal(det.euAjax, true);
+  const { id, source } = await addSupplier(store, { url: "https://sportyandrich.com" }, { fetchImpl: f });
+  assert.equal(source.custom.euAjax, true); assert.equal(source.custom.shopCurrency, "EUR");
+  await createJob(store, { sourceId: id, mode: "full" });
+  for (let i = 0; i < 10; i++) { const r = await tick(store, { fetchImpl: f, sleep: noSleep }); if (!r.jobId) break; }
+  const list = await store.list("product");
+  const p = list.find(x => x.title.includes("Hoodie 1"));
+  assert.equal(p.offers[0].boutique, 85, "цена Германии 85 €, а не 100 $ по курсу");
+  assert.ok(!list.some(x => x.title.includes("Hoodie 3")), "без цены Германии товар не грузится");
+});
+
+test("уже подключённый магазин в долларах сам переходит на цены Германии", async () => {
+  const { upgradeEuSource } = await import("../lib/suppliers.js");
+  const store = new MemoryStore();
+  const f = (url, opts) => { const c = opts?.headers?.Cookie || ""; return fakeFetch(u => {
+    const de = c.includes("localization=DE");
+    if (u.endsWith("/robots.txt")) return { body: "User-agent: *\n", type: "text/plain" };
+    if (/\/products\/hoodie-1\.js$/.test(u)) return { body: JSON.stringify({ variants: [{ id: 100, price: de ? 8500 : 10000 }] }), type: "application/json" };
+    if (/\/products\/hoodie-1$/.test(u)) return { body: de ? '<meta property="og:price:amount" content="85,00"><script>Shopify.currency = {"active":"EUR"};</script>' : '<script>Shopify.currency = {"active":"USD"};</script>', type: "text/html" };
+    if (/\/products\.json/.test(u)) return { body: JSON.stringify({ products: [{ id: 1, handle: "hoodie-1", title: "Hoodie 1", variants: [{ id: 100, price: "100.00" }] }] }), type: "application/json" };
+    return null;
+  })(url, opts); };
+  const settings = { _id: "source.s-x", custom: { id: "s-x", adapter: "shopify", home: "https://shop.example", domains: ["shop.example"], shopCurrency: "USD", geoEu: false } };
+  await store.put(settings);
+  const next = await upgradeEuSource(store, "s-x", settings, { fetchImpl: f });
+  assert.equal(next.custom.euAjax, true); assert.equal(next.custom.shopCurrency, "EUR");
+  assert.equal((await store.get("source.s-x")).custom.euAjax, true);
+});
