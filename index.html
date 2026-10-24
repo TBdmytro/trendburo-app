@@ -527,7 +527,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero.ph::after,.intg .pv-hero.ph::after{display:none}
 .pv-hero.ph .pv-gal{padding:0 22px;gap:8px;scroll-padding:0 22px;align-items:flex-start}
 /* рамка фото — скругление через overflow (не clip-path: iOS в Telegram недорисовывал куски фото при листании) */
-.pv-hero.ph .pv-gal .sl{flex:0 0 100%;padding:0;margin:10px 0 0;height:calc(100% - 70px);border-radius:20px;overflow:hidden;background:var(--slbg,#f3f3f3)}
+.pv-hero.ph .pv-gal .sl{flex:0 0 100%;padding:0;margin:10px 0 0;height:calc(100% - 70px);border-radius:20px;overflow:hidden;background:#fff}
 .pv-hero.ph .pv-gal .slb{display:none!important}
 .pv-hero.ph .pv-dots{bottom:43px;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0}
 .pv-hero.ph .pv-bdg,.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .pv-bdg{top:22px;right:34px}
@@ -2154,6 +2154,8 @@ function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!
   const vfill=si?`linear-gradient(to bottom,${edgeC(si.grad)} ${(pt+T).toFixed(1)}px,${edgeC(si.grad,1)} ${(pt+T+dh).toFixed(1)}px)`:"";
   const hfill=full&&si&&si.gradT&&dh<H-1&&!(dw<W-1)?`${si.gradT} left top/100% ${Math.ceil(pt+T+dh/2)}px no-repeat,${si.gradB} left bottom/100% ${Math.ceil(H+pb-T-dh/2)}px no-repeat,`:"";
   box.style.background=si&&gap?(dw<W-1?`${gl} left top/${Math.ceil(L+dw/2)}px 100% no-repeat,${gr} right top/${Math.ceil(W-L-dw/2)}px 100% no-repeat,`:hfill)+vfill:"";
+  // фото «на улице» / не студийный фон: никаких закрашенных полос по бокам — сам снимок аккуратной карточкой со скруглением, вокруг белый
+  if(full){const plain=!si||!si.flat;if(plain&&gap){box.style.background="#fff";im.style.borderRadius="16px"}else im.style.borderRadius=""}
   // «живой» фон (улица, интерьер): края — размытое продолжение этого же снимка
   const b=box.querySelector(".slb");if(b){const live=gap&&!si;b.hidden=!live;if(live&&src&&!b.style.backgroundImage)b.style.backgroundImage=`url("${(src.thumb||src.src).replace(/"/g,"%22")}")`}
   // края снимка мягко растворяются в заливке — без шва
