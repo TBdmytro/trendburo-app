@@ -63,6 +63,12 @@ async def main():
     await pg.evaluate("showCatHome()")
     import re as _re; _css="".join(_re.findall(r"<style[^>]*>(.*?)</style>",open(__file__.replace("scripts/ui_rules.py","index.html")).read(),_re.S))
     ok("в стилях нет :has() (на iPhone тормозит всю страницу)",":has(" not in _css)
+    # страж: подписка на большой бренд не должна раздувать страницу (на телефоне владельца было 48 000 элементов)
+    big=await pg.evaluate("Object.entries(P.reduce((m,p)=>(m[p.bk]=(m[p.bk]||0)+1,m),{})).sort((a,b)=>b[1]-a[1])[0][0]")
+    await pg.evaluate(f"follows.add('{big}');renderFeedFollow();renderCatHome&&renderCatHome()");await pg.wait_for_timeout(500)
+    dn=await pg.evaluate("[document.getElementsByTagName('*').length,document.images.length]")
+    ok("подписка на большой бренд не раздувает страницу",dn[0]<8000 and dn[1]<400,dn)
+    await pg.evaluate(f"follows.delete('{big}');renderFeedFollow()")
     ok("нет ошибок JavaScript",not errs,errs[:3])
     await b.close()
   bad=[r for r in RULES if not r[1]]
