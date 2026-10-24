@@ -541,11 +541,8 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .dlv-more{display:grid;grid-template-rows:1fr;transition:grid-template-rows .65s var(--ease),opacity .45s}
 .dlv-more>div{overflow:hidden;min-height:0}
 .dlv:not(.open) .dlv-more{grid-template-rows:0fr;opacity:0}
-.dlv:not(.open) .dlv-line{margin-top:0}
+/* первый экран: выбор страны и строка доставки видны сразу; путь и «Как работает доставка» — по свайпу вверх */
 .dlv-seg{max-height:64px;transition:max-height .55s var(--ease),opacity .35s,margin .55s var(--ease),padding .55s var(--ease)}
-.dlv:not(.open) .dlv-seg{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-bottom:-14px;overflow:hidden;pointer-events:none}
-.dlv:not(.open) .dlv-line{border-top-color:transparent;padding-top:0}
-.dlv:not(.open) .dlv-line [data-to]::after{content:" · сменить ›";color:rgba(255,255,255,.45)}
 .dlv:not(.open){cursor:pointer}
 .dlv.open .dlv-st i{animation:dlpop .55s var(--ease) backwards}
 .dlv.open .dlv-st:nth-child(1) i{animation-delay:.18s}.dlv.open .dlv-st:nth-child(2) i{animation-delay:.3s}.dlv.open .dlv-st:nth-child(3) i{animation-delay:.42s}
@@ -2205,7 +2202,7 @@ function openProduct(id){
   if(showDl){const box=s.querySelector("#pvd");box.innerHTML=dlvHTML(d);
     {const dl=box.querySelector(".dlv"),sc=s.querySelector(".scroll"),open=()=>dl.classList.add("open"),
        onSc=()=>{const y=sc.scrollTop;if(y>24)open();else if(y<6&&!dl.querySelector(".dlv-in.on"))dl.classList.remove("open")};
-     sc.addEventListener("scroll",onSc,{passive:true});dl.addEventListener("click",e=>{if(!e.target.closest(".dlv-fb"))open()})}dlvMount(box,d,k=>{d=k;prefs.dest=k;store.set("tb_prefs",prefs);draw();if(!ob.dataset.added)setLbl(btnLabel())})}
+     sc.addEventListener("scroll",onSc,{passive:true});dl.addEventListener("click",e=>{if(!e.target.closest(".dlv-fb,.dlv-seg"))open()})}dlvMount(box,d,k=>{d=k;prefs.dest=k;store.set("tb_prefs",prefs);draw();if(!ob.dataset.added)setLbl(btnLabel())})}
   {const hb=s.querySelector("[data-how]");if(hb)hb.onclick=howSheet}
   // рамка фото: от верхней плашки до панели; панель на первом экране видна целиком — до конца блока доставки, над кнопкой
   {const hero=s.querySelector(".pv-hero.ph");if(hero){const pan=s.querySelector(".pv-panel"),ft=s.querySelector(".foot");
@@ -2213,7 +2210,7 @@ function openProduct(id){
       const scr=s.querySelector(".scroll");if(scr&&scr.scrollTop>4)return;const dlo=s.querySelector(".dlv.open");if(dlo)return;
       const off=scr?parseFloat(getComputedStyle(scr).paddingTop)||0:0;
       const k=last.offsetTop+last.offsetHeight,W=hero.clientWidth,f=ft?ft.offsetHeight:90;
-      const h=Math.round(Math.max(W*.78,Math.min(W*1.6,innerHeight-off-k-f+4)));
+      const h=Math.round(Math.max(W*.78,Math.min(W*1.6,innerHeight-off-k-f-10)));
       if(Math.abs((parseFloat(hero.style.getPropertyValue("--frh"))||0)-h)>1){hero.style.setProperty("--frh",h+"px");s._fitAll&&s._fitAll()}};
     size();requestAnimationFrame(size);setTimeout(size,400);(document.fonts&&document.fonts.ready||Promise.resolve()).then(size);
     const onR=()=>{if(!s.isConnected)return removeEventListener("resize",onR);size()};addEventListener("resize",onR)}}
