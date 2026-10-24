@@ -45,6 +45,16 @@ async def main():
     ok("умный поиск понимает запрос",await pg.evaluate("!!document.querySelector('#smartBox .smartq')"))
     await pg.fill("#uq","");await pg.dispatch_event("#uq","input");await pg.wait_for_timeout(300)
     ok("очистка поиска возвращает каталог",await pg.evaluate("!document.querySelector('#homeBody').hidden"))
+    # плавность: в простое страница не пересчитывается каждый кадр (анимации — только transform/opacity)
+    cdp=await ctx.new_cdp_session(pg);await cdp.send("Performance.enable")
+    async def lay():
+      r=(await cdp.send("Performance.getMetrics"))["metrics"];return {x["name"]:x["value"] for x in r}["LayoutCount"]
+    await pg.evaluate("popAll();tab('catalog');showCatHome&&showCatHome()");await pg.wait_for_timeout(1500)
+    a=await lay();await pg.wait_for_timeout(3000);n=await lay()-a
+    ok("каталог в простое: без пересчёта страницы каждый кадр",n<30,f"{n:.0f} пересчётов за 3 с")
+    t=await pg.evaluate("(async()=>{openBrand(Object.keys(P.reduce((m,p)=>(m[p.bk]=(m[p.bk]||0)+1,m),{})).sort((a,b)=>P.filter(p=>p.bk===b).length-P.filter(p=>p.bk===a).length)[0]);const t=performance.now();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return [Math.round(performance.now()-t),document.querySelectorAll('#bgrid .pc').length]})()")
+    ok("страница бренда открывается быстро и порциями",t[1]<=48,t)
+    await pg.evaluate("popAll()")
     ok("нет ошибок JavaScript",not errs,errs[:3])
     await b.close()
   bad=[r for r in RULES if not r[1]]

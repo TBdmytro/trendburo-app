@@ -1298,10 +1298,11 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .nfr::after{content:"";position:absolute;inset:0 0 72%;background:linear-gradient(rgba(0,0,0,.28),transparent);z-index:2;pointer-events:none}
 .nbars{position:absolute;left:10px;right:10px;top:10px;display:flex;gap:3px;z-index:3}
 .nbars .nb{flex:1 1 0;display:block;position:static;width:auto;height:2.5px;border-radius:2px;background:rgba(255,255,255,.45);overflow:hidden}
-.nbars .nbf{display:block;position:static;height:100%;width:0;background:#fff}
-.nbars .nb.nwd .nbf{width:100%}.nbars .nb.nwr .nbf{animation:nbar 3.6s linear forwards}
+.nbars .nbf{display:block;position:static;height:100%;width:100%;background:#fff;transform:scaleX(0);transform-origin:left center;will-change:transform}
+.nbars .nb.nwd .nbf{transform:none}.nbars .nb.nwr .nbf{animation:nbar 3.6s linear forwards}
 .nfr.pz .nbars .nb.nwr .nbf{animation-play-state:paused}
-@keyframes nbar{to{width:100%}}
+/* полоска сторис — через transform: без пересчёта страницы в каждом кадре */
+@keyframes nbar{to{transform:none}}
 .nfh{position:absolute;left:10px;right:10px;top:20px;z-index:3;display:flex;justify-content:space-between;color:#fff;font-size:12px;font-weight:600;text-shadow:0 1px 6px rgba(0,0,0,.35)}
 .nfh span:last-child{font-weight:500}
 .ncap{position:absolute;left:10px;right:10px;bottom:10px;z-index:3;border-radius:14px;padding:9px 11px;background:rgba(255,255,255,.93);font-size:12.5px;line-height:1.3}
@@ -1323,7 +1324,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .nall small{color:var(--muted);font-weight:500;margin-left:6px}
 .smartq{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:4px 0 8px}
 .smartq span.c{height:28px;padding:0 11px;border-radius:14px;background:var(--fg);color:#fff;font-size:12.5px;font-weight:500;display:inline-flex;align-items:center}
-@media (prefers-reduced-motion:reduce){.nbars .nb.nwr .nbf{animation:none;width:100%}}
+@media (prefers-reduced-motion:reduce){.nbars .nb.nwr .nbf{animation:none;transform:none}}
 </style>
 </head>
 <body>
@@ -1706,7 +1707,8 @@ const lightShape=(s,c)=>shapeSVG(s,`color-mix(in oklab,${c} 35%,#ffffff)`,"");
 
 /* ===== Утилиты ===== */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const eur=n=>new Intl.NumberFormat("ru-RU",{maximumFractionDigits:0}).format(Math.round(n))+" €";
+// один форматтер на всё приложение: создавать его на каждую цену — сотни миллисекунд на длинных списках
+const EURF=new Intl.NumberFormat("ru-RU",{maximumFractionDigits:0}),eur=n=>EURF.format(Math.round(n))+" €";
 const esc=s=>String(s).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("on"),2000)}
@@ -2373,7 +2375,8 @@ function nwGroup(){const g=NW.G[NW.gi],L=nwItems(),extra=g.all.length-L.length;
   $("#nB").textContent=g.name;$("#nAll").innerHTML=`<span>Все новинки ${esc(g.name)}<small class="num">${g.all.length}</small></span><i class="chev"></i>`;
   $("#nEnd").innerHTML=extra>0?`<div class="mos">${g.all.slice(NW.SHOW,NW.SHOW+3).map(p=>`<img src="${esc(nImg(p).thumb)}" alt="" loading="lazy">`).join("")}</div><b>Ещё ${extra} ${plural(extra,["новинка","новинки","новинок"])}</b><small>${esc(g.name)}</small><button data-nall="1">Смотреть все ${g.all.length}</button>`:"";
   $$("#nRings .nrg").forEach((r,i)=>{r.classList.toggle("on",i===NW.gi);r.classList.toggle("seen",NW.G[i].seen&&i!==NW.gi)});
-  const on=$(`#nRings [data-ngi="${NW.gi}"]`),rs=$("#nRings");if(on)rs.scrollTo({left:on.offsetLeft-rs.clientWidth/2+33,behavior:"smooth"});
+  // прокрутка колец к текущему бренду — в следующем кадре и только когда блок виден (иначе браузер пересчитывает всю страницу)
+  requestAnimationFrame(()=>{const on=$(`#nRings [data-ngi="${NW.gi}"]`),rs=$("#nRings");if(on&&rs&&rs.offsetParent&&!nwBusy())rs.scrollTo({left:on.offsetLeft-rs.clientWidth/2+33,behavior:"smooth"})});
   nwShow(0)}
 function nwShow(i){const g=NW.G[NW.gi],L=nwItems(),extra=g.all.length-L.length,last=L.length-1+(extra>0?1:0);NW.ii=i;const end=i>=L.length;
   $("#nEnd").classList.toggle("on",end);$$("#nIms img").forEach((m,j)=>m.classList.toggle("off",j!==Math.min(i,L.length-1)));
@@ -2463,7 +2466,12 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
     s.querySelector("#bcats").innerHTML=`<button class="chip" data-bc="" aria-pressed="${!st.cat}">Все<span class="c num">${f.length}</span></button>`+cats.map(c=>{const n=f.filter(p=>p.cat===c).length;return n?`<button class="chip" data-bc="${c}" aria-pressed="${st.cat===c}">${CATS[c]}<span class="c num">${n}</span></button>`:""}).join("");
     const bg=s.querySelector("#bgs");if(bg)bg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===st.g));
     const f2=f.filter(p=>!st.cat||p.cat===st.cat),list=st.sort==="pop"?popOrder(f2):f2.sort((a,b)=>st.sort==="asc"?a.price-b.price:st.sort==="desc"?b.price-a.price:(b.isNew-a.isNew)||(a.price-b.price));
-    s.querySelector("#bgrid").innerHTML=list.map(pcHTML).join("")};
+    // товары бренда — порциями по 24 при прокрутке (у больших брендов их тысячи — разом всё рисовать нельзя)
+    bl=list;bn0=0;bio&&bio.disconnect();s.querySelector("#bgrid").innerHTML="";bMore()};
+  let bl=[],bn0=0,bio=null;
+  const bMore=()=>{const g=s.querySelector("#bgrid"),to=Math.min(bl.length,bn0+GRID_STEP);if(bn0>=to)return;g.querySelector(".grid-more")?.remove();
+    g.insertAdjacentHTML("beforeend",bl.slice(bn0,to).map(pcHTML).join("")+(to<bl.length?'<div class="grid-more"></div>':""));bn0=to;
+    const m=g.querySelector(".grid-more");if(m){bio=bio||new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))bMore()},{root:s.querySelector(".scroll"),rootMargin:"900px 0px"});bio.observe(m)}};
   s.querySelector("#bcats").addEventListener("click",e=>{const b=e.target.closest("[data-bc]");if(b){st.cat=b.dataset.bc;draw()}});
   const bg=s.querySelector("#bgs");if(bg)bg.addEventListener("click",e=>{const b=e.target.closest("button");if(b){st.g=b.dataset.g;if(st.cat&&!all.some(p=>p.cat===st.cat&&(st.g==="all"||p.g===st.g)))st.cat="";draw()}});
   s.querySelector("#bsort").onchange=e=>{st.sort=e.target.value;draw()};
@@ -3405,7 +3413,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act=watch-
 const CATK="/api/catalog?v=2",CATSTO="tb-cat-1";
 async function catLocal(){try{if(!window.caches)return null;const c=await caches.open(CATSTO),r=await c.match(CATK);return r?await r.json():null}catch(e){return null}}
 async function catSave(txt){try{if(!window.caches)return;const c=await caches.open(CATSTO);await c.put(CATK,new Response(txt,{headers:{"content-type":"application/json"}}))}catch(e){}}
-async function catNet(){const r=await fetch(CATK);const t=await r.text();const j=JSON.parse(t);const ok=r.ok&&Array.isArray(j.products);if(ok&&j.products.length)catSave(t);return {j,ok}}
+async function catNet(){const r=await fetch(CATK);const t=await r.text();const j=JSON.parse(t);const ok=r.ok&&Array.isArray(j.products);if(ok&&j.products.length){const sv=()=>catSave(t);window.requestIdleCallback?requestIdleCallback(sv,{timeout:4000}):setTimeout(sv,1500)}return {j,ok}}
 const catSig=l=>(l||[]).length+":"+(l||[]).reduce((a,x)=>(a+((x.price&&x.price.ua)||0)+x.id.length*7+(x.stock?1:0))%1e9,0);
 function catApply(j,fresh){if(j.content)CMS={banners:[],stories:[],news:[],rails:[],site:null,...j.content};applySite(CMS.site);applyLive(j.products||[],fresh)}
 function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();renderCatHome();if(LIVE)renderBanners()}catch(e){}}
