@@ -1416,7 +1416,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
         <span class="o-entry-go">Открыть<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
       </button>
 
-      <div class="sec"><button class="stockban press" data-act="stock-all" id="stockBanFeed"></button></div>
+      <div class="sec"><button class="stockban press" data-act="stock-all" id="stockBanFeed" hidden></button></div>
       <div class="sec"><div class="sech"><h2 id="newsTitle">Новости брендов</h2></div>
         <div id="leadNews"></div>
         <div id="newsList" style="margin-top:6px"></div>
@@ -2359,8 +2359,9 @@ function applyTheme(t){if(!t)return;try{const a=/^#[0-9a-f]{6}$/i.test(t.accent)
 /* Каталог: главный экран */
 function renderCatHome(){try{renderNew()}catch(e){}$$("#hg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
   // старые блоки (категории, бренды, культовые модели) скрыты по концепту — не тратим время телефона на их сборку
+  renderStockBan();
   if(document.querySelector("#homeBody>.nwhide"))return;
-  renderStockBan();{const bx=$("#catBn"),L=bnFor("catalog");bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}
+  {const bx=$("#catBn"),L=bnFor("catalog");bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}
   $$("#hg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
   const pool=P.filter(p=>F.g==="all"||(p.g===F.g||p.g==="u"));
   const oxTile=OPTIX_ON?`<button class="ctile ox press" data-act="optixapp" aria-label="Очки OPTIX — открыть"><span class="t"><small>Очки</small><span class="wordmark">OPTIX</span><span class="br">Cartier · Gucci · Miu Miu · Saint Laurent</span></span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`:"";
