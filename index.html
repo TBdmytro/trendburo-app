@@ -2403,6 +2403,21 @@ function runSearch(raw){const q=norm(raw.trim());const box=$("#sres"),body=$("#h
   if(!h)h=`<div class="empty" style="margin-top:16px"><h3>Ничего не нашли</h3><p>Напишите, что ищете — найдём в бутиках Европы.</p><button class="btn sm" data-act="askany" style="margin-top:8px">Написать менеджеру</button></div>`;
   box.innerHTML=h}
 $("#uq").addEventListener("input",e=>{e.target.parentNode.classList.toggle("typed",!!e.target.value);runSearch(e.target.value)});
+// диагностика плавности на телефоне: в поиске ввести «#diag» — 60 с замеров (паузы кадров, события Telegram, память) уходят на сервер
+function diagRun(){if(window.__diag)return;const D=window.__diag={t0:performance.now(),gaps:[],ev:{},act:[]},tg=window.Telegram&&window.Telegram.WebApp;
+  const where=()=>{const s=stack[stack.length-1];return s?("push:"+((s.querySelector(".navbar .t")||{}).textContent||"")):("tab:"+curTab())};
+  ["resize","scroll","orientationchange","visibilitychange"].forEach(n=>addEventListener(n,()=>{D.ev[n]=(D.ev[n]||0)+1},{passive:true,capture:true}));
+  if(tg&&tg.onEvent)["viewportChanged","safeAreaChanged","contentSafeAreaChanged","fullscreenChanged","themeChanged","activated","deactivated"].forEach(n=>{try{tg.onEvent(n,()=>{D.ev["tg:"+n]=(D.ev["tg:"+n]||0)+1})}catch(e){}});
+  document.addEventListener("click",e=>{const b=e.target.closest("[data-act],[data-id],button");D.act.push([Math.round(performance.now()-D.t0),b?(b.dataset.act||b.className||"").toString().slice(0,30):"?"]);if(D.act.length>40)D.act.shift()},true);
+  let last=performance.now(),n=0;const loop=t=>{const g=t-last;last=t;n++;if(g>50)D.gaps.push([Math.round(t-D.t0),Math.round(g),where()]);if(t-D.t0<60000)requestAnimationFrame(loop)};requestAnimationFrame(loop);
+  const send=fin=>{let ls=0;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);ls+=k.length+(localStorage.getItem(k)||"").length}}catch(e){}
+    const g=D.gaps,b=x=>g.filter(a=>a[1]>x).length,body={fin,sec:Math.round((performance.now()-D.t0)/1000),frames:n,gaps50:b(50),gaps100:b(100),gaps300:b(300),top:g.slice().sort((a,b)=>b[1]-a[1]).slice(0,25),ev:D.ev,act:D.act,
+      env:{ua:navigator.userAgent,dpr:devicePixelRatio,w:innerWidth,h:innerHeight,tgv:tg&&tg.version,pl:tg&&tg.platform,fs:tg&&tg.isFullscreen,exp:tg&&tg.isExpanded,vh:tg&&tg.viewportHeight,cls:document.documentElement.className},
+      dom:document.getElementsByTagName("*").length,imgs:document.images.length,ls,P:P.length,mem:performance.memory?Math.round(performance.memory.usedJSHeapSize/1e6):null};
+    try{fetch("/api/diag",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})}catch(e){}};
+  setTimeout(()=>send(0),20000);setTimeout(()=>send(0),40000);setTimeout(()=>{send(1);toast("Диагностика отправлена, спасибо")},61000);
+  toast("Диагностика 60 с: пользуйтесь приложением как обычно")}
+$("#uq").addEventListener("input",e=>{if(e.target.value.trim().toLowerCase()==="#diag"){e.target.value="";e.target.parentNode.classList.remove("typed");diagRun()}});
 
 /* ===== «Новое»: сторис по брендам. Новинка = отметка isNew в каталоге; бренды по свежести, просмотренные — в конце ===== */
 const NW={G:[],gi:0,ii:0,t:0,SHOW:10};
