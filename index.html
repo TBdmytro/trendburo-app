@@ -22,7 +22,7 @@ html.fs .tglogo{display:flex}
 html.pvtop .tglogo i{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);-webkit-backdrop-filter:blur(10px) saturate(1.3);backdrop-filter:blur(10px) saturate(1.3);text-shadow:0 1px 2px rgba(0,0,0,.25)}
 html.pvtop .tglogo i::before{background:conic-gradient(from 0deg,rgba(255,255,255,.8) 0 18%,transparent 18% 50%,rgba(255,255,255,.8) 50% 68%,transparent 68%)}
 .tglogo i{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em}
-.tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);will-change:transform;animation:tgspin 6s linear infinite}
+.tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px)}
 @keyframes tgspin{to{transform:rotate(360deg)}}
 body:has(.sv) .tglogo,body:has(.splash) .tglogo,body:has(.oxa.in) .tglogo,body:has(.oxi) .tglogo{opacity:0}
 .splash{position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;cursor:pointer;overflow:hidden}
@@ -520,18 +520,19 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pushed:has(.pv-hero.ph) .navbar.clear .round,.intg .pushed:has(.pv-hero.ph) .navbar.clear .round{background:var(--soft);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 .pushed:has(.pv-hero.ph) .navbar .t,.intg .pushed:has(.pv-hero.ph) .navbar.clear.solid .t{opacity:1;display:flex;justify-content:center;font-size:0}
 .nbl{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em;font-style:normal}
-.nbl::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);animation:tgspin 6s linear infinite}
+.nbl::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px)}
 .pushed:has(.pv-hero.ph) .scroll.under,.intg .pushed:has(.pv-hero.ph) .scroll.under{padding-top:var(--nbh);background:#fff}
 .pv-hero.ph,.intg .pv-hero.ph{--top:0px;--off:0px;background:#fff}
 .pv-hero.ph::after,.intg .pv-hero.ph::after{display:none}
-.pv-hero.ph .pv-gal{padding:0 22px;gap:8px;scroll-padding:0 22px}
-.pv-hero.ph .pv-gal .sl{flex:0 0 100%;padding:10px 0 60px;clip-path:inset(10px 0 60px 0 round 20px);background:var(--slbg,#f3f3f3)}
+.pv-hero.ph .pv-gal{padding:0 22px;gap:8px;scroll-padding:0 22px;align-items:flex-start}
+/* рамка фото — скругление через overflow (не clip-path: iOS в Telegram недорисовывал куски фото при листании) */
+.pv-hero.ph .pv-gal .sl{flex:0 0 100%;padding:0;margin:10px 0 0;height:calc(100% - 70px);border-radius:20px;overflow:hidden;background:var(--slbg,#f3f3f3);transform:translateZ(0);-webkit-transform:translateZ(0)}
 .pv-hero.ph .pv-gal .slb{display:none!important}
 .pv-hero.ph .pv-dots{bottom:43px;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0}
 .pv-hero.ph .pv-bdg,.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .pv-bdg{top:22px;right:34px}
 .pv-hero.ph .newp,.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .newp{top:22px;left:34px}
 .pv-hero.ph .pv-n{top:22px;right:34px}
-.pv-hero.ph .pv-gal .sl[data-full] img,.pv-hero.ph .pv-gal .sl[data-full] img:not(.fit){opacity:1;animation:none;position:absolute;left:0;top:10px;width:100%;height:calc(100% - 70px);object-fit:contain;will-change:auto;transition:none}
+.pv-hero.ph .pv-gal .sl[data-full] img,.pv-hero.ph .pv-gal .sl[data-full] img:not(.fit){opacity:1;animation:none;position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;will-change:auto;transition:none}
 .pv-hero.ph .pv-gal .sl[data-full]{transition:background .25s}
 /* полноэкранный Telegram: «назад» и «⋯» рисует Telegram, логотип TB по центру его строки, наша корзина рядом с «⋯» */
 .fs .pushed:has(.pv-hero.ph) .navbar .t{visibility:hidden}
@@ -1381,8 +1382,9 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
   setTimeout(function(){s.classList.add("out");var R=document.documentElement;setTimeout(function(){R.classList.add("appin")},180);
     setTimeout(function(){s.remove();setTimeout(function(){R.classList.remove("appin")},700)},620)},w)};
 (function(){var s=document.getElementById("splash");if(!s)return;window.__sp0=performance.now();var seen=false;
-  try{seen=!!sessionStorage.getItem(window.__spKey||"tb_sp");sessionStorage.setItem(window.__spKey||"tb_sp","1")}catch(x){}
-  window.__spMin=seen?800:1600;if(seen)s.classList.add("quick");s.style.setProperty("--spd",(window.__spMin-100)+"ms");
+  // заставка: полная — только при самом первом входе, дальше короткая (Telegram каждый раз открывает приложение заново)
+  try{seen=!!localStorage.getItem(window.__spKey||"tb_sp");localStorage.setItem(window.__spKey||"tb_sp","1")}catch(x){}
+  window.__spMin=seen?450:1200;if(seen)s.classList.add("quick");s.style.setProperty("--spd",(window.__spMin-100)+"ms");
   s.addEventListener("click",function(){window.hideSplash(0)});setTimeout(function(){window.hideSplash(0)},6000)})();
 </script>
 <div id="app">
@@ -2149,7 +2151,7 @@ function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!
   // «живой» фон (улица, интерьер): края — размытое продолжение этого же снимка
   const b=box.querySelector(".slb");if(b){const live=gap&&!si;b.hidden=!live;if(live&&src&&!b.style.backgroundImage)b.style.backgroundImage=`url("${(src.thumb||src.src).replace(/"/g,"%22")}")`}
   // края снимка мягко растворяются в заливке — без шва
-  const fx=!si?"":dw<W-1?"linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)":dh<H-1?"linear-gradient(transparent,#000 5%,#000 95%,transparent)":"";im.style.webkitMaskImage=im.style.maskImage=fx;
+  const fx=!si||full?"":dw<W-1?"linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)":dh<H-1?"linear-gradient(transparent,#000 5%,#000 95%,transparent)":"";im.style.webkitMaskImage=im.style.maskImage=fx;
   im.classList.add("fit")}
 function edgeColor(im){try{const w=24,h=24,c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,w,h);
   const d=x.getImageData(0,0,w,h).data,px=[];for(let i=0;i<w;i++){px.push(i*4,((h-1)*w+i)*4)}for(let j=0;j<h;j++){px.push(j*w*4,(j*w+w-1)*4)}
