@@ -512,6 +512,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .cbo b{font:400 24px/1 "Prata",Georgia,serif;letter-spacing:.2em;margin-top:8px}
 .cbg{background:linear-gradient(180deg,#3d4046 0%,#282a2e 52%,#1d1f22 100%)}
 .cbg-im{position:absolute;left:14px;right:14px;top:14px;bottom:44%;border-radius:14px;background:#f3f3f3 center/contain no-repeat;opacity:.96}
+.fs #app::before{content:"";position:fixed;left:0;right:0;top:0;height:var(--st);background:#fff;z-index:6;pointer-events:none}
 /* ===== Карточка товара v3: белый верх (назад · TB · корзина), фото целиком в рамке, по краям соседние фото ===== */
 .pushed:has(.pv-hero.ph){--nbh:calc(52px + var(--st))}
 .fs .pushed:has(.pv-hero.ph){--nbh:calc(var(--st) + 2px)}
@@ -526,7 +527,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero.ph::after,.intg .pv-hero.ph::after{display:none}
 .pv-hero.ph .pv-gal{padding:0 22px;gap:8px;scroll-padding:0 22px;align-items:flex-start}
 /* рамка фото — скругление через overflow (не clip-path: iOS в Telegram недорисовывал куски фото при листании) */
-.pv-hero.ph .pv-gal .sl{flex:0 0 100%;padding:0;margin:10px 0 0;height:calc(100% - 70px);border-radius:20px;overflow:hidden;background:var(--slbg,#f3f3f3);transform:translateZ(0);-webkit-transform:translateZ(0)}
+.pv-hero.ph .pv-gal .sl{flex:0 0 100%;padding:0;margin:10px 0 0;height:calc(100% - 70px);border-radius:20px;overflow:hidden;background:var(--slbg,#f3f3f3)}
 .pv-hero.ph .pv-gal .slb{display:none!important}
 .pv-hero.ph .pv-dots{bottom:43px;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0}
 .pv-hero.ph .pv-bdg,.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .pv-bdg{top:22px;right:34px}
@@ -2114,9 +2115,14 @@ async function shotInfoAsync(im){if(im._si!==undefined)return im._si;const [w,h]
   // пока уменьшали, снимок сменился (листание фото) — этот разбор уже не нужен
   if(im._si!==undefined||(im.currentSrc||im.src)!==u){bm&&bm.close&&bm.close();return im._si}
   const r=shotCalc(src,w,h);bm&&bm.close&&bm.close();return shotKeep(im,r)}
+// цвета краёв по лёгкой копии снимка (раскодировать 400 px быстро); результат в общей памяти по адресу снимка без размера
+const THSI=new Map();function thumbSI(u){const k=siKey(u),m=SIMEM.get(k);if(m)return Promise.resolve(m);if(THSI.has(k))return THSI.get(k);
+  const pr=new Promise(res=>{const m=new Image();m.crossOrigin="anonymous";m.decoding="async";m.onload=()=>{shotInfoAsync(m).then(si=>{if(si)SIMEM.set(k,si);res(si||null)}).catch(()=>res(null))};m.onerror=()=>res(null);m.src=u});THSI.set(k,pr);return pr}
 /* Кадр в рамке: товар целиком и как можно крупнее; если снимок закрывает рамку — без полей, иначе края заливаются фоном снимка */
 function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!box)return;
   if(im._si===undefined){const m0=SIMEM.get(siKey(im.currentSrc||im.src));if(m0)im._si=m0}
+  // разбор цветов краёв — по лёгкой копии снимка (400 px, уже в кэше от каталога), а не по большому фото: на iPhone раскодирование большого тормозило открытие
+  if(im._si===undefined&&src&&src.thumb&&!im._thP){im._thP=thumbSI(src.thumb).then(si=>{im._si=si||undefined;fitShot(im,box,src)});return}
   if(im._si===undefined){if(!im._siP)im._siP=shotInfoAsync(im).catch(()=>shotKeep(im,null)).then(()=>{im._siP=null;fitShot(im,box,src)});return}
   const cs=getComputedStyle(box),pt=parseFloat(cs.paddingTop)||0,pb=parseFloat(cs.paddingBottom)||0,W=box.clientWidth,H=box.clientHeight-pt-pb;if(W<10||H<10)return;
   const si=shotInfo(im),bx=si?si.box:[0,0,1,1],res=box.dataset.res?+box.dataset.res:box.closest(".pv-hero")&&box.closest(".pv-hero").querySelector(".pv-dots")?24:0,Hc=H-res;
@@ -2176,7 +2182,7 @@ function openProduct(id){
   const showDl=!r&&!(st&&st.loc==="ua");
   const btnLabel=()=>r?"Купить":"В корзину · "+eur(priceFor(it,d));
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
-  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img style="background:url(&quot;${esc(im.thumb||im.src)}&quot;) center/contain no-repeat" src="${esc(im.src)}"${im.big?` srcset="${esc(im.src)} 1000w, ${esc(im.big)} 1600w" sizes="100vw"`:""} crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
+  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img ${i?"data-":""}style="background:url(&quot;${esc(im.thumb||im.src)}&quot;) center/contain no-repeat" ${i?"data-":""}src="${esc(im.src)}" crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?"":'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:14px"></div>
    ${showDl?`<div id="pvd"></div>`:""}
    <div id="pvx" style="display:flex;flex-direction:column;gap:18px"></div>
@@ -2184,6 +2190,8 @@ function openProduct(id){
    ${like.length?`<div class="ondark" id="pvlike"></div>`:""}
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
     foot:`<div class="foot dark glass"><button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
+  // остальные фото карточки грузим, когда она уже выехала: иначе iPhone раскодирует все снимки разом и анимация замирает
+  setTimeout(()=>{if(!s.isConnected)return;s.querySelectorAll("#pvg img[data-src]").forEach(im=>{im.setAttribute("style",im.dataset.style||"");im.src=im.dataset.src;im.removeAttribute("data-src")})},620);
   // «Похожие» дорисовываем после того, как карточка выехала — открытие без пауз
   if(like.length)setTimeout(()=>{const b=s.querySelector("#pvlike");if(b&&s.isConnected)b.innerHTML=`<div class="sech"><h2>${r?"Ещё в ресейле":"Похожие"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div>`},560);
   if(hasPh){const t0=s.querySelector(".navbar .t");if(t0)t0.innerHTML='<i class="nbl" aria-hidden="true">TB</i>'}
