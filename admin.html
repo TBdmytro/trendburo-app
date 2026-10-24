@@ -1437,6 +1437,9 @@ async function editor(id, reload) {
     <div class="sec"><h2>История</h2><div class="card pad hist">${(p.history || []).slice().reverse().map(h => `<div>${dt(h.at)} · <b>${esc(h.by)}</b> · ${esc(h.action)}${h.field ? " «" + esc({ title: "название", category: "категория", pinnedPrice: "цена", hidden: "скрыт", gender: "для кого", isNew: "новинка", newUntil: "новинка до", sale: "скидка", dims: "размер изделия", material: "материал", stock: "в наличии", cover: "обложка", imageOrder: "порядок фото", primaryOffer: "основное предложение" }[h.field] || h.field) + "»" + (["imageOrder", "cover"].includes(h.field) ? " изменено" : ": " + esc(JSON.stringify(h.from)) + " → " + esc(JSON.stringify(h.to))) : ""}${h.to && !h.field ? " → " + esc(h.to) : ""}</div>`).join("") || "—"}</div></div></div>`;
   };
   draw();
+  // «Новинка»: при включении срок сам ставится на месяц вперёд (в среднем новинки висят месяц), дату можно поменять
+  { const nw = d.querySelector("#eNew"), to = d.querySelector("#eNewTo");
+    if (nw && to) nw.addEventListener("change", () => { if (nw.checked && !to.value) { const x = new Date(Date.now() + 30 * 864e5); to.value = x.toISOString().slice(0, 10); } }); }
   d.onclick = async e => {
     if (e.target === d || e.target.closest("[data-x]")) return close();
     const b = e.target.closest("button"); if (!b) return;

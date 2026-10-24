@@ -264,6 +264,9 @@ button{cursor:pointer}
 .searchf{margin:0 18px;display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:12px;padding:0 12px;height:40px}
 .searchf svg{width:17px;height:17px;stroke:var(--muted);fill:none;stroke-width:1.8;flex:none}
 .searchf input{border:0;background:none;outline:none;flex:1;min-width:0;font-size:15px;height:100%}
+/* метка «Умный»: поиск понимает «кроссовки 41 до 1000» — прячется, когда начали печатать */
+.searchf .smb{flex:none;font-size:11px;font-weight:600;letter-spacing:.02em;color:#7a6a55;background:#efe8de;border-radius:99px;padding:3px 9px;transition:opacity .2s}
+.searchf:has(input:not(:placeholder-shown)) .smb{opacity:0;pointer-events:none}
 .seg{display:flex;background:var(--soft);border-radius:10px;padding:3px;gap:2px}
 .seg button{display:inline-flex;align-items:center;justify-content:center;flex:1;border:0;background:transparent;padding:7px 10px;border-radius:8px;font-size:13.5px;color:var(--g2);font-weight:500;transition:background .25s,box-shadow .25s}
 .seg button[aria-pressed="true"]{background:var(--ink-grad);color:#fff;box-shadow:var(--ink-hi)}
@@ -1412,7 +1415,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
     <div class="scroll">
       <div id="catHome">
         <div class="bigtitle"><h1>Каталог</h1><div class="topicons"></div></div>
-        <label class="searchf"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input type="search" id="uq" placeholder="Бренд, вещь или «кроссовки 41 до 1000 €»" autocomplete="off" aria-label="Поиск по каталогу"></label>
+        <label class="searchf"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input type="search" id="uq" placeholder="Бренд, вещь или «до 1 500 €»" autocomplete="off" aria-label="Поиск по каталогу"><span class="smb" aria-hidden="true">Умный</span></label>
         <div id="sres" hidden></div>
         <div id="homeBody">
           <div class="gb2"><button class="press" data-act="gopen" data-g="w">Для неё<i class="chev"></i></button><button class="press" data-act="gopen" data-g="m">Для него<i class="chev"></i></button></div>
