@@ -527,15 +527,17 @@ test("поставщик в долларах с европейским разд�
 
 test("поставщик в долларах, Европа по стране посетителя (Sporty & Rich): выбираем Германию, цены в евро", async () => {
   const store = new MemoryStore(); const st = { de: true, seen: [] };
-  const eu = fx => fx.map(p => ({ ...p, variants: p.variants.map(v => ({ ...v, price: "230.00" })) }));
+  const ids = fx => fx.map(p => ({ ...p, variants: p.variants.map((v, j) => ({ ...v, id: p.id * 100 + j })) }));
+  const eu = fx => ids(fx).map(p => ({ ...p, variants: p.variants.map(v => ({ ...v, price: "230.00" })) }));
   const f = (url, opts) => { const c = opts?.headers?.Cookie || ""; st.seen.push(c); return fakeFetch(u => {
     const de = st.de && c.includes("localization=DE");
     if (u.endsWith("/robots.txt")) return { body: "User-agent: *\nDisallow: /cart\n", type: "text/plain" };
     if (u.includes("/meta.json")) return { body: JSON.stringify({ name: "Sporty & Rich", currency: "USD" }), type: "application/json" };
+    { const js = u.match(/\/products\/hoodie-(\d+)\.js$/); if (js) { const n = Number(js[1]); return { body: JSON.stringify({ variants: [0, 1].map(j => ({ id: n * 100 + j, price: de ? 23000 : 19000 })) }), type: "application/json" }; } }
     if (/\/products\/hoodie-1$/.test(u)) return { body: de ? '<meta property="og:price:amount" content="230,00"><script>Shopify.currency = {"active":"EUR","rate":"0.9"};</script>' : '<meta property="og:price:amount" content="190.00"><script>Shopify.currency = {"active":"USD","rate":"1.0"};</script>', type: "text/html" };
     if (/\/$/.test(u)) return { body: de ? '<script>Shopify.currency = {"active":"EUR","rate":"0.9"};</script>' : '<script>Shopify.currency = {"active":"USD","rate":"1.0"};</script>', type: "text/html" };
     const m = u.match(/\/products\.json\?limit=(\d+)(?:&page=(\d+))?/);
-    if (m) { const page = Number(m[2] || 1), lim = Number(m[1]), all = de ? eu(shopFixture(2)) : shopFixture(2); return { body: JSON.stringify({ products: all.slice((page - 1) * lim, page * lim) }), type: "application/json" }; }
+    if (m) { const page = Number(m[2] || 1), lim = Number(m[1]), all = de ? eu(shopFixture(2)) : ids(shopFixture(2)); return { body: JSON.stringify({ products: all.slice((page - 1) * lim, page * lim) }), type: "application/json" }; }
     return null;
   })(url, opts); };
   const det = await detectSupplier("sportyandrich.com", { fetchImpl: f });
