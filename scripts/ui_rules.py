@@ -30,6 +30,15 @@ async def main():
     r=await pg.evaluate("(()=>{const s=[...document.querySelectorAll('.pushed')].pop();return {back:!!s.querySelector('[data-back]'),acc:!!s.querySelector('[data-act=account]'),cart:!!s.querySelector('.navbar [data-act=cart]')}})()")
     ok("карточка товара: есть «назад» и корзина, нет аккаунта",r["back"] and r["cart"] and not r["acc"],r)
     ok("карточка товара: панель вкладок скрыта",await pg.evaluate("document.querySelector('#tabbar').classList.contains('hide')"))
+    await pg.wait_for_timeout(1200)
+    r2=await pg.evaluate("""(()=>{const s=document.querySelector('.pushed:last-child'),nb=s.querySelector('.navbar'),g=s.querySelector('#pvg'),sl=[...g.querySelectorAll('.sl')],im=g.querySelector('img');
+      const sb=sl[0].getBoundingClientRect(),ib=im.getBoundingClientRect(),pad=parseFloat(getComputedStyle(sl[0]).paddingTop),pb=parseFloat(getComputedStyle(sl[0]).paddingBottom);
+      const blur=[...g.querySelectorAll('.slb')].some(b=>getComputedStyle(b).display!=='none');
+      return {logo:!!nb.querySelector('.nbl'),white:getComputedStyle(nb).backgroundColor,peek:sb.width<g.clientWidth-20,full:sl.every(x=>x.dataset.full==='1'),
+        whole:ib.left>=sb.left-1&&ib.right<=sb.right+1&&ib.top>=sb.top+pad-1&&ib.bottom<=sb.bottom-pb+1,blur,step:gStep(g)>sb.width}})()""")
+    ok("карточка товара: белый верх с логотипом TB",r2["logo"] and r2["white"]=="rgb(255, 255, 255)",r2)
+    ok("карточка товара: фото целиком в рамке, без размытого фона",r2["full"] and r2["whole"] and not r2["blur"],r2)
+    ok("карточка товара: по краям видны соседние фото",r2["peek"] and r2["step"],r2)
     await pg.evaluate("pop()");await pg.wait_for_timeout(700)
     ok("после закрытия товара панель вкладок вернулась",await pg.evaluate("!document.querySelector('#tabbar').classList.contains('hide')"))
     await pg.fill("#uq","женские леггинсы до 150");await pg.dispatch_event("#uq","input");await pg.wait_for_timeout(400)

@@ -490,6 +490,28 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero.ph .pv-bdg{top:calc(var(--st) + 58px);left:auto;right:16px;flex-direction:column;align-items:flex-end}
 .pv-bdg span{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:var(--fg);padding:5px 10px;border-radius:99px}
 .pv-bdg .sale,.pc .salb{background:#b3261e;color:#fff;letter-spacing:.02em}
+/* ===== Карточка товара v3: белый верх (назад · TB · корзина), фото целиком в рамке, по краям соседние фото ===== */
+.pushed:has(.pv-hero.ph){--nbh:calc(52px + var(--st))}
+.fs .pushed:has(.pv-hero.ph){--nbh:calc(var(--st) + 2px)}
+.pushed:has(.pv-hero.ph) .navbar.clear,.pushed:has(.pv-hero.ph) .navbar.clear.solid,.intg .pushed:has(.pv-hero.ph) .navbar.clear,.intg .pushed:has(.pv-hero.ph) .navbar.clear.solid{height:var(--nbh);padding:var(--st) 10px 0;background:#fff;border-bottom:1px solid var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}
+.pushed:has(.pv-hero.ph) .navbar.clear::before{display:none}
+.pushed:has(.pv-hero.ph) .navbar.clear .round,.intg .pushed:has(.pv-hero.ph) .navbar.clear .round{background:var(--soft);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.pushed:has(.pv-hero.ph) .navbar .t,.intg .pushed:has(.pv-hero.ph) .navbar.clear.solid .t{opacity:1;display:flex;justify-content:center;font-size:0}
+.nbl{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em;font-style:normal}
+.nbl::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);animation:tgspin 6s linear infinite}
+.pushed:has(.pv-hero.ph) .scroll.under,.intg .pushed:has(.pv-hero.ph) .scroll.under{padding-top:var(--nbh);background:#fff}
+.pv-hero.ph,.intg .pv-hero.ph{--top:0px;--off:0px;background:#fff}
+.pv-hero.ph::after,.intg .pv-hero.ph::after{display:none}
+.pv-hero.ph .pv-gal{padding:0 22px;gap:8px;scroll-padding:0 22px}
+.pv-hero.ph .pv-gal .sl{flex:0 0 100%;padding:10px 0 60px;clip-path:inset(10px 0 60px 0 round 20px);background:var(--slbg,#f3f3f3)}
+.pv-hero.ph .pv-gal .slb{display:none!important}
+.pv-hero.ph .pv-dots{bottom:43px;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0}
+.pv-hero.ph .pv-bdg,.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .pv-bdg{top:22px;right:34px}
+.pv-hero.ph .newp,.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .newp{top:22px;left:34px}
+.pv-hero.ph .pv-n{top:22px;right:34px}
+/* полноэкранный Telegram: «назад» и «⋯» рисует Telegram, логотип TB по центру его строки, наша корзина рядом с «⋯» */
+.fs .pushed:has(.pv-hero.ph) .navbar .t{visibility:hidden}
+.fs .pushed:has(.pv-hero.ph) .navbar [data-act="cart"]{position:fixed;z-index:410;top:calc(var(--tgs) + var(--tgc) / 2 - 17px);right:var(--tgcart,104px);width:34px;height:34px}
 .pv-bdg .sale{font-size:12.5px;padding:4px 10px}
 .pc .salb{position:absolute;left:12px;top:12px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;z-index:1}
 .pc .p s{font-weight:400;color:var(--muted);margin-left:5px;font-size:12px}
@@ -2040,6 +2062,9 @@ function shotCalc(src,w,h){let r=null;
     // заливка полей: отдельно для левого и правого края — продолжение крайнего столбца снимка (сглаженное по высоте)
     const col=x=>{const o=[];for(let t=0;t<=1.0001;t+=.125){const j0=Math.max(0,Math.round(t*(h-1))-2),j1=Math.min(h-1,j0+4);let a=[0,0,0],m=0;for(let j=j0;j<=j1;j++)for(let i=x;i<x+3&&i<w;i++){const k=(j*w+(x?i-2:i))*4;a[0]+=d[k];a[1]+=d[k+1];a[2]+=d[k+2];m++}o.push(`rgb(${a[0]/m|0},${a[1]/m|0},${a[2]/m|0}) ${(t*100).toFixed(1)}%`)}return "linear-gradient(to bottom,"+o.join(",")+")"};
     const grad=col(0),gradR=col(w-1);
+    // то же для верхнего и нижнего края (квадратные и широкие фото): цвет каждой колонки края слева направо
+    const row=y=>{const o=[];for(let t=0;t<=1.0001;t+=.125){const i0=Math.max(0,Math.round(t*(w-1))-2),i1=Math.min(w-1,i0+4);let a=[0,0,0],m=0;for(let i=i0;i<=i1;i++)for(let j=y;j<y+3&&j<h;j++){const k=((y?j-2:j)*w+i)*4;a[0]+=d[k];a[1]+=d[k+1];a[2]+=d[k+2];m++}o.push(`rgb(${a[0]/m|0},${a[1]/m|0},${a[2]/m|0}) ${(t*100).toFixed(1)}%`)}return "linear-gradient(to right,"+o.join(",")+")"};
+    const gradT=row(0),gradB=row(h-1);
     // фон по бокам по высоте: цвет левого и правого края в каждой строке; ровный, если края похожи и цвет меняется плавно (студийный градиент)
     const px=k=>[d[k*4],d[k*4+1],d[k*4+2]],side=[];let lr=0,jump=0;
     for(let j=0;j<h;j++){const a=px(j*w),b=px(j*w+w-1);lr+=(Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2]))/3;side.push([(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2])}
@@ -2050,7 +2075,7 @@ function shotCalc(src,w,h){let r=null;
     for(let j=0;j<h;j++){const c0=side[j];for(let i=0;i<w;i++){const k=(j*w+i)*4;if(Math.max(Math.abs(d[k]-c0[0]),Math.abs(d[k+1]-c0[1]),Math.abs(d[k+2]-c0[2]))>26){rows[j]++;cols[i]++}}}
     const fr=(a,len,lim)=>{let s0=0,e0=a.length-1;while(s0<a.length&&a[s0]<=lim)s0++;while(e0>s0&&a[e0]<=lim)e0--;return s0>=a.length?[0,1]:[s0/len,(e0+1)/len]};
     const [y0,y1]=fr(rows,h,w*.02),[x0,x1]=fr(cols,w,h*.02);
-    r={bg:`rgb(${R|0},${G|0},${B|0})`,grad,gradR,flat:dev<9,box:[x0,y0,x1,y1]}}catch(e){r=null}
+    r={bg:`rgb(${R|0},${G|0},${B|0})`,grad,gradR,gradT,gradB,flat:dev<9,box:[x0,y0,x1,y1]}}catch(e){r=null}
   return r}
 const shotWH=im=>[72,Math.max(8,Math.round(72*im.naturalHeight/im.naturalWidth))];
 // полный разбор (с цветами краёв) по адресу снимка без размера: разобрали маленькую копию — большой уже не пересчитываем
@@ -2077,13 +2102,15 @@ function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!
   if(box.dataset.whole&&w/h>=.8)sc=Math.min(sc,W/w,Hc/h);
   const live=box.dataset.live&&si&&!si.flat&&(bx[0]<.02||bx[2]>.98);
   if(live)sc=Math.min(W/w,H/h);
+  // data-full (карточка товара): снимок всегда целиком, без приближения, по центру рамки
+  const full=!!box.dataset.full;if(full)sc=Math.min(W/w,H/h);
   // len — вся рамка, vis — где товар должен быть виден (над точками листания); сначала без полей, затем товар целиком
   // v0..v1 — где товар должен быть виден (ниже кнопок Telegram, выше точек листания); товар по центру этой области,
   // снимок закрывает рамку без полей, если может; товар целиком важнее всего
   const ax=(n,len,v0,v1,c0,c1)=>{let t=(v0+v1)/2-(c0+c1)/2*n;if(n>=len)t=Math.min(0,Math.max(len-n,t));t=Math.min(t,v1-c1*n);t=Math.max(t,v0-c0*n);return t};
   // «живое» фото чуть уже рамки (до 7%) — растягиваем по ширине на эти проценты: глазом не видно, зато ни полос, ни обрезки
-  let dw=w*sc;const dh=h*sc;if(live&&dw<W&&(W-dw)/W<=.07)dw=W;
-  const L=live?(W-dw)/2:ax(dw,W,0,W,bx[0],bx[2]),T=live?(dh>=H-1?0:ax(dh,H,rt,Hc,0,1)):ax(dh,H,rt,Hc,bx[1],bx[3]);
+  let dw=w*sc;const dh=h*sc;if(live&&!full&&dw<W&&(W-dw)/W<=.07)dw=W;
+  const L=full||live?(W-dw)/2:ax(dw,W,0,W,bx[0],bx[2]),T=full?(H-dh)/2:live?(dh>=H-1?0:ax(dh,H,rt,Hc,0,1)):ax(dh,H,rt,Hc,bx[1],bx[3]);
   Object.assign(im.style,{position:"absolute",left:L+"px",top:(pt+T)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"fill"});
   const gap=dw<W-1||dh<H-1;box.style.setProperty("--slbg",si&&si.bg||"#f3f3f3");
   // поля сверху/снизу — цветом фона; по бокам — тем же цветом по высоте (у студийных фото фон сверху и снизу разный)
@@ -2093,7 +2120,8 @@ function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!
   // сверху/снизу — цвет верхнего/нижнего края снимка, по бокам — продолжение левого/правого края
   const edgeC=(g,end)=>{const m=g.match(/rgb\([^)]*\)/g)||[];return end?m[m.length-1]:m[0]};
   const vfill=si?`linear-gradient(to bottom,${edgeC(si.grad)} ${(pt+T).toFixed(1)}px,${edgeC(si.grad,1)} ${(pt+T+dh).toFixed(1)}px)`:"";
-  box.style.background=si&&gap?(dw<W-1?`${gl} left top/${Math.ceil(L+dw/2)}px 100% no-repeat,${gr} right top/${Math.ceil(W-L-dw/2)}px 100% no-repeat,`:"")+vfill:"";
+  const hfill=full&&si&&si.gradT&&dh<H-1&&!(dw<W-1)?`${si.gradT} left top/100% ${Math.ceil(pt+T+dh/2)}px no-repeat,${si.gradB} left bottom/100% ${Math.ceil(H+pb-T-dh/2)}px no-repeat,`:"";
+  box.style.background=si&&gap?(dw<W-1?`${gl} left top/${Math.ceil(L+dw/2)}px 100% no-repeat,${gr} right top/${Math.ceil(W-L-dw/2)}px 100% no-repeat,`:hfill)+vfill:"";
   // «живой» фон (улица, интерьер): края — размытое продолжение этого же снимка
   const b=box.querySelector(".slb");if(b){const live=gap&&!si;b.hidden=!live;if(live&&src&&!b.style.backgroundImage)b.style.backgroundImage=`url("${(src.thumb||src.src).replace(/"/g,"%22")}")`}
   // края снимка мягко растворяются в заливке — без шва
@@ -2102,6 +2130,8 @@ function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!
 function edgeColor(im){try{const w=24,h=24,c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,w,h);
   const d=x.getImageData(0,0,w,h).data,px=[];for(let i=0;i<w;i++){px.push(i*4,((h-1)*w+i)*4)}for(let j=0;j<h;j++){px.push(j*w*4,(j*w+w-1)*4)}
   let r=0,g=0,b=0;px.forEach(k=>{r+=d[k];g+=d[k+1];b+=d[k+2]});const n=px.length;return `rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`}catch(e){return ""}}
+// шаг листания фото: ширина слайда + промежуток (по краям выглядывают соседние фото)
+const gStep=g=>{const a=g.children[0],b=g.children[1];return b&&b.offsetLeft>a.offsetLeft?b.offsetLeft-a.offsetLeft:g.clientWidth};
 function similarTo(p){const t=TIER_OF(p.brand),pool=P.filter(x=>x.id!==p.id&&x.cat===p.cat);
   const sc=x=>Math.abs(TIER_OF(x.brand)-t)*0.6+Math.abs(Math.log((x.price||1)/(p.price||1)))+(x.bk===p.bk?0.15:0);
   let l=pool.filter(x=>Math.abs(TIER_OF(x.brand)-t)<=1&&x.price>=p.price*.6&&x.price<=p.price*1.4);
@@ -2128,14 +2158,15 @@ function openProduct(id){
    ${like.length?`<div class="ondark"><div class="sech"><h2>${r?"Ещё в ресейле":"Похожие"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div></div>`:""}
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
     foot:`<div class="foot dark glass"><button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
-  {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/g.clientWidth);dots.forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true});
+  if(hasPh){const t0=s.querySelector(".navbar .t");if(t0)t0.innerHTML='<i class="nbl" aria-hidden="true">TB</i>'}
+  {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/gStep(g));dots.forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true});
     // листание фото: один свайп — ровно один слайд (вправо/влево), без остановки между снимками
-    {const n=g.querySelectorAll(".sl").length;let x0=0,y0=0,k0=0,t0=0;const go=k=>{k=Math.max(0,Math.min(n-1,k));g.scrollTo({left:k*g.clientWidth,behavior:"smooth"})};
-     g.addEventListener("touchstart",e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now();k0=Math.round(g.scrollLeft/g.clientWidth)},{passive:true});
-     g.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)<Math.abs(dy)&&Math.abs(dy)>12){go(Math.round(g.scrollLeft/g.clientWidth));return}
-       const fast=Math.abs(dx)>30&&Date.now()-t0<350;setTimeout(()=>go(Math.abs(dx)>g.clientWidth*.18||fast?k0+(dx<0?1:-1):k0),0)},{passive:true});
+    {const n=g.querySelectorAll(".sl").length;let x0=0,y0=0,k0=0,t0=0;const go=k=>{k=Math.max(0,Math.min(n-1,k));g.scrollTo({left:k*gStep(g),behavior:"smooth"})};
+     g.addEventListener("touchstart",e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now();k0=Math.round(g.scrollLeft/gStep(g))},{passive:true});
+     g.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)<Math.abs(dy)&&Math.abs(dy)>12){go(Math.round(g.scrollLeft/gStep(g)));return}
+       const fast=Math.abs(dx)>30&&Date.now()-t0<350;setTimeout(()=>go(Math.abs(dx)>gStep(g)*.18||fast?k0+(dx<0?1:-1):k0),0)},{passive:true});
      // на всякий случай: прокрутка остановилась между снимками — доводим до ближайшего
-     let st=0;g.addEventListener("scroll",()=>{clearTimeout(st);st=setTimeout(()=>{const r=g.scrollLeft/g.clientWidth;if(Math.abs(r-Math.round(r))>.02)go(Math.round(r))},140)},{passive:true});}
+     let st=0;g.addEventListener("scroll",()=>{clearTimeout(st);st=setTimeout(()=>{const r=g.scrollLeft/gStep(g);if(Math.abs(r-Math.round(r))>.02)go(Math.round(r))},140)},{passive:true});}
     const sc=s.querySelector(".scroll"),ims=[...g.querySelectorAll("img")];let raf=0;
     sc.addEventListener("scroll",()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;const y=Math.max(0,Math.min(sc.scrollTop,500));ims.forEach(im=>im.style.transform=y?`translateY(${y*.35}px) scale(${1-y/2400})`:"")})},{passive:true});
     // фон под фото = цвет краёв снимка, чтобы фото смотрелось на весь экран без рамок
@@ -2144,7 +2175,7 @@ function openProduct(id){
     // фото «на улице»: кадр держится за верх снимка, а для обуви и брюк — за низ (чтобы не срезать сам товар)
     const anchor=p.cat==="shoes"||/pant|trouser|legging|jean|short|skirt|jogger|брюк|джинс|шорт|юбк/i.test(it.name)?"bottom":"top";
     const stp=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--st"))||0;
-    g.querySelectorAll(".sl").forEach(sl=>{sl.dataset.live=anchor;if(document.documentElement.classList.contains("intg")&&stp)sl.dataset.rt=Math.round(stp+4)});
+    g.querySelectorAll(".sl").forEach(sl=>{sl.dataset.live=anchor;sl.dataset.full="1";sl.dataset.res="0";if(document.documentElement.classList.contains("intg")&&stp)sl.dataset.rt=Math.round(stp+4)});
     const fitAll=()=>ims.forEach(im=>{if(im.complete&&im.naturalWidth)fitShot(im,im.parentNode,p.imgs[+im.dataset.zi])});
     s._fitAll=fitAll;
     ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.addEventListener("load",go,{once:true});im.src=im.src}else im.classList.add("fit")}))});
@@ -2164,7 +2195,7 @@ function openProduct(id){
     ${p&&(p.dims||p.material)?`<div class="pv-specs">${p.dims?`<span><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/></svg>${esc(p.dims)}</span>`:""}${p.material?`<span><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/></svg>${esc(p.material)}</span>`:""}</div>`:""}
     ${r?`<div class="trust"><div><svg viewBox="0 0 24 24">${IC.shield}</svg><span>Проверяем подлинность, сделку ведём сами</span></div></div>`:""}`;
     s.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=size===b.dataset.sz?"":b.dataset.sz;draw()});
-    s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;{const g=s.querySelector("#pvg"),ix=cws[ci].idx;if(g&&ix>=0)g.scrollTo({left:ix*g.clientWidth,behavior:"smooth"})}const v=s.querySelector("#pvv");if(v){v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180)}resetBtn();draw()});
+    s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;{const g=s.querySelector("#pvg"),ix=cws[ci].idx;if(g&&ix>=0)g.scrollTo({left:ix*gStep(g),behavior:"smooth"})}const v=s.querySelector("#pvv");if(v){v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180)}resetBtn();draw()});
   };
   const ob=s.querySelector("[data-order]"),fb=s.querySelector("[data-favp]");
   const setLbl=t=>{const l=ob.querySelector(".bl");if(!l){ob.textContent=t;return}ob.classList.add("swap");setTimeout(()=>{l.textContent=t;ob.classList.remove("swap")},180)};
@@ -2180,7 +2211,7 @@ function openProduct(id){
   {const hero=s.querySelector(".pv-hero.ph");if(hero){const pan=s.querySelector(".pv-panel"),ft=s.querySelector(".foot");
     const size=()=>{const last=s.querySelector("#pvd")||s.querySelector("#pvb");if(!last||!pan.offsetHeight)return;
       const scr=s.querySelector(".scroll");if(scr&&scr.scrollTop>4)return;const dlo=s.querySelector(".dlv.open");if(dlo)return;
-      const gl=hero.querySelector(".pv-gal"),sl0=gl&&gl.querySelector(".sl"),off=(gl?gl.offsetTop:0)+(sl0?parseFloat(getComputedStyle(sl0).paddingTop)||0:0);
+      const off=scr?parseFloat(getComputedStyle(scr).paddingTop)||0:0;
       const k=last.offsetTop+last.offsetHeight,W=hero.clientWidth,f=ft?ft.offsetHeight:90;
       const h=Math.round(Math.max(W*.78,Math.min(W*1.6,innerHeight-off-k-f+4)));
       if(Math.abs((parseFloat(hero.style.getPropertyValue("--frh"))||0)-h)>1){hero.style.setProperty("--frh",h+"px");s._fitAll&&s._fitAll()}};
