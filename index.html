@@ -24,7 +24,7 @@ html.pvtop .tglogo i::before{background:conic-gradient(from 0deg,rgba(255,255,25
 .tglogo i{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em}
 .tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px)}
 @keyframes tgspin{to{transform:rotate(360deg)}}
-body:has(.sv) .tglogo,body:has(.splash) .tglogo,body:has(.oxa.in) .tglogo,body:has(.oxi) .tglogo{opacity:0}
+html.nologo .tglogo{opacity:0}
 .splash{position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;cursor:pointer;overflow:hidden}
 .splash::before{content:"";position:absolute;width:150vmax;height:150vmax;border-radius:50%;background:radial-gradient(circle,rgba(31,33,37,.05) 0,rgba(31,33,37,0) 45%);animation:spglow 2.6s ease-out both}
 .sp-logo{position:relative;width:96px;height:96px;border-radius:50%;background:linear-gradient(160deg,#3a3d43,#1f2125 60%,#17181b);color:#fff;display:grid;place-items:center;box-shadow:0 18px 40px rgba(31,33,37,.22);animation:sppop .9s cubic-bezier(.34,1.56,.64,1) both}
@@ -195,7 +195,7 @@ button{cursor:pointer}
 .navbar.clear.solid{background:var(--glass);border-color:var(--line)}
 .pushed .scroll{padding-top:calc(52px + var(--st))}
 .pushed .scroll.under{padding-top:0}
-.pushed .scroll.under:has(>.pv-hero.ph){background:linear-gradient(180deg,transparent 60%,#1f2125 60%)}
+.pushed.pvph .scroll.under{background:linear-gradient(180deg,transparent 60%,#1f2125 60%)}
 
 /* press feedback */
 .press{transition:transform .25s var(--ease)}
@@ -266,7 +266,7 @@ button{cursor:pointer}
 .searchf input{border:0;background:none;outline:none;flex:1;min-width:0;font-size:15px;height:100%}
 /* метка «Умный»: поиск понимает «кроссовки 41 до 1000» — прячется, когда начали печатать */
 .searchf .smb{flex:none;font-size:11px;font-weight:600;letter-spacing:.02em;color:#7a6a55;background:#efe8de;border-radius:99px;padding:3px 9px;transition:opacity .2s}
-.searchf:has(input:not(:placeholder-shown)) .smb{opacity:0;pointer-events:none}
+.searchf.typed .smb{opacity:0;pointer-events:none}
 .seg{display:flex;background:var(--soft);border-radius:10px;padding:3px;gap:2px}
 .seg button{display:inline-flex;align-items:center;justify-content:center;flex:1;border:0;background:transparent;padding:7px 10px;border-radius:8px;font-size:13.5px;color:var(--g2);font-weight:500;transition:background .25s,box-shadow .25s}
 .seg button[aria-pressed="true"]{background:var(--ink-grad);color:#fff;box-shadow:var(--ink-hi)}
@@ -350,12 +350,12 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 /* real photos */
 .shimg{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply;display:block}
 .pc .art img.shimg{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;padding:0;box-sizing:border-box;object-fit:contain;mix-blend-mode:normal}
-.pc .art:has(img.shimg){background:var(--tbg,#f3f3f3);transition:background .3s}
+.pc .art.hasimg{background:var(--tbg,#f3f3f3);transition:background .3s}
 .pc .art img.shimg{transition:transform .35s var(--ease),opacity .3s}
 /* фото «на модели» и вертикальные снимки — во всю плитку, без полей */
 .pc .art.fill img.shimg{object-fit:cover;object-position:50% 22%;transform:none!important;opacity:1}.pc .art:not(.framed) img.shimg[crossorigin]{opacity:.001}.pc .art.framed img.shimg{opacity:1}
 .pv-hero .v img.shimg{width:100%;height:auto;max-height:330px}
-.pv-hero .v:has(img.shimg){mix-blend-mode:multiply}
+.pv-hero .v.hasimg{mix-blend-mode:multiply}
 .cw .t img.shimg{width:86%;height:86%}
 .cartrow .th img.shimg,.srow .th img.shimg,.ord .its img.shimg,.mini .a img.shimg{width:90%;height:90%}
 .demo-badge{position:fixed;top:calc(8px + var(--st));left:50%;transform:translateX(-50%);z-index:95;background:#b3261e;color:#fff;font:600 11px/1 var(--f);letter-spacing:.08em;padding:5px 10px;border-radius:99px;pointer-events:none}
@@ -405,8 +405,8 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .intg .pv-hero.ph .pv-gal{top:0}
 .intg .pv-hero.ph::after{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--st) + 40px);background:linear-gradient(rgba(0,0,0,.24),rgba(0,0,0,.07) 60%,transparent);pointer-events:none;z-index:1}
 /* карточка товара в Telegram: фото с самого верха, под кнопками Telegram; белая плашка появляется, когда карточку листают */
-.intg .pushed:has(.pv-hero.ph) .navbar.clear::before{opacity:0;transition:opacity .2s}
-.intg .pushed:has(.pv-hero.ph) .navbar.clear.moved::before{opacity:1}
+.intg .pushed.pvph .navbar.clear::before{opacity:0;transition:opacity .2s}
+.intg .pushed.pvph .navbar.clear.moved::before{opacity:1}
 .intg .navbar.clear::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--st);background:#fff;pointer-events:none}
 .intg .navbar.clear{padding-top:calc(var(--st) + 14px);height:calc(66px + var(--st))}
 /* рамка фото: от верхней плашки до панели; фото целиком (без обрезки), нижние 34 px рамки уходят под графитовую панель */
@@ -421,14 +421,14 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .intg .navbar.clear [data-back]{visibility:hidden}
 .navbar.clear .dotn{box-shadow:0 0 0 2px #fff}
 /* карточка товара в Telegram: зона «чёлки» и кнопок Telegram — чистая белая полоса (кнопки Telegram слева и справа, логотип TB по центру); фото начинается сразу под ней, без затемнения */
-.intg .pushed:has(.pv-hero.ph) .navbar.clear::before{opacity:1;height:calc(var(--st) - 6px);background:#fff}
-.intg .pushed:has(.pv-hero.ph) .scroll.under{padding-top:calc(var(--st) - 6px);background:#fff}
-.intg .pushed:has(.pv-hero.ph) .pv-hero.ph::after{display:none}
-.intg .pushed:has(.pv-hero.ph) .navbar.clear .round{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 1px 6px rgba(20,22,25,.12)}
-.intg .pushed:has(.pv-hero.ph) .navbar.clear{padding-top:calc(var(--st) + 4px);height:calc(56px + var(--st))}
-.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .newp{top:calc(var(--st) + 50px)}
-.intg .pushed:has(.pv-hero.ph) .navbar.clear.solid{background:transparent;border-color:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
-.intg .pushed:has(.pv-hero.ph) .navbar.clear.solid .t{opacity:0}
+.intg .pushed.pvph .navbar.clear::before{opacity:1;height:calc(var(--st) - 6px);background:#fff}
+.intg .pushed.pvph .scroll.under{padding-top:calc(var(--st) - 6px);background:#fff}
+.intg .pushed.pvph .pv-hero.ph::after{display:none}
+.intg .pushed.pvph .navbar.clear .round{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 1px 6px rgba(20,22,25,.12)}
+.intg .pushed.pvph .navbar.clear{padding-top:calc(var(--st) + 4px);height:calc(56px + var(--st))}
+.intg .pushed.pvph .pv-hero.ph .newp{top:calc(var(--st) + 50px)}
+.intg .pushed.pvph .navbar.clear.solid{background:transparent;border-color:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+.intg .pushed.pvph .navbar.clear.solid .t{opacity:0}
 .pv-hero.ph .newp{left:18px;transform:none;top:calc(var(--st) + 60px);z-index:2}
 .pv-hero.ph .pv-n{position:absolute;right:18px;top:calc(var(--st) + 60px);z-index:2;font-size:11px;font-weight:600;background:rgba(255,255,255,.9);padding:4px 9px;border-radius:99px;color:var(--fg)}
 .zv{position:fixed;inset:0;z-index:90;background:#fff;display:flex;flex-direction:column;opacity:0;transition:opacity .25s}
@@ -503,7 +503,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .cbn2{margin-bottom:28px!important}
 #t-catalog .bar b{font-size:18px;font-weight:700;letter-spacing:-.01em}
 #t-catalog .bar .topicons .round{width:34px;height:34px}
-#t-catalog .bar:has(~.scroll #catItems:not([hidden])) .topicons{display:none}
+#t-catalog.items .bar .topicons{display:none}
 .cbn2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:22px 18px 8px}
 .cbn2 button{position:relative;border:0;border-radius:22px;aspect-ratio:1/1.08;padding:16px;text-align:left;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;font:inherit;color:#fff}
 .cbn2 .cap{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;opacity:.6;position:relative}
@@ -516,15 +516,15 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .cbg-im{position:absolute;left:14px;right:14px;top:14px;bottom:44%;border-radius:14px;background:#f3f3f3 center/contain no-repeat;opacity:.96}
 .fs #app::before{content:"";position:fixed;left:0;right:0;top:0;height:var(--st);background:#fff;z-index:6;pointer-events:none}
 /* ===== Карточка товара v3: белый верх (назад · TB · корзина), фото целиком в рамке, по краям соседние фото ===== */
-.pushed:has(.pv-hero.ph){--nbh:calc(52px + var(--st))}
-.fs .pushed:has(.pv-hero.ph){--nbh:calc(var(--st) + 2px)}
-.pushed:has(.pv-hero.ph) .navbar.clear,.pushed:has(.pv-hero.ph) .navbar.clear.solid,.intg .pushed:has(.pv-hero.ph) .navbar.clear,.intg .pushed:has(.pv-hero.ph) .navbar.clear.solid{height:var(--nbh);padding:var(--st) 10px 0;background:#fff;border-bottom:1px solid var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}
-.pushed:has(.pv-hero.ph) .navbar.clear::before{display:none}
-.pushed:has(.pv-hero.ph) .navbar.clear .round,.intg .pushed:has(.pv-hero.ph) .navbar.clear .round{background:var(--soft);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
-.pushed:has(.pv-hero.ph) .navbar .t,.intg .pushed:has(.pv-hero.ph) .navbar.clear.solid .t{opacity:1;display:flex;justify-content:center;font-size:0}
+.pushed.pvph{--nbh:calc(52px + var(--st))}
+.fs .pushed.pvph{--nbh:calc(var(--st) + 2px)}
+.pushed.pvph .navbar.clear,.pushed.pvph .navbar.clear.solid,.intg .pushed.pvph .navbar.clear,.intg .pushed.pvph .navbar.clear.solid{height:var(--nbh);padding:var(--st) 10px 0;background:#fff;border-bottom:1px solid var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}
+.pushed.pvph .navbar.clear::before{display:none}
+.pushed.pvph .navbar.clear .round,.intg .pushed.pvph .navbar.clear .round{background:var(--soft);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.pushed.pvph .navbar .t,.intg .pushed.pvph .navbar.clear.solid .t{opacity:1;display:flex;justify-content:center;font-size:0}
 .nbl{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em;font-style:normal}
 .nbl::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px)}
-.pushed:has(.pv-hero.ph) .scroll.under,.intg .pushed:has(.pv-hero.ph) .scroll.under{padding-top:var(--nbh);background:#fff}
+.pushed.pvph .scroll.under,.intg .pushed.pvph .scroll.under{padding-top:var(--nbh);background:#fff}
 .pv-hero.ph,.intg .pv-hero.ph{--top:0px;--off:0px;background:#fff}
 .pv-hero.ph::after,.intg .pv-hero.ph::after{display:none}
 .pv-hero.ph .pv-gal{padding:0 22px;gap:8px;scroll-padding:0 22px;align-items:flex-start}
@@ -532,14 +532,14 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero.ph .pv-gal .sl{flex:0 0 100%;padding:0;margin:10px 0 0;height:calc(100% - 70px);border-radius:20px;overflow:hidden;background:#fff}
 .pv-hero.ph .pv-gal .slb{display:none!important}
 .pv-hero.ph .pv-dots{bottom:43px;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0}
-.pv-hero.ph .pv-bdg,.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .pv-bdg{top:22px;right:34px}
-.pv-hero.ph .newp,.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .newp{top:22px;left:34px}
+.pv-hero.ph .pv-bdg,.intg .pushed.pvph .pv-hero.ph .pv-bdg{top:22px;right:34px}
+.pv-hero.ph .newp,.intg .pushed.pvph .pv-hero.ph .newp{top:22px;left:34px}
 .pv-hero.ph .pv-n{top:22px;right:34px}
 .pv-hero.ph .pv-gal .sl[data-full] img,.pv-hero.ph .pv-gal .sl[data-full] img:not(.fit){opacity:1;animation:none;position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;will-change:auto;transition:none}
 .pv-hero.ph .pv-gal .sl[data-full]{transition:background .25s}
 /* полноэкранный Telegram: «назад» и «⋯» рисует Telegram, логотип TB по центру его строки, наша корзина рядом с «⋯» */
-.fs .pushed:has(.pv-hero.ph) .navbar .t{visibility:hidden}
-.fs .pushed:has(.pv-hero.ph) .navbar [data-act="cart"]{position:fixed;z-index:410;top:calc(var(--tgs) + var(--tgc) / 2 - 17px);right:var(--tgcart,104px);width:34px;height:34px}
+.fs .pushed.pvph .navbar .t{visibility:hidden}
+.fs .pushed.pvph .navbar [data-act="cart"]{position:fixed;z-index:410;top:calc(var(--tgs) + var(--tgc) / 2 - 17px);right:var(--tgcart,104px);width:34px;height:34px}
 .pv-bdg .sale{font-size:12.5px;padding:4px 10px}
 .pc .salb{position:absolute;left:12px;top:12px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;z-index:1}
 .pc .p s{font-weight:400;color:var(--muted);margin-left:5px;font-size:12px}
@@ -1365,6 +1365,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 
 <div id="splash" class="splash" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 124 124"><circle class="r1" cx="62" cy="62" r="52"/><circle class="r2" cx="62" cy="62" r="52"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Байер-сервис</div><div class="sp-bar"><i></i></div></div>
 <div class="tglogo" aria-hidden="true"><i>TB</i></div>
+<script>document.documentElement.classList.add("nologo")</script>
 <script>window.__spKey="tb_sp";
 /* Telegram: полный экран на телефоне и отступы под кнопки Telegram (закрыть, меню) */
 (function(){var tg=window.Telegram&&window.Telegram.WebApp;if(!tg||!tg.initData)return;var R=document.documentElement;
@@ -1756,7 +1757,7 @@ function toggleFav(id){const isO=id[0]==="o",S=isO?ofavs:favs;S.has(id)?S.delete
   updateCounts();renderFavs();if(F.onlyFav)renderGrid()}
 
 function pcHTML(p,i=0){const r=p.id[0]==="r";return `<button class="pc press" data-act="product" data-id="${p.id}" style="--c:${p.c};--i:${i}">
-  <div class="art s-${p.shape}">${p.sale?`<span class="salb">−${p.sale}%</span>`:p.st?`<span class="stk"><span class="gdot"></span>В наличии</span>`:p.isNew?'<span class="newb">Новинка</span>':r?`<span class="newb">${esc(p.cond)}</span>`:""}<span class="fav" role="button" tabindex="0" data-fav="${p.id}" aria-label="В избранное" aria-pressed="${favs.has(p.id)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span>${shapeSVG(p.shape,p.c)}</div>
+  <div class="art s-${p.shape}${String(p.shape).startsWith("img:")?" hasimg":""}">${p.sale?`<span class="salb">−${p.sale}%</span>`:p.st?`<span class="stk"><span class="gdot"></span>В наличии</span>`:p.isNew?'<span class="newb">Новинка</span>':r?`<span class="newb">${esc(p.cond)}</span>`:""}<span class="fav" role="button" tabindex="0" data-fav="${p.id}" aria-label="В избранное" aria-pressed="${favs.has(p.id)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span>${shapeSVG(p.shape,p.c)}</div>
   <div class="m"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span><span class="pr"><span class="p num">${eur(r?p.price:priceFor(p,prefs.dest||"ua"))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[prefs.dest||"ua"]??p.oldPrices.ua)}</s>`:""}</span><span class="ct">${r?"проверено":p.st?p.st.city:""}</span></span></div></button>`}
 
 /* ===== Лента ===== */
@@ -1881,7 +1882,7 @@ function openOptixApp(ev){if(OXA)return;
   w.innerHTML=`<iframe title="OPTIX"></iframe>${TGW?"":'<button class="oxa-x" aria-label="Вернуться в Trend Büro"><i>TB</i>Trend Büro</button>'}`;
   OXA=w;const fr=w.querySelector("iframe");let ready=false,shown=false;
   document.body.append(w); // грузится сразу, но невидимо — пока играет синий круг
-  const show=()=>{if(shown||!OXA)return;shown=true;requestAnimationFrame(()=>w.classList.add("in"))};
+  const show=()=>{if(shown||!OXA)return;shown=true;requestAnimationFrame(()=>{w.classList.add("in");syncFlags()})};
   fr.addEventListener("load",()=>{ready=true;try{const d=fr.contentDocument,bg=getComputedStyle(d.body).backgroundColor;if(bg&&!/rgba\(0, 0, 0, 0\)|transparent/.test(bg))w.style.setProperty("--oxbg",bg)}catch(e){}});
   optixDoc().then(t=>{fr.srcdoc=t}).catch(()=>{fr.src=OPTIX_LINK});
   const x=w.querySelector(".oxa-x");if(x)x.onclick=closeOptixApp;
@@ -1923,7 +1924,10 @@ function backLayer(){
 // логотип TB поверх фото карточки товара — стеклянный; когда карточку листают и появилась плашка — обычный
 function updTop(){requestAnimationFrame(()=>{const L=typeof stack!=="undefined"&&stack.length?stack[stack.length-1]:null;
   document.documentElement.classList.toggle("pvtop",!!(L&&L.querySelector(".pv-hero.ph")&&!document.documentElement.classList.contains("intg")&&!L.querySelector(".navbar.moved")))})}
-function syncBack(){updTop();if(!TGW||!TGW.BackButton)return;requestAnimationFrame(()=>{const need=!!(OXA||document.querySelector(".zv,.sv")||sheetEl||stack.length||$("#app").classList.contains("in-optix"));try{need?TGW.BackButton.show():TGW.BackButton.hide()}catch(e){}})}
+// вместо селекторов :has() (на iPhone они пересчитывают стили всей страницы при каждом изменении): классы ставятся явно
+function syncFlags(){const R=document.documentElement;R.classList.toggle("nologo",!!document.querySelector(".sv,.splash,.oxa.in,.oxi"));const v=document.querySelectorAll(".pv-hero .v:not(.hasimg) img.shimg");v.forEach(i=>i.closest(".v").classList.add("hasimg"))}
+if(window.MutationObserver){const mo=new MutationObserver(syncFlags);mo.observe(document.body,{childList:true});mo.observe(document.getElementById("app"),{childList:true})}
+function syncBack(){updTop();syncFlags();if(!TGW||!TGW.BackButton)return;requestAnimationFrame(()=>{const need=!!(OXA||document.querySelector(".zv,.sv")||sheetEl||stack.length||$("#app").classList.contains("in-optix"));try{need?TGW.BackButton.show():TGW.BackButton.hide()}catch(e){}})}
 if(TGW&&TGW.BackButton){try{TGW.BackButton.onClick(()=>{backLayer();setTimeout(syncBack,60)})}catch(e){}
   new MutationObserver(syncBack).observe(document.getElementById("app")||document.body,{childList:true,attributes:true,attributeFilter:["class"]});
   new MutationObserver(syncBack).observe(document.body,{childList:true})}
@@ -2198,6 +2202,7 @@ function openProduct(id){
   setTimeout(()=>{if(!s.isConnected)return;s.querySelectorAll("#pvg img[data-src]").forEach(im=>{im.setAttribute("style",im.dataset.style||"");im.src=im.dataset.src;im.removeAttribute("data-src")})},620);
   // «Похожие» дорисовываем после того, как карточка выехала — открытие без пауз
   if(like.length)setTimeout(()=>{const b=s.querySelector("#pvlike");if(b&&s.isConnected)b.innerHTML=`<div class="sech"><h2>${r?"Ещё в ресейле":"Похожие"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div>`},560);
+  if(hasPh)s.classList.add("pvph");
   if(hasPh){const t0=s.querySelector(".navbar .t");if(t0)t0.innerHTML='<i class="nbl" aria-hidden="true">TB</i>'}
   {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];let dk=0,stp0=0;g.addEventListener("scroll",()=>{stp0=stp0||gStep(g);const k=Math.round(g.scrollLeft/stp0);if(k!==dk){dk=k;dots.forEach((d,i)=>d.classList.toggle("on",i===k))}},{passive:true});addEventListener("resize",()=>{stp0=0},{passive:true});
     // листание фото: один свайп — ровно одно фото; делает сам браузер (scroll-snap + snap-stop), без своих доводок — так плавно и без рывков
@@ -2375,8 +2380,8 @@ function renderStockBan(){const l=P.filter(p=>p.st&&(F.g==="all"||(p.g===F.g||p.
 function btileHTML(bk){const l=bItems(bk).filter(p=>F.g==="all"||(p.g===F.g||p.g==="u")).sort((a,b)=>b.isNew-a.isNew);
   return `<button class="btile press" data-act="brand" data-bk="${bk}"><b>${esc(bname(bk))}</b><span class="mini3">${l.slice(0,3).map(p=>`<i style="--c:${p.c}">${shapeSVG(p.shape,p.c,"")}</i>`).join("")}</span><span class="num">${l.length} ${plural(l.length,["товар","товара","товаров"])}</span></button>`}
 $("#hg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;F.g=b.dataset.g;renderCatHome();renderCatalog()});
-function showItems(title){$("#catHome").hidden=true;$("#catItems").hidden=false;{let bx=$("#catItemsBn");if(!bx){bx=document.createElement("div");bx.id="catItemsBn";bx.className="cbwrap";bx.style.margin="4px 0 14px";$("#catItems .itemshead").after(bx)}const c=F.cats.size===1?[...F.cats][0]:"",L=c?bnFor("cat:"+c):[];bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}$("#itemsTitle").textContent=title;$("#catBarT").textContent=title;renderCatalog();$("#t-catalog .scroll").scrollTop=0}
-function showCatHome(){F.g="all";$("#catItems").hidden=true;$("#catHome").hidden=false;$("#catBarT").textContent="Каталог";renderCatHome();$("#t-catalog .scroll").scrollTop=0}
+function showItems(title){$("#t-catalog").classList.add("items");$("#catHome").hidden=true;$("#catItems").hidden=false;{let bx=$("#catItemsBn");if(!bx){bx=document.createElement("div");bx.id="catItemsBn";bx.className="cbwrap";bx.style.margin="4px 0 14px";$("#catItems .itemshead").after(bx)}const c=F.cats.size===1?[...F.cats][0]:"",L=c?bnFor("cat:"+c):[];bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}$("#itemsTitle").textContent=title;$("#catBarT").textContent=title;renderCatalog();$("#t-catalog .scroll").scrollTop=0}
+function showCatHome(){$("#t-catalog").classList.remove("items");F.g="all";$("#catItems").hidden=true;$("#catHome").hidden=false;$("#catBarT").textContent="Каталог";renderCatHome();$("#t-catalog .scroll").scrollTop=0}
 function clearFilters(){F.ids=null;F.stock="";F.cats.clear();F.brands.clear();F.cities.clear();F.onlyNew=F.onlyFav=false;F.sort="pop";resetBudgets()}
 
 /* Общий поиск */
@@ -2395,7 +2400,7 @@ function runSearch(raw){const q=norm(raw.trim());const box=$("#sres"),body=$("#h
   if(resale.length)h+=`<div class="sgroup"><h4>В ресейле</h4>${resale.map(r=>`<button class="srow" data-act="product" data-id="${r.id}"><span class="th" style="--c:${r.c}">${shapeSVG(r.shape,r.c,"")}</span><span class="tx"><b>${hl(r.brand+" "+r.name,q)}</b><span>${esc(r.cond)} · проверено</span></span><span class="rt num">${eur(r.price)}</span></button>`).join("")}</div>`;
   if(!h)h=`<div class="empty" style="margin-top:16px"><h3>Ничего не нашли</h3><p>Напишите, что ищете — найдём в бутиках Европы.</p><button class="btn sm" data-act="askany" style="margin-top:8px">Написать менеджеру</button></div>`;
   box.innerHTML=h}
-$("#uq").addEventListener("input",e=>runSearch(e.target.value));
+$("#uq").addEventListener("input",e=>{e.target.parentNode.classList.toggle("typed",!!e.target.value);runSearch(e.target.value)});
 
 /* ===== «Новое»: сторис по брендам. Новинка = отметка isNew в каталоге; бренды по свежести, просмотренные — в конце ===== */
 const NW={G:[],gi:0,ii:0,t:0,SHOW:10};

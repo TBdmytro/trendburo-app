@@ -61,6 +61,8 @@ async def main():
     await pg.evaluate("document.querySelector('#homeBody [data-act=gifts]').click()");await pg.wait_for_timeout(800)
     ok("«Подарки любимым» открывают подборку",await pg.evaluate("document.querySelector('#itemsTitle').textContent==='Подарки любимым'&&document.querySelectorAll('#grid .pc').length>0"))
     await pg.evaluate("showCatHome()")
+    import re as _re; _css="".join(_re.findall(r"<style[^>]*>(.*?)</style>",open(__file__.replace("scripts/ui_rules.py","index.html")).read(),_re.S))
+    ok("в стилях нет :has() (на iPhone тормозит всю страницу)",":has(" not in _css)
     ok("нет ошибок JavaScript",not errs,errs[:3])
     await b.close()
   bad=[r for r in RULES if not r[1]]
