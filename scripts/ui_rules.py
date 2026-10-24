@@ -69,6 +69,14 @@ async def main():
     dn=await pg.evaluate("[document.getElementsByTagName('*').length,document.images.length]")
     ok("подписка на большой бренд не раздувает страницу",dn[0]<8000 and dn[1]<400,dn)
     await pg.evaluate(f"follows.delete('{big}');renderFeedFollow()")
+    # «тяжёлый» пользователь: подписан на 3 крупнейших бренда, 300 вещей в избранном — страница должна оставаться лёгкой на всех вкладках
+    await pg.evaluate("""(()=>{const c={};P.forEach(p=>c[p.bk]=(c[p.bk]||0)+1);Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,3).forEach(([k])=>follows.add(k));P.slice(0,300).forEach(p=>favs.add(p.id));renderFeedFollow();renderFavs&&renderFavs()})()""")
+    worst=0
+    for tb in ["feed","catalog","services","stylist"]:
+      await pg.evaluate(f"tab('{tb}')");await pg.wait_for_timeout(400)
+      worst=max(worst,await pg.evaluate("document.getElementsByTagName('*').length"))
+    ok("«тяжёлый» пользователь (подписки, 300 в избранном): страница лёгкая",worst<9000,worst)
+    await pg.evaluate("follows.clear();favs.clear();renderFeedFollow();renderFavs&&renderFavs();tab('catalog')")
     ok("нет ошибок JavaScript",not errs,errs[:3])
     await b.close()
   bad=[r for r in RULES if not r[1]]

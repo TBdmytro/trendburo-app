@@ -2864,7 +2864,9 @@ const cartBtnHTML=()=>`<button class="round" data-act="cart" aria-label="Кор�
 function addToCart(id,size,color="",ok=true,hex="",quiet=false){if(cart.some(c=>c.id===id&&c.size===size&&(c.color||"")===color)){toast("Уже в корзине");return false}
   cart.push({id,size,color,ok,hex});store.set("tb_cart",cart);updateCounts();bumpCart();if(!quiet)toast("Добавлено в корзину");return true}
 function renderFavs(){const el=$("#favGrid");if(!el)return;const l=P.filter(p=>favs.has(p.id)).concat(RESALE.filter(r=>favs.has(r.id)));
-  el.innerHTML=l.length?`<div class="grid2">${l.map(pcHTML).join("")}</div>`:`<div class="empty"><h3>Пока пусто</h3><p>Нажмите на сердце на товаре — он появится здесь.</p><button class="btn sm" data-act="gocat" style="margin-top:8px">В каталог</button></div>`}
+  // избранное: первые 60, остальные — кнопкой (страница не раздувается, сколько бы ни сохранили)
+  const F0=el._n||60;
+  el.innerHTML=l.length?`<div class="grid2">${l.slice(0,F0).map(pcHTML).join("")}</div>${l.length>F0?`<button class="btn sm soft" style="margin:16px auto;display:flex" onclick="this.parentNode._n=(this.parentNode._n||60)+60;renderFavs()">Показать ещё ${l.length-F0}</button>`:""}`:`<div class="empty"><h3>Пока пусто</h3><p>Нажмите на сердце на товаре — он появится здесь.</p><button class="btn sm" data-act="gocat" style="margin-top:8px">В каталог</button></div>`}
 function openFavs(){push("Избранное",`<div class="bigtitle" style="padding-top:12px"><div><div class="sub num" id="favSub"></div><h1>Избранное</h1></div></div><div id="favGrid"></div>`,{right:cartBtnHTML()});
   $("#favSub").textContent=favs.size?favs.size+" "+plural(favs.size,["вещь","вещи","вещей"]):"";renderFavs()}
 const findItem=id=>P.find(p=>p.id===id);
@@ -3199,7 +3201,9 @@ const turns=[];let sampleFn=null,ctl=null;
 const SUGG=["Ужин в Милане","Капсула на неделю в Париже","Подарок мужу до 1 500 €","Свадьба подруги летом"];
 $("#sugg").innerHTML=SUGG.map(s=>`<button type="button" class="chip" data-s="${s}">${s}</button>`).join("");
 $("#sugg").addEventListener("click",e=>{const b=e.target.closest("[data-s]");if(b){$("#chatIn").value=b.dataset.s;$("#composer").requestSubmit()}});
-function rules(){const g=$("#stG").value;const cat=P.filter(p=>p.g===g).map(p=>`${p.id}|${p.brand}|${p.name}|${CATS[p.cat]}|${p.price}€`).join("\n");
+function rules(){const g=$("#stG").value,bud=+$("#stBudget").value||0;
+  // стилисту — не весь каталог (тысячи строк), а до 250 подходящих вещей: по полу, в бюджете, популярные первыми
+  const cat=popOrder(P.filter(p=>(p.g===g||p.g==="u")&&(!bud||p.price<=bud))).slice(0,250).map(p=>`${p.id}|${p.brand}|${p.name}|${CATS[p.cat]}|${p.price}€`).join("\n");
   return `Ты — личный стилист байер-сервиса Trend Büro (выкуп люксовых вещей в Европе, доставка в Украину ${SHIPF()}). Отвечай по-русски, спокойно и по делу, без восклицаний и громких слов.
 Клиент: ${g==="w"?"женщина":"мужчина"}; стиль: ${$("#stStyle").value}; бюджет на образ: ${+$("#stBudget").value||0} €.
 Собирай образ из витрины ниже. Каждую вещь из витрины обозначай кодом в квадратных скобках, например [p5]. Уложись в бюджет и назови итоговую сумму. Если в витрине чего-то нет (платье, брюки), посоветуй, что поискать, и предложи заказать через менеджера. Не выдумывай наличие и цены вне витрины. До 150 слов, без markdown.
