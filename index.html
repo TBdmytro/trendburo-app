@@ -509,6 +509,8 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero.ph .pv-bdg,.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .pv-bdg{top:22px;right:34px}
 .pv-hero.ph .newp,.intg .pushed:has(.pv-hero.ph) .pv-hero.ph .newp{top:22px;left:34px}
 .pv-hero.ph .pv-n{top:22px;right:34px}
+.pv-hero.ph .pv-gal .sl[data-full] img,.pv-hero.ph .pv-gal .sl[data-full] img:not(.fit){opacity:1;animation:none;position:absolute;left:0;top:10px;width:100%;height:calc(100% - 70px);object-fit:contain;will-change:auto;transition:none}
+.pv-hero.ph .pv-gal .sl[data-full]{transition:background .25s}
 /* полноэкранный Telegram: «назад» и «⋯» рисует Telegram, логотип TB по центру его строки, наша корзина рядом с «⋯» */
 .fs .pushed:has(.pv-hero.ph) .navbar .t{visibility:hidden}
 .fs .pushed:has(.pv-hero.ph) .navbar [data-act="cart"]{position:fixed;z-index:410;top:calc(var(--tgs) + var(--tgc) / 2 - 17px);right:var(--tgcart,104px);width:34px;height:34px}
@@ -2149,25 +2151,20 @@ function openProduct(id){
   const showDl=!r&&!(st&&st.loc==="ua");
   const btnLabel=()=>r?"Купить":"В корзину · "+eur(priceFor(it,d));
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
-  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl"><i class="slb"></i><img src="${esc(im.src)}"${im.big?` srcset="${esc(im.src)} 1000w, ${esc(im.big)} 1600w" sizes="100vw"`:""} crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
+  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img src="${esc(im.src)}"${im.big?` srcset="${esc(im.src)} 1000w, ${esc(im.big)} 1600w" sizes="100vw"`:""} crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:14px"></div>
    ${showDl?`<div id="pvd"></div>`:""}
    <div id="pvx" style="display:flex;flex-direction:column;gap:18px"></div>
    ${r?"":`<button class="pv-how press" type="button" data-how><span class="ic"><svg viewBox="0 0 24 24">${IC.shield}</svg></span><span><b>Как мы работаем</b><small>Поиск, выкуп, проверка, отправка</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`}
-   ${like.length?`<div class="ondark"><div class="sech"><h2>${r?"Ещё в ресейле":"Похожие"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div></div>`:""}
+   ${like.length?`<div class="ondark" id="pvlike"></div>`:""}
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
     foot:`<div class="foot dark glass"><button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
+  // «Похожие» дорисовываем после того, как карточка выехала — открытие без пауз
+  if(like.length)setTimeout(()=>{const b=s.querySelector("#pvlike");if(b&&s.isConnected)b.innerHTML=`<div class="sech"><h2>${r?"Ещё в ресейле":"Похожие"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div>`},560);
   if(hasPh){const t0=s.querySelector(".navbar .t");if(t0)t0.innerHTML='<i class="nbl" aria-hidden="true">TB</i>'}
-  {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/gStep(g));dots.forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true});
-    // листание фото: один свайп — ровно один слайд (вправо/влево), без остановки между снимками
-    {const n=g.querySelectorAll(".sl").length;let x0=0,y0=0,k0=0,t0=0;const go=k=>{k=Math.max(0,Math.min(n-1,k));g.scrollTo({left:k*gStep(g),behavior:"smooth"})};
-     g.addEventListener("touchstart",e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now();k0=Math.round(g.scrollLeft/gStep(g))},{passive:true});
-     g.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)<Math.abs(dy)&&Math.abs(dy)>12){go(Math.round(g.scrollLeft/gStep(g)));return}
-       const fast=Math.abs(dx)>30&&Date.now()-t0<350;setTimeout(()=>go(Math.abs(dx)>gStep(g)*.18||fast?k0+(dx<0?1:-1):k0),0)},{passive:true});
-     // на всякий случай: прокрутка остановилась между снимками — доводим до ближайшего
-     let st=0;g.addEventListener("scroll",()=>{clearTimeout(st);st=setTimeout(()=>{const r=g.scrollLeft/gStep(g);if(Math.abs(r-Math.round(r))>.02)go(Math.round(r))},140)},{passive:true});}
-    const sc=s.querySelector(".scroll"),ims=[...g.querySelectorAll("img")];let raf=0;
-    sc.addEventListener("scroll",()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;const y=Math.max(0,Math.min(sc.scrollTop,500));ims.forEach(im=>im.style.transform=y?`translateY(${y*.35}px) scale(${1-y/2400})`:"")})},{passive:true});
+  {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];let dk=0,stp0=0;g.addEventListener("scroll",()=>{stp0=stp0||gStep(g);const k=Math.round(g.scrollLeft/stp0);if(k!==dk){dk=k;dots.forEach((d,i)=>d.classList.toggle("on",i===k))}},{passive:true});addEventListener("resize",()=>{stp0=0},{passive:true});
+    // листание фото: один свайп — ровно одно фото; делает сам браузер (scroll-snap + snap-stop), без своих доводок — так плавно и без рывков
+    const ims=[...g.querySelectorAll("img")];
     // фон под фото = цвет краёв снимка, чтобы фото смотрелось на весь экран без рамок
     const hero=s.querySelector(".pv-hero");
     // фото вписывается в рамку по самому товару: приближаем, но товар целиком; свободные края — фоном снимка
