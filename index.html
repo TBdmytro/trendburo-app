@@ -2416,11 +2416,13 @@ function nwGroup(){const g=NW.G[NW.gi],L=nwItems(),extra=g.all.length-L.length;
   requestAnimationFrame(()=>{const on=$(`#nRings [data-ngi="${NW.gi}"]`),rs=$("#nRings");if(on&&rs&&rs.offsetParent&&!nwBusy())rs.scrollTo({left:on.offsetLeft-rs.clientWidth/2+33,behavior:"smooth"})});
   nwShow(0)}
 function nwShow(i){const g=NW.G[NW.gi],L=nwItems(),extra=g.all.length-L.length,last=L.length-1+(extra>0?1:0);NW.ii=i;const end=i>=L.length;
-  $("#nEnd").classList.toggle("on",end);$$("#nIms img").forEach((m,j)=>m.classList.toggle("off",j!==Math.min(i,L.length-1)));
+  $("#nEnd").classList.toggle("on",end);{const ims=$$("#nIms img"),c=Math.min(i,L.length-1);ims.forEach((m,j)=>m.classList.toggle("off",j!==c));
+    // следующий кадр сторис грузим и раскодируем заранее — смена кадра без серой пустоты и без подвисания
+    [c,c+1,c+2].forEach(j=>{const m=ims[j];if(m&&!m._pre){m._pre=1;m.loading="eager";m.decode&&m.decode().catch(()=>{})}})}
   $$("#nBars .nb").forEach((b,j)=>{b.className="nb"+(j<i?" nwd":j===i?" nwr":"");const x=b.firstChild;x.style.animation="none";void x.offsetWidth;x.style.animation=""});
   const p=L[Math.min(i,L.length-1)];$("#nN").textContent=end?"":`${i+1} из ${g.all.length}`;
   $("#nCap").hidden=end;$("#nCap").innerHTML=`<b>${esc(p.name)}</b><span class="num">${eur(p.price)}</span>`;
-  const nx=[];for(let o=1;o<=3&&nx.length<3;o++){const j=i+o;if(j<L.length)nx.push(`<button data-nj="${j}"><img src="${esc(nImg(L[j]).thumb)}" alt="" loading="lazy"><small class="num">${eur(L[j].price)}</small></button>`)}
+  const nx=[];for(let o=1;o<=3&&nx.length<3;o++){const j=i+o;if(j<L.length)nx.push(`<button data-nj="${j}"><img src="${esc(nImg(L[j]).thumb)}" alt="" decoding="async"><small class="num">${eur(L[j].price)}</small></button>`)}
   if(nx.length<3&&extra>0&&!end)nx.push(`<button class="nmore" data-nj="${L.length}"><b class="num">+${extra}</b>новинок</button>`);
   if(nx.length<3&&NW.G.length>1){const ng=NW.G[(NW.gi+1)%NW.G.length],im=nImg(ng.all[0]);nx.push(`<button data-nnext="1">${im?`<img src="${esc(im.thumb)}" alt="" loading="lazy">`:""}<small>${esc(ng.name)}</small></button>`)}
   $("#nSide").innerHTML=nx.join("");
