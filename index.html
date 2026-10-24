@@ -2642,7 +2642,7 @@ function openAuto(ri){
     if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
     if(s.t==="du")return `<div class="du ${duLay(s.a,s.b)}">${[s.a,s.b].map((p,j)=>duCardH(p,j)).join("")}<span class="vs">VS</span></div><div class="duh">смахните неинтересное · тап по карточке — открыть</div>`;
     const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
-    const nph=s.t==="p"?Math.min(6,(p.imgs||[]).length):0,b0=s.t==="p"?Math.min(bestIdx(p),5):0;
+    const nph=0,b0=s.t==="p"?Math.min(bestIdx(p),5):0;
     return `<div class="st"><img crossorigin="anonymous" src="${esc(srcOf(s))}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j===b0?"on":""}"></i>`).join("")}</div>`:""}
       ${p.sale?`<span class="bg s">−${p.sale}%</span>`:p.isNew?`<span class="bg">Новинка</span>`:""}
       ${cs?`<div class="dt">${cs.map((c,j)=>`<button data-c="${j}" class="${j?"":"on"}" aria-label="${esc(c.name)}" style="background-image:url('${esc(c.idx>=0&&svImg(p,c.idx)?svImg(p,c.idx).thumb:c.image)}')"></button>`).join("")}</div>`:""}
@@ -2673,8 +2673,8 @@ function openAuto(ri){
       im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.src=im.src}else im.classList.add("fit")})}
     return n};
   const mark=s=>{if(s.p)svMark(s.p.id);if(s.t==="du"){svMark(s.a.id);svMark(s.b.id)}};
-  // фото товара внутри одной сторис: тап сбоку листает снимки этого товара, после последнего — следующий товар
-  let pj=0;const phs=()=>{const s=list[i];return s&&s.t==="p"&&s.p.imgs&&s.p.imgs.length>1?s.p.imgs.slice(0,6):null};
+  // одна вещь — одно главное фото: тап справа — сразу следующая вещь, все фото — в карточке по «Смотреть»
+  let pj=0;const phs=()=>null;
   const showPh=()=>{const L=phs();if(!L)return;const n=[...cb.querySelectorAll(".sl")].filter(x=>!x.classList.contains("out")).pop();if(!n)return;const im=n.querySelector(".st img");if(!im)return;
     im.removeAttribute("style");im.classList.remove("fit");im.src=L[pj].src;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");n.querySelectorAll(".pd i").forEach((d,k)=>d.classList.toggle("on",k===pj));
     if(L[pj+1]){const m=new Image();m.crossOrigin="anonymous";m.src=L[pj+1].src}el=0;hap("light")};
