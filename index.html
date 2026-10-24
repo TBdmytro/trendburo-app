@@ -493,18 +493,6 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pv-hero.ph .pv-bdg{top:calc(var(--st) + 58px);left:auto;right:16px;flex-direction:column;align-items:flex-end}
 .pv-bdg span{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:var(--fg);padding:5px 10px;border-radius:99px}
 .pv-bdg .sale,.pc .salb{background:#b3261e;color:#fff;letter-spacing:.02em}
-/* ===== Плавность на iPhone (Telegram): разбор видео — паузы и белые куски =====
-   1) размытие фона (backdrop-filter) пересчитывается каждый кадр поверх прокрутки и фото — на iPhone это главный источник рывков и недорисовки; заменяем сплошными цветами
-   2) невидимые вкладки не рисуются вовсе — меньше памяти видеокарты, меньше белых «дыр»
-   3) карточки вне экрана в лентах-рельсах не рисуются; без тени у выезжающего экрана */
-*,*::before,*::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
-.tab:not(.on){content-visibility:hidden}
-.hrail>.pc{content-visibility:auto;contain-intrinsic-size:auto 280px}
-.pushed{box-shadow:none}
-.foot.dark.glass .btn{background:#fff}
-.foot.dark.glass .fv{background:rgba(255,255,255,.1)}
-.navbar.clear .round{background:#fff}
-.tglogo i{background:#1f2125}
 /* ===== Каталог как в концепте: иконки над заголовком, ниже поиск, «Для неё / Для него», «Новое», баннеры OPTIX и «Подарки» ===== */
 #homeBody>.nwhide{display:none!important}
 #catHome>.bigtitle{flex-direction:column-reverse;align-items:stretch;gap:10px;padding-top:calc(12px + var(--st))}
