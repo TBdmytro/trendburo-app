@@ -61,6 +61,10 @@ async def main():
     await pg.evaluate("document.querySelector('#homeBody [data-act=gifts]').click()");await pg.wait_for_timeout(800)
     ok("«Подарки любимым» открывают подборку",await pg.evaluate("document.querySelector('#itemsTitle').textContent==='Подарки любимым'&&document.querySelectorAll('#grid .pc').length>0"))
     await pg.evaluate("showCatHome()")
+    bf=await pg.evaluate("[...document.querySelectorAll('*')].filter(e=>{const c=getComputedStyle(e);return (c.backdropFilter&&c.backdropFilter!=='none')||(c.webkitBackdropFilter&&c.webkitBackdropFilter!=='none')}).length")
+    ok("нет размытия фона (тормозит на iPhone)",bf==0,bf)
+    hid=await pg.evaluate("[...document.querySelectorAll('.tab:not(.on)')].every(t=>getComputedStyle(t).contentVisibility==='hidden')")
+    ok("невидимые вкладки не рисуются",hid)
     ok("нет ошибок JavaScript",not errs,errs[:3])
     await b.close()
   bad=[r for r in RULES if not r[1]]
