@@ -2386,7 +2386,9 @@ $("#uq").addEventListener("input",e=>runSearch(e.target.value));
 /* ===== «Новое»: сторис по брендам. Новинка = отметка isNew в каталоге; бренды по свежести, просмотренные — в конце ===== */
 const NW={G:[],gi:0,ii:0,t:0,SHOW:10};
 const nImg=p=>{const im=p.imgs&&p.imgs[0];return im?im:null};
-function nwGroups(){const m=new Map();P.filter(p=>p.isNew&&nImg(p)).forEach(p=>{if(!m.has(p.bk))m.set(p.bk,[]);m.get(p.bk).push(p)});
+// «Новое»: отмеченные новинки (админка или раздел «Новинки» у бренда); если таких пока нет — последние добавленные в каталог вещи (каталог приходит от новых к старым), чтобы блок не пустовал
+function nwPool(){const a=P.filter(p=>p.isNew&&nImg(p));NW.fb=!a.length;if(a.length)return a;const c={},o=[];for(const p of P){if(!p.live||!nImg(p)||(c[p.bk]=(c[p.bk]||0)+1)>15)continue;o.push(p);if(o.length>=150)break}return o}
+function nwGroups(){const m=new Map();nwPool().forEach(p=>{if(!m.has(p.bk))m.set(p.bk,[]);m.get(p.bk).push(p)});
   const seen=store.get("tb_nseen",{}),wk=Math.floor(Date.now()/6048e5);
   return [...m.entries()].map(([bk,L])=>({bk,name:bname(bk),all:L,seen:seen[bk]===wk})).sort((a,b)=>(a.seen-b.seen)||(b.all.length-a.all.length))}
 function nwBusy(){return !$("#t-catalog").classList.contains("on")||$("#catHome").hidden||(typeof stack!=="undefined"&&stack.length)||!!document.querySelector(".sv,.sheet.in,.zv")||document.hidden}
@@ -2416,7 +2418,7 @@ function nwSeen(){const s=store.get("tb_nseen",{});s[NW.G[NW.gi].bk]=Math.floor(
 function nwStep(d){const L=nwItems(),extra=NW.G[NW.gi].all.length-L.length,last=L.length-1+(extra>0?1:0);
   if(d>0&&NW.ii>=last){nwSeen();NW.gi=(NW.gi+1)%NW.G.length;nwGroup();return}if(d<0&&NW.ii===0){NW.gi=(NW.gi-1+NW.G.length)%NW.G.length;nwGroup();return}nwShow(NW.ii+d)}
 function nwTick(ms){clearTimeout(NW.t);if(RM.matches)return;NW.t=setTimeout(()=>{if(nwBusy()||NW.hold){$("#nFr").classList.add("pz");return nwTick(1200)}$("#nFr").classList.remove("pz");nwStep(1)},ms)}
-function nwOpenAll(bk){clearFilters();if(bk)F.brands.add(bk);F.onlyNew=true;showItems(bk?"Новое · "+bname(bk):"Новое")}
+function nwOpenAll(bk){clearFilters();if(bk)F.brands.add(bk);if(NW.fb)F.ids=new Set(nwPool().map(p=>p.id));else F.onlyNew=true;showItems(bk?"Новое · "+bname(bk):"Новое")}
 function giftPic(){const el=$("#giftIm");if(!el||el.style.backgroundImage)return;const p=P.find(p=>(p.cat==="jewelry"||p.cat==="accessories"||p.cat==="bags")&&p.imgs&&p.imgs.length);if(p){const u=p.imgs[0].thumb||p.imgs[0].src;el.style.backgroundImage=`url("${String(u).replace(/"/g,"%22")}")`}else el.remove()}
 function renderNew(){giftPic();const sec=$("#nwSec");if(!sec)return;NW.G=nwGroups();sec.hidden=!NW.G.length;if(!NW.G.length)return;if(NW.gi>=NW.G.length)NW.gi=0;nwRings();nwGroup()}
 $("#nRings").addEventListener("click",e=>{const r=e.target.closest("[data-ngi]");if(!r)return;e.stopPropagation();NW.gi=+r.dataset.ngi;nwGroup()});
