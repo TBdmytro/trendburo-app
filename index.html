@@ -22,7 +22,7 @@ html.fs .tglogo{display:flex}
 html.pvtop .tglogo i{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);-webkit-backdrop-filter:blur(10px) saturate(1.3);backdrop-filter:blur(10px) saturate(1.3);text-shadow:0 1px 2px rgba(0,0,0,.25)}
 html.pvtop .tglogo i::before{background:conic-gradient(from 0deg,rgba(255,255,255,.8) 0 18%,transparent 18% 50%,rgba(255,255,255,.8) 50% 68%,transparent 68%)}
 .tglogo i{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em}
-.tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px)}
+.tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);will-change:transform;animation:tgspin 6s linear infinite}
 @keyframes tgspin{to{transform:rotate(360deg)}}
 html.nologo .tglogo{opacity:0}
 .splash{position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;cursor:pointer;overflow:hidden}
@@ -523,7 +523,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pushed.pvph .navbar.clear .round,.intg .pushed.pvph .navbar.clear .round{background:var(--soft);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 .pushed.pvph .navbar .t,.intg .pushed.pvph .navbar.clear.solid .t{opacity:1;display:flex;justify-content:center;font-size:0}
 .nbl{position:relative;width:30px;height:30px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font:400 11.5px/1 "Prata",Georgia,serif;letter-spacing:.02em;font-style:normal}
-.nbl::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px)}
+.nbl::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);will-change:transform;animation:tgspin 6s linear infinite}
 .pushed.pvph .scroll.under,.intg .pushed.pvph .scroll.under{padding-top:var(--nbh);background:#fff}
 .pv-hero.ph,.intg .pv-hero.ph{--top:0px;--off:0px;background:#fff}
 .pv-hero.ph::after,.intg .pv-hero.ph::after{display:none}
@@ -1741,6 +1741,8 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 // один форматтер на всё приложение: создавать его на каждую цену — сотни миллисекунд на длинных списках
 const EURF=new Intl.NumberFormat("ru-RU",{maximumFractionDigits:0}),eur=n=>EURF.format(Math.round(n))+" €";
 const esc=s=>String(s).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+// память телефона под приложение: если за время пользования накопилось больше ~1 МБ — убираем служебные кэши (корзина, избранное, вход не трогаем)
+try{let n=0;for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);n+=k.length+(localStorage.getItem(k)||"").length}if(n>1e6)["tb_shp","tb_svseen","tb_nseen","tb_seen"].forEach(k=>localStorage.removeItem(k))}catch(e){}
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("on"),2000)}
 async function copy(text,el){try{await navigator.clipboard.writeText(text);toast("Скопировано")}catch(e){if(el){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r)}toast("Текст выделен — скопируйте")}}
@@ -2064,10 +2066,10 @@ function howSheet(){const r=(t,d,ic)=>`<div class="hw-r"><span class="hw-i"><svg
 const TIER_OF=(()=>{const T={1:"hermes chanel therow loropiana goyard brunellocucinelli",2:"louisvuitton lv dior celine loewe bottegaveneta prada saintlaurent ysl gucci miumiu fendi givenchy balenciaga valentino burberry cartier"};const m={};Object.entries(T).forEach(([t,s])=>s.split(" ").forEach(n=>m[n]=+t));return b=>m[String(b||"").toLowerCase().normalize("NFD").replace(/[^a-z]/g,"")]||3})();
 /* Разбор фото товара (по маленькой копии 400px): где товар, ровный ли фон. Запоминается по адресу снимка —
    при следующих открытиях раскладка выбирается сразу. SHP[url] = [x0,y0,x1,y1, ровный фон 0/1, ширина/высота снимка] */
-const SHP=(()=>{const o=store.get("tb_shp",{});return o&&typeof o==="object"?o:{}})();
+const SHP=(()=>{let o=store.get("tb_shp",{});if(!o||typeof o!=="object")o={};const ks=Object.keys(o);if(ks.length>400){ks.slice(0,ks.length-300).forEach(k=>delete o[k]);store.set("tb_shp",o)}return o})();
 let shpSave=0;const shpPut=(u,si,ar)=>{if(!u||!si)return;const k=u.replace(/[?&]width=\d+/,"");SHP[k]=[...si.box.map(v=>Math.round(v*100)/100),si.flat?1:0,Math.round(ar*100)/100];
-  if(!shpSave)shpSave=setTimeout(shpFlush,1200)};
-const shpFlush=()=>{shpSave=0;const ks=Object.keys(SHP);if(ks.length>2500)ks.slice(0,ks.length-2000).forEach(k=>delete SHP[k]);store.set("tb_shp",SHP)};
+  if(!shpSave)shpSave=setTimeout(()=>window.requestIdleCallback?requestIdleCallback(shpFlush,{timeout:5000}):shpFlush(),15000)};
+const shpFlush=()=>{shpSave=0;const ks=Object.keys(SHP);if(ks.length>400)ks.slice(0,ks.length-300).forEach(k=>delete SHP[k]);store.set("tb_shp",SHP)};
 addEventListener("pagehide",()=>{if(shpSave){clearTimeout(shpSave);shpFlush()}});
 const shpGet=u=>u?SHP[u.replace(/[?&]width=\d+/,"")]:null;
 // форма товара: w — горизонтальный, t — вертикальный, s — примерно квадратный, ? — ещё не знаем
