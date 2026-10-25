@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 22</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 23</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v22] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v23] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -136,7 +136,7 @@ async function tbCollect() {
   };
   // размеров не нашли — короткий кусок страницы рядом со словом size (без личных данных), чтобы понять формат сайта
   var sizeDbg = function (html) { var H = String(html || "").replace(/<style[\s\S]*?<\/style>/gi, " "), re = /size/gi, m, out = [], last = -999;
-    while ((m = re.exec(H)) && out.length < 4) { if (m.index - last < 300) continue; var pre = H.slice(Math.max(0, m.index - 30), m.index).toLowerCase(); if (/(font-|background-|max-|min-|data-|aria-|box-|text-|icon|image|img)$/.test(pre)) continue; last = m.index; out.push(H.slice(Math.max(0, m.index - 60), m.index + 160).replace(/\s+/g, " ")); }
+    while ((m = re.exec(H)) && out.length < 4) { if (m.index - last < 300) continue; var pre = H.slice(Math.max(0, m.index - 30), m.index).toLowerCase(); if (/(font-|background-|max-|min-|data-|aria-|box-|text-|icon|image|img)$/.test(pre) || /^sizes?="/i.test(H.slice(m.index, m.index + 7)) || /^size-adjust/i.test(H.slice(m.index, m.index + 12))) continue; last = m.index; out.push(H.slice(Math.max(0, m.index - 60), m.index + 160).replace(/\s+/g, " ")); }
     return out.join(" | ").slice(0, 900); };
   // размеры на готовой странице без известных классов: ищем группу кнопок/пунктов, подписи которых похожи на размеры (XS, 44, IT 38…)
   var genericSizes = function (doc) {
@@ -166,17 +166,20 @@ async function tbCollect() {
     var out = { sst: [], blocked: "", dbg: "" };
     try {
       await new Promise(function (ok) { f.onload = ok; f.src = url; document.body.appendChild(f); setTimeout(ok, 8000); });
-      var last = "", same = 0, clicked = false;
+      var last = "", same = 0, clicked = false, info = [];
+      try { info.push(f.contentDocument ? "loaded:" + String(f.contentWindow.location.pathname).slice(0, 60) : "blocked"); } catch (e) { info.push("blocked:" + (e && e.name)); }
       for (var t = 0; t < 14; t++) {
         await sleep(450);
         var d = f.contentDocument; if (!d || !d.body) continue;
         // размеры прячутся за кнопкой «Select your size» — нажимаем её один раз (как покупатель), чтобы список появился
-        if (!clicked && t >= 2) { clicked = true; var sb = [].slice.call(d.querySelectorAll("button, [role='button'], a")).filter(function (b) { var tx = (b.textContent || "").replace(/\s+/g, " ").trim(); return tx.length < 40 && /(select|choose|choisir|w[äa]hlen|seleziona)?\s*(your\s*)?(size|taille|gr[öo](ss|ß)e|taglia)/i.test(tx) && !/guide|chart|tabelle/i.test(tx); })[0]; if (sb) try { sb.click(); } catch (e) {} }
+        if (!clicked && t >= 2) { clicked = true; var sb = [].slice.call(d.querySelectorAll("button, [role='button'], a")).filter(function (b) { var tx = (b.textContent || "").replace(/\s+/g, " ").trim(); return tx.length < 40 && /(select|choose|choisir|w[äa]hlen|seleziona)?\s*(your\s*)?(size|taille|gr[öo](ss|ß)e|taglia)/i.test(tx) && !/guide|chart|tabelle/i.test(tx); })[0]; if (sb) try { sb.click(); info.push("click:" + (sb.textContent || "").replace(/\s+/g, " ").trim().slice(0, 30)); } catch (e) {} else info.push("nobtn"); }
         var sst = sizeInfo(d, "", p || {}), key = JSON.stringify(sst);
         if (sst.length) { if (key === last) { if (++same >= 2) { out.sst = sst; break; } } else { last = key; same = 0; } }
       }
       var d2 = f.contentDocument;
-      if (d2) { if (!out.sst.length && last) out.sst = JSON.parse(last); out.blocked = pageBlock(d2, d2.documentElement.outerHTML, p || {}, ""); if (!out.sst.length) out.dbg = sizeDbg(d2.body ? d2.body.innerHTML : ""); }
+      if (d2) { if (!out.sst.length && last) out.sst = JSON.parse(last); out.blocked = pageBlock(d2, d2.documentElement.outerHTML, p || {}, ""); if (!out.sst.length) { var bt = [].slice.call(d2.querySelectorAll("button, [role='button'], li, label")).map(function (b) { return (b.textContent || "").replace(/\s+/g, " ").trim(); }).filter(function (t) { return t && t.length < 25; }).slice(0, 60).join("|");
+        out.dbg = ("R " + info.join(" ") + " · BTN " + bt + " · " + sizeDbg(d2.body ? d2.body.innerHTML : "")).slice(0, 900); } }
+      else out.dbg = "R " + info.join(" ") + " · нет доступа к странице в окне";
     } catch (e) {}
     f.remove(); if (out.sst.length) rOk++; else rFail++; return out;
   };
