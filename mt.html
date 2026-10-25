@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro»</h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 3</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -45,7 +45,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 80, PAUSE = 1200;
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v3] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   var host = location.hostname.replace(/^www\./, "");
   var SITE = { "mytheresa.com": "Mytheresa", "ysl.com": "Saint Laurent" }, siteName = SITE[host] || host.split(".")[0].replace(/^\w/, function (c) { return c.toUpperCase(); });
