@@ -817,7 +817,7 @@ async function start() {
   renderNav();
   $("#loginView").hidden = true; $("#appView").hidden = false;
   go(location.hash.slice(1) || "home");
-  if (location.hash === "#screens:mt") mtPing();
+  if (location.hash === "#screens:mt") { mtPing(); if (location.search) history.replaceState(null, "", location.pathname + location.hash); }
   window.hideSplash && hideSplash();
   pump(); pollLeads();
 }
@@ -2227,7 +2227,9 @@ function mtPing() { if (!window.opener) return; let n = 0; clearInterval(mtPing.
 let mtQueue = Promise.resolve(), mtShown = false, mtSummary = null;
 const mtPrefix = host => { const h = String(host || "").replace(/^www\./, "").split(".")[0].replace(/[^a-z0-9]/g, "").slice(0, 12); return h === "mytheresa" ? "mt" : h; };
 window.addEventListener("message", async e => {
-  if (!e.source || e.source !== window.opener || !/^https:\/\//.test(e.origin) || !e.data || !me) return;
+  if (!e.source || e.source !== window.opener || !/^https:\/\//.test(e.origin) || !e.data) return;
+  if (e.data === "tb-hi") { if (me) try { e.source.postMessage("tb-ready", e.origin); } catch {} return; } // кнопка стучится — отвечаем, когда вход выполнен
+  if (!me) return;
   if (e.data.type === "tb-hello") { // кнопка спрашивает, что уже есть: такие товары она пропустит
     clearInterval(mtPing.t);
     let status = {}; try { status = (await api("knownProducts", { query: { prefix: mtPrefix(e.data.host) }, silent: true })).status || {}; } catch {}
