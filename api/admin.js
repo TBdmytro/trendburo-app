@@ -3,7 +3,7 @@
  * Все действия, кроме входа, требуют авторизации; изменяющие — ещё и заголовок X-TB (защита от CSRF).
  */
 import { kickWorker } from "../lib/chain.js";
-import { loadCatalogPage, dbStats } from "../lib/catalogload.js";
+import { loadCatalogPage, dbStats, rememberDeleted } from "../lib/catalogload.js";
 import { startLoad, stopLoad, loadState, kickCatalog, STALE_MS } from "../lib/catalogrun.js";
 import { repriceAll, ensurePrices, PRICE_VER } from "../lib/reprice.js";
 import { getStore } from "../lib/store.js";
@@ -200,6 +200,8 @@ export default async function handler(req, res) {
         const linked = await store.list("importItem", { publishedAs: ids }, { limit: 20000, fields: "_id" });
         if (linked.length) await store.patchMany(linked.map(i => i._id), { publishedAs: null, publishedAt: null });
         await store.delMany(ids);
+        // запоминаем удалённые — загрузка каталога поставщика (в том числе ночная) не вернёт их скрытыми
+        await rememberDeleted(store, ids);
         return send(res, 200, { ok: true, deleted: ids.length });
       }
 

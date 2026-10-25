@@ -77,3 +77,18 @@ test("категории: книги, коврики и бутылки Alo — �
   assert.equal(detectCategory("Women:Leggings", "Airlift Legging"), "clothing");
   assert.equal(detectCategory("Accessories:Shoes:Sneakers", "Runner"), "shoes");
 });
+
+test("удалённые в админке товары не возвращаются при новой загрузке каталога (в том числе ночной)", async () => {
+  const { rememberDeleted } = await import("../lib/catalogload.js");
+  const store = new MemoryStore();
+  const { id } = await addSupplier(store, { url: "https://shop.example" }, { fetchImpl: f });
+  await loadCatalogPage(store, id, { page: 1, limit: 100, fetchImpl: f });
+  const all = await store.list("product", {});
+  const del = all.slice(0, 5).map(p => p._id);
+  await store.delMany(del); await rememberDeleted(store, del);
+  const r = await loadCatalogPage(store, id, { page: 1, limit: 100, fetchImpl: f });
+  const after = await store.list("product", {});
+  assert.equal(after.length, all.length - 5);
+  assert.ok(!after.some(p => del.includes(p._id)));
+  assert.equal(r.deleted, 5);
+});
