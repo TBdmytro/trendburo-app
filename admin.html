@@ -464,6 +464,15 @@ textarea{min-height:110px}
 .hub-top{display:flex;align-items:center;gap:12px}.hub-top .av{width:44px;height:44px;border-radius:12px;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:Prata,Georgia,serif;font-size:18px;flex:none}
 .hub-top .tx{display:flex;flex-direction:column;min-width:0}.hub-top .tx b{font-size:18px;font-weight:600}.hub-top .tx span{font-size:12.5px;color:var(--muted)}
 .hub-act{display:flex;gap:8px;flex-wrap:wrap}
+.bboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.btile{display:flex;flex-direction:column;gap:10px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;cursor:pointer;text-align:left;font:inherit;color:inherit;transition:border-color .2s,box-shadow .2s}
+.btile:hover{border-color:var(--ink)}
+.btile .bt{display:flex;align-items:center;gap:12px}.btile .bav{width:44px;height:44px;flex:none;border-radius:12px;background:#efe8de;display:grid;place-items:center;font-family:Prata,serif;font-size:17px}
+.btile .bn{font-weight:600;font-size:16px;line-height:1.2}.btile .bc{color:var(--muted,#8a8d93);font-size:13px}
+.btile .bpics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.btile .bpics i{aspect-ratio:4/5;border-radius:10px;background:#f2f3f4 center/cover no-repeat}
+.btile .bcats{display:flex;flex-wrap:wrap;gap:6px}.btile .bcats span{background:#f2f3f4;border-radius:999px;padding:3px 10px;font-size:13px}.btile .bcats span.no{color:#b0b4b9}
+.btile .bst{display:flex;gap:12px;font-size:13px}.btile .bst .g{color:#2f7d4f}.btile .bst .d{color:var(--muted,#8a8d93)}
+.baz{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.baz button{min-width:32px;height:30px;padding:0 8px;border-radius:8px;border:1px solid var(--line);background:#fff;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}.baz button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 .ptabs{display:flex;gap:8px;overflow-x:auto;margin:0 0 12px;padding-bottom:2px;scrollbar-width:none}.ptabs::-webkit-scrollbar{display:none}
 .ptabs button{flex:none;height:40px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:#fff;font:inherit;font-weight:600;font-size:14.5px;color:var(--ink);cursor:pointer}
 .ptabs button .num{color:var(--muted,#8a8d93);font-weight:500;margin-left:4px}
@@ -2577,14 +2586,49 @@ async function vTexts() {
 }
 
 /* ---------- Товары ---------- */
+// «Товары» начинаются с брендов: плитки с категориями и витриной; бренд → его товары с кнопками категорий
+const BOARD_CATS = ["bags", "shoes", "clothing", "accessories", "jewelry", "eyewear"];
+async function vBrandBoard() {
+  const { brands, total } = await api("brandBoard");
+  let q = "", letter = "";
+  const ini = n => n.replace(/&/g, " ").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+  const plural = n => n % 10 === 1 && n % 100 !== 11 ? "товар" : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "товара" : "товаров";
+  const letters = [...new Set(brands.map(b => b.brand[0].toUpperCase()))].sort();
+  $("#main").innerHTML = `<div class="vh"><h1>Товары</h1><span class="sp"></span><button class="btn sm" data-go="add">${svg("add")}Новый</button></div><p class="vsub" style="margin-bottom:12px">Сначала бренды — сразу видно, что есть и чего нет</p>
+    <div class="ptabs"><button role="tab" aria-selected="true">Бренды <span class="num">${brands.length}</span></button><button role="tab" aria-selected="false" data-go="products:all">Все товары <span class="num">${total}</span></button></div>
+    <input type="search" id="bq" placeholder="Найти бренд…" aria-label="Найти бренд" style="margin-bottom:12px">
+    <div class="baz" id="baz"></div><div class="bboard" id="bboard"></div>`;
+  const draw = () => {
+    $("#baz").innerHTML = [`<button data-l="" aria-pressed="${!letter}">Все</button>`].concat(letters.map(l => `<button data-l="${esc(l)}" aria-pressed="${letter === l}">${esc(l)}</button>`)).join("");
+    const list = brands.filter(b => (!q || b.brand.toLowerCase().includes(q)) && (!letter || b.brand[0].toUpperCase() === letter));
+    $("#bboard").innerHTML = list.length ? list.map(b => {
+      const cats = BOARD_CATS.filter(c => b.cats[c]).map(c => `<span>${esc(CATS[c])} ${b.cats[c]}</span>`)
+        .concat(Object.keys(b.cats).filter(c => !BOARD_CATS.includes(c)).map(c => `<span>${esc((CATS[c] || c).split(":")[0])} ${b.cats[c]}</span>`))
+        .concat(["bags", "shoes", "clothing"].filter(c => !b.cats[c]).map(c => `<span class="no">${esc(CATS[c])} —</span>`));
+      return `<button class="btile" data-brand="${esc(b.brand)}"><div class="bt"><span class="bav">${esc(ini(b.brand))}</span><span><span class="bn">${esc(b.brand)}</span><br><span class="bc">${b.n} ${plural(b.n)}</span></span></div>
+        <div class="bpics">${[0, 1, 2, 3].map(i => `<i${b.covers[i] ? ` style="background-image:url('${esc(b.covers[i])}')"` : ""}></i>`).join("")}</div>
+        <div class="bcats">${cats.join("")}</div>
+        <div class="bst"><span class="g">● ${b.pub} на витрине</span>${b.n - b.pub ? `<span class="d">${b.n - b.pub} скрыто</span>` : ""}</div></button>`;
+    }).join("") : `<div class="card empty" style="grid-column:1/-1"><b>${brands.length ? "Ничего не нашли" : "Товаров пока нет"}</b>${brands.length ? "Попробуйте другое название" : "Подключите поставщика или добавьте товар"}</div>`;
+  };
+  draw();
+  $("#bq").oninput = e => { q = e.target.value.trim().toLowerCase(); draw(); };
+  $("#main").onclick = e => {
+    const g = e.target.closest("[data-go]"); if (g) return go(g.dataset.go);
+    const l = e.target.closest("[data-l]"); if (l) { letter = l.dataset.l; return draw(); }
+    const t = e.target.closest("[data-brand]"); if (t) return go("products:brand=" + encodeURIComponent(t.dataset.brand));
+  };
+}
 async function vProducts2(pre) {
+  if (!pre) return vBrandBoard();
   const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "", sec: "" };
   if (pre) pre.split(",").forEach(kv => { const [k, v] = kv.split("="); if (k in F) F[k] = decodeURIComponent(v || ""); });
   let sel = new Set(), list = [], total = 0, shown = 0, facets = { brands: [], cats: [], sources: [] }, LS = null;
   const srcs = await getSources();
   const sname = id => id === "manual" ? "Вручную" : srcs.find(s => s.id === id)?.name || srcName(id);
   let PV = "grid"; try { PV = localStorage.getItem("tb_pview") || "grid"; } catch {}
-  $("#main").innerHTML = `<div class="vh"><h1>Товары</h1><span class="sp"></span><div class="pview" role="group" aria-label="Вид"><button data-pv="grid" aria-pressed="${PV === "grid"}">Каталог</button><button data-pv="list" aria-pressed="${PV === "list"}">Список</button></div><button class="btn sm" data-go="add">${svg("add")}Новый</button></div><p class="vsub" id="ptot" style="margin-bottom:12px"></p>
+  $("#main").innerHTML = `<div class="vh">${F.brand ? `<button class="btn ghost sm" data-go="products">← Бренды</button><h1 style="flex:1">${esc(F.brand)}</h1>` : `<h1>Товары</h1>`}<span class="sp"></span><div class="pview" role="group" aria-label="Вид"><button data-pv="grid" aria-pressed="${PV === "grid"}">Каталог</button><button data-pv="list" aria-pressed="${PV === "list"}">Список</button></div><button class="btn sm" data-go="add">${svg("add")}Новый</button></div><p class="vsub" id="ptot" style="margin-bottom:12px"></p>
+    ${!F.brand && !F.source ? `<div class="ptabs"><button role="tab" aria-selected="false" data-go="products">Бренды</button><button role="tab" aria-selected="true">Все товары</button></div>` : ""}
     <div id="hub"></div>
     <div class="ptabs" id="ptabs" role="tablist" aria-label="Разделы магазина"></div>
     <div class="ptabs sm" id="pcats" aria-label="Категории"></div>
@@ -2598,7 +2642,7 @@ async function vProducts2(pre) {
   const drawCats = () => {
     const el = $("#pcats"); if (!el) return;
     const cs = (facets.cats || []).filter(c => c.n);
-    if (cs.length < 2 && !F.cat) { el.innerHTML = ""; return; }
+    if (cs.length < 2 && !F.cat && !F.brand) { el.innerHTML = ""; return; }
     el.innerHTML = [`<button data-catq="" aria-pressed="${!F.cat}">Все категории</button>`].concat(cs.map(c => `<button data-catq="${esc(c.k)}" aria-pressed="${F.cat === c.k}">${esc(CATS[c.k] || c.k)} <span class="num">${c.n}</span></button>`)).join("");
   };
   const drawTabs = () => {
