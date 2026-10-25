@@ -68,3 +68,15 @@ test("сумка с кнопки, попавшая в одежду из-за «c
   assert.equal((await s.get("product.manual.ysl-x1")).category, "bags");
   assert.equal((await s.get("product.manual.ysl-x2")).category, "clothing");
 });
+
+test("наличие по размерам с сайта бренда: продано — «out», остальные в наличии; держится месяц, а не двое суток", async () => {
+  const { saveManualProduct } = await import("../lib/manual.js");
+  const { toStorefront } = await import("../lib/catalog.js");
+  const s = new MemoryStore();
+  const p = await saveManualProduct(s, { id: "product.manual.mt-l1", brand: "Alo Yoga", title: "Leggings", category: "clothing", boutique: 120, images: ["https://x.test/a.jpg"], markupPct: 10, status: "published",
+    sizeStock: [{ s: "XS", ok: true }, { s: "S", ok: true }, { s: "M", ok: true }, { s: "L", ok: true }, { s: "XL", ok: true }, { s: "XXL", ok: false }] });
+  const in10days = Date.parse(p.offers[0].checkedAt) + 10 * 864e5;
+  const sf = toStorefront(p, in10days);
+  assert.deepEqual(sf.sizes.map(x => x.size + ":" + x.status), ["XS:online", "S:online", "M:online", "L:online", "XL:online", "XXL:out"]);
+  assert.equal(sf.orderable, true);
+});
