@@ -1393,7 +1393,7 @@ function supplierCard(s) {
 async function editor(id, reload) {
   const { product: p, storefront } = await api("product", { query: { id } });
   const o = p.overrides || {};
-  let order = (o.imageOrder && o.imageOrder.length ? o.imageOrder : (p.images || []).map(i => i.sourceUrl || i.url));
+  let order = [...new Set(o.imageOrder && o.imageOrder.length ? o.imageOrder : (p.images || []).map(i => i.sourceUrl || i.url))];
   let cover = o.cover || order[0];
   const order0 = JSON.stringify(order), cover0 = cover;
   const d = document.createElement("div"); d.className = "drawer"; document.body.append(d);
@@ -2583,7 +2583,7 @@ async function vProducts2(pre) {
     if (!s) { h.innerHTML = ""; return; }
     h.innerHTML = `<div class="hub"><div class="hub-top"><span class="av">${esc((s.name || "?")[0])}</span><div class="tx"><b>${esc(s.name)}</b><span>${esc((s.home || "").replace("https://", ""))} · ${s.collections?.length ? "разделы: " + esc(s.collections.map(secName).join(", ")) : "весь каталог"}${s.market ? " · цены Европы" : ""}</span></div></div>
       ${s.cats?.length || s.brands?.length ? `<div class="note-box" style="align-items:center"><div style="flex:1">Фильтр загрузки: ${s.cats?.length ? "только " + esc(s.cats.map(c => CATS[c] || c).join(", ")) : ""}${s.brands?.length ? (s.cats?.length ? " · " : "") + "бренды " + esc(s.brands.join(", ")) : ""} — остальное не загружается</div><button class="btn ghost sm" data-hubnofilter>Брать всё</button></div>` : ""}
-      <div class="hub-act">${LS?.status === "running" && !LS.loadedAt ? `<button class="btn danger" data-hubstop>Остановить</button>` : `<button class="btn" data-hubload>Загрузить каталог</button>${LS && ["stopped", "failed"].includes(LS.status) && LS.hi < (LS.handles?.length || 1) ? `<button class="btn soft" data-hubresume>Продолжить</button>` : ""}`}<button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
+      <div class="hub-act">${LS?.status === "running" && !LS.loadedAt ? `<button class="btn danger" data-hubstop>Остановить</button>` : LS && ["stopped", "failed"].includes(LS.status) && LS.hi < (LS.handles?.length || 1) ? `<button class="btn" data-hubresume>Продолжить загрузку</button><button class="btn soft" data-hubload>Начать заново</button>` : `<button class="btn" data-hubload>Загрузить каталог</button>`}<button class="btn ghost" data-hubsec>Разделы</button><button class="btn ghost" data-all="on">Все на сайт</button><button class="btn ghost" data-hubclean>Убрать распроданное</button><button class="btn ghost" data-go="sources">Настройки</button></div>
       <div class="hub-prog" id="ldProg" ${LS ? "" : "hidden"}>${ldHTML(LS)}</div>
       <label class="toggle"><input type="checkbox" data-hubavail ${s.onlyAvailable !== false ? "checked" : ""}>Только то, что можно купить сейчас: хотя бы один размер в наличии (старые распроданные не загружаем)</label>
       <label class="toggle"><input type="checkbox" data-hubauto ${s.autoPublish ? "checked" : ""}>Автовыгрузка: новые товары сразу появляются на сайте</label></div>`;

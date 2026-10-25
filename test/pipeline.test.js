@@ -677,3 +677,10 @@ test("уже подключённый магазин в долларах сам 
   assert.equal(next.custom.euAjax, true); assert.equal(next.custom.shopCurrency, "EUR");
   assert.equal((await store.get("source.s-x")).custom.euAjax, true);
 });
+
+test("фото поставщика без повторов: тот же файл с параметрами, хвостом-UUID или размером — один раз", async () => {
+  const { uniqImages } = await import("../lib/sources.js");
+  const b = "https://cdn.shopify.com/s/files/1/a/";
+  const out = uniqImages([b + "cover.jpg?v=1", b + "cover.jpg?v=2", b + "cover_3f2b1c4d-1111-2222-3333-444455556666.jpg", b + "cover_800x.jpg", b + "back.jpg", b + "side.jpg"]);
+  assert.deepEqual(out, [b + "cover.jpg?v=1", b + "back.jpg", b + "side.jpg"]);
+});
