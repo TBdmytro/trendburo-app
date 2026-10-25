@@ -174,11 +174,11 @@ async function probeMockImgs(res) {
 // размеры у загруженных с сайта бренда товаров: сколько с размерами и без (только чтение), плюс разбор пары страниц без размеров
 async function probeSizes(res, host) {
   const store = await getStore(); const out = { host };
-  const list = await store.q(`*[_type=="product" && _id in path("product.**") && sourceUrl match $h]{_id,title,category,subcategory,sizes,sourceUrl,"note":offers[0].note}`, { h: "*" + host + "*" });
+  const list = await store.q(`*[_type=="product" && _id in path("product.**") && sourceUrl match $h]{_id,title,category,subcategory,sizes,sourceUrl,sizeDebug,_updatedAt}`, { h: "*" + host + "*" });
   const by = {}; for (const p of list) { const k = p.category || "?"; by[k] = by[k] || { with: 0, without: 0 }; (p.sizes && p.sizes.length ? by[k].with++ : by[k].without++); }
   out.total = list.length; out.byCat = by;
   const no = list.filter(p => p.category === "clothing" && !(p.sizes && p.sizes.length)), yes = list.filter(p => p.category === "clothing" && p.sizes && p.sizes.length);
-  out.noSamples = no.slice(0, 12).map(p => [p.title, p.sourceUrl]); out.yesSamples = yes.slice(0, 6).map(p => [p.title, p.sizes, p.sourceUrl]);
+  out.noSamples = no.slice(0, 12).map(p => [p.title, p.sourceUrl, p._updatedAt]); out.debug = list.filter(p => p.sizeDebug).slice(0, 6).map(p => [p.title, p.sizeDebug]); out.yesSamples = yes.slice(0, 6).map(p => [p.title, p.sizes, p.sourceUrl]);
   const dom = host.replace(/^www\./, ""); out.pages = [];
   for (const p of [...no.slice(0, 3), ...yes.slice(0, 1)]) {
     try { const r = await safeFetch(p.sourceUrl, { domains: [dom, "www." + dom], types: ["text/html"], maxBytes: 8_000_000, lang: "en-GB,en;q=0.9" }); const t = r.text || "";
