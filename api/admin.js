@@ -318,6 +318,22 @@ export default async function handler(req, res) {
         catch (e) { if (e instanceof ScreenError) return send(res, e.status === 429 ? 429 : 422, { error: e.message, retryAfter: e.retryAfter }); throw e; }
       }
       case "manualSave": return send(res, 200, { product: await saveManualProduct(store, body, { by: me.name, pricingCfg }) });
+      case "webImport": {
+        // товар с кнопки «В Trend Büro» одним запросом: сервер сам скачивает фото по ссылкам (параллельно) и сохраняет товар скрытым
+        const it = body.item || {}, id = String(body.id || "");
+        if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
+        const { fetchBinary } = await import("../lib/images.js");
+        const urls = [...new Set((Array.isArray(it.images) ? it.images : []).map(String).filter(u => /^https:\/\//.test(u)))].slice(0, 8);
+        let copied = 0;
+        const images = (await Promise.all(urls.map(async u => {
+          try { const b = await Promise.race([fetchBinary(u, [new URL(u).hostname]), new Promise((_, no) => setTimeout(() => no(new Error("долго")), 20000))]);
+            const up = await store.uploadImage(b.buf, { filename: "web-" + Date.now() + "." + (b.type.split("/")[1] || "jpg"), contentType: b.type, sourceUrl: u }); copied++; return up.url; }
+          catch (e) { console.log("IMGURL fail " + JSON.stringify({ host: new URL(u).hostname, why: String(e.message).slice(0, 120) })); return u; } // не скачалось — ставим ссылку магазина
+        }))).filter(Boolean);
+        if (!images.length) return send(res, 400, { error: "Нет фото" });
+        const product = await saveManualProduct(store, { ...it, id, images, availability: "online", status: "draft", boutique: Number(it.boutique) }, { by: me.name, pricingCfg });
+        return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null });
+      }
       case "pricePreview": {
         const { priceFor } = await import("../lib/pipeline.js");
         const p = priceFor({ sourceKind: "official", boutique: Number(body.boutique) || null, region: "DE", currency: "EUR" }, pricingCfg, Number(body.pinned) || null, body.category || null);

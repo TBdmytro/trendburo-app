@@ -178,3 +178,22 @@ test("каталог под нагрузкой: одновременные за�
   try { const st = await call(catalog, { query: { v: "2" } }); assert.equal(st.status, 200); assert.deepEqual(st.body.products, ok.body.products); }
   finally { Date.now = realNow; store.list = orig; _resetCatalogMemo(); }
 });
+
+test("кнопка «В Trend Büro»: товар одним запросом — сервер качает фото, сохраняет скрытым, цена +10%", async () => {
+  const login = await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } });
+  const cookie = login.headers["set-cookie"].split(";")[0];
+  const real = globalThis.fetch;
+  const jpg = Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAA//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AN//Z", "base64");
+  globalThis.fetch = async u => String(u).includes("_A.jpg") ? new Response(jpg, { status: 200, headers: { "content-type": "image/jpeg" } }) : new Response("no", { status: 404 });
+  try {
+    const item = { brand: "Yves Saint Laurent", title: "SIMONE medium", category: "bags", gender: "w", boutique: 3200, images: ["https://saint-laurent.dam.kering.com/x/A0_A.jpg", "https://saint-laurent.dam.kering.com/x/A0_B.jpg"], markupPct: 10 };
+    const r = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "product.manual.ysl-a0", item }, headers: { cookie, "x-tb": "1" } });
+    assert.equal(r.status, 200, JSON.stringify(r.body));
+    assert.equal(r.body.copied, 1); assert.equal(r.body.images, 2); assert.equal(r.body.price, 3520);
+    const p = await store.get("product.manual.ysl-a0");
+    assert.equal(p.status, "draft"); assert.equal(p.brand, "Saint Laurent");
+    assert.ok(p.images[0].url.startsWith("https://cdn.sanity.io/")); assert.equal(p.images[1].url, item.images[1]); // обложка — первая, как на сайте; не скачалось — ссылка
+    const bad = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "evil", item }, headers: { cookie, "x-tb": "1" } });
+    assert.equal(bad.status, 400);
+  } finally { globalThis.fetch = real; }
+});

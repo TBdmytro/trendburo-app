@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 7</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 9</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -34,8 +34,8 @@
     <ol>
       <li>Войдите в админку в этом же браузере.</li>
       <li><b>Один товар:</b> откройте страницу товара и нажмите закладку.</li>
-      <li><b>Весь раздел:</b> откройте, например, «Сумки» на ysl.com, пролистайте вниз, чтобы подгрузились все товары, и нажмите закладку — она пройдёт по каждому товару по очереди (до 80 за раз).</li>
-      <li>Товары сразу сохраняются в админке в «Товары» скрытыми, цена бутика +10%. Проверьте и нажмите «Все на сайт».</li>
+      <li><b>Весь раздел:</b> откройте, например, «Сумки» на ysl.com, пролистайте вниз, чтобы подгрузились все товары, и нажмите закладку — она пройдёт по каждому товару по очереди (до 100 за раз).</li>
+      <li>Откроется отдельная вкладка с ходом загрузки — её не закрывайте. Товары сразу сохраняются в «Товары» скрытыми, цена бутика +10%; в основной вкладке админки видно, как они добавляются. Можно запускать несколько разделов одновременно. Потом — «Все на сайт».</li>
     </ol>
     <p style="margin:12px 0 0;font-size:14px">Пока идёт сбор, не закрывайте вкладку магазина. Повторный сбор того же товара обновит карточку, а не создаст дубль. Наценка — по нашим правилам автоматически.</p>
   </div>
@@ -44,8 +44,8 @@
 // Код закладки: работает только в вашем браузере, на странице, которую вы открыли сами. Читает данные schema.org (бренд, название, цена) и фото,
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
-  var ADM = "https://trendburo-app.vercel.app", MAX = 80, PAUSE = 1200;
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v7] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 700;
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v9] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   var host = location.hostname.replace(/^www\./, "");
   var SITE = { "mytheresa.com": "Mytheresa", "ysl.com": "Saint Laurent" }, siteName = SITE[host] || host.split(".")[0].replace(/^\w/, function (c) { return c.toUpperCase(); });
@@ -88,13 +88,14 @@ async function tbCollect() {
     var brand = String((p.brand && (p.brand.name || p.brand)) || siteName).trim(); brand = BRANDS[brand.toLowerCase()] || brand;
     var code = String(p.sku || "").toUpperCase() || codeOf(url), sz = [].concat(p.size || []).map(function (s) { return String(s).split(" / ")[0].trim(); }).filter(Boolean);
     var srcs = pickImages(html, code || codeOf(url), p.image, limit), images = [];
-    for (var k = 0; k < srcs.length; k++) { var jp = await toJpeg(srcs[k]); if (jp) images.push(jp); }
+    for (var k = 0; k < srcs.length; k++) images.push({ u: srcs[k] }); // фото качает сервер по ссылке — быстро и без нагрузки на браузер
     return { src: siteName, host: host, brand: brand, title: String(p.name || "").replace(/\s+/g, " ").trim(), price: price, currency: ps.priceCurrency || of.priceCurrency || "EUR",
       sizes: sz.filter(function (s, i) { return sz.indexOf(s) === i; }), color: String(p.color || ""), sku: code, description: String(p.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
       url: url.split("?")[0].split("#")[0], crumbs: crumbs, gender: gender(new URL(url).pathname + "/" + (extra || []).join("/")), images: images };
   };
   // админку открываем всегда заново (свежая загрузка) и стучимся к ней, пока не ответит — даже если вкладка уже была открыта
-  var w = window.open(ADM + "/admin.html?tb=" + Date.now() + "#screens:mt", "tbadmin");
+  // своя вкладка админки на каждую загрузку: можно запускать сумки и обувь одновременно, основная вкладка админки остаётся где была
+  var w = window.open(ADM + "/admin.html?tb=" + Date.now() + "#import", "tb" + Date.now());
   var ready = new Promise(function (res) {
     var knock = setInterval(function () { try { w && w.postMessage("tb-hi", ADM); } catch (e) {} }, 1000);
     var f = function (e) { if (e.origin === ADM && e.data === "tb-ready") { removeEventListener("message", f); clearInterval(knock); res(true); } };
@@ -103,13 +104,16 @@ async function tbCollect() {
   var send = async function (item) { if (!(await ready)) throw new Error("admin"); w.postMessage({ type: "tb-import", items: [item] }, ADM); };
   // что уже есть в админке (на витрине или скрыто) — такие товары не берём; удалённые из админки берутся заново
   var knownP = null, getKnown = function () { if (!knownP) knownP = (async function () { if (!(await ready)) throw new Error("admin"); return new Promise(function (res) { var f = function (e) { if (e.origin === ADM && e.data && e.data.type === "tb-known") { removeEventListener("message", f); res(e.data); } }; addEventListener("message", f); w.postMessage({ type: "tb-hello", host: host }, ADM); setTimeout(res, 20000, { status: {} }); }); })(); return knownP; };
+  var saved = { ok: 0, fail: 0, total: 0, left: 0 }; addEventListener("message", function (e) { if (e.origin === ADM && e.data && e.data.type === "tb-saved") saved = e.data; });
+  // ждём, пока админка сохранит всё, что получила: «Готово» — только когда реально в «Товарах»
+  var waitSaved = async function (sent) { for (var t = 0; t < 600; t++) { if (saved.ok + saved.fail >= sent && !saved.left) return; note("Trend Büro: сохраняю в админке " + saved.ok + " из " + sent + (saved.fail ? " · не сохранилось " + saved.fail : "") + " — не закрывайте вкладки", true); await sleep(1000); } };
   var stName = function (st) { return st === "published" ? "на витрине" : "в скрытых"; };
   try {
     var html0 = document.documentElement.outerHTML, one = await build(document, html0, location.href, 8);
     if (one) {
-      if (/(^|\.)mytheresa\.com$/.test(location.hostname)) { var g = [].slice.call(document.querySelectorAll('img[class*="gallery__carousel__media__image"]')).map(function (i) { return i.currentSrc || i.src; }); if (g.length) { one.images = []; for (var gi = 0; gi < Math.min(g.length, 8); gi++) { if (g.indexOf(g[gi]) !== gi) continue; var gj = await toJpeg(g[gi]); if (gj) one.images.push(gj); } } }
+      if (/(^|\.)mytheresa\.com$/.test(location.hostname)) { var g = [].slice.call(document.querySelectorAll('img[class*="gallery__carousel__media__image"]')).map(function (i) { return i.currentSrc || i.src; }); if (g.length) { one.images = []; for (var gi = 0; gi < Math.min(g.length, 8); gi++) { if (g.indexOf(g[gi]) !== gi) continue; one.images.push({ u: g[gi] }); } } }
       var K1 = await getKnown(); if (K1.status && K1.status[one.sku]) { note("Этот товар уже есть в админке (" + stName(K1.status[one.sku]) + ") — не добавляю"); return; }
-      note("Trend Büro: передаю в админку…", true); await send(one); note("Готово: " + one.brand + " — " + one.title + " · фото: " + one.images.length); return;
+      note("Trend Büro: передаю в админку…", true); await send(one); await waitSaved(1); note(saved.ok ? "Готово: " + one.brand + " — " + one.title + " в «Товарах» (скрыт)" : "Не сохранилось — откройте админку, там написана причина"); return;
     }
     // раздел: ссылки на товары этого же сайта (с кодом товара в адресе); сначала листаем вниз, чтобы подгрузились все товары
     var countLinks = function () { return [].slice.call(document.querySelectorAll("a[href]")).filter(function (a) { return !!codeOf(a.href); }).length; };
@@ -132,8 +136,8 @@ async function tbCollect() {
       catch (e) { if (e && e.message === "admin") throw e; bad++; }
       await sleep(PAUSE);
     }
-    summary(ok);
-    note("Готово: новых " + ok + (had ? " · уже были в админке: " + had : "") + (bad ? " · не прочитано: " + bad : "") + (newTotal > links.length ? " · ещё новых: " + (newTotal - links.length) + " — нажмите кнопку ещё раз" : ""));
+    summary(ok); await waitSaved(ok);
+    note("Готово: в «Товарах» " + saved.ok + (saved.fail ? " · не сохранилось " + saved.fail + " (причины в админке)" : "") + " · новых найдено " + ok + (had ? " · уже были в админке: " + had : "") + (bad ? " · не прочитано: " + bad : "") + (newTotal > links.length ? " · ещё новых: " + (newTotal - links.length) + " — нажмите кнопку ещё раз" : ""));
   } catch (e) { note(e && e.message === "admin" ? "Админка не ответила. Войдите в админку в этом браузере и нажмите кнопку ещё раз" : "Не получилось: " + (e && e.message || e)); }
 }
 document.getElementById("bm").href = "javascript:" + encodeURIComponent("void((" + tbCollect.toString() + ")())");
