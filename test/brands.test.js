@@ -101,7 +101,7 @@ test("предзаказ у бутика: размеры «предзаказ»,
 test("подразделы: обувь, сумки, одежда — по разделу сайта, названию, описанию", async () => {
   const { detectSubcategory } = await import("../lib/normalize.js");
   assert.equal(detectSubcategory("shoes", ["sneakers"], "SL/61 low-top"), "sneakers");
-  assert.equal(detectSubcategory("shoes", [], "ISABELLA slingback pumps in TPU"), "sandals"); // slingback — открытая пятка
+  assert.equal(detectSubcategory("shoes", [], "ISABELLA slingback pumps in TPU"), "pumps"); // как у YSL: «Туфли и слингбэки»
   assert.equal(detectSubcategory("shoes", [], "Tribute sandals in patent leather"), "sandals");
   assert.equal(detectSubcategory("shoes", [], "Wyatt chelsea boots"), "boots");
   assert.equal(detectSubcategory("bags", [], "ICARE maxi shopping bag"), "totes");
@@ -110,6 +110,16 @@ test("подразделы: обувь, сумки, одежда — по раз
   assert.equal(detectSubcategory("clothing", [], "Airlift High-Waist Legging"), "sport");
   assert.equal(detectSubcategory("clothing", [], "Wool trousers"), "pants");
   assert.equal(detectSubcategory("bags", [], "Simone"), null);
+  // одежда как у YSL: пиджаки отдельно от курток, футболки и топы, боди; название важнее раздела «jackets-and-pants»
+  assert.equal(detectSubcategory("clothing", "single-breasted tuxedo jacket in grain de poudre"), "blazers");
+  assert.equal(detectSubcategory("clothing", "bomber jacket in lambskin"), "jackets");
+  assert.equal(detectSubcategory("clothing", "Cassandre Tank Top"), "tops");
+  assert.equal(detectSubcategory("clothing", "Saint Laurent T-shirt in cotton"), "tops");
+  assert.equal(detectSubcategory("clothing", "laced bodysuit in ribbed silk jersey"), "lingerie");
+  assert.equal(detectSubcategory("clothing", "trench coat in suede"), "coats");
+  assert.equal(detectSubcategory("clothing", "Saint Laurent sweatshirt"), "hoodies");
+  assert.equal(detectSubcategory("clothing", "Wool trousers", ["jackets", "and", "pants"]), "pants");
+  assert.equal(detectSubcategory("clothing", "split pencil skirt in silicone-coated lace"), "skirts");
   const s = new MemoryStore();
   await s.put({ _id: "product.u.l1", _type: "product", brand: "Alo Yoga", title: "Airlift High-Waist Legging", category: "clothing" });
   await fixBrands(s);

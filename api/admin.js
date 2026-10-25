@@ -28,6 +28,16 @@ const slim = j => { if (!j) return j; const { rows, seen, queue, attempts, catRo
 // Задачи без тяжёлых полей (строки файла, очередь ссылок) — список грузится мгновенно
 const JOB_FIELDS = `..., "rows": null, "seen": null, "queue": null, "attempts": null, "catRoot": null, "discover": null, "queuedCount": count(queue), "discoverLeft": count(discover)`;
 
+// список товаров для «Товаров», брендов и фильтров: держим 30 с в памяти, чтобы админка открывалась быстро.
+// Любое изменение (кроме потока загрузки с кнопки) сбрасывает — после «На сайт», правок и удаления список свежий.
+let PCACHE = null;
+const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing, updatedAt, createdAt, issues, gender, sections, secPos, webSections, sourceUrl, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}, stock";
+async function allProducts(store) {
+  if (PCACHE && Date.now() - PCACHE.at < 30000) return PCACHE.data;
+  const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
+  PCACHE = { at: Date.now(), data }; return data;
+}
+let FIXAT = 0; // приводить бренды/подразделы при открытии «Товаров» — не чаще раза в 30 минут (ночью — всегда, в cron)
 export default async function handler(req, res) {
   const a = (req.query && req.query.a) || new URL(req.url, "http://x").searchParams.get("a");
   const body = typeof req.body === "string" ? safeJson(req.body) : (req.body || {});
@@ -42,6 +52,7 @@ export default async function handler(req, res) {
     if (!me) return send(res, 401, { error: "Нужен вход" });
     if (req.method !== "GET" && req.headers["x-tb"] !== "1") return send(res, 403, { error: "Запрос отклонён" });
     const store = getStore();
+    if (req.method !== "GET" && !["webImport", "webUpdate", "imageUpload", "imageFromUrl"].includes(a)) PCACHE = null;
     const pricingCfg = (await store.get("settings.pricing"))?.config || null;
 
     switch (a) {
@@ -219,7 +230,7 @@ export default async function handler(req, res) {
       case "status": return send(res, 200, { results: await setStatus(store, (body.ids || []).slice(0, 5000), ["published", "draft", "hidden"].includes(body.status) ? body.status : "draft", me.name) });
       case "productIds": {
         // все товары по текущему фильтру — для «Показать все найденные»
-        const all = await store.list("product", {}, { limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, sections, offers[]{sourceId, onlineOrder}" });
+        const all = await allProducts(store);
         const Q = req.query, q = String(Q.q || "").toLowerCase();
         const ids = all.filter(p => (!Q.sec || (p.sections || []).includes(Q.sec)) && (!Q.avail || (p.offers || []).some(o => o.onlineOrder)) && (!Q.noavail || !(p.offers || []).some(o => o.onlineOrder)) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (!Q.status || p.status === Q.status)
           && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source)) && (!Q.brand || p.brand === Q.brand) && (!Q.cat || (p.overrides?.category || p.category) === Q.cat)).map(p => p._id);
@@ -230,14 +241,14 @@ export default async function handler(req, res) {
         // какие товары с этого сайта уже есть (на витрине или скрыты) — кнопка «В Trend Büro» их не берёт повторно
         const px = "product.manual." + String(req.query.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-";
         if (px.length < 18) return send(res, 400, { error: "Нет сайта" });
-        const all = await store.list("product", {}, { limit: 50000, fields: "_id, status" });
+        const all = await allProducts(store);
         const status = {}; for (const p of all) if (p._id.startsWith(px)) status[p._id.slice(px.length).toUpperCase()] = p.status || "draft";
         return send(res, 200, { status });
       }
       case "brandBoard": {
         // бренды, которые у нас есть: сколько товаров, что на витрине, разбивка по категориям, 4 обложки
-        await fixBrands(store).catch(e => console.log("BRANDFIX err", e.message)); // одно название на бренд
-        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "brand, category, status, overrides, images[0...1]{url}" });
+        if (Date.now() - FIXAT > 30 * 60e3) { FIXAT = Date.now(); const n = await fixBrands(store).catch(e => { console.log("BRANDFIX err", e.message); return 0; }); if (n) PCACHE = null; } // одно название на бренд
+        const all = await allProducts(store);
         const m = new Map();
         for (const p of all) {
           const name = String(p.brand || "").trim(); if (!name) continue;
@@ -252,7 +263,7 @@ export default async function handler(req, res) {
         return send(res, 200, { brands, total: all.length });
       }
       case "products": {
-        const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "_id, brand, title, sourceTitle, modelSku, overrides, category, status, images[0...1]{url}, pricing, updatedAt, createdAt, issues, gender, sections, secPos, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}, stock" });
+        const all = await allProducts(store);
         const Q = req.query, q = String(Q.q || "").toLowerCase();
         const cat = p => p.overrides?.category || p.category;
         // фильтры применяются по очереди; списки для выпадающих меню строятся по остальным фильтрам
@@ -323,7 +334,14 @@ export default async function handler(req, res) {
         // прогон: товар уже есть — обновить цену и наличие по размерам
         const id = String(body.id || ""), it = body.item || {};
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
-        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
+        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
+      }
+      case "sectionKnown": {
+        // товары этого раздела у нас (артикул + ссылка): кнопка перепроверит по странице те, что не видны в разделе, — прежде чем считать «продано»
+        const px = "product.manual." + String(req.query.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-", section = String(req.query.section || "").slice(0, 200);
+        if (px.length < 18 || !section) return send(res, 400, { error: "Нет раздела" });
+        const list = (await allProducts(store)).filter(p => p._id.startsWith(px) && (p.webSections || []).includes(section) && p.sourceUrl).slice(0, 600).map(p => ({ code: p._id.slice(px.length).toUpperCase(), url: p.sourceUrl }));
+        return send(res, 200, { list });
       }
       case "sectionSync": {
         // прогон: товары этого раздела, которых больше нет на сайте бренда, — «продано». Если раздел загрузился меньше чем наполовину — ничего не трогаем

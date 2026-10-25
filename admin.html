@@ -2256,6 +2256,10 @@ window.addEventListener("message", async e => {
     try { const r = await api("markNew", { method: "POST", silent: true, body: { ids } }); MTP.marked = (MTP.marked || 0) + r.marked; e.source.postMessage({ type: "tb-marked", marked: r.marked }, e.origin); } catch {}
     mtDraw(); return;
   }
+  if (e.data.type === "tb-secknown") { // кнопка спрашивает, какие товары этого раздела у нас есть — перепроверит те, что не видны на странице
+    let list = []; try { list = (await api("sectionKnown", { query: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), section: e.data.section || "" }, silent: true })).list || []; } catch {}
+    try { e.source.postMessage({ type: "tb-secknown", list }, e.origin); } catch {} return;
+  }
   if (e.data.type === "tb-section") { // прогон раздела: чего нет на сайте бренда — «продано»
     try { const r = await api("sectionSync", { method: "POST", silent: true, body: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), section: e.data.section, codes: e.data.codes || [], url: e.data.url, title: e.data.title } }); MTP.gone = (MTP.gone || 0) + (r.gone || 0); if (r.skipped) MTP.sectionSkipped = true; } catch {}
     mtDraw(); try { e.source.postMessage({ type: "tb-section-done", gone: MTP.gone || 0, skipped: !!MTP.sectionSkipped }, e.origin); } catch {} return;
@@ -2290,7 +2294,7 @@ function mtDraw() {
     if (view === "import") vImport(); else if (view === "screens") vScreens();
   }, 300);
 }
-function tbRun(st) { TB_RUNS.set(st.run, st); tbWidget(); tbAutoRefresh(); }
+function tbRun(st) { TB_RUNS.set(st.run, st); tbWidget(); }
 tbBC && (tbBC.onmessage = e => e.data && e.data.run && tbRun(e.data));
 function tbWidget() {
   const el = $("#tbImp"); if (!el) return;
@@ -2298,16 +2302,13 @@ function tbWidget() {
   const runs = [...TB_RUNS.values()];
   if (!runs.length || view === "import") { el.hidden = true; return; }
   el.hidden = false;
-  el.innerHTML = runs.map(r => `<div class="tr"><div><b>${esc(r.host || "Загрузка с сайта")}</b> · ${r.ok} из ${r.total} в «Товарах»${r.fail ? ` · <span class="err">не сохранилось ${r.fail}</span>` : ""}</div><div class="bar"><i style="width:${Math.round((r.ok + r.fail) / Math.max(1, r.total) * 100)}%"></i></div><span class="hint">${r.left ? "идёт… можно работать дальше" : "готово"}</span></div>`).join("");
+  const sum = runs.reduce((a, r) => a + r.ok, 0), fresh = sum - tbSeen;
+  el.innerHTML = runs.map(r => `<div class="tr"><div><b>${esc(r.host || "Загрузка с сайта")}</b> · ${r.ok} из ${r.total} в «Товарах»${r.fail ? ` · <span class="err">не сохранилось ${r.fail}</span>` : ""}</div><div class="bar"><i style="width:${Math.round((r.ok + r.fail) / Math.max(1, r.total) * 100)}%"></i></div><span class="hint">${r.left ? "идёт… можно работать дальше" : "готово"}</span></div>`).join("")
+    + (fresh > 0 && String(view).startsWith("products") ? `<button class="btn sm" data-tbshow style="margin-top:8px;width:100%">Показать новые · ${fresh}</button>` : "");
+  const sb = el.querySelector("[data-tbshow]"); if (sb) sb.onclick = () => { tbSeen = sum; go(view); tbWidget(); };
   clearTimeout(tbWidget.t); tbWidget.t = setTimeout(tbWidget, 16000);
 }
-// «Товары» обновляются сами, пока идёт загрузка (если вы вверху страницы и ничего не выбрали)
-function tbAutoRefresh() {
-  const sum = [...TB_RUNS.values()].reduce((a, r) => a + r.ok, 0);
-  if (sum === tbSeen || !String(view).startsWith("products") || Date.now() - tbRefreshAt < 6000) return;
-  if (window.scrollY > 300 || document.querySelector(".pcard.sel, .prow.sel, .drawer") || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) return;
-  tbSeen = sum; tbRefreshAt = Date.now(); go(view);
-}
+// «Товары» сами не перезагружаются во время загрузки (мешало работать) — в плашке кнопка «Показать новые»
 // разделы сайтов брендов: открыть → нажать кнопку «В Trend Büro» → прогон (новые, цены, размеры, что продано)
 async function vSites() {
   const { sections } = await api("webSections");
@@ -2343,7 +2344,7 @@ async function vImport() {
 async function mtUpd(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
   if (!sku) return false;
-  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, isNew: !!it.isNew, section: it.section || "", szDbg: String(it.szDbg || "").slice(0, 900) } } });
+  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, unavailable: !!it.unavailable, isNew: !!it.isNew, section: it.section || "", szDbg: String(it.szDbg || "").slice(0, 900) } } });
     MTP.upd = (MTP.upd || 0) + 1; if (r.price) MTP.priceCh = (MTP.priceCh || 0) + 1; if (r.changes) MTP.changed = (MTP.changed || 0) + 1; return true; }
   catch (err) { MTP.last.unshift("✕ " + (it.title || sku) + ": " + err.message); return false; }
 }
