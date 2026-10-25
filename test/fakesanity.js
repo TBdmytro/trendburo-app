@@ -9,6 +9,7 @@ export function fakeSanity({ limit = 2000, latencyMs = 0 } = {}) {
   const sleep = () => latencyMs ? new Promise(r => setTimeout(r, latencyMs)) : null;
   const evalCond = (d, cond, params) => {
     let m;
+    if ((m = cond.match(/^_id in path\("([\w-]+)\.\*\*"\)$/))) return String(d._id).startsWith(m[1] + ".");
     if ((m = cond.match(/^!defined\((\w+)\)$/))) return d[m[1]] === undefined || d[m[1]] === null;
     if ((m = cond.match(/^(\w+) == \$(\w+)$/))) return d[m[1]] === params[m[2]];
     if ((m = cond.match(/^(\w+) in \$(\w+)$/))) return params[m[2]].includes(d[m[1]]);
