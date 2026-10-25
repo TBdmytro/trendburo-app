@@ -113,6 +113,15 @@ test("с сайта бренда: размер распродан или «ли�
   assert.equal(toStorefront(g, Date.parse(g.offers[0].checkedAt) + 864e5).availability, "out");
 });
 
+test("кнопка +10%: минимальная наценка по категории — как на сайте (обувь 40 €)", async () => {
+  const { priceFor } = await import("../lib/pipeline.js");
+  const { mergeConfig } = await import("../lib/pricing.js");
+  const cfg = mergeConfig({ official: { minAdd: { shoes: 40, default: 40 } } });
+  assert.equal(priceFor({ sourceKind: "official", boutique: 200, flatMarkup: 0.1 }, cfg, null, "shoes").ua, 240); // 10% = 20 € < 40 €
+  assert.equal(priceFor({ sourceKind: "official", boutique: 1200, flatMarkup: 0.1 }, cfg, null, "shoes").ua, 1320); // 10% больше минимума
+  assert.equal(priceFor({ sourceKind: "official", boutique: 150, flatMarkup: 0.1 }, cfg, null, "bags").ua, 190);
+});
+
 test("подразделы: обувь, сумки, одежда — по разделу сайта, названию, описанию", async () => {
   const { detectSubcategory } = await import("../lib/normalize.js");
   assert.equal(detectSubcategory("shoes", ["sneakers"], "SL/61 low-top"), "sneakers");
