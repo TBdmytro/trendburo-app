@@ -19,6 +19,7 @@ async function probeMytheresa(res) {
   const look = async (name, url, types) => {
     try { const r = await safeFetch(url, { domains, types, maxBytes: 6_000_000, lang: "en-GB,en;q=0.9" });
       const t = r.text || ""; out[name] = { status: r.status, type: r.type, bytes: t.length, ldjson: (t.match(/application\/ld\+json/g) || []).length, product: /"@type"\s*:\s*"Product"/.test(t), price: (t.match(/"price"\s*:\s*"?([\d.,]+)/) || [])[1] || null, currency: (t.match(/"priceCurrency"\s*:\s*"([A-Z]{3})"/) || [])[1] || null,
+        title: (t.match(/<title[^>]*>([^<]{0,160})/i) || [])[1] || null, text: t.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 400), scripts: (t.match(/<script[^>]*src="([^"]+)"/gi) || []).slice(0, 6).map(x => x.replace(/.*src="/, "").slice(0, 120)),
         challenge: /captcha|px-captcha|perimeterx|_abck|akamai|access denied|cf-chl|are you a human/i.test(t), head: t.slice(0, 160).replace(/\s+/g, " ") }; return t; }
     catch (e) { out[name] = { error: String(e && e.message || e).slice(0, 200) }; return ""; }
   };
@@ -26,10 +27,16 @@ async function probeMytheresa(res) {
   if (rb) { const R = parseRobots(rb); out.robotsRules = rb.split("\n").filter(l => /^(user-agent|disallow|allow|sitemap|crawl-delay)/i.test(l.trim())).slice(0, 60);
     out.allowed = { women: robotsAllows(R, "/euro/en/women/clothing"), product: robotsAllows(R, "/euro/en/women/x-p00123456") }; }
   const sm = (rb.match(/sitemap:\s*(\S+)/i) || [])[1];
-  if (sm) await look("sitemap", sm, ["application/xml", "text/xml", "text/plain"]);
+  const smx = sm ? await look("sitemap", sm, ["application/xml", "text/xml", "text/plain"]) : "";
+  const locs = (smx.match(/<loc>([^<]+)<\/loc>/g) || []).map(x => x.slice(5, -6)); out.sitemapLocs = locs.slice(0, 80); out.sitemapCount = locs.length;
+  const psm = locs.find(u => /euro|en-de|de-en/i.test(u) && /product/i.test(u) && !/\.gz$/.test(u)) || locs.find(u => /product/i.test(u) && !/\.gz$/.test(u));
+  let firstProduct = null;
+  if (psm) { const px = await look("productSitemap", psm, ["application/xml", "text/xml", "text/plain"]); const pl = (px.match(/<loc>([^<]+)<\/loc>/g) || []).map(x => x.slice(5, -6)); out.productSitemapCount = pl.length; out.productSitemapSample = pl.slice(0, 5); firstProduct = pl.find(u => /-p\d{6,}/.test(u)) || pl[0] || null; }
   const cat = await look("category", H + "/euro/en/women/clothing", ["text/html"]);
   const purl = (cat.match(/href="(\/euro\/en\/women\/[^"]*-p\d{8}[^"]*)"/) || [])[1];
-  if (purl) await look("product", H + purl, ["text/html"]);
+  const prod = purl ? H + purl : firstProduct;
+  if (prod && domains.some(d => prod.includes("//" + d + "/"))) { const pt = await look("product", prod, ["text/html"]); out.productUrl = prod;
+    const lds = (pt.match(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi) || []).map(x => x.replace(/^<script[^>]*>|<\/script>$/gi, "")); out.productLd = lds.map(x => x.slice(0, 1500)); out.nextData = /__NEXT_DATA__/.test(pt); }
   console.log("PROBE " + JSON.stringify(out).slice(0, 12000));
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
