@@ -2224,7 +2224,12 @@ window.addEventListener("message", e => {
     for (const it of items) {
       const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = String(it.host || e.origin.replace(/^https:\/\/(www\.)?/, "")).split(".")[0].replace(/[^a-z0-9]/g, "").slice(0, 12);
       const images = [];
-      for (const d of (it.images || []).slice(0, 8)) { const b64 = String(d).split(",")[1]; if (!b64) continue; try { images.push((await api("imageUpload", { method: "POST", body: { data: b64 }, silent: true })).url); } catch {} }
+      for (const d of (it.images || []).slice(0, 8)) {
+        const v = String(d || "");
+        if (/^https:\/\//.test(v)) { images.push(v.replace(/[?&]tbx=1$/, "")); continue; } // фото не удалось скопировать — ссылка на фото магазина
+        const b64 = v.startsWith("data:image/") ? v.split(",")[1] : ""; if (!b64) continue;
+        try { images.push((await api("imageUpload", { method: "POST", body: { data: b64 }, silent: true })).url); } catch {}
+      }
       const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
       const key = "w:" + hk + ":" + (sku || scrKey(it));
       SCR.groups.set(key, { key, id: sku ? "product.manual." + (hk === "mytheresa" ? "mt" : hk) + "-" + sku : undefined, src: String(it.src || hk), brand: String(it.brand || ""), title: String(it.title || ""), price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur,

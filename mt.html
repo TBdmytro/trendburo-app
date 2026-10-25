@@ -64,10 +64,15 @@ async function tbCollect() {
     urls.forEach(function (u) { var k = u.split("?")[0].split("/").pop().toLowerCase(); if (!best[k]) { best[k] = u; order.push(k); } else if (score(u) > score(best[k])) best[k] = u; });
     return order.map(function (k) { return best[k]; }).filter(function (u) { return score(u) > -2000; }).slice(0, limit);
   };
+  // фото берём так же, как их показывает страница (через картинку, а не прямой запрос — его могут запрещать правила сайта); не вышло — передаём ссылку на фото
   var toJpeg = async function (u) {
-    var b = await (await fetch(u, { credentials: new URL(u).origin === location.origin ? "include" : "omit" })).blob(), bm = await createImageBitmap(b);
-    var s = Math.min(1, 1600 / Math.max(bm.width, bm.height)), c = document.createElement("canvas"); c.width = Math.round(bm.width * s); c.height = Math.round(bm.height * s);
-    var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(bm, 0, 0, c.width, c.height); return c.toDataURL("image/jpeg", 0.9);
+    try {
+      var im = new Image(); im.crossOrigin = "anonymous"; im.referrerPolicy = "no-referrer-when-downgrade";
+      await new Promise(function (ok, no) { im.onload = ok; im.onerror = no; im.src = u + (u.indexOf("?") >= 0 ? "&" : "?") + "tbx=1"; setTimeout(no, 20000); });
+      var w0 = im.naturalWidth, h0 = im.naturalHeight; if (!w0) throw new Error("empty");
+      var s = Math.min(1, 1600 / Math.max(w0, h0)), c = document.createElement("canvas"); c.width = Math.round(w0 * s); c.height = Math.round(h0 * s);
+      var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height); return c.toDataURL("image/jpeg", 0.9);
+    } catch (e) { return /^https:\/\//.test(u) ? u : null; }
   };
   var gender = function (path) { var t = "/" + path.toLowerCase().replace(/[-_]/g, "/") + "/"; return /\/(women|womens|woman|donna|damen|femme)\//.test(t) ? "w" : /\/(men|mens|man|uomo|herren|homme)\//.test(t) ? "m" : "u"; };
   var build = async function (doc, html, url, limit, extra) {
@@ -79,7 +84,7 @@ async function tbCollect() {
     var brand = String((p.brand && (p.brand.name || p.brand)) || siteName).trim(); brand = BRANDS[brand.toLowerCase()] || brand;
     var code = String(p.sku || "").toUpperCase() || codeOf(url), sz = [].concat(p.size || []).map(function (s) { return String(s).split(" / ")[0].trim(); }).filter(Boolean);
     var srcs = pickImages(html, code || codeOf(url), p.image, limit), images = [];
-    for (var k = 0; k < srcs.length; k++) { try { images.push(await toJpeg(srcs[k])); } catch (e) {} }
+    for (var k = 0; k < srcs.length; k++) { var jp = await toJpeg(srcs[k]); if (jp) images.push(jp); }
     return { src: siteName, host: host, brand: brand, title: String(p.name || "").replace(/\s+/g, " ").trim(), price: price, currency: ps.priceCurrency || of.priceCurrency || "EUR",
       sizes: sz.filter(function (s, i) { return sz.indexOf(s) === i; }), color: String(p.color || ""), sku: code, description: String(p.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
       url: url.split("?")[0].split("#")[0], crumbs: crumbs, gender: gender(new URL(url).pathname + "/" + (extra || []).join("/")), images: images };
@@ -90,7 +95,7 @@ async function tbCollect() {
   try {
     var html0 = document.documentElement.outerHTML, one = await build(document, html0, location.href, 8);
     if (one) {
-      if (/(^|\.)mytheresa\.com$/.test(location.hostname)) { var g = [].slice.call(document.querySelectorAll('img[class*="gallery__carousel__media__image"]')).map(function (i) { return i.currentSrc || i.src; }); if (g.length) { one.images = []; for (var gi = 0; gi < Math.min(g.length, 8); gi++) { if (g.indexOf(g[gi]) !== gi) continue; try { one.images.push(await toJpeg(g[gi])); } catch (e) {} } } }
+      if (/(^|\.)mytheresa\.com$/.test(location.hostname)) { var g = [].slice.call(document.querySelectorAll('img[class*="gallery__carousel__media__image"]')).map(function (i) { return i.currentSrc || i.src; }); if (g.length) { one.images = []; for (var gi = 0; gi < Math.min(g.length, 8); gi++) { if (g.indexOf(g[gi]) !== gi) continue; var gj = await toJpeg(g[gi]); if (gj) one.images.push(gj); } } }
       note("Trend Büro: передаю в админку…", true); await send(one); note("Готово: " + one.brand + " — " + one.title); return;
     }
     // раздел: ссылки на товары этого же сайта (с кодом товара в адресе); сначала листаем вниз, чтобы подгрузились все товары
