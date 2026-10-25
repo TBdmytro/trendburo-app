@@ -4,6 +4,7 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
+  if (req.method === "GET" && /[?&]probe=shops\b/.test(String(req.url || ""))) return probeShops(res, (String(req.url).match(/[?&]part=(\d)/) || [])[1] | 0);
   if (req.method !== "POST") { res.statusCode = 405; return res.end(); }
   let j = null;
   try {
@@ -39,4 +40,22 @@ async function probeMytheresa(res) {
     const lds = (pt.match(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi) || []).map(x => x.replace(/^<script[^>]*>|<\/script>$/gi, "")); out.productLd = lds.map(x => x.slice(0, 1500)); out.nextData = /__NEXT_DATA__/.test(pt); }
   console.log("PROBE " + JSON.stringify(out).slice(0, 12000));
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
+}
+
+// какие европейские мультибренды отдают открытый каталог (как Sporty & Rich): фиксированный список, только чтение, через обычную проверку поставщика
+import { detectSupplier } from "../lib/suppliers.js";
+const SHOP_CANDIDATES = [
+  ["smets.lu", "voostore.com", "andreas-murkudis.com", "jades24.com", "apropos-store.com", "lodenfrey.com", "julian-fashion.com", "antonioli.eu", "coltortiboutique.com", "giglio.com", "baseblu.com", "tizianafausti.com"],
+  ["genteroma.com", "leam.com", "biffi.com", "dante5.com", "suitnegozi.com", "eraldo.com", "wiseboutique.com", "nugnes1920.com", "thedoublef.com", "vitkac.com", "eleonorabonucci.com", "modes.com"],
+  ["lyst.com", "cettire.com", "24s.com", "luisaviaroma.com", "ssense.com", "brownsfashion.com", "theluxurycloset.com", "zalando-lounge.de", "breuninger.com", "ekseption.es", "stefaniamode.com", "boutiquematerfamilias.com"]
+];
+async function probeShops(res, part) {
+  const list = SHOP_CANDIDATES[part] || SHOP_CANDIDATES[0], t0 = Date.now();
+  const out = await Promise.all(list.map(async h => {
+    try { const r = await Promise.race([detectSupplier("https://" + h), new Promise(r => setTimeout(r, 45000, { ok: false, reason: "долго не отвечает" }))]);
+      return { host: h, ok: !!r.ok, currency: r.currency || null, eu: !!r.euPrices, market: r.market || null, geoEu: !!r.geoEu, sample: r.sample || 0, vendors: (r.vendors || []).slice(0, 25), vendorCount: r.vendorCount || 0, reason: r.reason || null };
+    } catch (e) { return { host: h, ok: false, reason: String(e && e.message || e).slice(0, 160) }; }
+  }));
+  console.log("PROBE shops " + JSON.stringify(out.map(o => [o.host, o.ok, o.currency, o.vendorCount])).slice(0, 3000));
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify({ ms: Date.now() - t0, out }, null, 1));
 }
