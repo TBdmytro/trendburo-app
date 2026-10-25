@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 19</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 20</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v19] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v20] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   var host = location.hostname.replace(/^www\./, "");
   var SITE = { "mytheresa.com": "Mytheresa", "ysl.com": "Saint Laurent" }, siteName = SITE[host] || host.split(".")[0].replace(/^\w/, function (c) { return c.toUpperCase(); });
@@ -233,8 +233,7 @@ async function tbCollect() {
     var html0 = document.documentElement.outerHTML, one = await build(document, html0, location.href, 8);
     if (one) {
       if (/(^|\.)mytheresa\.com$/.test(location.hostname)) { var g = [].slice.call(document.querySelectorAll('img[class*="gallery__carousel__media__image"]')).map(function (i) { return i.currentSrc || i.src; }); if (g.length) { one.images = []; for (var gi = 0; gi < Math.min(g.length, 8); gi++) { if (g.indexOf(g[gi]) !== gi) continue; one.images.push({ u: g[gi] }); } } }
-      var K1 = await getKnown(); if (one.blocked) one.unavailable = true;
-      if (one.blocked && !(K1.status && K1.status[one.sku])) { note("Не добавляю: " + BLK[one.blocked] + " — такие позиции не берём"); w && w.close && w.close(); return; }
+      var K1 = await getKnown(); if (one.blocked || (one.sizeStock.length && one.sizeStock.every(function (x) { return x.ok === false; }))) one.ask = one.blocked || "wait";
       if (K1.status && K1.status[one.sku]) { w.postMessage({ type: "tb-update", items: [one] }, ADM); await waitSaved(1); note("Обновил: " + one.title + " — цена и размеры (" + stName(K1.status[one.sku]) + ")"); return; }
       note("Trend Büro: передаю в админку…", true); await send(one); await waitSaved(1); note(saved.ok ? "Готово: " + one.brand + " — " + one.title + " в «Товарах» (скрыт)" : "Не сохранилось — откройте админку, там написана причина"); return;
     }
@@ -252,24 +251,23 @@ async function tbCollect() {
     var section = host + location.pathname, allCodes = links.map(codeOf).filter(Boolean);
     var known = links.filter(function (u) { return !!st[codeOf(u)]; }), fresh = links.filter(function (u) { return !st[codeOf(u)]; });
     had = known.length; var newTotal = fresh.length;
-    var skipped = fresh.filter(function (u) { return !!tb[codeOf(u)]; }).length; fresh = fresh.filter(function (u) { return !tb[codeOf(u)]; }); newTotal = fresh.length;
+    var askN = 0; // предзаказ / лист ожидания / «только в бутике» / размеры распроданы — берём, на сайте у них «Уточнить наличие»
     var todo = fresh.slice(0, MAX).map(function (u) { return [u, false]; }).concat(known.slice(0, 400).map(function (u) { return [u, true]; }));
     var summary = function (added) { try { w.postMessage({ type: "tb-summary", found: had + newTotal, had: had, added: added, left: Math.max(0, newTotal - Math.min(newTotal, MAX)) }, ADM); } catch (e) {} };
     var ok = 0, upd = 0, bad = 0, sentN = 0, extra = location.pathname.toLowerCase().split(/[/_-]+/);
-    var offItem = function (code, u) { return { src: siteName, host: host, sku: code, price: null, currency: "EUR", sizeStock: [], unavailable: true, section: section, url: u }; };
     // по два товара одновременно (как если бы покупатель открыл две вкладки) — вдвое быстрее и без нагрузки на сайт
     var one1 = async function (i) {
       var isUpd = todo[i][1], tcode = codeOf(todo[i][0]);
-      if (isUpd && tb[tcode]) { w.postMessage({ type: "tb-update", items: [offItem(tcode, todo[i][0])] }, ADM); sentN++; upd++; return; } // уже есть, а на сайте теперь предзаказ/лист ожидания — у нас «нет в наличии»
       note("Trend Büro: " + (isUpd ? "проверяю добавленный " : "новый товар ") + (i + 1) + " из " + todo.length + " · новых " + ok + " · проверено " + upd + (bad ? " · не прочитано " + bad : "") + ". Не закрывайте вкладку", true);
       try { var r = await fetch(todo[i][0], { credentials: "include", cache: "no-store" }), h = await r.text(); if (!r.ok) throw new Error(r.status);
         var it = await build(new DOMParser().parseFromString(h, "text/html"), h, todo[i][0], isUpd ? 0 : 6, extra);
-        if (it && it.title && !it.sizes.length && !it.blocked && !/bag|handbag|tasche|borse|\bsac\b|wallet|card|belt|jewel|ring|necklace|earring|bracelet|sunglass|eyewear/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) {
+        if (it && it.title && !it.blocked && tb[tcode]) it.blocked = tb[tcode];
+        if (it && it.title && !it.sizes.length && !/bag|handbag|tasche|borse|\bsac\b|wallet|card|belt|jewel|ring|necklace|earring|bracelet|sunglass|eyewear/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) {
           note("Trend Büro: жду размеры на странице товара " + (i + 1) + " из " + todo.length + "…", true);
           var rr = await rendered(todo[i][0], {}); if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked;
         }
-        if (it && it.title && it.blocked) { if (isUpd) { it.unavailable = true; it.section = section; w.postMessage({ type: "tb-update", items: [it] }, ADM); sentN++; upd++; } else skipped++; }
-        else if (it && it.title) { it.section = section; if (!(await ready)) throw new Error("admin"); w.postMessage({ type: isUpd ? "tb-update" : "tb-import", items: [it] }, ADM); sentN++; if (isUpd) upd++; else ok++; } else bad++; }
+        if (it && it.title && (it.blocked || (it.sizeStock.length && it.sizeStock.every(function (x) { return x.ok === false; })))) { it.ask = it.blocked || "wait"; askN++; }
+        if (it && it.title) { it.section = section; if (!(await ready)) throw new Error("admin"); w.postMessage({ type: isUpd ? "tb-update" : "tb-import", items: [it] }, ADM); sentN++; if (isUpd) upd++; else ok++; } else bad++; }
       catch (e) { if (e && e.message === "admin") throw e; bad++; }
     };
     var nextI = 0, adminErr = null;
@@ -287,15 +285,15 @@ async function tbCollect() {
         var mh = await mr.text(), mit = mr.ok ? await build(new DOMParser().parseFromString(mh, "text/html"), mh, missing[mi].url, 0, extra) : null;
         if (!mr.ok) { alive.push(missing[mi].code); continue; } // сайт не ответил — ничего не меняем
         if (!mit || !mit.title || (mit.sku && mit.sku !== missing[mi].code && codeOf(mr.url) !== missing[mi].code)) continue; // перекинуло на раздел/другой товар — снят
-        if (!mit.sizes.length && !mit.blocked) { var mr2 = await rendered(missing[mi].url, {}); if (mr2.sst.length) { mit.sizeStock = mr2.sst; mit.sizes = mr2.sst.map(function (x) { return x.s; }); mit.szDbg = ""; } if (mr2.blocked) mit.blocked = mr2.blocked; }
-        alive.push(missing[mi].code); mit.section = section; if (mit.blocked) mit.unavailable = true;
+        if (!mit.sizes.length) { var mr2 = await rendered(missing[mi].url, {}); if (mr2.sst.length) { mit.sizeStock = mr2.sst; mit.sizes = mr2.sst.map(function (x) { return x.s; }); mit.szDbg = ""; } if (mr2.blocked) mit.blocked = mr2.blocked; }
+        alive.push(missing[mi].code); mit.section = section; if (mit.blocked) mit.ask = mit.blocked;
         w.postMessage({ type: "tb-update", items: [mit] }, ADM); sentN++; upd++;
       } catch (e) { alive.push(missing[mi].code); }
       await sleep(PAUSE);
     }
     try { w.postMessage({ type: "tb-section", host: host, section: section, codes: allCodes.concat(alive), url: location.href.split("#")[0], title: document.title }, ADM); } catch (e) {}
     summary(ok); await waitSaved(sentN);
-    note("Готово: новых " + ok + " · проверено добавленных " + upd + (saved.fail ? " · не сохранилось " + saved.fail + " (причины в админке)" : "") + (bad ? " · не прочитано " + bad : "") + (skipped ? " · пропущено (предзаказ, лист ожидания, только в бутике): " + skipped : "") + (newTotal > MAX ? " · ещё новых: " + (newTotal - MAX) + " — нажмите кнопку ещё раз" : "") + ". Что продано и что пропало — в админке");
+    note("Готово: новых " + ok + " · проверено добавленных " + upd + (saved.fail ? " · не сохранилось " + saved.fail + " (причины в админке)" : "") + (bad ? " · не прочитано " + bad : "") + (askN ? " · из них «уточнить наличие» (предзаказ, лист ожидания, нет размеров): " + askN : "") + (newTotal > MAX ? " · ещё новых: " + (newTotal - MAX) + " — нажмите кнопку ещё раз" : "") + ". Что продано и что пропало — в админке");
   } catch (e) { if (e && e.message === "noframe") { note("Этот сайт не даёт работать без окна — нажмите кнопку ещё раз: загрузка пойдёт через маленькое окно в углу", true); return; }
     note(e && e.message === "admin" ? "Админка не ответила. Войдите в админку в этом браузере и нажмите кнопку ещё раз" : "Не получилось: " + (e && e.message || e)); }
 }

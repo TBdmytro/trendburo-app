@@ -77,7 +77,7 @@ test("наличие по размерам с сайта бренда: прод�
     sizeStock: [{ s: "XS", ok: true }, { s: "S", ok: true }, { s: "M", ok: true }, { s: "L", ok: true }, { s: "XL", ok: true }, { s: "XXL", ok: false }] });
   const in10days = Date.parse(p.offers[0].checkedAt) + 10 * 864e5;
   const sf = toStorefront(p, in10days);
-  assert.deepEqual(sf.sizes.map(x => x.size + ":" + x.status), ["XS:online", "S:online", "M:online", "L:online", "XL:online", "XXL:out"]);
+  assert.deepEqual(sf.sizes.map(x => x.size + ":" + x.status), ["XS:online", "S:online", "M:online", "L:online", "XL:online", "XXL:ask"]);
   assert.equal(sf.orderable, true);
 });
 
@@ -88,7 +88,7 @@ test("предзаказ у бутика: размеры «предзаказ»,
   const p = await saveManualProduct(s, { id: "product.manual.ysl-j1", brand: "Saint Laurent", title: "Jacket", category: "clothing", boutique: 3000, images: ["https://x.test/a.jpg"], markupPct: 10, status: "published",
     sizeStock: [{ s: "44", ok: true }, { s: "46", ok: false }], preorder: true });
   const sf = toStorefront(p, Date.parse(p.offers[0].checkedAt) + 864e5);
-  assert.deepEqual(sf.sizes.map(x => x.size + ":" + x.status), ["44:preorder", "46:out"]);
+  assert.deepEqual(sf.sizes.map(x => x.size + ":" + x.status), ["44:preorder", "46:preorder"]);
   assert.equal(sf.availability, "preorder"); assert.equal(sf.orderable, false);
   const nosz = await saveManualProduct(s, { id: "product.manual.ysl-j2", brand: "Saint Laurent", title: "Coat", category: "clothing", boutique: 3000, images: ["https://x.test/a.jpg"], status: "published", preorder: true });
   assert.equal(toStorefront(nosz, Date.parse(nosz.offers[0].checkedAt) + 864e5).availability, "preorder");
@@ -96,6 +96,21 @@ test("предзаказ у бутика: размеры «предзаказ»,
   const after = await s.get("product.manual.ysl-j1");
   assert.equal(toStorefront(after, Date.parse(after.offers[0].checkedAt) + 864e5).availability, "online");
   assert.ok(u);
+});
+
+test("с сайта бренда: размер распродан или «лист ожидания» — на витрине «уточнить наличие» (менеджер выкупит в бутике), а не «продано»", async () => {
+  const { saveManualProduct, markWebGone } = await import("../lib/manual.js");
+  const { toStorefront } = await import("../lib/catalog.js");
+  const s = new MemoryStore();
+  const a = await saveManualProduct(s, { id: "product.manual.lv-s1", brand: "Louis Vuitton", title: "LV Trainer sneaker", category: "shoes", boutique: 1200, images: ["https://x.test/a.jpg"], status: "published",
+    sizeStock: [{ s: "40", ok: false }, { s: "41", ok: false }] });
+  const sa = toStorefront(a, Date.parse(a.offers[0].checkedAt) + 864e5);
+  assert.equal(sa.availability, "ask"); assert.equal(sa.orderable, false); assert.ok(a.hasPre);
+  const b = await saveManualProduct(s, { id: "product.manual.lv-s2", brand: "Louis Vuitton", title: "Coat", category: "clothing", boutique: 5000, images: ["https://x.test/a.jpg"], status: "published", ask: "wait" });
+  assert.equal(toStorefront(b, Date.parse(b.offers[0].checkedAt) + 864e5).availability, "ask");
+  await markWebGone(s, ["product.manual.lv-s2"]); // страницы на сайте бренда больше нет — тогда «нет в наличии»
+  const g = await s.get("product.manual.lv-s2");
+  assert.equal(toStorefront(g, Date.parse(g.offers[0].checkedAt) + 864e5).availability, "out");
 });
 
 test("подразделы: обувь, сумки, одежда — по разделу сайта, названию, описанию", async () => {

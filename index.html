@@ -2196,9 +2196,9 @@ function openProduct(id){
   const cws=st?[{name:"",c:it.c,ok:true}]:colorways(it);
   const sizes=st?null:(p&&p.live?(p.sizes&&p.sizes.length?[...new Set(p.sizes.map(z=>z.size))]:null):(p&&SIZES[p.cat]?SIZES[p.cat][p.g]:null));
   // размеры, которых нет у поставщика, показываем зачёркнутыми и не даём выбрать
-  const szOut=new Set(p&&p.live&&p.sizes?[...new Set(p.sizes.map(z=>z.size))].filter(z=>!p.sizes.some(x=>x.size===z&&(x.status==="online"||x.status==="boutique"||x.status==="preorder"))):[]);
-  // предзаказ у бутика: вместо корзины — «Уточнить наличие» (заявка менеджеру)
-  const isPre=()=>{if(!p||!p.live||r)return false;if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size===size);return z.some(x=>x.status==="preorder")&&!z.some(x=>x.status==="online"||x.status==="boutique")}return p.availability==="preorder"};
+  const szOut=new Set(p&&p.live&&p.sizes?[...new Set(p.sizes.map(z=>z.size))].filter(z=>!p.sizes.some(x=>x.size===z&&(x.status==="online"||x.status==="boutique"||x.status==="preorder"||x.status==="ask"))):[]);
+  // онлайн сейчас не купить (предзаказ, лист ожидания, размер распродан на сайте бренда) — вместо корзины «Уточнить наличие»: менеджер найдёт и выкупит в бутике
+  const ASK=["preorder","ask"],isPre=()=>{if(!p||!p.live||r)return false;if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size===size);return z.some(x=>ASK.includes(x.status))&&!z.some(x=>x.status==="online"||x.status==="boutique")}return ASK.includes(p.availability)};
   if(st&&st.size)size=st.size;
   if(sizes){const pz=p.cat==="shoes"?prefs.shoe:prefs.cloth;if(pz&&sizes.includes(pz)&&!szOut.has(pz))size=pz}
   const like=p?similarTo(p):RESALE.filter(x=>x.id!==it.id);
@@ -2239,7 +2239,7 @@ function openProduct(id){
     <div class="pv-top"><div style="min-width:0">${p?`<button class="bl" data-act="brand" data-bk="${p.bk}">${esc(it.brand)} ›</button>`:`<span class="bl">${esc(it.brand)}</span>`}<h2>${esc(it.name)}</h2></div>
       <div class="pr"><b class="num">${eur(r?it.price:priceFor(it,d))}</b>${oldP()?`<s class="num">${eur(oldP())}</s>`:r?"<span>Цена продавца</span>":""}</div></div>
     ${st?`<span class="avail"><span class="gdot"></span>В наличии · ${st.city}${st.loc==="ua"?", Украина":", Германия"}</span>`:""}
-    ${st&&st.loc==="ua"?`<div class="pv-note">Уже в Украине — отправим Новой почтой за 1–3 дня</div>`:!st&&p&&p.live&&isPre()?`<div class="pv-note">У бутика предзаказ — наличие и срок уточнит менеджер</div>`:!st&&p&&p.live&&!p.orderable?`<div class="pv-note">Наличие и размер менеджер подтвердит после заказа</div>`:""}`;
+    ${st&&st.loc==="ua"?`<div class="pv-note">Уже в Украине — отправим Новой почтой за 1–3 дня</div>`:!st&&p&&p.live&&isPre()?`<div class="pv-note">${p.availability==="preorder"?"У бутика предзаказ — наличие и срок уточнит менеджер":"Онлайн сейчас нет — менеджер уточнит наличие и выкупит в бутике"}</div>`:!st&&p&&p.live&&!p.orderable?`<div class="pv-note">Наличие и размер менеджер подтвердит после заказа</div>`:""}`;
     s.querySelector("#pvx").innerHTML=`
     ${st&&st.size?`<div><div class="pv-lbl">Размер</div><div class="fixsz"><b>${st.size}</b><span>один экземпляр</span></div></div>`:""}
     ${r?`<div class="tags"><span class="dark" style="background:#fff;color:var(--fg)">Проверено Trend Büro</span><span style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">${esc(r.set)}</span></div>`:""}
@@ -2274,7 +2274,7 @@ function openProduct(id){
   ob.onclick=()=>{
     if(sizes&&!size){toast("Выберите размер или «Не знаю»");s.querySelector(".dsz").scrollIntoView({behavior:"smooth",block:"center"});return}
     const cw=cws[ci];
-    if(isPre()){orderSheet("Уточнить наличие: "+it.brand,`Здравствуйте! Хочу уточнить наличие (у бутика предзаказ):\n${it.brand} — ${it.name}${cws.length>1?"\nЦвет: "+cw.name:""}${sizes?"\nРазмер: "+(size==="?"?"нужна помощь":size):""}\nЦена: ${eur(priceFor(it,d))}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`);return}
+    if(isPre()){orderSheet("Уточнить наличие: "+it.brand,`Здравствуйте! Хочу уточнить наличие${p.availability==="preorder"?" (у бутика предзаказ)":""}:\n${it.brand} — ${it.name}${cws.length>1?"\nЦвет: "+cw.name:""}${sizes?"\nРазмер: "+(size==="?"?"нужна помощь":size):""}\nЦена: ${eur(priceFor(it,d))}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`);return}
     // наличие менеджер уточняет после заказа — в карточке всегда «В корзину»
     if(!r){if(ob.dataset.added){openCart();return}addToCart(it.id,size,cws.length>1?cw.name:"",cw.ok,cw.c,true);if(st)toast("Один экземпляр — менеджер закрепит его за вами");ob.dataset.added="1";ob.classList.remove("added");void ob.offsetWidth;ob.classList.add("added");setLbl("✓ Добавлено в корзину");
       try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.notificationOccurred("success")}catch(e){}

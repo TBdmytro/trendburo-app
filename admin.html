@@ -798,7 +798,7 @@ const MODE = { link: "Один товар", links: "По ссылкам", catego
 const IKIND = { new: "Новые", update: "Обновления", duplicate: "Возможные дубли", incomplete: "Неполные", error: "Ошибки", excluded: "Исключены", pricechange: "Изменения цен" };
 const CATS = { bags: "Сумки", clothing: "Одежда", shoes: "Обувь", accessories: "Аксессуары", jewelry: "Украшения", eyewear: "Очки", watches: "Часы", fragrance: "Ароматы", other: "Другое: книги, коврики…" };
 const LOADCATS = ["bags", "clothing", "shoes", "accessories", "jewelry", "eyewear"];
-const AV = { online: ["онлайн", "ok"], boutique: ["в бутике", "warn"], out: ["нет", "err"], preorder: ["предзаказ", "warn"], unknown: ["?", ""] };
+const AV = { online: ["онлайн", "ok"], boutique: ["в бутике", "warn"], out: ["нет", "err"], preorder: ["предзаказ", "warn"], ask: ["уточнить", "warn"], unknown: ["?", ""] };
 const REGION = { DE: "Германия", ES: "Испания", FR: "Франция", IT: "Италия" };
 const CHECK = { ok: ["Доступ есть", "ok"], blocked: ["Сайт блокирует", "err"], error: ["Ошибка связи", "warn"], none: ["Нужен файл", ""] };
 const ACTIVE = ["queued", "running", "waiting"];
@@ -2351,7 +2351,7 @@ async function vImport() {
 async function mtUpd(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
   if (!sku) return false;
-  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, unavailable: !!it.unavailable, isNew: !!it.isNew, section: it.section || "", szDbg: String(it.szDbg || "").slice(0, 900) } } });
+  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, unavailable: !!it.unavailable, ask: String(it.ask || it.blocked || ""), isNew: !!it.isNew, section: it.section || "", szDbg: String(it.szDbg || "").slice(0, 900) } } });
     MTP.upd = (MTP.upd || 0) + 1; if (r.price) MTP.priceCh = (MTP.priceCh || 0) + 1; if (r.changes) MTP.changed = (MTP.changed || 0) + 1; return true; }
   catch (err) { MTP.last.unshift("✕ " + (it.title || sku) + ": " + err.message); return false; }
 }
@@ -2360,7 +2360,7 @@ async function mtOne(it, origin) {
   const urls = (it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || ""));
   const datas = (it.images || []).map(x => typeof x === "string" ? (x.startsWith("data:image/") ? x : null) : x && x.d).filter(Boolean);
   const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
-  const base = { brand: String(it.brand || ""), title: String(it.title || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u", boutique: eur, sizes: (it.sizes || []).map(String).slice(0, 40), sizeStock: (Array.isArray(it.sizeStock) ? it.sizeStock : []).slice(0, 40).map(x => ({ s: String(x && x.s || "").slice(0, 20), ok: x && x.ok === false ? false : x && x.ok === true ? true : null, ...(x && x.pre ? { pre: true } : {}) })).filter(x => x.s), preorder: !!it.preorder, color: String(it.color || ""), sku: String(it.sku || ""), url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), markupPct: MT_MARKUP, isNew: !!it.isNew, section: String(it.section || "").slice(0, 200), szDbg: String(it.szDbg || "").slice(0, 900) };
+  const base = { brand: String(it.brand || ""), title: String(it.title || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u", boutique: eur, sizes: (it.sizes || []).map(String).slice(0, 40), sizeStock: (Array.isArray(it.sizeStock) ? it.sizeStock : []).slice(0, 40).map(x => ({ s: String(x && x.s || "").slice(0, 20), ok: x && x.ok === false ? false : x && x.ok === true ? true : null, ...(x && x.pre ? { pre: true } : {}) })).filter(x => x.s), preorder: !!it.preorder, ask: String(it.ask || it.blocked || ""), color: String(it.color || ""), sku: String(it.sku || ""), url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), markupPct: MT_MARKUP, isNew: !!it.isNew, section: String(it.section || "").slice(0, 200), szDbg: String(it.szDbg || "").slice(0, 900) };
   const fail = why => { const key = "w:" + hk + ":" + (sku || scrKey(it)); SCR.groups.set(key, { key, id: sku ? "product.manual." + hk + "-" + sku : undefined, src: String(it.src || hk), ...base, price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur, images: urls, photos: urls, crops: [], count: 0, checked: true, sent: (it.images || []).length, err: why }); MTP.last.unshift("✕ " + base.title + ": " + why); return false; };
   if (!sku) return fail("нет артикула");
   if (!eur) return fail("нет цены в € — впишите и сохраните");
@@ -2797,14 +2797,14 @@ async function vProducts2(pre) {
   const chipSel = (key, label, arr, labf = x => x) => `<span class="fchip ${F[key] ? "on" : ""}">${esc(F[key] ? labf(F[key]) : label)} ${F[key] ? "×" : "▾"}<select data-f="${key}" aria-label="${label}"><option value="">${label}: все</option>${arr.map(x => `<option value="${esc(x.k)}" ${x.k === F[key] ? "selected" : ""}>${esc(labf(x.k))} · ${x.n}</option>`).join("")}</select></span>`;
   const drawFilters = () => {
     $("#pf").innerHTML = [["", "Все"], ["published", "На витрине"], ["draft", "Скрытые"]].map(([k, v]) => `<button class="fchip ${F.status === k ? "on" : ""}" data-st="${k}">${v}</button>`).join("")
-      + `<button class="fchip ${F.avail ? "on" : ""}" data-avail>Можно купить</button><button class="fchip ${F.pre ? "on" : ""}" data-pre>Предзаказ</button>`
+      + `<button class="fchip ${F.avail ? "on" : ""}" data-avail>Можно купить</button><button class="fchip ${F.pre ? "on" : ""}" data-pre>Уточнить наличие</button>`
       + chipSel("source", "Поставщик", facets.sources, sname) + chipSel("brand", "Бренд", facets.brands) + chipSel("cat", "Категория", facets.cats, k => CATS[k] || k);
   };
   const row = p => `<div class="prow" data-open="${esc(p._id)}">
       <input type="checkbox" class="ck" data-psel="${esc(p._id)}" ${sel.has(p._id) ? "checked" : ""} aria-label="Выбрать">
       <div class="th">${p.cover ? `<img src="${esc(thumb(p.cover))}" alt="" loading="lazy" decoding="async">` : svg("img")}</div>
       <div class="tx"><span class="br">${esc(p.brand || "—")} · ${esc(sname(p.source || "manual"))}</span><span class="tt">${esc(p.title)}</span>
-        <span class="pr"><b class="num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</b> <span>· ${esc(CATS[p.category] || "—")}${p.pre ? " · предзаказ" : p.avail === false ? " · нет в наличии" : ""}</span></span></div>
+        <span class="pr"><b class="num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</b> <span>· ${esc(CATS[p.category] || "—")}${p.pre ? " · уточнить наличие" : p.avail === false ? " · нет в наличии" : ""}</span></span></div>
       <input type="checkbox" class="sw" data-show1="${esc(p._id)}" ${p.status === "published" ? "checked" : ""} ${p.price?.ua ? "" : "disabled"} aria-label="На витрине"></div>`;
   const card = p => `<div class="pcard ${sel.has(p._id) ? "sel" : ""}" data-open="${esc(p._id)}">
       <button type="button" class="tick" data-pick1="${esc(p._id)}" aria-label="Выбрать" aria-pressed="${sel.has(p._id)}">${sel.has(p._id) ? "✓" : ""}</button>${p.status === "published" ? `<span class="live">На сайте</span>` : p.createdAt && Date.now() - Date.parse(p.createdAt) < 3 * 864e5 ? `<span class="live" style="background:#eef1fb;color:#3a55c4">Новое</span>` : ""}

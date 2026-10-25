@@ -354,7 +354,7 @@ export default async function handler(req, res) {
         // прогон: товар уже есть — обновить цену и наличие по размерам
         const id = String(body.id || ""), it = body.item || {};
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
-        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
+        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
       }
       case "fixBrands": {
         // выравнивание брендов и подразделов — отдельным запросом в фоне (админка не ждёт его, чтобы «Товары» открывались сразу)
