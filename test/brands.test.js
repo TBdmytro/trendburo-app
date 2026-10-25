@@ -81,6 +81,23 @@ test("наличие по размерам с сайта бренда: прод�
   assert.equal(sf.orderable, true);
 });
 
+test("предзаказ у бутика: размеры «предзаказ», проданные остаются проданными, купить сразу нельзя; при обновлении — снимается", async () => {
+  const { saveManualProduct, updateWebProduct } = await import("../lib/manual.js");
+  const { toStorefront } = await import("../lib/catalog.js");
+  const s = new MemoryStore();
+  const p = await saveManualProduct(s, { id: "product.manual.ysl-j1", brand: "Saint Laurent", title: "Jacket", category: "clothing", boutique: 3000, images: ["https://x.test/a.jpg"], markupPct: 10, status: "published",
+    sizeStock: [{ s: "44", ok: true }, { s: "46", ok: false }], preorder: true });
+  const sf = toStorefront(p, Date.parse(p.offers[0].checkedAt) + 864e5);
+  assert.deepEqual(sf.sizes.map(x => x.size + ":" + x.status), ["44:preorder", "46:out"]);
+  assert.equal(sf.availability, "preorder"); assert.equal(sf.orderable, false);
+  const nosz = await saveManualProduct(s, { id: "product.manual.ysl-j2", brand: "Saint Laurent", title: "Coat", category: "clothing", boutique: 3000, images: ["https://x.test/a.jpg"], status: "published", preorder: true });
+  assert.equal(toStorefront(nosz, Date.parse(nosz.offers[0].checkedAt) + 864e5).availability, "preorder");
+  const u = await updateWebProduct(s, "product.manual.ysl-j1", { boutique: 3000, sizeStock: [{ s: "44", ok: true }, { s: "46", ok: true }] }, {});
+  const after = await s.get("product.manual.ysl-j1");
+  assert.equal(toStorefront(after, Date.parse(after.offers[0].checkedAt) + 864e5).availability, "online");
+  assert.ok(u);
+});
+
 test("подразделы: обувь, сумки, одежда — по разделу сайта, названию, описанию", async () => {
   const { detectSubcategory } = await import("../lib/normalize.js");
   assert.equal(detectSubcategory("shoes", ["sneakers"], "SL/61 low-top"), "sneakers");

@@ -1075,7 +1075,7 @@ async function vAdd(editId) {
         <div id="fColors" class="fcols"></div><button class="btn ghost sm" id="fColAdd" style="margin-top:8px">+ Добавить цвет</button></div>
       <div class="row" style="align-items:flex-end">
         <label class="f" style="flex:2;min-width:240px">Ссылка на товар у бренда <span class="hint" style="font-weight:400">для менеджера, клиенту не видна</span><input type="text" id="fUrl" value="${esc(F.url)}" placeholder="https://…"></label></div>
-      <div><h3 style="margin-bottom:10px">Наличие</h3><div class="seg" id="fAv">${[["online", "Можно заказать"], ["boutique", "Уточнить наличие"], ["out", "Нет в наличии"]].map(([k, v]) => `<button data-fav="${k}" aria-pressed="${F.availability === k}">${v}</button>`).join("")}</div></div>
+      <div><h3 style="margin-bottom:10px">Наличие</h3><div class="seg" id="fAv">${[["online", "Можно заказать"], ["boutique", "Уточнить наличие"], ["preorder", "Предзаказ"], ["out", "Нет в наличии"]].map(([k, v]) => `<button data-fav="${k}" aria-pressed="${F.availability === k}">${v}</button>`).join("")}</div></div>
       <div><h3 style="margin-bottom:4px">Уже выкуплено, лежит у нас</h3><p class="hint" style="margin:0 0 10px">Товар попадёт в блок «В наличии» с быстрой доставкой</p><div class="seg" id="fSt">${[["", "Нет"], ["ua", "В Украине"], ["eu", "В Европе"]].map(([k, v]) => `<button data-fst="${k}" aria-pressed="${F.stock.loc === k}">${v}</button>`).join("")}</div>
         <div class="row" id="fStX" style="margin-top:10px" ${F.stock.loc ? "" : "hidden"}><input type="text" id="fStCity" value="${esc(F.stock.city)}" placeholder="Город, напр. Киев" style="flex:1;min-width:150px"><input type="text" id="fStSize" value="${esc(F.stock.size)}" placeholder="Размер, если есть" style="flex:1;min-width:120px"></div></div>
       <div class="row" style="padding-top:6px;border-top:1px solid var(--line)"><button class="btn lg" id="fPub">${editId ? "Сохранить" : "Опубликовать на витрину"}</button><button class="btn ghost lg" id="fDraft">В черновик</button><span class="err" id="fErr"></span></div>
@@ -2343,7 +2343,7 @@ async function vImport() {
 async function mtUpd(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
   if (!sku) return false;
-  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], isNew: !!it.isNew, section: it.section || "", szDbg: String(it.szDbg || "").slice(0, 900) } } });
+  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, isNew: !!it.isNew, section: it.section || "", szDbg: String(it.szDbg || "").slice(0, 900) } } });
     MTP.upd = (MTP.upd || 0) + 1; if (r.price) MTP.priceCh = (MTP.priceCh || 0) + 1; if (r.changes) MTP.changed = (MTP.changed || 0) + 1; return true; }
   catch (err) { MTP.last.unshift("✕ " + (it.title || sku) + ": " + err.message); return false; }
 }
@@ -2352,7 +2352,7 @@ async function mtOne(it, origin) {
   const urls = (it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || ""));
   const datas = (it.images || []).map(x => typeof x === "string" ? (x.startsWith("data:image/") ? x : null) : x && x.d).filter(Boolean);
   const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
-  const base = { brand: String(it.brand || ""), title: String(it.title || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u", boutique: eur, sizes: (it.sizes || []).map(String).slice(0, 40), sizeStock: (Array.isArray(it.sizeStock) ? it.sizeStock : []).slice(0, 40).map(x => ({ s: String(x && x.s || "").slice(0, 20), ok: x && x.ok === false ? false : x && x.ok === true ? true : null })).filter(x => x.s), color: String(it.color || ""), sku: String(it.sku || ""), url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), markupPct: MT_MARKUP, isNew: !!it.isNew, section: String(it.section || "").slice(0, 200), szDbg: String(it.szDbg || "").slice(0, 900) };
+  const base = { brand: String(it.brand || ""), title: String(it.title || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u", boutique: eur, sizes: (it.sizes || []).map(String).slice(0, 40), sizeStock: (Array.isArray(it.sizeStock) ? it.sizeStock : []).slice(0, 40).map(x => ({ s: String(x && x.s || "").slice(0, 20), ok: x && x.ok === false ? false : x && x.ok === true ? true : null, ...(x && x.pre ? { pre: true } : {}) })).filter(x => x.s), preorder: !!it.preorder, color: String(it.color || ""), sku: String(it.sku || ""), url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), markupPct: MT_MARKUP, isNew: !!it.isNew, section: String(it.section || "").slice(0, 200), szDbg: String(it.szDbg || "").slice(0, 900) };
   const fail = why => { const key = "w:" + hk + ":" + (sku || scrKey(it)); SCR.groups.set(key, { key, id: sku ? "product.manual." + hk + "-" + sku : undefined, src: String(it.src || hk), ...base, price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur, images: urls, photos: urls, crops: [], count: 0, checked: true, sent: (it.images || []).length, err: why }); MTP.last.unshift("✕ " + base.title + ": " + why); return false; };
   if (!sku) return fail("нет артикула");
   if (!eur) return fail("нет цены в € — впишите и сохраните");
@@ -2756,7 +2756,7 @@ async function vProducts2(pre) {
     <input type="search" id="pq" placeholder="Бренд, модель, артикул" value="${esc(F.q)}" aria-label="Поиск">
     <div class="fchips" id="pf"></div>
     <div class="plist" id="plist"></div><div class="more" id="pmore"></div><div class="pbar" id="pbar"></div>`;
-  const q = extra => ({ q: F.q, status: F.status, source: F.source, brand: F.brand, cat: F.cat, avail: F.avail, sec: F.sec, ...extra });
+  const q = extra => ({ q: F.q, status: F.status, source: F.source, brand: F.brand, cat: F.cat, avail: F.avail, pre: F.pre, sec: F.sec, ...extra });
   // вкладки разделов магазина поставщика: Все · Бестселлеры · Женское · Мужское · Аксессуары
   let tabs = [], baseTotal = 0;
   // категории — сразу видны кнопками: Одежда · Обувь · Сумки · Аксессуары · Другое (книги, коврики…)
@@ -2787,14 +2787,14 @@ async function vProducts2(pre) {
   const chipSel = (key, label, arr, labf = x => x) => `<span class="fchip ${F[key] ? "on" : ""}">${esc(F[key] ? labf(F[key]) : label)} ${F[key] ? "×" : "▾"}<select data-f="${key}" aria-label="${label}"><option value="">${label}: все</option>${arr.map(x => `<option value="${esc(x.k)}" ${x.k === F[key] ? "selected" : ""}>${esc(labf(x.k))} · ${x.n}</option>`).join("")}</select></span>`;
   const drawFilters = () => {
     $("#pf").innerHTML = [["", "Все"], ["published", "На витрине"], ["draft", "Скрытые"]].map(([k, v]) => `<button class="fchip ${F.status === k ? "on" : ""}" data-st="${k}">${v}</button>`).join("")
-      + `<button class="fchip ${F.avail ? "on" : ""}" data-avail>Можно купить</button>`
+      + `<button class="fchip ${F.avail ? "on" : ""}" data-avail>Можно купить</button><button class="fchip ${F.pre ? "on" : ""}" data-pre>Предзаказ</button>`
       + chipSel("source", "Поставщик", facets.sources, sname) + chipSel("brand", "Бренд", facets.brands) + chipSel("cat", "Категория", facets.cats, k => CATS[k] || k);
   };
   const row = p => `<div class="prow" data-open="${esc(p._id)}">
       <input type="checkbox" class="ck" data-psel="${esc(p._id)}" ${sel.has(p._id) ? "checked" : ""} aria-label="Выбрать">
       <div class="th">${p.cover ? `<img src="${esc(thumb(p.cover))}" alt="" loading="lazy" decoding="async">` : svg("img")}</div>
       <div class="tx"><span class="br">${esc(p.brand || "—")} · ${esc(sname(p.source || "manual"))}</span><span class="tt">${esc(p.title)}</span>
-        <span class="pr"><b class="num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</b> <span>· ${esc(CATS[p.category] || "—")}${p.avail === false ? " · нет в наличии" : ""}</span></span></div>
+        <span class="pr"><b class="num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</b> <span>· ${esc(CATS[p.category] || "—")}${p.pre ? " · предзаказ" : p.avail === false ? " · нет в наличии" : ""}</span></span></div>
       <input type="checkbox" class="sw" data-show1="${esc(p._id)}" ${p.status === "published" ? "checked" : ""} ${p.price?.ua ? "" : "disabled"} aria-label="На витрине"></div>`;
   const card = p => `<div class="pcard ${sel.has(p._id) ? "sel" : ""}" data-open="${esc(p._id)}">
       <button type="button" class="tick" data-pick1="${esc(p._id)}" aria-label="Выбрать" aria-pressed="${sel.has(p._id)}">${sel.has(p._id) ? "✓" : ""}</button>${p.status === "published" ? `<span class="live">На сайте</span>` : p.createdAt && Date.now() - Date.parse(p.createdAt) < 3 * 864e5 ? `<span class="live" style="background:#eef1fb;color:#3a55c4">Новое</span>` : ""}
@@ -2878,6 +2878,7 @@ async function vProducts2(pre) {
     const sc = e.target.closest("[data-sec]"); if (sc) { F.sec = sc.dataset.sec; sel.clear(); return load(); }
     const cq = e.target.closest("[data-catq]"); if (cq) { F.cat = cq.dataset.catq; sel.clear(); return load(); }
     if (e.target.closest("[data-avail]")) { F.avail = F.avail ? "" : "1"; return load(); }
+    if (e.target.closest("[data-pre]")) { F.pre = F.pre ? "" : "1"; return load(); }
     if (e.target.id === "pMore") return load(true);
     const sw = e.target.closest("[data-show1]");
     if (sw) { const on = sw.checked; try { await api("status", { method: "POST", body: { ids: [sw.dataset.show1], status: on ? "published" : "draft" }, silent: true }); } catch (err) { sw.checked = !on; return toast(err.message); } const p = list.find(x => x._id === sw.dataset.show1); if (p) p.status = on ? "published" : "draft"; shown += on ? 1 : -1; tot(); return toast(on ? "На витрине через ~10 секунд" : "Скрыто с витрины"); }

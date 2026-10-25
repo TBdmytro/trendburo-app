@@ -259,6 +259,7 @@ export default async function handler(req, res) {
         const base = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q))
           && (!Q.status || p.status === Q.status) && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source))
           && (!Q.avail || (p.offers || []).some(o => o.onlineOrder))
+          && (!Q.pre || (p.offers || []).some(o => Object.values(o.availability || {}).some(v => v && v.status === "preorder")))
           // «В наличии»: вещь уже выкуплена и лежит у нас (ua — Украина, eu — Европа, any — любая)
           && (!Q.stock || (l => Q.stock === "any" ? !!l : l === Q.stock)((p.overrides?.stock || p.stock)?.loc || "")));
         // вкладка раздела магазина (Бестселлеры, Женское…) — в том же порядке, что на сайте бренда
@@ -272,7 +273,7 @@ export default async function handler(req, res) {
         return send(res, 200, { total: list.length, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId) },
           shown: list.filter(p => p.status === "published").length,
-          products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), gender: p.gender || null, sizes: sizeList(p), createdAt: p.createdAt || null })) });
+          products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: (p.offers || []).some(o => Object.values(o.availability || {}).some(v => v && v.status === "preorder")), gender: p.gender || null, sizes: sizeList(p), createdAt: p.createdAt || null })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });
@@ -322,7 +323,7 @@ export default async function handler(req, res) {
         // прогон: товар уже есть — обновить цену и наличие по размерам
         const id = String(body.id || ""), it = body.item || {};
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
-        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
+        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
       }
       case "sectionSync": {
         // прогон: товары этого раздела, которых больше нет на сайте бренда, — «продано». Если раздел загрузился меньше чем наполовину — ничего не трогаем

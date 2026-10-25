@@ -1768,7 +1768,7 @@ function toggleFav(id){const isO=id[0]==="o",S=isO?ofavs:favs;S.has(id)?S.delete
   updateCounts();renderFavs();if(F.onlyFav)renderGrid()}
 
 function pcHTML(p,i=0){const r=p.id[0]==="r";return `<button class="pc press" data-act="product" data-id="${p.id}" style="--c:${p.c};--i:${i}">
-  <div class="art s-${p.shape}${String(p.shape).startsWith("img:")?" hasimg":""}">${p.sale?`<span class="salb">−${p.sale}%</span>`:p.st?`<span class="stk"><span class="gdot"></span>В наличии</span>`:p.isNew?'<span class="newb">Новинка</span>':r?`<span class="newb">${esc(p.cond)}</span>`:""}<span class="fav" role="button" tabindex="0" data-fav="${p.id}" aria-label="В избранное" aria-pressed="${favs.has(p.id)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span>${shapeSVG(p.shape,p.c)}</div>
+  <div class="art s-${p.shape}${String(p.shape).startsWith("img:")?" hasimg":""}">${p.sale?`<span class="salb">−${p.sale}%</span>`:p.st?`<span class="stk"><span class="gdot"></span>В наличии</span>`:p.availability==="preorder"?'<span class="newb">Предзаказ</span>':p.isNew?'<span class="newb">Новинка</span>':r?`<span class="newb">${esc(p.cond)}</span>`:""}<span class="fav" role="button" tabindex="0" data-fav="${p.id}" aria-label="В избранное" aria-pressed="${favs.has(p.id)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span>${shapeSVG(p.shape,p.c)}</div>
   <div class="m"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span><span class="pr"><span class="p num">${eur(r?p.price:priceFor(p,prefs.dest||"ua"))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[prefs.dest||"ua"]??p.oldPrices.ua)}</s>`:""}</span><span class="ct">${r?"проверено":p.st?p.st.city:""}</span></span></div></button>`}
 
 /* ===== Лента ===== */
@@ -2196,14 +2196,16 @@ function openProduct(id){
   const cws=st?[{name:"",c:it.c,ok:true}]:colorways(it);
   const sizes=st?null:(p&&p.live?(p.sizes&&p.sizes.length?[...new Set(p.sizes.map(z=>z.size))]:null):(p&&SIZES[p.cat]?SIZES[p.cat][p.g]:null));
   // размеры, которых нет у поставщика, показываем зачёркнутыми и не даём выбрать
-  const szOut=new Set(p&&p.live&&p.sizes?[...new Set(p.sizes.map(z=>z.size))].filter(z=>!p.sizes.some(x=>x.size===z&&(x.status==="online"||x.status==="boutique"))):[]);
+  const szOut=new Set(p&&p.live&&p.sizes?[...new Set(p.sizes.map(z=>z.size))].filter(z=>!p.sizes.some(x=>x.size===z&&(x.status==="online"||x.status==="boutique"||x.status==="preorder"))):[]);
+  // предзаказ у бутика: вместо корзины — «Уточнить наличие» (заявка менеджеру)
+  const isPre=()=>{if(!p||!p.live||r)return false;if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size===size);return z.some(x=>x.status==="preorder")&&!z.some(x=>x.status==="online"||x.status==="boutique")}return p.availability==="preorder"};
   if(st&&st.size)size=st.size;
   if(sizes){const pz=p.cat==="shoes"?prefs.shoe:prefs.cloth;if(pz&&sizes.includes(pz)&&!szOut.has(pz))size=pz}
   const like=p?similarTo(p):RESALE.filter(x=>x.id!==it.id);
   const showDl=!r&&!(st&&st.loc==="ua");
-  const btnLabel=()=>r?"Купить":"В корзину · "+eur(priceFor(it,d));
+  const btnLabel=()=>r?"Купить":isPre()?"Уточнить наличие":"В корзину · "+eur(priceFor(it,d));
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
-  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img ${i?"data-":""}style="background:url(&quot;${esc(im.thumb||im.src)}&quot;) center/contain no-repeat" ${i?"data-":""}src="${esc(im.src)}" crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?"":'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
+  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.availability==="preorder"?"<span>Предзаказ</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img ${i?"data-":""}style="background:url(&quot;${esc(im.thumb||im.src)}&quot;) center/contain no-repeat" ${i?"data-":""}src="${esc(im.src)}" crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?"":'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:14px"></div>
    ${showDl?`<div id="pvd"></div>`:""}
    <div id="pvx" style="display:flex;flex-direction:column;gap:18px"></div>
@@ -2237,7 +2239,7 @@ function openProduct(id){
     <div class="pv-top"><div style="min-width:0">${p?`<button class="bl" data-act="brand" data-bk="${p.bk}">${esc(it.brand)} ›</button>`:`<span class="bl">${esc(it.brand)}</span>`}<h2>${esc(it.name)}</h2></div>
       <div class="pr"><b class="num">${eur(r?it.price:priceFor(it,d))}</b>${oldP()?`<s class="num">${eur(oldP())}</s>`:r?"<span>Цена продавца</span>":""}</div></div>
     ${st?`<span class="avail"><span class="gdot"></span>В наличии · ${st.city}${st.loc==="ua"?", Украина":", Германия"}</span>`:""}
-    ${st&&st.loc==="ua"?`<div class="pv-note">Уже в Украине — отправим Новой почтой за 1–3 дня</div>`:!st&&p&&p.live&&!p.orderable?`<div class="pv-note">Наличие и размер менеджер подтвердит после заказа</div>`:""}`;
+    ${st&&st.loc==="ua"?`<div class="pv-note">Уже в Украине — отправим Новой почтой за 1–3 дня</div>`:!st&&p&&p.live&&isPre()?`<div class="pv-note">У бутика предзаказ — наличие и срок уточнит менеджер</div>`:!st&&p&&p.live&&!p.orderable?`<div class="pv-note">Наличие и размер менеджер подтвердит после заказа</div>`:""}`;
     s.querySelector("#pvx").innerHTML=`
     ${st&&st.size?`<div><div class="pv-lbl">Размер</div><div class="fixsz"><b>${st.size}</b><span>один экземпляр</span></div></div>`:""}
     ${r?`<div class="tags"><span class="dark" style="background:#fff;color:var(--fg)">Проверено Trend Büro</span><span style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">${esc(r.set)}</span></div>`:""}
@@ -2245,7 +2247,7 @@ function openProduct(id){
     ${sizes?`<div><div class="pv-lbl">Размер${size&&size!=="?"?" · "+size:""}</div><div class="dsz">${sizes.map(z=>szOut.has(z)?`<button class="na" disabled aria-label="${z} — нет в наличии">${z}</button>`:`<button data-sz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-sz="?" aria-pressed="${size==="?"}">Не знаю</button></div></div>`:""}
     ${p&&(p.dims||p.material)?`<div class="pv-specs">${p.dims?`<span><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/></svg>${esc(p.dims)}</span>`:""}${p.material?`<span><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/></svg>${esc(p.material)}</span>`:""}</div>`:""}
     ${r?`<div class="trust"><div><svg viewBox="0 0 24 24">${IC.shield}</svg><span>Проверяем подлинность, сделку ведём сами</span></div></div>`:""}`;
-    s.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=size===b.dataset.sz?"":b.dataset.sz;draw()});
+    s.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=size===b.dataset.sz?"":b.dataset.sz;resetBtn();draw()});
     s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;{const g=s.querySelector("#pvg"),ix=cws[ci].idx;if(g&&ix>=0)g.scrollTo({left:ix*gStep(g),behavior:"smooth"})}const v=s.querySelector("#pvv");if(v){v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180)}resetBtn();draw()});
   };
   const ob=s.querySelector("[data-order]"),fb=s.querySelector("[data-favp]");
@@ -2272,6 +2274,7 @@ function openProduct(id){
   ob.onclick=()=>{
     if(sizes&&!size){toast("Выберите размер или «Не знаю»");s.querySelector(".dsz").scrollIntoView({behavior:"smooth",block:"center"});return}
     const cw=cws[ci];
+    if(isPre()){orderSheet("Уточнить наличие: "+it.brand,`Здравствуйте! Хочу уточнить наличие (у бутика предзаказ):\n${it.brand} — ${it.name}${cws.length>1?"\nЦвет: "+cw.name:""}${sizes?"\nРазмер: "+(size==="?"?"нужна помощь":size):""}\nЦена: ${eur(priceFor(it,d))}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`);return}
     // наличие менеджер уточняет после заказа — в карточке всегда «В корзину»
     if(!r){if(ob.dataset.added){openCart();return}addToCart(it.id,size,cws.length>1?cw.name:"",cw.ok,cw.c,true);if(st)toast("Один экземпляр — менеджер закрепит его за вами");ob.dataset.added="1";ob.classList.remove("added");void ob.offsetWidth;ob.classList.add("added");setLbl("✓ Добавлено в корзину");
       try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.notificationOccurred("success")}catch(e){}
