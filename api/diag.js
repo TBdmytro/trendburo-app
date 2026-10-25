@@ -4,6 +4,7 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
+  if (req.method === "GET" && /[?&]migrate=(step|verify)\b/.test(String(req.url || ""))) return migrate(res, String(req.url).match(/migrate=(step|verify)/)[1]);
   if (req.method === "GET" && /[?&]probe=db\b/.test(String(req.url || ""))) return probeDb(res);
   if (req.method === "GET" && /[?&]probe=ysl\b/.test(String(req.url || ""))) return probeYsl(res);
   if (req.method === "GET" && /[?&]probe=count\b/.test(String(req.url || ""))) return probeCount(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "");
@@ -121,5 +122,15 @@ async function probeDb(res) {
     out.sources = types.map(t => ({ id: t._id, name: t.name, home: t.custom?.home || null }));
   } catch (e) { out.error = String(e && e.message || e).slice(0, 300); }
   console.log("PROBE db " + JSON.stringify(out).slice(0, 5000));
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
+}
+
+// перенос Trend Büro в отдельную базу: шаг копирования (только своё, повторять до done) и сверка. После done шаг ничего не делает.
+async function migrate(res, mode) {
+  let out;
+  try { const { stores, migrateStep, migrateVerify } = await import("../lib/migrate.js"); const { oldS, newS } = stores();
+    out = mode === "step" ? await migrateStep(oldS, newS) : await migrateVerify(oldS, newS); }
+  catch (e) { out = { error: String(e && e.message || e).slice(0, 300) }; }
+  console.log("MIGRATE " + mode + " " + JSON.stringify(out).slice(0, 2000));
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
