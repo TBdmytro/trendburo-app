@@ -4,6 +4,7 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
+  if (req.method === "GET" && /[?&]probe=count\b/.test(String(req.url || ""))) return probeCount(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "");
   if (req.method === "GET" && /[?&]probe=shops\b/.test(String(req.url || ""))) return probeShops(res, (String(req.url).match(/[?&]part=(\d)/) || [])[1] | 0);
   if (req.method !== "POST") { res.statusCode = 405; return res.end(); }
   let j = null;
@@ -58,4 +59,23 @@ async function probeShops(res, part) {
   }));
   console.log("PROBE shops " + JSON.stringify(out.map(o => [o.host, o.ok, o.currency, o.vendorCount])).slice(0, 3000));
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify({ ms: Date.now() - t0, out }, null, 1));
+}
+
+// сколько товаров ключевых брендов у открытого магазина (только из списка выше): листаем products.json, считаем товары в наличии
+const KEY_BRANDS = { gucci: "Gucci", prada: "Prada", "saint laurent": "Saint Laurent", "miu miu": "Miu Miu", loewe: "Loewe", "bottega veneta": "Bottega Veneta", "the row": "The Row", balenciaga: "Balenciaga", valentino: "Valentino", "valentino garavani": "Valentino", fendi: "Fendi", "brunello cucinelli": "Brunello Cucinelli", "loro piana": "Loro Piana", "loropiana": "Loro Piana", khaite: "Khaite", "phoebe philo": "Phoebe Philo", celine: "Celine", "alaïa": "Alaïa", alaia: "Alaïa", moncler: "Moncler", toteme: "Toteme" };
+async function probeCount(res, host) {
+  const ok = SHOP_CANDIDATES.flat().includes(host); const out = { host, ok, total: 0, inStock: 0, brands: {}, pages: 0, complete: false };
+  if (ok) { const t0 = Date.now();
+    for (let page = 1; page <= 120 && Date.now() - t0 < 50000; page++) {
+      let list = [];
+      try { const r = await safeFetch(`https://${host}/products.json?limit=250&page=${page}`, { domains: [host, "www." + host], types: ["application/json"], maxBytes: 12_000_000, timeoutMs: 12000 }); list = JSON.parse(r.text || "{}").products || []; }
+      catch (e) { out.error = String(e && e.message || e).slice(0, 160); break; }
+      out.pages = page; if (!list.length) { out.complete = true; break; }
+      for (const p of list) { out.total++; const live = (p.variants || []).some(v => v.available); if (live) out.inStock++;
+        const b = KEY_BRANDS[String(p.vendor || "").toLowerCase().trim()]; if (b && live) out.brands[b] = (out.brands[b] || 0) + 1; }
+      await new Promise(r => setTimeout(r, 250));
+    }
+  }
+  console.log("PROBE count " + JSON.stringify(out));
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
