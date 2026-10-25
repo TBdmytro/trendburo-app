@@ -33,7 +33,7 @@ const JOB_FIELDS = `..., "rows": null, "seen": null, "queue": null, "attempts": 
 // Любое изменение (кроме потока загрузки с кнопки) сбрасывает — после «На сайт», правок и удаления список свежий.
 let PCACHE = null;
 // только лёгкие поля: размеры и наличие по размерам дочитываются для открытой страницы (до 120 товаров), а не для всех тысяч
-const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, stock, hasPre";
+const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre";
 async function allProducts(store) {
   if (PCACHE && Date.now() - PCACHE.at < 30000) return PCACHE.data;
   const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
@@ -261,8 +261,10 @@ export default async function handler(req, res) {
         const px = "product.manual." + String(req.query.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-";
         if (px.length < 18) return send(res, 400, { error: "Нет сайта" });
         const all = await allProducts(store);
-        const status = {}; for (const p of all) if (p._id.startsWith(px)) status[p._id.slice(px.length).toUpperCase()] = p.status || "draft";
-        return send(res, 200, { status });
+        // fresh — проверены кнопкой за последние 12 часов: при повторном прогоне их не открываем заново (быстрее)
+        const status = {}, fresh = {}, since = Date.now() - 12 * 36e5;
+        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; if (ck && Date.parse(ck) > since) fresh[k] = 1; }
+        return send(res, 200, { status, fresh });
       }
       case "brandBoard": {
         // бренды, которые у нас есть: сколько товаров, что на витрине, разбивка по категориям, 4 обложки

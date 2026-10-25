@@ -2250,10 +2250,10 @@ window.addEventListener("message", async e => {
   if (!me) return;
   if (e.data.type === "tb-hello") { // кнопка спрашивает, что уже есть: такие товары она пропустит
     clearInterval(mtPing.t);
-    let status = {}; try { status = (await api("knownProducts", { query: { prefix: mtPrefix(e.data.host) }, silent: true })).status || {}; } catch {}
+    let status = {}, fresh = {}; try { const kr = await api("knownProducts", { query: { prefix: mtPrefix(e.data.host) }, silent: true }); status = kr.status || {}; fresh = kr.fresh || {}; } catch {}
     // карточки, которые уже пришли и ждут проверки здесь, тоже считаем «уже есть»
     for (const x of mtTodo) { const k = String(x.it.sku || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); if (k && !status[k]) status[k] = "draft"; } // ещё в очереди на сохранение
-    try { e.source.postMessage({ type: "tb-known", status }, e.origin); } catch {}
+    try { e.source.postMessage({ type: "tb-known", status, fresh }, e.origin); } catch {}
     return;
   }
   if (e.data.type === "tb-summary") { mtSummary = e.data; mtQueue = mtQueue.then(() => { toast(`Новых: ${e.data.added} · уже были: ${e.data.had}${e.data.left ? ` · ещё новых: ${e.data.left} — нажмите кнопку ещё раз` : ""}`); if (view === "screens") vScreens(); else if (view === "import") vImport(); }); return; }
