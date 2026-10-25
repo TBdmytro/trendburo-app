@@ -2811,7 +2811,7 @@ async function vProducts2(pre) {
       <div class="im">${p.cover ? `<img src="${esc(thumb(p.cover))}" alt="" loading="lazy" decoding="async">` : svg("img")}</div>
       <div class="bd"><span class="br">${esc(p.brand || "—")}${p.gender ? " · " + (p.gender === "w" ? "жен" : p.gender === "m" ? "муж" : "унисекс") : ""}</span><span class="tt">${esc(p.title)}</span>
         <span class="pr num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</span>
-        ${p.sizes?.length ? `<div class="szs">${p.sizes.map(z => `<span class="${z.ok ? "" : "no"}">${esc(z.s)}</span>`).join("")}</div>` : p.avail === false ? `<span class="hint">нет в наличии</span>` : ""}</div>
+        ${p.sizes?.length ? `<div class="szs">${p.sizes.map(z => `<span class="${z.ok ? "" : "no"}">${esc(z.s)}</span>`).join("")}</div>` : ""}${p.pre ? `<span class="hint" style="color:#b4582f">уточнить наличие</span>` : !p.sizes?.length && ["clothing", "shoes"].includes(p.category) ? `<span class="hint" style="color:#b4582f">размеры не найдены · уточнить наличие</span>` : !p.sizes?.length && p.avail === false ? `<span class="hint">нет в наличии</span>` : ""}</div>
       <button class="op" data-open="${esc(p._id)}" aria-label="Открыть товар">${svg("edit")}</button></div>`;
   const togglePick = id => {
     sel.has(id) ? sel.delete(id) : sel.add(id);

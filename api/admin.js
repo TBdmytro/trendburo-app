@@ -426,7 +426,7 @@ export default async function handler(req, res) {
           catch (e) { console.log("IMGURL fail " + JSON.stringify({ host: new URL(u).hostname, why: String(e.message).slice(0, 120) })); return u; } // не скачалось — ставим ссылку магазина
         }))).filter(Boolean);
         if (!images.length) return send(res, 400, { error: "Нет фото" });
-        const product = await saveManualProduct(store, { ...it, id, images, availability: "online", status: "draft", boutique: Number(it.boutique) }, { by: me.name, pricingCfg });
+        const product = await saveManualProduct(store, { ...it, id, images, availability: "online", status: "draft", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
         return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null });
       }
       case "pricePreview": {

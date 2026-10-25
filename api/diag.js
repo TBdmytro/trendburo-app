@@ -178,7 +178,7 @@ async function probeSizes(res, host) {
   const by = {}; for (const p of list) { const k = p.category || "?"; by[k] = by[k] || { with: 0, without: 0 }; (p.sizes && p.sizes.length ? by[k].with++ : by[k].without++); }
   out.total = list.length; out.byCat = by;
   const no = list.filter(p => p.category === "clothing" && !(p.sizes && p.sizes.length)), yes = list.filter(p => p.category === "clothing" && p.sizes && p.sizes.length);
-  out.noSamples = no.slice(0, 12).map(p => [p.title, p.sourceUrl, p._updatedAt]); out.debug = list.filter(p => p.sizeDebug).slice(0, 6).map(p => [p.title, p.sizeDebug]); out.yesSamples = yes.slice(0, 6).map(p => [p.title, p.sizes, p.sourceUrl]);
+  out.noSamples = no.slice(0, 12).map(p => [p.title, p.sourceUrl, p._updatedAt]); out.debug = list.filter(p => p.sizeDebug && p.category === "clothing").sort((a, b) => String(b._updatedAt).localeCompare(String(a._updatedAt))).slice(0, 5).map(p => [p.title, p._updatedAt, p.sizeDebug]); out.yesSamples = yes.slice(0, 6).map(p => [p.title, p.sizes, p.sourceUrl]);
   const dom = host.replace(/^www\./, ""); out.pages = [];
   for (const p of [...no.slice(0, 3), ...yes.slice(0, 1)]) {
     try { const r = await safeFetch(p.sourceUrl, { domains: [dom, "www." + dom], types: ["text/html"], maxBytes: 8_000_000, lang: "en-GB,en;q=0.9" }); const t = r.text || "";
