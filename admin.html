@@ -2222,9 +2222,17 @@ async function cropToB64(file, box) {
 }
 const SCR = { queue: [], groups: new Map(), running: false, enabled: null, last: 0, one: false, oneKey: null, lastKey: null, pending: [] };
 // Кнопка «В Trend Büro» (mt.html) на странице магазина или бренда: товары приходят сюда сообщениями из той вкладки, что открыла админку → карточки на проверку
-const MT_CATS = [[/bag|handbag|tote|clutch|backpack|сумк/, "bags"], [/shoe|sneaker|boot|sandal|pump|loafer|mule|slide|ballerina|espadrille/, "shoes"], [/sunglass|eyewear|optical/, "eyewear"], [/watch/, "watches"], [/jewel|necklace|earring|bracelet|ring\b/, "jewelry"], [/fragrance|parfum|perfume|beauty/, "fragrance"],
-  [/accessor|belt|scarf|wallet|card.?holder|small.leather|hat|cap\b|glove|keyring/, "accessories"], [/cloth|ready.to.wear|dress|coat|jacket|pant|trouser|jean|knit|sweater|shirt|top|skirt|short|blazer|suit|swim/, "clothing"]];
-const mtCat = it => { const parts = [...(it.crumbs || []), String(it.title || "").toLowerCase()].reverse(); for (const t of parts) for (const [re, c] of MT_CATS) if (re.test(t)) return c; return "other"; };
+// категория: сначала раздел, где нажали кнопку (например «handbags»), потом хлебные крошки страницы, потом название, в конце описание;
+// слова — целиком (иначе «coated canvas» попадало в одежду из-за «coat»)
+const MT_CATS = [[/\b(bags?|handbags?|totes?|clutch(es)?|backpacks?|pouch(es)?|crossbody|shoulder bag|hobo|cabas|сумк\w*)\b/i, "bags"], [/\b(shoes?|sneakers?|boots?|sandals?|pumps?|loafers?|mules?|slides?|ballerinas?|espadrilles?|heels?|derbies|moccasins?)\b/i, "shoes"],
+  [/\b(sunglasses|eyewear|optical|glasses)\b/i, "eyewear"], [/\b(watch(es)?)\b/i, "watches"], [/\b(jewel(le)?ry|necklaces?|earrings?|bracelets?|rings?|brooch(es)?)\b/i, "jewelry"], [/\b(fragrances?|parfums?|perfumes?|beauty)\b/i, "fragrance"],
+  [/\b(accessories|belts?|scarf|scarves|wallets?|card ?holders?|small leather goods|hats?|caps?|gloves?|key ?rings?|keychains?)\b/i, "accessories"],
+  [/\b(clothing|ready[- ]to[- ]wear|dress(es)?|coats?|jackets?|pants|trousers|jeans|knitwear|sweaters?|shirts?|t-shirts?|tops?|skirts?|shorts|blazers?|suits?|swimwear)\b/i, "clothing"]];
+const mtCat = it => {
+  const parts = [...(it.section || []), ...[...(it.crumbs || [])].reverse(), String(it.title || ""), String(it.description || "")].map(x => String(x).toLowerCase()).filter(Boolean);
+  for (const t of parts) for (const [re, c] of MT_CATS) if (re.test(t)) return c;
+  return "other";
+};
 function mtPing() { if (!window.opener) return; let n = 0; clearInterval(mtPing.t); mtPing.t = setInterval(() => { try { window.opener.postMessage("tb-ready", "*"); } catch {} if (++n > 90) clearInterval(mtPing.t); }, 1000); }
 let mtQueue = Promise.resolve(), mtShown = false, mtSummary = null, mtSaved = [];
 const MT_MARKUP = 10; // наценка к цене бутика для товаров с кнопки «В Trend Büro», %
@@ -2764,7 +2772,7 @@ async function vProducts2(pre) {
   };
   const bar = () => {
     const n = sel.size;
-    $("#pbar").innerHTML = n ? `<span>Выбрано ${n}${n < total ? ` из ${total}` : ""}</span>${n < total ? `<button class="g" data-selall>Выбрать все ${total}</button>` : ""}<button class="w" data-bulk="published">На сайт</button><button class="g" data-bulk="draft">Скрыть</button><button class="g" data-bulk="del">Удалить</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
+    $("#pbar").innerHTML = n ? `<span>Выбрано ${n}${n < total ? ` из ${total}` : ""}</span>${n < total ? `<button class="g" data-selall>Выбрать все ${total}</button>` : ""}<button class="w" data-bulk="published">На сайт</button><button class="g" data-bulk="draft">Скрыть</button><label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Категория<select data-bulkcat style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(CATS).map(([k, v]) => `<option value="${k}">${esc(v.split(":")[0])}</option>`).join("")}</select></label><button class="g" data-bulk="del">Удалить</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
       : `<span>Найдено ${total}</span><button class="g" data-selall>Выбрать все</button><button class="w" data-all="on">Все на сайт</button><button class="g" data-all="off">Скрыть все</button>`;
     $("#pbar").hidden = !total;
     $("#plist").classList.toggle("picking", n > 0);
@@ -2812,7 +2820,13 @@ async function vProducts2(pre) {
   (async () => { for (let i = 0; i < 6; i++) { const r = await api("ensurePrices", { method: "POST", body: {}, silent: true }).catch(() => ({ done: true })); if (r.changed && view.startsWith("products")) load(); if (r.done) break; } })();
   drawHub(); poll().then(() => { if (HUB_AUTO && HUB_AUTO === hubSrc()?.id && LS?.status !== "running") startLoad(false); HUB_AUTO = null; });
   let t; $("#pq").oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(load, 300); };
-  $("#main").onchange = e => { const f = e.target.dataset.f; if (f) { F[f] = e.target.value; if (f === "source") { F.brand = ""; F.cat = ""; LS = null; drawHub(); poll(); } load(); } };
+  $("#main").onchange = async e => {
+    if (e.target.dataset.bulkcat !== undefined && e.target.value) { // сменить категорию у выбранных
+      const ids = [...sel], c = e.target.value;
+      try { const r = await api("bulkCategory", { method: "POST", body: { ids, category: c } }); toast(`Категория «${(CATS[c] || c).split(":")[0]}»: ${r.changed}`); sel.clear(); load(); } catch (err) { toast(err.message); }
+      return;
+    }
+    const f = e.target.dataset.f; if (f) { F[f] = e.target.value; if (f === "source") { F.brand = ""; F.cat = ""; LS = null; drawHub(); poll(); } load(); } };
   $("#main").onclick = async e => {
     if (e.target.closest("select")) return;
     const g = e.target.closest("[data-go]"); if (g) return go(g.dataset.go);

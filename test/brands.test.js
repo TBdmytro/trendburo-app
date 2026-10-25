@@ -59,3 +59,12 @@ test("товар с кнопки: цена бутика +10% во все рег�
   assert.equal(q.pricing.eu, 2570); // 2566,3 → вверх до 2570
   assert.equal(q.status, "draft");
 });
+
+test("сумка с кнопки, попавшая в одежду из-за «coated canvas», возвращается в «Сумки»; куртка остаётся одеждой", async () => {
+  const s = new MemoryStore();
+  await s.put({ _id: "product.manual.ysl-x1", _type: "product", brand: "Saint Laurent", title: "CABAS in coated canvas", description: "A spacious tote bag in coated canvas", category: "clothing" });
+  await s.put({ _id: "product.manual.ysl-x2", _type: "product", brand: "Saint Laurent", title: "Jacket in wool", description: "Fits in your bag", category: "clothing" });
+  await fixBrands(s);
+  assert.equal((await s.get("product.manual.ysl-x1")).category, "bags");
+  assert.equal((await s.get("product.manual.ysl-x2")).category, "clothing");
+});

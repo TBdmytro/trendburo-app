@@ -318,6 +318,15 @@ export default async function handler(req, res) {
         catch (e) { if (e instanceof ScreenError) return send(res, e.status === 429 ? 429 : 422, { error: e.message, retryAfter: e.retryAfter }); throw e; }
       }
       case "manualSave": return send(res, 200, { product: await saveManualProduct(store, body, { by: me.name, pricingCfg }) });
+      case "bulkCategory": {
+        // смена категории у выбранных товаров (правка администратора, как в карточке товара)
+        const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(i => i.startsWith("product.")).slice(0, 2000);
+        const { CATEGORIES } = await import("../lib/normalize.js");
+        if (!CATEGORIES[body.category]) return send(res, 400, { error: "Нет такой категории" });
+        let changed = 0;
+        for (const id of ids) { try { await saveOverrides(store, id, { category: body.category }, me.name, pricingCfg); changed++; } catch {} }
+        return send(res, 200, { changed });
+      }
       case "webImport": {
         // товар с кнопки «В Trend Büro» одним запросом: сервер сам скачивает фото по ссылкам (параллельно) и сохраняет товар скрытым
         const it = body.item || {}, id = String(body.id || "");
