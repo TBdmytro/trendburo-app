@@ -31,7 +31,8 @@ const JOB_FIELDS = `..., "rows": null, "seen": null, "queue": null, "attempts": 
 // список товаров для «Товаров», брендов и фильтров: держим 30 с в памяти, чтобы админка открывалась быстро.
 // Любое изменение (кроме потока загрузки с кнопки) сбрасывает — после «На сайт», правок и удаления список свежий.
 let PCACHE = null;
-const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing, updatedAt, createdAt, issues, gender, sections, secPos, webSections, sourceUrl, variants[]{_key, size}, offers[]{sourceId, onlineOrder, availability}, stock";
+// только лёгкие поля: размеры и наличие по размерам дочитываются для открытой страницы (до 120 товаров), а не для всех тысяч
+const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, stock, hasPre";
 async function allProducts(store) {
   if (PCACHE && Date.now() - PCACHE.at < 30000) return PCACHE.data;
   const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
@@ -247,7 +248,6 @@ export default async function handler(req, res) {
       }
       case "brandBoard": {
         // бренды, которые у нас есть: сколько товаров, что на витрине, разбивка по категориям, 4 обложки
-        if (Date.now() - FIXAT > 30 * 60e3) { FIXAT = Date.now(); const n = await fixBrands(store).catch(e => { console.log("BRANDFIX err", e.message); return 0; }); if (n) PCACHE = null; } // одно название на бренд
         const all = await allProducts(store);
         const m = new Map();
         for (const p of all) {
@@ -270,7 +270,7 @@ export default async function handler(req, res) {
         const base = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q))
           && (!Q.status || p.status === Q.status) && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source))
           && (!Q.avail || (p.offers || []).some(o => o.onlineOrder))
-          && (!Q.pre || (p.offers || []).some(o => Object.values(o.availability || {}).some(v => v && v.status === "preorder")))
+          && (!Q.pre || !!p.hasPre)
           // «В наличии»: вещь уже выкуплена и лежит у нас (ua — Украина, eu — Европа, any — любая)
           && (!Q.stock || (l => Q.stock === "any" ? !!l : l === Q.stock)((p.overrides?.stock || p.stock)?.loc || "")));
         // вкладка раздела магазина (Бестселлеры, Женское…) — в том же порядке, что на сайте бренда
@@ -281,10 +281,12 @@ export default async function handler(req, res) {
         const secCounts = {}; base.forEach(p => (p.sections || []).forEach(h => secCounts[h] = (secCounts[h] || 0) + 1));
         const facet = (arr, f) => { const m = {}; arr.forEach(p => { const k = f(p); if (k) m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ k, n })); };
         const offset = Math.max(0, Number(Q.offset) || 0), limit = Math.min(300, Math.max(1, Number(Q.limit) || 120));
+        const page = list.slice(offset, offset + limit);
+        const det = new Map((await store.list("product", { _id: page.map(p => p._id) }, { limit: 400, fields: "_id, variants[]{_key, size}, offers[]{availability, _av}" })).map(d => [d._id, d]));
         return send(res, 200, { total: list.length, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId) },
           shown: list.filter(p => p.status === "published").length,
-          products: list.slice(offset, offset + limit).map(p => ({ _id: p._id, stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: (p.offers || []).some(o => Object.values(o.availability || {}).some(v => v && v.status === "preorder")), gender: p.gender || null, sizes: sizeList(p), createdAt: p.createdAt || null })) });
+          products: page.map(p => ({ _id: p._id, stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });
@@ -335,6 +337,12 @@ export default async function handler(req, res) {
         const id = String(body.id || ""), it = body.item || {};
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
         return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
+      }
+      case "fixBrands": {
+        // выравнивание брендов и подразделов — отдельным запросом в фоне (админка не ждёт его, чтобы «Товары» открывались сразу)
+        if (Date.now() - FIXAT < 10 * 60e3) return send(res, 200, { fixed: 0, recent: true });
+        FIXAT = Date.now(); const fixed = await fixBrands(store); if (fixed) PCACHE = null;
+        return send(res, 200, { fixed });
       }
       case "sectionKnown": {
         // товары этого раздела у нас (артикул + ссылка): кнопка перепроверит по странице те, что не видны в разделе, — прежде чем считать «продано»

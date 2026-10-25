@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 15</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 16</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -47,7 +47,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 700;
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v15] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v16] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   var host = location.hostname.replace(/^www\./, "");
   var SITE = { "mytheresa.com": "Mytheresa", "ysl.com": "Saint Laurent" }, siteName = SITE[host] || host.split(".")[0].replace(/^\w/, function (c) { return c.toUpperCase(); });
@@ -129,6 +129,43 @@ async function tbCollect() {
   var sizeDbg = function (html) { var H = String(html || "").replace(/<style[\s\S]*?<\/style>/gi, " "), re = /size/gi, m, out = [], last = -999;
     while ((m = re.exec(H)) && out.length < 4) { if (m.index - last < 300) continue; var pre = H.slice(Math.max(0, m.index - 30), m.index).toLowerCase(); if (/(font-|background-|max-|min-|data-|aria-|box-|text-|icon|image|img)$/.test(pre)) continue; last = m.index; out.push(H.slice(Math.max(0, m.index - 60), m.index + 160).replace(/\s+/g, " ")); }
     return out.join(" | ").slice(0, 900); };
+  // размеры на готовой странице без известных классов: ищем группу кнопок/пунктов, подписи которых похожи на размеры (XS, 44, IT 38…)
+  var genericSizes = function (doc) {
+    var groups = new Map();
+    [].slice.call(doc.querySelectorAll('button, li, label, a, [role="radio"], [role="option"], option, input[type="radio"]')).forEach(function (el) {
+      if (el.closest && el.closest("nav, header, footer, [class*='filter' i], [class*='breadcrumb' i]")) return;
+      var t = el.tagName === "INPUT" ? (el.value || el.getAttribute("aria-label") || "") : (el.getAttribute("aria-label") && okLabel(el.getAttribute("aria-label")) ? el.getAttribute("aria-label") : el.textContent);
+      var lab = okLabel(String(t || "").replace(/(sold ?out|notify me|out of stock|ausverkauft|épuisé)/ig, "").trim()); if (!lab) return;
+      var par = el.parentElement; if (par && par.children.length === 1 && par.parentElement) par = par.parentElement;
+      if (!par) return; if (!groups.has(par)) groups.set(par, []); groups.get(par).push({ el: el, lab: lab });
+    });
+    var best = null; groups.forEach(function (g) { var n = {}; g.forEach(function (x) { n[x.lab] = 1; }); var k = Object.keys(n).length; if (k >= 2 && (!best || k > best.k)) best = { g: g, k: k }; });
+    if (!best) return [];
+    var rows = best.g.map(function (x) { var el = x.el, cls = String(el.className || "") + " " + String((el.parentElement || {}).className || ""), tx = el.textContent || "";
+      return { lab: x.lab, hard: OUT.test(tx) || /(sold|unavail|notavail|not-available|out-of-stock|oos|strike)/i.test(cls), soft: /disabled/i.test(cls) || el.getAttribute("aria-disabled") === "true" || !!el.disabled, pre: PRE.test(tx) }; });
+    var allSoft = rows.every(function (x) { return x.soft && !x.hard; });
+    return rows.map(function (x) { return [x.lab, allSoft ? null : !(x.hard || x.soft), x.pre]; });
+  };
+  // размеры дорисовываются на странице уже в браузере (Saint Laurent и др.): открываем страницу товара в невидимом окне этого же сайта,
+  // ждём, пока появятся размеры, и читаем их с готовой страницы — так же, как их видит покупатель
+  var rendered = async function (url, p) {
+    var f = document.createElement("iframe"); f.setAttribute("aria-hidden", "true"); f.tabIndex = -1;
+    f.style.cssText = "position:fixed;left:-3000px;top:0;width:1280px;height:1000px;opacity:0;pointer-events:none;border:0";
+    var out = { sst: [], blocked: "", dbg: "" };
+    try {
+      await new Promise(function (ok) { f.onload = ok; f.src = url; document.body.appendChild(f); setTimeout(ok, 15000); });
+      var last = "", same = 0;
+      for (var t = 0; t < 24; t++) {
+        await sleep(500);
+        var d = f.contentDocument; if (!d || !d.body) continue;
+        var sst = sizeInfo(d, "", p || {}), key = JSON.stringify(sst);
+        if (sst.length) { if (key === last) { if (++same >= 2) { out.sst = sst; break; } } else { last = key; same = 0; } }
+      }
+      var d2 = f.contentDocument;
+      if (d2) { if (!out.sst.length && last) out.sst = JSON.parse(last); out.blocked = pageBlock(d2, d2.documentElement.outerHTML, p || {}, ""); if (!out.sst.length) out.dbg = sizeDbg(d2.body ? d2.body.innerHTML : ""); }
+    } catch (e) {}
+    f.remove(); return out;
+  };
   var sizeInfo = function (doc, html, p) {
     var out = [], seen = {}, add = function (s, ok, pre) { s = okLabel(s); if (!s) return; if (seen[s] !== undefined) { if (ok === false) out[seen[s]].ok = false; return; } seen[s] = out.length; out.push(pre && ok !== false ? { s: s, ok: ok, pre: true } : { s: s, ok: ok }); };
     var avail = function (a) { a = String(a || ""); return /InStock|LimitedAvailability|PreOrder|PreSale|BackOrder|OnlineOnly/i.test(a) ? true : /OutOfStock|SoldOut|Discontinued/i.test(a) ? false : null; };
@@ -143,6 +180,7 @@ async function tbCollect() {
       var allSoft = els.length && els.every(function (x) { return x.soft && !x.hard; });
       els.forEach(function (x) { add(x.lab, allSoft ? null : !(x.hard || x.soft), x.pre); }); }
     if (!out.length) jsonSizes(html).forEach(function (x) { add(x[0], x[1], x[2]); });
+    if (!out.length) genericSizes(doc).forEach(function (x) { add(x[0], x[1], x[2]); });
     if (!out.length) [].concat(p.size || []).forEach(function (z) { add(z, null); });
     return out.slice(0, 40);
   };
@@ -217,6 +255,10 @@ async function tbCollect() {
       note("Trend Büro: " + (isUpd ? "проверяю добавленный " : "новый товар ") + (i + 1) + " из " + todo.length + " · новых " + ok + " · проверено " + upd + (bad ? " · не прочитано " + bad : "") + ". Не закрывайте вкладку", true);
       try { var r = await fetch(todo[i][0], { credentials: "include", cache: "no-store" }), h = await r.text(); if (!r.ok) throw new Error(r.status);
         var it = await build(new DOMParser().parseFromString(h, "text/html"), h, todo[i][0], isUpd ? 0 : 6, extra);
+        if (it && it.title && !it.sizes.length && !it.blocked && !/bag|handbag|tasche|borse|\bsac\b|wallet|card|belt|jewel|ring|necklace|earring|bracelet|sunglass|eyewear/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) {
+          note("Trend Büro: жду размеры на странице товара " + (i + 1) + " из " + todo.length + "…", true);
+          var rr = await rendered(todo[i][0], {}); if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked;
+        }
         if (it && it.title && it.blocked) { if (isUpd) { it.unavailable = true; it.section = section; w.postMessage({ type: "tb-update", items: [it] }, ADM); sentN++; upd++; } else skipped++; }
         else if (it && it.title) { it.section = section; if (!(await ready)) throw new Error("admin"); w.postMessage({ type: isUpd ? "tb-update" : "tb-import", items: [it] }, ADM); sentN++; if (isUpd) upd++; else ok++; } else bad++; }
       catch (e) { if (e && e.message === "admin") throw e; bad++; }
@@ -233,6 +275,7 @@ async function tbCollect() {
         var mh = await mr.text(), mit = mr.ok ? await build(new DOMParser().parseFromString(mh, "text/html"), mh, missing[mi].url, 0, extra) : null;
         if (!mr.ok) { alive.push(missing[mi].code); continue; } // сайт не ответил — ничего не меняем
         if (!mit || !mit.title || (mit.sku && mit.sku !== missing[mi].code && codeOf(mr.url) !== missing[mi].code)) continue; // перекинуло на раздел/другой товар — снят
+        if (!mit.sizes.length && !mit.blocked) { var mr2 = await rendered(missing[mi].url, {}); if (mr2.sst.length) { mit.sizeStock = mr2.sst; mit.sizes = mr2.sst.map(function (x) { return x.s; }); mit.szDbg = ""; } if (mr2.blocked) mit.blocked = mr2.blocked; }
         alive.push(missing[mi].code); mit.section = section; if (mit.blocked) mit.unavailable = true;
         w.postMessage({ type: "tb-update", items: [mit] }, ADM); sentN++; upd++;
       } catch (e) { alive.push(missing[mi].code); }

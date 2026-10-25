@@ -2710,6 +2710,8 @@ async function vTexts() {
 const BOARD_CATS = ["bags", "shoes", "clothing", "accessories", "jewelry", "eyewear"];
 async function vBrandBoard() {
   const { brands, total } = await api("brandBoard");
+  // бренды и подразделы выравниваются в фоне, не чаще раза в 30 минут — «Товары» не ждут этого
+  try { if (Date.now() - (+localStorage.getItem("tbFixAt") || 0) > 30 * 60e3) { localStorage.setItem("tbFixAt", String(Date.now())); api("fixBrands", { method: "POST", silent: true }).catch(() => {}); } } catch {}
   let q = "", letter = "";
   const ini = n => n.replace(/&/g, " ").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
   const plural = n => n % 10 === 1 && n % 100 !== 11 ? "товар" : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "товара" : "товаров";
