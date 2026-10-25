@@ -4,6 +4,7 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
+  if (req.method === "GET" && /[?&]probe=ysl\b/.test(String(req.url || ""))) return probeYsl(res);
   if (req.method === "GET" && /[?&]probe=count\b/.test(String(req.url || ""))) return probeCount(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "");
   if (req.method === "GET" && /[?&]probe=shops\b/.test(String(req.url || ""))) return probeShops(res, (String(req.url).match(/[?&]part=(\d)/) || [])[1] | 0);
   if (req.method !== "POST") { res.statusCode = 405; return res.end(); }
@@ -77,5 +78,23 @@ async function probeCount(res, host) {
     }
   }
   console.log("PROBE count " + JSON.stringify(out));
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
+}
+
+// сайт Saint Laurent: robots.txt, карта сайта, страница сумок — только чтение, без обхода защиты
+async function probeYsl(res) {
+  const H = "https://www.ysl.com", domains = ["www.ysl.com", "ysl.com"], out = {};
+  const look = async (name, url, types) => {
+    try { const r = await safeFetch(url, { domains, types, maxBytes: 8_000_000, lang: "en-GB,en;q=0.9" }); const t = r.text || "";
+      out[name] = { status: r.status, bytes: t.length, title: (t.match(/<title[^>]*>([^<]{0,160})/i) || [])[1] || null, ld: (t.match(/application\/ld\+json/g) || []).length, products: (t.match(/"@type"\s*:\s*"Product"/g) || []).length,
+        links: [...new Set((t.match(/href="([^"]*\/[^"]*-[A-Z0-9]{6,}[^"]*\.html)"/g) || []).map(x => x.slice(6, -1)))].slice(0, 5), text: t.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 300) }; return t; }
+    catch (e) { out[name] = { error: String(e && e.message || e).slice(0, 200) }; return ""; }
+  };
+  const rb = await look("robots", H + "/robots.txt", ["text/plain", "text/html"]);
+  out.robotsRules = rb.split("\n").filter(l => /^(user-agent|disallow|allow|sitemap)/i.test(l.trim())).slice(0, 40);
+  if (rb) { const R = parseRobots(rb); out.allowed = robotsAllows(R, "/en-de/shop-women/handbags"); }
+  const sm = (rb.match(/sitemap:\s*(\S+)/i) || [])[1]; if (sm) { const x = await look("sitemap", sm, ["application/xml", "text/xml", "text/plain"]); out.sitemapLocs = (x.match(/<loc>([^<]+)<\/loc>/g) || []).slice(0, 15).map(v => v.slice(5, -6)); }
+  await look("bags", H + "/en-de/shop-women/handbags", ["text/html"]);
+  console.log("PROBE ysl " + JSON.stringify(out).slice(0, 6000));
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
