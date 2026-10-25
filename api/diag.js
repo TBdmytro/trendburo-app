@@ -5,6 +5,7 @@ export default async function handler(req, res) {
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
   if (req.method === "GET" && /[?&]migrate=(step|verify)\b/.test(String(req.url || ""))) return migrate(res, String(req.url).match(/migrate=(step|verify)/)[1]);
+  if (req.method === "GET" && /[?&]probe=photo\b/.test(String(req.url || ""))) return probePhoto(res);
   if (req.method === "GET" && /[?&]probe=db\b/.test(String(req.url || ""))) return probeDb(res);
   if (req.method === "GET" && /[?&]probe=ysl\b/.test(String(req.url || ""))) return probeYsl(res);
   if (req.method === "GET" && /[?&]probe=count\b/.test(String(req.url || ""))) return probeCount(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "");
@@ -132,5 +133,21 @@ async function migrate(res, mode) {
     out = mode === "step" ? await migrateStep(oldS, newS) : await migrateVerify(oldS, newS); }
   catch (e) { out = { error: String(e && e.message || e).slice(0, 300), cause: String(e && e.cause && (e.cause.code || e.cause.message) || "").slice(0, 120) }; }
   console.log("MIGRATE " + mode + " " + JSON.stringify(out).slice(0, 2000));
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
+}
+
+// путь фото с кнопки: 1) хранилище принимает файл (крошечная картинка, сразу удаляется); 2) сервер скачивает фото Saint Laurent и Mytheresa по ссылке (без сохранения)
+async function probePhoto(res) {
+  const out = {}; const store = await getStore();
+  try { const buf = Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAA//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AN//Z", "base64");
+    const up = await store.uploadImage(buf, { filename: "probe.jpg", contentType: "image/jpeg" }); out.upload = { ok: !!up.url, cdn: String(up.url || "").split("/").slice(0, 5).join("/") };
+    if (up.assetId && store.del) await store.del(up.assetId).catch(() => {}); }
+  catch (e) { out.upload = { ok: false, why: String(e.message).slice(0, 200) }; }
+  const { fetchBinary } = await import("../lib/images.js");
+  for (const [k, u] of [["ysl", "https://saint-laurent.dam.kering.com/asset/ba997059-975d-4e64-b3db-7b15dfb980a8/eCom/A00FMUAAHXH1000_A.jpg?v=1"], ["mytheresa", "https://www.mytheresa.com/image/1094/1238/100/c2/P00670061.jpg"]]) {
+    try { const b = await fetchBinary(u, [new URL(u).hostname]); out[k] = { ok: true, type: b.type, kb: Math.round(b.buf.length / 1024) }; }
+    catch (e) { out[k] = { ok: false, why: String(e.message).slice(0, 160) }; }
+  }
+  console.log("PROBE photo " + JSON.stringify(out));
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
