@@ -197,3 +197,16 @@ test("кнопка «В Trend Büro»: товар одним запросом �
     assert.equal(bad.status, 400);
   } finally { globalThis.fetch = real; }
 });
+
+test("раздел «Новинки»: новый товар сохраняется новинкой на месяц, уже добавленный — отмечается новинкой", async () => {
+  const login = await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } });
+  const cookie = login.headers["set-cookie"].split(";")[0];
+  const { saveManualProduct } = await import("../lib/manual.js");
+  const p1 = await saveManualProduct(store, { id: "product.manual.ysl-n1", brand: "Saint Laurent", title: "Niki", category: "bags", boutique: 2000, images: ["https://x.test/a.jpg"], markupPct: 10, status: "draft", isNew: true });
+  assert.equal(p1.overrides.isNew, "on"); assert.match(p1.overrides.newUntil, /^\d{4}-\d{2}-\d{2}$/);
+  await saveManualProduct(store, { id: "product.manual.ysl-n2", brand: "Saint Laurent", title: "Loulou", category: "bags", boutique: 2100, images: ["https://x.test/b.jpg"], markupPct: 10, status: "published" });
+  const r = await call(handler, { method: "POST", query: { a: "markNew" }, body: { ids: ["product.manual.ysl-n2", "product.u.zzz"] }, headers: { cookie, "x-tb": "1" } });
+  assert.equal(r.body.marked, 1);
+  const p2 = await store.get("product.manual.ysl-n2");
+  assert.equal(p2.overrides.isNew, "on"); assert.equal(p2.status, "published"); // витрину не трогаем
+});

@@ -318,6 +318,13 @@ export default async function handler(req, res) {
         catch (e) { if (e instanceof ScreenError) return send(res, e.status === 429 ? 429 : 422, { error: e.message, retryAfter: e.retryAfter }); throw e; }
       }
       case "manualSave": return send(res, 200, { product: await saveManualProduct(store, body, { by: me.name, pricingCfg }) });
+      case "markNew": {
+        // товары, которые уже есть, но снова встретились в разделе «Новинки» сайта бренда — отмечаем новинками на месяц
+        const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(i => /^product\.manual\.[a-z0-9]+-[a-z0-9]+$/.test(i)).slice(0, 500);
+        const until = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10); let marked = 0;
+        for (const id of ids) { try { await saveOverrides(store, id, { isNew: "on", newUntil: until }, me.name, pricingCfg); marked++; } catch {} }
+        return send(res, 200, { marked });
+      }
       case "bulkCategory": {
         // смена категории у выбранных товаров (правка администратора, как в карточке товара)
         const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(i => i.startsWith("product.")).slice(0, 2000);
