@@ -3,7 +3,8 @@
  * Все действия, кроме входа, требуют авторизации; изменяющие — ещё и заголовок X-TB (защита от CSRF).
  */
 import { kickWorker } from "../lib/chain.js";
-import { loadCatalogPage, dbStats, rememberDeleted } from "../lib/catalogload.js";
+import { loadCatalogPage, dbStats, rememberDeleted, fixBrands } from "../lib/catalogload.js";
+import { brandKey } from "../lib/normalize.js";
 import { startLoad, stopLoad, loadState, kickCatalog, STALE_MS } from "../lib/catalogrun.js";
 import { repriceAll, ensurePrices, PRICE_VER } from "../lib/reprice.js";
 import { getStore } from "../lib/store.js";
@@ -235,17 +236,18 @@ export default async function handler(req, res) {
       }
       case "brandBoard": {
         // бренды, которые у нас есть: сколько товаров, что на витрине, разбивка по категориям, 4 обложки
+        await fixBrands(store).catch(e => console.log("BRANDFIX err", e.message)); // одно название на бренд
         const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "brand, category, status, overrides, images[0...1]{url}" });
         const m = new Map();
         for (const p of all) {
           const name = String(p.brand || "").trim(); if (!name) continue;
-          const k = name.toLowerCase(); let b = m.get(k);
+          const k = brandKey(name); let b = m.get(k);
           if (!b) { b = { brand: name, n: 0, pub: 0, cats: {}, covers: [] }; m.set(k, b); }
           b.n++; if (p.status === "published") b.pub++;
           const c = p.overrides?.category || p.category || "other"; b.cats[c] = (b.cats[c] || 0) + 1;
           const u = (p.images || [])[0]?.url; if (u && b.covers.length < 4 && p.status === "published") b.covers.push(u);
         }
-        for (const p of all) { const b = m.get(String(p.brand || "").trim().toLowerCase()); const u = (p.images || [])[0]?.url; if (b && u && b.covers.length < 4 && !b.covers.includes(u)) b.covers.push(u); }
+        for (const p of all) { const b = m.get(brandKey(p.brand)); const u = (p.images || [])[0]?.url; if (b && u && b.covers.length < 4 && !b.covers.includes(u)) b.covers.push(u); }
         const brands = [...m.values()].sort((a, b) => b.n - a.n);
         return send(res, 200, { brands, total: all.length });
       }

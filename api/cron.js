@@ -11,6 +11,7 @@ import { kickWorker, CHAIN_MAX } from "../lib/chain.js";
 import { publicUrl } from "./bot.js";
 import { runStep, kickCatalog, startLoad, STALE_MS } from "../lib/catalogrun.js";
 import { ensurePrices } from "../lib/reprice.js";
+import { fixBrands } from "../lib/catalogload.js";
 
 export default async function handler(req, res) {
   const auth = req.headers.authorization || "";
@@ -34,6 +35,7 @@ export default async function handler(req, res) {
   const step = Math.max(0, Math.min(CHAIN_MAX + 1, Number(req.query?.chain || new URL(req.url, "http://x").searchParams.get("chain")) || 0));
   // шаг цепочки — только продолжение задач; курсы и плановые обновления — в обычном (ночном) запуске
   if (!step) await refreshFx(store).catch(() => {});
+  if (!step) await fixBrands(store).catch(() => {});
   if (!step) await ensurePrices(store, { budgetMs: 15000, log: x => console.log("[price]", JSON.stringify(x)) }).catch(() => {});
   const planned = step ? [] : await planRefresh(store);
   for (const p of planned) if (p.catalog) await kickCatalog(publicUrl(req), p.source, p.runId, 1);
