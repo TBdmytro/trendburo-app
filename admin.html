@@ -839,7 +839,7 @@ function go(v) {
   $("#main").innerHTML = `<div class="empty"><span class="spin"></span></div>`; $("#main").onclick = $("#main").oninput = $("#main").onchange = null; $(".actbar")?.remove();
   document.querySelectorAll(".drawer").forEach(x => x.remove()); tgBack.stack = [];
   window.scrollTo(0, 0); navSync();
-  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, customers: vCustomers, screens: vScreens, import: vImport, finance: vFinance, more: vMore, bot: vBot, stock: vStock }[k] || vHome2;
+  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, customers: vCustomers, screens: vScreens, import: vImport, sites: vSites, finance: vFinance, more: vMore, bot: vBot, stock: vStock }[k] || vHome2;
   fn(v.split(":")[1]).catch(e => { $("#main").innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(e.message)}</div></div>`; });
 }
 async function getSources(force) { if (!sources || force) sources = (await api("sources")).sources; return sources; }
@@ -2256,10 +2256,14 @@ window.addEventListener("message", async e => {
     try { const r = await api("markNew", { method: "POST", silent: true, body: { ids } }); MTP.marked = (MTP.marked || 0) + r.marked; e.source.postMessage({ type: "tb-marked", marked: r.marked }, e.origin); } catch {}
     mtDraw(); return;
   }
-  if (e.data.type !== "tb-import") return;
+  if (e.data.type === "tb-section") { // прогон раздела: чего нет на сайте бренда — «продано»
+    try { const r = await api("sectionSync", { method: "POST", silent: true, body: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), section: e.data.section, codes: e.data.codes || [], url: e.data.url, title: e.data.title } }); MTP.gone = (MTP.gone || 0) + (r.gone || 0); if (r.skipped) MTP.sectionSkipped = true; } catch {}
+    mtDraw(); try { e.source.postMessage({ type: "tb-section-done", gone: MTP.gone || 0, skipped: !!MTP.sectionSkipped }, e.origin); } catch {} return;
+  }
+  if (e.data.type !== "tb-import" && e.data.type !== "tb-update") return;
   clearInterval(mtPing.t);
   tbHost = tbHost || e.origin.replace(/^https:\/\/(www\.)?/, "");
-  for (const it of (Array.isArray(e.data.items) ? e.data.items : []).slice(0, 20)) mtTodo.push({ it, origin: e.origin, src: e.source });
+  for (const it of (Array.isArray(e.data.items) ? e.data.items : []).slice(0, 20)) mtTodo.push({ it, origin: e.origin, src: e.source, upd: e.data.type === "tb-update" });
   MTP.total += Math.min(20, (e.data.items || []).length); mtPump();
 });
 // очередь товаров с кнопки: по 4 одновременно, каждый — один запрос на сервер (сервер сам качает фото и сохраняет товар скрытым)
@@ -2267,8 +2271,8 @@ const mtTodo = [], MTP = { total: 0, ok: 0, fail: 0, running: 0, last: [] };
 function mtAck(src, origin) { try { src && src.postMessage({ type: "tb-saved", ok: MTP.ok, fail: MTP.fail, total: MTP.total, left: mtTodo.length + MTP.running }, origin); } catch {} }
 function mtPump() {
   while (MTP.running < 4 && mtTodo.length) {
-    const { it, origin, src } = mtTodo.shift(); MTP.running++;
-    mtOne(it, origin).then(ok => { ok ? MTP.ok++ : MTP.fail++; }).catch(() => MTP.fail++).finally(() => { MTP.running--; mtAck(src, origin); mtDraw(); mtPump(); });
+    const { it, origin, src, upd } = mtTodo.shift(); MTP.running++;
+    (upd ? mtUpd(it, origin) : mtOne(it, origin)).then(ok => { ok ? MTP.ok++ : MTP.fail++; }).catch(() => MTP.fail++).finally(() => { MTP.running--; mtAck(src, origin); mtDraw(); mtPump(); });
   }
   mtDraw();
 }
@@ -2304,13 +2308,31 @@ function tbAutoRefresh() {
   if (window.scrollY > 300 || document.querySelector(".pcard.sel, .prow.sel, .drawer") || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) return;
   tbSeen = sum; tbRefreshAt = Date.now(); go(view);
 }
+// разделы сайтов брендов: открыть → нажать кнопку «В Trend Büro» → прогон (новые, цены, размеры, что продано)
+async function vSites() {
+  const { sections } = await api("webSections");
+  const ago = t => { const h = Math.round((Date.now() - Date.parse(t)) / 36e5); return h < 1 ? "только что" : h < 24 ? h + " ч назад" : Math.round(h / 24) + " дн назад"; };
+  $("#main").innerHTML = head("Сайты брендов", "Разделы, где вы нажимали кнопку «В Trend Büro». Откройте раздел и нажмите кнопку — добавятся новинки, обновятся цены и размеры, пропавшие товары станут «продано». Сверху — давно не проверенные.",
+    `<a class="btn ghost" href="/mt.html" target="_blank" rel="noopener">${svg("link")}Кнопка</a>`) + (sections.length ? `<div class="card" style="overflow:hidden">${sections.map(x => {
+      const old = Date.now() - Date.parse(x.lastRun) > 7 * 864e5;
+      return `<div class="row" style="padding:14px 16px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px"><b>${esc(x.title || x.section)}</b><div class="hint">${esc(x.section)}</div>
+        <div class="hint">${old ? `<span class="err">проверяли ${ago(x.lastRun)}</span>` : "проверяли " + ago(x.lastRun)} · на сайте ${x.found} · у нас из раздела ${x.inSection}${x.gone ? ` · пропало ${x.gone}` : ""}${x.partial ? ` · <span class="err">раздел загрузился не полностью</span>` : ""}</div></div>
+        ${x.url ? `<a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Открыть раздел</a>` : ""}<button class="btn ghost sm" data-sdel="${esc(x.section)}" aria-label="Убрать из списка">×</button></div>`;
+    }).join("")}</div>` : `<div class="card empty"><b>Пока пусто</b>Откройте раздел на сайте бренда (например, сумки на ysl.com) и нажмите кнопку «В Trend Büro» — раздел появится здесь.</div>`);
+  $("#main").onclick = async e => {
+    const d = e.target.closest("[data-sdel]"); if (d) { await api("webSectionDel", { method: "POST", body: { section: d.dataset.sdel } }); vSites(); }
+  };
+}
 async function vImport() {
   const fails = [...SCR.groups.values()].filter(g => g.src && g.err && !g.saved);
   const left = mtTodo.length + MTP.running;
   $("#main").innerHTML = head("Загрузка с сайта", tbHost ? esc(tbHost) : "Кнопка «В Trend Büro»") + `
     <div class="card pad" style="display:flex;flex-direction:column;gap:10px">
-      <div class="row"><b style="font-size:18px">${MTP.ok} из ${MTP.total || "…"} уже в «Товарах» (скрыты, цена +${MT_MARKUP}%)</b></div>
+      <div class="row"><b style="font-size:18px">${MTP.ok} из ${MTP.total || "…"} обработано (новые — скрыты, цена +${MT_MARKUP}%)</b></div>
       ${MTP.marked ? `<p class="hint" style="margin:0">Уже были в админке и отмечены новинками: ${MTP.marked}</p>` : ""}
+      ${MTP.upd || MTP.gone ? `<p class="hint" style="margin:0">Прогон: проверено уже добавленных ${MTP.upd || 0}${MTP.changed ? `, изменилось ${MTP.changed}${MTP.priceCh ? ` (цена — у ${MTP.priceCh})` : ""}` : ", без изменений"} · пропало с сайта бренда (отмечены «продано»): ${MTP.gone || 0}</p>` : ""}
+      ${MTP.sectionSkipped ? `<p class="hint err" style="margin:0">Раздел на сайте загрузился не полностью — проданные не отмечали. Пролистайте раздел до конца и нажмите кнопку ещё раз.</p>` : ""}
       <div class="bar"><i style="width:${Math.round((MTP.ok + MTP.fail) / Math.max(1, MTP.total) * 100)}%"></i></div>
       <p class="hint" style="margin:0">${left ? `<span class="spin"></span> ещё ${left}. Эту вкладку не закрывайте — работайте в другой вкладке админки, там видно, как добавляются товары.` : MTP.total ? "Готово. Эту вкладку можно закрыть." : "Жду товары с сайта…"}</p>
       ${MTP.fail ? `<div class="note-box warn">${svg("warn")}<div><b>Не сохранилось: ${MTP.fail}</b><br>${fails.slice(0, 8).map(g => esc(g.title + " — " + g.err)).join("<br>")}${fails.length ? `<br><button class="btn sm" data-go="screens" style="margin-top:8px">Исправить и сохранить вручную</button>` : ""}</div></div>` : ""}
@@ -2318,12 +2340,19 @@ async function vImport() {
     </div>`;
   $("#main").onclick = e => { const g = e.target.closest("[data-go]"); if (g) go(g.dataset.go); };
 }
+async function mtUpd(it, origin) {
+  const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
+  if (!sku) return false;
+  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], isNew: !!it.isNew, section: it.section || "" } } });
+    MTP.upd = (MTP.upd || 0) + 1; if (r.price) MTP.priceCh = (MTP.priceCh || 0) + 1; if (r.changes) MTP.changed = (MTP.changed || 0) + 1; return true; }
+  catch (err) { MTP.last.unshift("✕ " + (it.title || sku) + ": " + err.message); return false; }
+}
 async function mtOne(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
   const urls = (it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || ""));
   const datas = (it.images || []).map(x => typeof x === "string" ? (x.startsWith("data:image/") ? x : null) : x && x.d).filter(Boolean);
   const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
-  const base = { brand: String(it.brand || ""), title: String(it.title || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u", boutique: eur, sizes: (it.sizes || []).map(String).slice(0, 40), sizeStock: (Array.isArray(it.sizeStock) ? it.sizeStock : []).slice(0, 40).map(x => ({ s: String(x && x.s || "").slice(0, 20), ok: x && x.ok === false ? false : x && x.ok === true ? true : null })).filter(x => x.s), color: String(it.color || ""), sku: String(it.sku || ""), url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), markupPct: MT_MARKUP, isNew: !!it.isNew };
+  const base = { brand: String(it.brand || ""), title: String(it.title || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u", boutique: eur, sizes: (it.sizes || []).map(String).slice(0, 40), sizeStock: (Array.isArray(it.sizeStock) ? it.sizeStock : []).slice(0, 40).map(x => ({ s: String(x && x.s || "").slice(0, 20), ok: x && x.ok === false ? false : x && x.ok === true ? true : null })).filter(x => x.s), color: String(it.color || ""), sku: String(it.sku || ""), url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), markupPct: MT_MARKUP, isNew: !!it.isNew, section: String(it.section || "").slice(0, 200) };
   const fail = why => { const key = "w:" + hk + ":" + (sku || scrKey(it)); SCR.groups.set(key, { key, id: sku ? "product.manual." + hk + "-" + sku : undefined, src: String(it.src || hk), ...base, price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur, images: urls, photos: urls, crops: [], count: 0, checked: true, sent: (it.images || []).length, err: why }); MTP.last.unshift("✕ " + base.title + ": " + why); return false; };
   if (!sku) return fail("нет артикула");
   if (!eur) return fail("нет цены в € — впишите и сохраните");
@@ -2467,7 +2496,7 @@ Object.assign(IC, {
   out: '<path d="M14 4h5v16h-5"/><path d="M10 16l4-4-4-4M14 12H4"/>'
 });
 const NAV_MAIN = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"]];
-const NAV_MORE = [["customers", "Клиенты", "users", "кто заходил, доставка, история заказов"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["stock", "В наличии", "van", "уже выкуплено: Украина и Европа · блок в приложении"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
+const NAV_MORE = [["customers", "Клиенты", "users", "кто заходил, доставка, история заказов"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["sites", "Сайты брендов", "link", "разделы для проверки наличия кнопкой"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["stock", "В наличии", "van", "уже выкуплено: Украина и Европа · блок в приложении"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
 const chevSvg = '<svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
 const backSvg = '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>';
 const isMainView = v => { const [k, s] = v.split(":"); return ["home", "products", "leads", "more"].includes(k) || (k === "show" && (!s || s === "feed")); };

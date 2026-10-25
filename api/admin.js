@@ -15,7 +15,7 @@ import { createJob, tick, cancelJob, deleteJob, ACTIVE } from "../lib/worker.js"
 import { publishItems, setStatus, saveOverrides, computePricing } from "../lib/publish.js";
 import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
 import { toStorefront } from "../lib/catalog.js";
-import { saveManualProduct } from "../lib/manual.js";
+import { saveManualProduct, updateWebProduct, markWebGone } from "../lib/manual.js";
 import { LEAD_STATUS, notifyClient } from "./lead.js";
 import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier, listCollections, saveCollections } from "../lib/suppliers.js";
 import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
@@ -318,6 +318,33 @@ export default async function handler(req, res) {
         catch (e) { if (e instanceof ScreenError) return send(res, e.status === 429 ? 429 : 422, { error: e.message, retryAfter: e.retryAfter }); throw e; }
       }
       case "manualSave": return send(res, 200, { product: await saveManualProduct(store, body, { by: me.name, pricingCfg }) });
+      case "webUpdate": {
+        // прогон: товар уже есть — обновить цену и наличие по размерам
+        const id = String(body.id || ""), it = body.item || {};
+        if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
+        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, isNew: !!it.isNew, section: it.section }, { by: me.name, pricingCfg }));
+      }
+      case "sectionSync": {
+        // прогон: товары этого раздела, которых больше нет на сайте бренда, — «продано». Если раздел загрузился меньше чем наполовину — ничего не трогаем
+        const px = "product.manual." + String(body.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-", section = String(body.section || "").slice(0, 200);
+        const codes = new Set((Array.isArray(body.codes) ? body.codes : []).map(c => String(c).toLowerCase().replace(/[^a-z0-9]/g, "")));
+        if (px.length < 18 || !section) return send(res, 400, { error: "Нет раздела" });
+        const mine = (await store.list("product", {}, { limit: 60000, fields: "_id, webSections" })).filter(p => p._id.startsWith(px) && (p.webSections || []).includes(section));
+        const gone = mine.filter(p => !codes.has(p._id.slice(px.length))).map(p => p._id);
+        if (mine.length && codes.size < mine.length * 0.5) { await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: 0, partial: true }); return send(res, 200, { gone: 0, skipped: true, inSection: mine.length, found: codes.size }); }
+        const goneN = gone.length && !(mine.length && codes.size < mine.length * 0.5) ? await markWebGone(store, gone.slice(0, 500), { by: me.name, pricingCfg }) : 0;
+        await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: goneN });
+        return send(res, 200, { gone: goneN, inSection: mine.length });
+      }
+      case "webSections": {
+        // разделы сайтов брендов, где нажимали кнопку: ссылка, когда прогоняли, что нашли
+        const d = await store.get("settings.webSections");
+        return send(res, 200, { sections: Object.values(d?.list || {}).sort((a, b) => String(a.lastRun).localeCompare(String(b.lastRun))) });
+      }
+      case "webSectionDel": {
+        const d = await store.get("settings.webSections"); if (d?.list) { delete d.list[String(body.section || "")]; await store.put(d); }
+        return send(res, 200, { ok: true });
+      }
       case "markNew": {
         // товары, которые уже есть, но снова встретились в разделе «Новинки» сайта бренда — отмечаем новинками на месяц
         const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(i => /^product\.manual\.[a-z0-9]+-[a-z0-9]+$/.test(i)).slice(0, 500);
@@ -486,3 +513,11 @@ function sizeList(p) {
   return [...out].map(([s, ok]) => ({ s, ok })).slice(0, 14);
 }
 function safeJson(s) { try { return JSON.parse(s); } catch { return {}; } }
+
+async function rememberSection(store, x) {
+  const d = (await store.get("settings.webSections")) || { _id: "settings.webSections", _type: "settings", list: {} };
+  const url = /^https:\/\//.test(String(x.url || "")) ? String(x.url).slice(0, 500) : (d.list[x.section]?.url || null);
+  d.list = d.list || {};
+  d.list[x.section] = { section: x.section, url, title: String(x.title || d.list[x.section]?.title || "").replace(/\s*[|–-]\s*[^|–-]*$/, "").slice(0, 120), lastRun: new Date().toISOString(), found: x.found, inSection: x.inSection, gone: x.gone, partial: !!x.partial };
+  const { _rev, _createdAt, _updatedAt, ...save } = d; await store.put(save);
+}
