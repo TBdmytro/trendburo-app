@@ -22,11 +22,12 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 18</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 19</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
     <a class="bm" id="bm" href="#">＋ В Trend Büro</a>
+    <p id="bmHint" style="margin:14px 0 0;font-size:14px;color:#b4582f">Вы не вошли в админку в этом браузере — кнопка будет открывать окно. Войдите в админку, обновите эту страницу и перетащите кнопку заново: тогда она работает без окон и переходов.</p>
     <p style="margin:14px 0 0;font-size:14px">Панель закладок не видна: ⌘ + Shift + B. Если кнопка уже стоит со старой версией — удалите её и перетащите заново.</p>
   </div>
   <div class="card">
@@ -46,8 +47,8 @@
 // Код закладки: работает только в вашем браузере, на странице, которую вы открыли сами. Читает данные schema.org (бренд, название, цена) и фото,
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
-  var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400;
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v18] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v19] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   var host = location.hostname.replace(/^www\./, "");
   var SITE = { "mytheresa.com": "Mytheresa", "ysl.com": "Saint Laurent" }, siteName = SITE[host] || host.split(".")[0].replace(/^\w/, function (c) { return c.toUpperCase(); });
@@ -203,13 +204,18 @@ async function tbCollect() {
   // своя вкладка админки на каждую загрузку: можно запускать сумки и обувь одновременно, основная вкладка админки остаётся где была
   // раздел «Новинки» на сайте бренда: новые товары — с отметкой «новинка», а уже добавленные — отмечаем новинками
   var isNewSec = /(new[-_ ]?arrivals?|new[-_ ]?in\b|whats[-_ ]?new|\/new\/|\/new$|novelt|nouveaut|neuheit|neu[-_]?eingetroffen|novit|novedad)/i.test(location.pathname + " " + document.title);
-  // ход загрузки — в маленьком отдельном окне в углу экрана, а не во вкладке поверх магазина: сайт бренда остаётся перед глазами
-  var w = window.open(ADM + "/admin.html?tb=" + Date.now() + "#import", "tb" + Date.now(), "popup=yes,width=460,height=440,top=60,left=" + Math.max(0, (screen.availWidth || 1400) - 500));
-  try { window.focus(); } catch (e) {}
+  // связь с админкой: без окон — невидимо внутри этой же страницы (по ключу из закладки). Если сайт так не даёт — маленькое окно в углу
+  var noFrame = false; try { noFrame = localStorage.getItem("tbNoFrame") === "1"; } catch (e) {}
+  var w, frame = null, viaFrame = KEY.length === 48 && !noFrame;
+  if (viaFrame) { frame = document.createElement("iframe"); frame.setAttribute("aria-hidden", "true"); frame.tabIndex = -1; frame.style.cssText = "position:fixed;left:-20px;top:-20px;width:10px;height:10px;opacity:0;border:0;pointer-events:none"; frame.src = ADM + "/admin.html?bridge=1&tb=" + Date.now() + "#import"; document.body.appendChild(frame); w = frame.contentWindow; }
+  else { w = window.open(ADM + "/admin.html?tb=" + Date.now() + "#import", "tb" + Date.now(), "popup=yes,width=460,height=440,top=60,left=" + Math.max(0, (screen.availWidth || 1400) - 500)); try { window.focus(); } catch (e) {} }
   var ready = new Promise(function (res) {
-    var knock = setInterval(function () { try { w && w.postMessage("tb-hi", ADM); } catch (e) {} }, 1000);
-    var f = function (e) { if (e.origin === ADM && e.data === "tb-ready") { removeEventListener("message", f); clearInterval(knock); res(true); } };
-    addEventListener("message", f); setTimeout(function () { clearInterval(knock); res(false); }, 90000);
+    var knock = setInterval(function () { try { w && w.postMessage(viaFrame ? { type: "tb-hi", key: KEY } : "tb-hi", ADM); } catch (e) {} }, viaFrame ? 600 : 1000);
+    var f = function (e) { if (e.origin === ADM && e.data === "tb-ready" && e.source === w) { removeEventListener("message", f); clearInterval(knock); res(true); } };
+    addEventListener("message", f); setTimeout(function () { clearInterval(knock); removeEventListener("message", f); res(false); }, viaFrame ? 12000 : 90000);
+  }).then(function (ok) {
+    if (!ok && viaFrame) { try { localStorage.setItem("tbNoFrame", "1"); } catch (e) {} if (frame) frame.remove(); throw new Error("noframe"); }
+    return ok;
   });
   var send = async function (item) { if (!(await ready)) throw new Error("admin"); w.postMessage({ type: "tb-import", items: [item] }, ADM); };
   // что уже есть в админке (на витрине или скрыто) — такие товары не берём; удалённые из админки берутся заново
@@ -290,9 +296,12 @@ async function tbCollect() {
     try { w.postMessage({ type: "tb-section", host: host, section: section, codes: allCodes.concat(alive), url: location.href.split("#")[0], title: document.title }, ADM); } catch (e) {}
     summary(ok); await waitSaved(sentN);
     note("Готово: новых " + ok + " · проверено добавленных " + upd + (saved.fail ? " · не сохранилось " + saved.fail + " (причины в админке)" : "") + (bad ? " · не прочитано " + bad : "") + (skipped ? " · пропущено (предзаказ, лист ожидания, только в бутике): " + skipped : "") + (newTotal > MAX ? " · ещё новых: " + (newTotal - MAX) + " — нажмите кнопку ещё раз" : "") + ". Что продано и что пропало — в админке");
-  } catch (e) { note(e && e.message === "admin" ? "Админка не ответила. Войдите в админку в этом браузере и нажмите кнопку ещё раз" : "Не получилось: " + (e && e.message || e)); }
+  } catch (e) { if (e && e.message === "noframe") { note("Этот сайт не даёт работать без окна — нажмите кнопку ещё раз: загрузка пойдёт через маленькое окно в углу", true); return; }
+    note(e && e.message === "admin" ? "Админка не ответила. Войдите в админку в этом браузере и нажмите кнопку ещё раз" : "Не получилось: " + (e && e.message || e)); }
 }
-document.getElementById("bm").href = "javascript:" + encodeURIComponent("void((" + tbCollect.toString() + ")())");
+var setBm = function (key) { document.getElementById("bm").href = "javascript:" + encodeURIComponent("void((" + tbCollect.toString().replace("__TBKEY__", key || "") + ")())"); var h = document.getElementById("bmHint"); if (h) h.hidden = !!key; };
+setBm("");
+fetch("/api/admin?a=importKey", { credentials: "same-origin", headers: { "X-TB": "1" } }).then(function (r) { return r.ok ? r.json() : {}; }).then(function (j) { setBm(j.key || ""); }).catch(function () {});
 document.getElementById("bm").onclick = function (e) { e.preventDefault(); alert("Не нажимайте здесь — перетащите кнопку на панель закладок."); };
 </script>
 </body>

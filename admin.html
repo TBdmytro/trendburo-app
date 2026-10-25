@@ -757,11 +757,15 @@ async function api(a, { method = "GET", body, query = {}, silent = false } = {})
   if (!silent) busy(1);
   try { return await api_(a, { method, body, query }); } finally { if (!silent) busy(-1); }
 }
+// режим «мост» для кнопки: админка открыта невидимо внутри страницы магазина и работает по ключу из закладки (без входа и без окон)
+const BRIDGE = new URLSearchParams(location.search).get("bridge") === "1"; let BRIDGE_KEY = "";
+const tbPeer = () => BRIDGE ? (window.parent !== window ? window.parent : null) : window.opener;
 async function api_(a, { method, body, query }) {
   const u = "/api/admin?" + new URLSearchParams(Object.entries({ a, ...query }).filter(([, v]) => v !== undefined && v !== null && v !== "")); // пустые фильтры не отправляем
-  const r = await fetch(u, { method, credentials: "same-origin", headers: body ? { "Content-Type": "application/json", "X-TB": "1" } : { "X-TB": "1" }, body: body ? JSON.stringify(body) : undefined });
+  const hd = body ? { "Content-Type": "application/json", "X-TB": "1" } : { "X-TB": "1" }; if (BRIDGE_KEY) hd["X-TB-Key"] = BRIDGE_KEY;
+  const r = await fetch(u, { method, credentials: "same-origin", headers: hd, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({ error: "Сервер ответил с ошибкой (" + r.status + ")" }));
-  if (r.status === 401 && a !== "login") { showLogin(); throw new Error(j.error); }
+  if (r.status === 401 && a !== "login") { if (!BRIDGE) showLogin(); throw new Error(j.error); }
   if (!r.ok) throw new Error(j.error || "Ошибка " + r.status);
   return j;
 }
@@ -819,8 +823,9 @@ async function start() {
   renderNav();
   $("#loginView").hidden = true; $("#appView").hidden = false;
   go(location.hash.slice(1) || "home");
-  if (location.hash === "#screens:mt" || location.hash === "#import") { mtPing(); if (location.search) history.replaceState(null, "", location.pathname + location.hash); }
+  if (location.hash === "#screens:mt" || location.hash === "#import") { mtPing(); if (location.search && !BRIDGE) history.replaceState(null, "", location.pathname + location.hash); }
   window.hideSplash && hideSplash();
+  if (BRIDGE) return; // мост: только приём товаров, остальное не нужно
   pump(); pollLeads();
 }
 // новые заявки: счётчик в меню обновляется раз в минуту
@@ -2233,13 +2238,15 @@ const mtCat = it => {
   for (const t of parts) for (const [re, c] of MT_CATS) if (re.test(t)) return c;
   return "other";
 };
-function mtPing() { if (!window.opener) return; let n = 0; clearInterval(mtPing.t); mtPing.t = setInterval(() => { try { window.opener.postMessage("tb-ready", "*"); } catch {} if (++n > 90) clearInterval(mtPing.t); }, 1000); }
+function mtPing() { if (BRIDGE || !window.opener) return; let n = 0; clearInterval(mtPing.t); mtPing.t = setInterval(() => { try { window.opener.postMessage("tb-ready", "*"); } catch {} if (++n > 90) clearInterval(mtPing.t); }, 1000); }
 let mtQueue = Promise.resolve(), mtShown = false, mtSummary = null, mtSaved = [];
 const MT_MARKUP = 10; // наценка к цене бутика для товаров с кнопки «В Trend Büro», %
 const mtPrefix = host => { const h = String(host || "").replace(/^www\./, "").split(".")[0].replace(/[^a-z0-9]/g, "").slice(0, 12); return h === "mytheresa" ? "mt" : h; };
 window.addEventListener("message", async e => {
-  if (!e.source || e.source !== window.opener || !/^https:\/\//.test(e.origin) || !e.data) return;
-  if (e.data === "tb-hi") { if (me) try { e.source.postMessage("tb-ready", e.origin); } catch {} return; } // кнопка стучится — отвечаем, когда вход выполнен
+  if (!e.source || e.source !== tbPeer() || !/^https:\/\//.test(e.origin) || !e.data) return;
+  if (e.data === "tb-hi" || e.data.type === "tb-hi") { // кнопка стучится — отвечаем, когда вход выполнен (в режиме моста — по ключу из закладки)
+    if (BRIDGE && !me && e.data.key && !BRIDGE_KEY) { BRIDGE_KEY = String(e.data.key); await start(); }
+    if (me) try { e.source.postMessage("tb-ready", e.origin); } catch {} return; }
   if (!me) return;
   if (e.data.type === "tb-hello") { // кнопка спрашивает, что уже есть: такие товары она пропустит
     clearInterval(mtPing.t);
@@ -3114,7 +3121,7 @@ async function vBot() {
   };
 }
 
-start();
+if (!BRIDGE) start(); // в режиме моста вход — по ключу, когда кнопка постучится
 </script>
 </body>
 </html>

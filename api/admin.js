@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 /**
  * API админки. Один обработчик на все действия (?a=…), чтобы укладываться в лимит функций Vercel.
  * Все действия, кроме входа, требуют авторизации; изменяющие — ещё и заголовок X-TB (защита от CSRF).
@@ -38,6 +39,15 @@ async function allProducts(store) {
   const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
   PCACHE = { at: Date.now(), data }; return data;
 }
+// ключ кнопки «В Trend Büro»: даёт только загрузку товаров с сайтов брендов (скрытыми), без доступа к остальной админке.
+// Хранится на сервере только отпечаток (sha256); сам ключ — внутри закладки пользователя
+const KEY_ACTIONS = new Set(["me", "knownProducts", "webImport", "webUpdate", "sectionKnown", "sectionSync", "markNew", "imageUpload", "subcats"]);
+const keyHash = k => createHash("sha256").update(String(k)).digest("hex");
+async function keySession(req, a, store) {
+  const k = String(req.headers["x-tb-key"] || ""); if (!/^[a-f0-9]{48}$/.test(k) || !KEY_ACTIONS.has(a)) return null;
+  const d = await store.get("settings.importKeys"); const h = keyHash(k);
+  return (d?.list || []).some(x => x.h === h) ? { name: "Кнопка", key: true } : null;
+}
 let FIXAT = 0; // приводить бренды/подразделы при открытии «Товаров» — не чаще раза в 30 минут (ночью — всегда, в cron)
 export default async function handler(req, res) {
   const a = (req.query && req.query.a) || new URL(req.url, "http://x").searchParams.get("a");
@@ -49,7 +59,8 @@ export default async function handler(req, res) {
       res.setHeader("Set-Cookie", issueCookie(body.name || "admin"));
       return send(res, 200, { ok: true, name: body.name || "admin" });
     }
-    const me = readSession(req);
+    let me = readSession(req);
+    if (!me && req.headers["x-tb-key"]) me = await keySession(req, a, getStore());
     if (!me) return send(res, 401, { error: "Нужен вход" });
     if (req.method !== "GET" && req.headers["x-tb"] !== "1") return send(res, 403, { error: "Запрос отклонён" });
     const store = getStore();
@@ -58,7 +69,14 @@ export default async function handler(req, res) {
 
     switch (a) {
       case "logout": res.setHeader("Set-Cookie", clearCookie()); return send(res, 200, { ok: true });
-      case "me": { await seedRails(store, me.name).catch(() => {}); return send(res, 200, { name: me.name, store: store.kind, demo: !!store.demo }); }
+      case "importKey": {
+        // новый ключ для закладки (страница кнопки берёт его, когда вы вошли в админку); храним 10 последних
+        if (me.key) return send(res, 403, { error: "Нет доступа" });
+        const key = randomBytes(24).toString("hex"), d = (await store.get("settings.importKeys")) || { _id: "settings.importKeys", _type: "settings", list: [] };
+        d.list = [{ h: keyHash(key), at: new Date().toISOString() }, ...(d.list || [])].slice(0, 10); delete d._rev; delete d._createdAt; delete d._updatedAt;
+        await store.put(d); return send(res, 200, { key });
+      }
+      case "me": { if (!me.key) await seedRails(store, me.name).catch(() => {}); return send(res, 200, { name: me.name, store: store.kind, demo: !!store.demo }); }
 
       case "overview": {
         const [published, draft, hidden, jobs, waiting, leadsNew] = await Promise.all([
