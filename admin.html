@@ -2244,17 +2244,21 @@ window.addEventListener("message", async e => {
     for (const it of items) {
       const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || e.origin.replace(/^https:\/\//, ""));
       const images = [];
-      for (const d of (it.images || []).slice(0, 8)) {
-        const v = String(d || "");
-        if (/^https:\/\//.test(v)) { images.push(v.replace(/[?&]tbx=1$/, "")); continue; } // фото не удалось скопировать — ссылка на фото магазина
-        const b64 = v.startsWith("data:image/") ? v.split(",")[1] : ""; if (!b64) continue;
-        try { images.push((await api("imageUpload", { method: "POST", body: { data: b64 }, silent: true })).url); } catch {}
+      const imgErr = [];
+      for (const e0 of (it.images || []).slice(0, 8)) {
+        // фото приходит файлом (d) и/или ссылкой магазина (u): файл → в хранилище; не вышло — сервер скачивает по ссылке; и это не вышло — ставим ссылку магазина
+        const d = typeof e0 === "string" ? (e0.startsWith("data:image/") ? e0 : null) : (e0 && e0.d) || null;
+        const u = typeof e0 === "string" ? (/^https:\/\//.test(e0) ? e0 : null) : (e0 && /^https:\/\//.test(e0.u || "") ? e0.u : null);
+        let got = null;
+        if (d) { try { got = (await api("imageUpload", { method: "POST", body: { data: d.split(",")[1] }, silent: true })).url; } catch (err) { imgErr.push(err.message); } }
+        if (!got && u) { try { got = (await api("imageFromUrl", { method: "POST", body: { url: u }, silent: true })).url; } catch (err) { imgErr.push(err.message); got = u; } }
+        if (got) images.push(got);
       }
       const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
       const key = "w:" + hk + ":" + (sku || scrKey(it));
       SCR.groups.set(key, { key, id: sku ? "product.manual." + hk + "-" + sku : undefined, src: String(it.src || hk), brand: String(it.brand || ""), title: String(it.title || ""), price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur,
         color: String(it.color || ""), sizes: (it.sizes || []).map(String).slice(0, 40), sku: String(it.sku || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u",
-        images, photos: images, crops: [], count: 0, checked: true, url: String(it.url || ""), description: String(it.description || "").slice(0, 2000) });
+        images, photos: images, crops: [], count: 0, checked: true, url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), sent: (it.images || []).length, imgErr: [...new Set(imgErr)].slice(0, 2) });
       if (!mtShown || view !== "screens") { mtShown = true; go("screens"); } else vScreens();
     }
     toast("Пришло карточек: " + [...SCR.groups.values()].filter(g => g.src && !g.saved).length + " — проверьте и сохраните");
@@ -2292,7 +2296,7 @@ async function vScreens() {
       <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:120px">Цена бутика, €<input type="number" data-gk="priceEur" value="${esc(g.priceEur ?? "")}" min="1"></label>
       <label class="f" style="flex:1;min-width:120px">Категория<select data-gk="category">${Object.entries(CATS).map(([k, v]) => `<option value="${k}" ${g.category === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
       <label class="f" style="flex:1;min-width:100px">Для кого<select data-gk="gender">${[["w", "Женское"], ["m", "Мужское"], ["u", "Унисекс"]].map(([k, v]) => `<option value="${k}" ${g.gender === k ? "selected" : ""}>${v}</option>`).join("")}</select></label></div>
-      <div class="hint">${g.src ? `${esc(g.src)}: ${esc(g.price ?? "—")} ${esc(g.currency)}${g.color ? " · " + esc(g.color) : ""}${g.sizes.length ? " · размеры " + esc(g.sizes.join(", ")) : ""}${g.url ? ` · <a href="${esc(g.url)}" target="_blank" rel="noopener">страница товара</a>` : ""}` : `${g.price ? `На скриншоте: ${esc(g.price)} ${esc(g.currency)}${g.currency !== "EUR" ? (g.currencyKnown ? " → пересчитано в € по курсу" : " — валюта неизвестна, впишите цену в €") : ""}` : "Цену не нашли — впишите"}${g.color ? " · " + esc(g.color) : ""}${g.sizes.length ? " · размеры " + esc(g.sizes.join(", ")) : ""} · скриншотов: ${g.count}`}</div>
+      <div class="hint">${g.src ? `${esc(g.src)}: ${esc(g.price ?? "—")} ${esc(g.currency)}${g.color ? " · " + esc(g.color) : ""}${g.sizes.length ? " · размеры " + esc(g.sizes.join(", ")) : ""}${g.url ? ` · <a href="${esc(g.url)}" target="_blank" rel="noopener">страница товара</a>` : ""} · фото ${g.images.length}${g.sent != null && g.sent !== g.images.length ? " из " + g.sent : ""}${g.imgErr?.length ? `<br><span class="err">${esc(g.imgErr.join(" · "))}</span>` : ""}${g.sent === 0 ? `<br><span class="err">Сайт не отдал фото — обновите кнопку (версия 5) и соберите ещё раз</span>` : ""}` : `${g.price ? `На скриншоте: ${esc(g.price)} ${esc(g.currency)}${g.currency !== "EUR" ? (g.currencyKnown ? " → пересчитано в € по курсу" : " — валюта неизвестна, впишите цену в €") : ""}` : "Цену не нашли — впишите"}${g.color ? " · " + esc(g.color) : ""}${g.sizes.length ? " · размеры " + esc(g.sizes.join(", ")) : ""} · скриншотов: ${g.count}`}</div>
       ${g.err ? `<div class="err hint">${esc(g.err)}</div>` : ""}
     </div></article>`;
   const addFiles = files => {

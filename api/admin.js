@@ -286,8 +286,17 @@ export default async function handler(req, res) {
         const type = buf[0] === 0xff && buf[1] === 0xd8 ? "image/jpeg" : buf[0] === 0x89 && buf[1] === 0x50 ? "image/png" : buf.slice(8, 12).toString() === "WEBP" ? "image/webp" : null;
         if (!type) return send(res, 400, { error: "Нужен JPEG, PNG или WebP" });
         if (!store.uploadImage) return send(res, 400, { error: "Хранилище фото не подключено" });
-        const up = await store.uploadImage(buf, { filename: "manual-" + Date.now() + "." + type.split("/")[1], contentType: type });
-        return send(res, 200, { url: up.url });
+        try { const up = await store.uploadImage(buf, { filename: "manual-" + Date.now() + "." + type.split("/")[1], contentType: type }); return send(res, 200, { url: up.url }); }
+        catch (e) { console.log("IMGUP fail " + JSON.stringify({ bytes: buf.length, why: String(e.message).slice(0, 200) })); return send(res, 502, { error: "Фото не сохранилось в хранилище: " + String(e.message).slice(0, 120) }); }
+      }
+      case "imageFromUrl": {
+        // фото по ссылке магазина (если браузер не смог передать сам файл): сервер скачивает картинку и кладёт в наше хранилище
+        const u = String(body.url || ""); let host = "";
+        try { const x = new URL(u); if (x.protocol !== "https:") throw 0; host = x.hostname; } catch { return send(res, 400, { error: "Нужна ссылка https" }); }
+        if (!store.uploadImage) return send(res, 400, { error: "Хранилище фото не подключено" });
+        try { const { fetchBinary } = await import("../lib/images.js"); const bin = await fetchBinary(u, [host]);
+          const up = await store.uploadImage(bin.buf, { filename: "web-" + Date.now() + "." + (bin.type.split("/")[1] || "jpg"), contentType: bin.type, sourceUrl: u }); return send(res, 200, { url: up.url }); }
+        catch (e) { console.log("IMGURL fail " + JSON.stringify({ host, why: String(e.message).slice(0, 200) })); return send(res, 502, { error: "Не удалось скачать фото: " + String(e.message).slice(0, 120) }); }
       }
       case "botStatus": {
         if (!botToken()) return send(res, 200, { token: false });
