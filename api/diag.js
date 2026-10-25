@@ -5,6 +5,7 @@ export default async function handler(req, res) {
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
   if (req.method === "GET" && /[?&]migrate=(step|verify)\b/.test(String(req.url || ""))) return migrate(res, String(req.url).match(/migrate=(step|verify)/)[1]);
+  if (req.method === "GET" && /[?&]probe=mockimgs\b/.test(String(req.url || ""))) return probeMockImgs(res);
   if (req.method === "GET" && /[?&]probe=photo\b/.test(String(req.url || ""))) return probePhoto(res);
   if (req.method === "GET" && /[?&]probe=db\b/.test(String(req.url || ""))) return probeDb(res);
   if (req.method === "GET" && /[?&]probe=ysl\b/.test(String(req.url || ""))) return probeYsl(res);
@@ -150,4 +151,21 @@ async function probePhoto(res) {
   }
   console.log("PROBE photo " + JSON.stringify(out));
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
+}
+
+// фото для макетов (фиксированный список с наших поставщиков, уменьшенные) — base64, только чтение
+const MOCK_IMGS = [
+  "https://saint-laurent.dam.kering.com/asset/bc42d3ca-6b5a-48eb-b0b3-d81174a9fa85/Medium/A00FMTAAHXH1000_A.jpg?v=1",
+  "https://saint-laurent.dam.kering.com/asset/00115dac-8c6c-441f-be31-9d9d672e7efc/Medium/A00FMUAAHXH6178_A.jpg?v=1",
+  "https://saint-laurent.dam.kering.com/asset/ba997059-975d-4e64-b3db-7b15dfb980a8/Medium/A00FMUAAHXH1000_A.jpg?v=1",
+  "https://saint-laurent.dam.kering.com/asset/5750f306-3f27-4613-87ac-98e10bf75afd/Medium/A00IJM1F4AW2557_A.jpg?v=2",
+  "https://cdn.shopify.com/s/files/1/2185/2813/files/A1050U_01_b1_s1_a1_dFA26.jpg?v=1788430157&width=420",
+  "https://cdn.shopify.com/s/files/1/2185/2813/files/A0891U_06645_b1_s1_a1_17016ab7-96c0-4018-9aa2-f65e77f61b63.jpg?v=1767195125&width=420",
+  "https://cdn.shopify.com/s/files/1/2185/2813/files/W5561R_0968_b1_s1_a2_dSP26_m18_c32b2296-22b6-4fcb-8c01-6d0cd09c8590.jpg?v=1775104180&width=420",
+  "https://cdn.shopify.com/s/files/1/2185/2813/files/A0158U_01_b1_s1_a191_dSP26.jpg?v=1776874071&width=420"
+];
+async function probeMockImgs(res) {
+  const { fetchBinary } = await import("../lib/images.js");
+  const out = await Promise.all(MOCK_IMGS.map(async u => { try { const b = await fetchBinary(u, [new URL(u).hostname]); return { u, type: b.type, kb: Math.round(b.buf.length / 1024), b64: b.buf.length < 400000 ? b.buf.toString("base64") : null }; } catch (e) { return { u, err: String(e.message).slice(0, 100) }; } }));
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out));
 }
