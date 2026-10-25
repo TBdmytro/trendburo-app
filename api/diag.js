@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   if (req.method === "GET" && /[?&]probe=mockimgs\b/.test(String(req.url || ""))) return probeMockImgs(res);
   if (req.method === "GET" && /[?&]probe=photo\b/.test(String(req.url || ""))) return probePhoto(res);
   if (req.method === "GET" && /[?&]probe=db\b/.test(String(req.url || ""))) return probeDb(res);
+  if (req.method === "GET" && /[?&]probe=sizes\b/.test(String(req.url || ""))) return probeSizes(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "ysl.com");
   if (req.method === "GET" && /[?&]probe=ysl\b/.test(String(req.url || ""))) return probeYsl(res);
   if (req.method === "GET" && /[?&]probe=count\b/.test(String(req.url || ""))) return probeCount(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "");
   if (req.method === "GET" && /[?&]probe=shops\b/.test(String(req.url || ""))) return probeShops(res, (String(req.url).match(/[?&]part=(\d)/) || [])[1] | 0);
@@ -168,4 +169,25 @@ async function probeMockImgs(res) {
   const { fetchBinary } = await import("../lib/images.js");
   const out = await Promise.all(MOCK_IMGS.map(async u => { try { const b = await fetchBinary(u, [new URL(u).hostname]); return { u, type: b.type, kb: Math.round(b.buf.length / 1024), b64: b.buf.length < 400000 ? b.buf.toString("base64") : null }; } catch (e) { return { u, err: String(e.message).slice(0, 100) }; } }));
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out));
+}
+
+// размеры у загруженных с сайта бренда товаров: сколько с размерами и без (только чтение), плюс разбор пары страниц без размеров
+async function probeSizes(res, host) {
+  const store = await getStore(); const out = { host };
+  const list = await store.q(`*[_type=="product" && _id in path("product.**") && sourceUrl match $h]{_id,title,category,subcategory,sizes,sourceUrl,"note":offers[0].note}`, { h: "*" + host + "*" });
+  const by = {}; for (const p of list) { const k = p.category || "?"; by[k] = by[k] || { with: 0, without: 0 }; (p.sizes && p.sizes.length ? by[k].with++ : by[k].without++); }
+  out.total = list.length; out.byCat = by;
+  const no = list.filter(p => p.category === "clothing" && !(p.sizes && p.sizes.length)), yes = list.filter(p => p.category === "clothing" && p.sizes && p.sizes.length);
+  out.noSamples = no.slice(0, 12).map(p => [p.title, p.sourceUrl]); out.yesSamples = yes.slice(0, 6).map(p => [p.title, p.sizes, p.sourceUrl]);
+  const dom = host.replace(/^www\./, ""); out.pages = [];
+  for (const p of [...no.slice(0, 3), ...yes.slice(0, 1)]) {
+    try { const r = await safeFetch(p.sourceUrl, { domains: [dom, "www." + dom], types: ["text/html"], maxBytes: 8_000_000, lang: "en-GB,en;q=0.9" }); const t = r.text || "";
+      const ld = (t.match(/<script[^>]*ld\+json[^>]*>([\s\S]*?)<\/script>/gi) || []).map(x => x.replace(/<[^>]+>/g, "")).join(" ");
+      const sz = t.match(/"sizes"\s*:\s*(\[[^\]]{0,600}\])/);
+      out.pages.push({ url: p.sourceUrl, had: !!(p.sizes && p.sizes.length), status: r.status, bytes: t.length, ldHasVariant: /hasVariant/.test(ld), ldSize: (ld.match(/"size"\s*:\s*"[^"]{0,20}"/g) || []).slice(0, 8), sizesJson: sz ? sz[1].slice(0, 400) : null,
+        sizeWords: [...new Set((t.match(/"(?:size|sizeLabel|displayValue)"\s*:\s*"[^"]{1,12}"/g) || []))].slice(0, 15), oneSize: /one ?size|taille unique|\bU\b"/i.test(t) });
+    } catch (e) { out.pages.push({ url: p.sourceUrl, error: String(e && e.message || e).slice(0, 160) }); }
+  }
+  console.log("PROBE sizes " + JSON.stringify(out).slice(0, 6000));
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
