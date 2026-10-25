@@ -4,6 +4,7 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
+  if (req.method === "GET" && /[?&]probe=db\b/.test(String(req.url || ""))) return probeDb(res);
   if (req.method === "GET" && /[?&]probe=ysl\b/.test(String(req.url || ""))) return probeYsl(res);
   if (req.method === "GET" && /[?&]probe=count\b/.test(String(req.url || ""))) return probeCount(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "");
   if (req.method === "GET" && /[?&]probe=shops\b/.test(String(req.url || ""))) return probeShops(res, (String(req.url).match(/[?&]part=(\d)/) || [])[1] | 0);
@@ -96,5 +97,28 @@ async function probeYsl(res) {
   const sm = (rb.match(/sitemap:\s*(\S+)/i) || [])[1]; if (sm) { const x = await look("sitemap", sm, ["application/xml", "text/xml", "text/plain"]); out.sitemapLocs = (x.match(/<loc>([^<]+)<\/loc>/g) || []).slice(0, 15).map(v => v.slice(5, -6)); }
   await look("bags", H + "/en-de/shop-women/handbags", ["text/html"]);
   console.log("PROBE ysl " + JSON.stringify(out).slice(0, 6000));
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
+}
+
+// сводка по товарам в базе (только числа и примеры id/брендов, без личных данных): откуда товары, сколько пустых
+import { getStore } from "../lib/store.js";
+async function probeDb(res) {
+  const store = await getStore(); const out = {};
+  try {
+    const all = await store.list("product", {}, { limit: 60000, fields: "_id, brand, title, status, category, images[0...1]{url}, offers[0...1]{sourceId}, manual, createdAt" });
+    const cnt = (f) => { const m = {}; all.forEach(p => { const k = f(p); m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 25); };
+    out.total = all.length;
+    out.byPrefix = cnt(p => String(p._id).split(".").slice(0, 2).join(".").replace(/^(product\.(manual|u))\..*/, "$1"));
+    out.bySource = cnt(p => (p.offers || [])[0]?.sourceId || "(нет источника)");
+    out.byStatus = cnt(p => p.status || "(нет)");
+    out.byCategory = cnt(p => p.category || "(нет)");
+    out.noTitle = all.filter(p => !p.title).length; out.noBrand = all.filter(p => !p.brand).length; out.noImage = all.filter(p => !(p.images || []).length).length;
+    out.emptyBySource = cnt(p => (!p.title || !(p.images || []).length) ? ((p.offers || [])[0]?.sourceId || "(нет источника)") : "_ok");
+    out.topBrands = cnt(p => p.brand || "(нет)");
+    out.samples = all.filter(p => !p.title || !(p.images || []).length).slice(0, 8).map(p => ({ id: String(p._id).slice(0, 60), brand: p.brand || null, title: (p.title || "").slice(0, 40), src: (p.offers || [])[0]?.sourceId || null, createdAt: p.createdAt || null }));
+    const types = await store.list("source", {}, { limit: 200, fields: "_id, name, kind, custom{home}" }).catch(() => []);
+    out.sources = types.map(t => ({ id: t._id, name: t.name, home: t.custom?.home || null }));
+  } catch (e) { out.error = String(e && e.message || e).slice(0, 300); }
+  console.log("PROBE db " + JSON.stringify(out).slice(0, 5000));
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
