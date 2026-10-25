@@ -225,6 +225,14 @@ export default async function handler(req, res) {
         return send(res, 200, { ids });
       }
 
+      case "knownProducts": {
+        // какие товары с этого сайта уже есть (на витрине или скрыты) — кнопка «В Trend Büro» их не берёт повторно
+        const px = "product.manual." + String(req.query.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-";
+        if (px.length < 18) return send(res, 400, { error: "Нет сайта" });
+        const all = await store.list("product", {}, { limit: 50000, fields: "_id, status" });
+        const status = {}; for (const p of all) if (p._id.startsWith(px)) status[p._id.slice(px.length).toUpperCase()] = p.status || "draft";
+        return send(res, 200, { status });
+      }
       case "brandBoard": {
         // бренды, которые у нас есть: сколько товаров, что на витрине, разбивка по категориям, 4 обложки
         const all = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: "brand, category, status, overrides, images[0...1]{url}" });

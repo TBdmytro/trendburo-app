@@ -2224,14 +2224,25 @@ const MT_CATS = [[/bag|handbag|tote|clutch|backpack|сумк/, "bags"], [/shoe|s
   [/accessor|belt|scarf|wallet|card.?holder|small.leather|hat|cap\b|glove|keyring/, "accessories"], [/cloth|ready.to.wear|dress|coat|jacket|pant|trouser|jean|knit|sweater|shirt|top|skirt|short|blazer|suit|swim/, "clothing"]];
 const mtCat = it => { const parts = [...(it.crumbs || []), String(it.title || "").toLowerCase()].reverse(); for (const t of parts) for (const [re, c] of MT_CATS) if (re.test(t)) return c; return "other"; };
 function mtPing() { if (!window.opener) return; let n = 0; clearInterval(mtPing.t); mtPing.t = setInterval(() => { try { window.opener.postMessage("tb-ready", "*"); } catch {} if (++n > 90) clearInterval(mtPing.t); }, 1000); }
-let mtQueue = Promise.resolve(), mtShown = false;
-window.addEventListener("message", e => {
-  if (!e.source || e.source !== window.opener || !/^https:\/\//.test(e.origin) || !e.data || e.data.type !== "tb-import" || !me) return;
+let mtQueue = Promise.resolve(), mtShown = false, mtSummary = null;
+const mtPrefix = host => { const h = String(host || "").replace(/^www\./, "").split(".")[0].replace(/[^a-z0-9]/g, "").slice(0, 12); return h === "mytheresa" ? "mt" : h; };
+window.addEventListener("message", async e => {
+  if (!e.source || e.source !== window.opener || !/^https:\/\//.test(e.origin) || !e.data || !me) return;
+  if (e.data.type === "tb-hello") { // кнопка спрашивает, что уже есть: такие товары она пропустит
+    clearInterval(mtPing.t);
+    let status = {}; try { status = (await api("knownProducts", { query: { prefix: mtPrefix(e.data.host) }, silent: true })).status || {}; } catch {}
+    // карточки, которые уже пришли и ждут проверки здесь, тоже считаем «уже есть»
+    for (const g of SCR.groups.values()) if (g.src && g.sku && !status[String(g.sku).toUpperCase().replace(/[^A-Z0-9]/g, "")]) status[String(g.sku).toUpperCase().replace(/[^A-Z0-9]/g, "")] = "draft";
+    try { e.source.postMessage({ type: "tb-known", status }, e.origin); } catch {}
+    return;
+  }
+  if (e.data.type === "tb-summary") { mtSummary = e.data; mtQueue = mtQueue.then(() => { toast(`Новых: ${e.data.added} · уже были: ${e.data.had}${e.data.left ? ` · ещё новых: ${e.data.left} — нажмите кнопку ещё раз` : ""}`); if (view === "screens") vScreens(); }); return; }
+  if (e.data.type !== "tb-import") return;
   clearInterval(mtPing.t);
   const items = (Array.isArray(e.data.items) ? e.data.items : []).slice(0, 20);
   mtQueue = mtQueue.then(async () => {
     for (const it of items) {
-      const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = String(it.host || e.origin.replace(/^https:\/\/(www\.)?/, "")).split(".")[0].replace(/[^a-z0-9]/g, "").slice(0, 12);
+      const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || e.origin.replace(/^https:\/\//, ""));
       const images = [];
       for (const d of (it.images || []).slice(0, 8)) {
         const v = String(d || "");
@@ -2241,7 +2252,7 @@ window.addEventListener("message", e => {
       }
       const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
       const key = "w:" + hk + ":" + (sku || scrKey(it));
-      SCR.groups.set(key, { key, id: sku ? "product.manual." + (hk === "mytheresa" ? "mt" : hk) + "-" + sku : undefined, src: String(it.src || hk), brand: String(it.brand || ""), title: String(it.title || ""), price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur,
+      SCR.groups.set(key, { key, id: sku ? "product.manual." + hk + "-" + sku : undefined, src: String(it.src || hk), brand: String(it.brand || ""), title: String(it.title || ""), price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur,
         color: String(it.color || ""), sizes: (it.sizes || []).map(String).slice(0, 40), sku: String(it.sku || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u",
         images, photos: images, crops: [], count: 0, checked: true, url: String(it.url || ""), description: String(it.description || "").slice(0, 2000) });
       if (!mtShown || view !== "screens") { mtShown = true; go("screens"); } else vScreens();
@@ -2267,6 +2278,7 @@ async function vScreens() {
         ${left ? `<p class="hint" style="margin:0">Не закрывайте эту страницу, пока идёт разбор. Бесплатный Gemini — около 14 скриншотов в минуту.</p>` : ""}
         ${q.filter(i => i.state === "err" || i.state === "skip").slice(0, 8).map(i => `<div class="hint err">${esc(i.name)}: ${esc(i.msg)}</div>`).join("")}
       </div>` : SCR.enabled ? `<div class="card empty"><b>Выберите скриншоты из галереи</b>Можно сразу 50–100 штук. Снимайте страницу товара так, чтобы были видны фото, название и цена.</div>` : ""}
+      ${mtSummary ? `<div class="note-box" style="margin-bottom:14px"><div><b>Сбор с сайта:</b> найдено ${mtSummary.found} · уже были в админке ${mtSummary.had} (пропущены) · новых ${mtSummary.added}${mtSummary.left ? ` · ещё новых ${mtSummary.left} — нажмите кнопку на сайте ещё раз` : ""}</div></div>` : ""}
       ${groups.length ? `<div class="row" style="margin:6px 0 12px"><h2 style="margin:0;font-size:18px">Карточки · ${groups.length}</h2><span class="sp"></span>
         <button class="btn ghost" id="scDraft">В черновики</button><button class="btn" id="scPub">Опубликовать</button></div>
         <div class="scgrid">${groups.map(g => scCard(g)).join("")}</div>` : ""}`;

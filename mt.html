@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 3</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 4</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -45,7 +45,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 80, PAUSE = 1200;
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v3] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v4] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   var host = location.hostname.replace(/^www\./, "");
   var SITE = { "mytheresa.com": "Mytheresa", "ysl.com": "Saint Laurent" }, siteName = SITE[host] || host.split(".")[0].replace(/^\w/, function (c) { return c.toUpperCase(); });
@@ -92,10 +92,14 @@ async function tbCollect() {
   var w = window.open(ADM + "/admin.html#screens:mt", "tbadmin");
   var ready = new Promise(function (res) { var f = function (e) { if (e.origin === ADM && e.data === "tb-ready") { removeEventListener("message", f); res(true); } }; addEventListener("message", f); setTimeout(res, 90000, false); });
   var send = async function (item) { if (!(await ready)) throw new Error("admin"); w.postMessage({ type: "tb-import", items: [item] }, ADM); };
+  // что уже есть в админке (на витрине или скрыто) — такие товары не берём; удалённые из админки берутся заново
+  var knownP = null, getKnown = function () { if (!knownP) knownP = (async function () { if (!(await ready)) throw new Error("admin"); return new Promise(function (res) { var f = function (e) { if (e.origin === ADM && e.data && e.data.type === "tb-known") { removeEventListener("message", f); res(e.data); } }; addEventListener("message", f); w.postMessage({ type: "tb-hello", host: host }, ADM); setTimeout(res, 20000, { status: {} }); }); })(); return knownP; };
+  var stName = function (st) { return st === "published" ? "на витрине" : "в скрытых"; };
   try {
     var html0 = document.documentElement.outerHTML, one = await build(document, html0, location.href, 8);
     if (one) {
       if (/(^|\.)mytheresa\.com$/.test(location.hostname)) { var g = [].slice.call(document.querySelectorAll('img[class*="gallery__carousel__media__image"]')).map(function (i) { return i.currentSrc || i.src; }); if (g.length) { one.images = []; for (var gi = 0; gi < Math.min(g.length, 8); gi++) { if (g.indexOf(g[gi]) !== gi) continue; var gj = await toJpeg(g[gi]); if (gj) one.images.push(gj); } } }
+      var K1 = await getKnown(); if (K1.status && K1.status[one.sku]) { note("Этот товар уже есть в админке (" + stName(K1.status[one.sku]) + ") — не добавляю"); return; }
       note("Trend Büro: передаю в админку…", true); await send(one); note("Готово: " + one.brand + " — " + one.title); return;
     }
     // раздел: ссылки на товары этого же сайта (с кодом товара в адресе); сначала листаем вниз, чтобы подгрузились все товары
@@ -103,17 +107,24 @@ async function tbCollect() {
     for (var sc = 0, last = -1, same = 0; sc < 25 && same < 3; sc++) { var n = countLinks(); same = n === last ? same + 1 : 0; last = n; note("Trend Büro: листаю раздел, найдено товаров: " + n, true); window.scrollTo(0, document.documentElement.scrollHeight); await sleep(900); }
     var links = [].slice.call(document.querySelectorAll("a[href]")).map(function (a) { return a.href.split("#")[0]; })
       .filter(function (u) { try { var x = new URL(u); return x.hostname === location.hostname && !!codeOf(u) && x.pathname !== location.pathname && !/(account|login|cart|wishlist|search|help|store-locator)/i.test(x.pathname); } catch (e) { return false; } });
-    links = links.filter(function (u, i) { return links.indexOf(u) === i; }).slice(0, MAX);
+    links = links.filter(function (u, i) { return links.indexOf(u) === i; });
     if (!links.length) { note("Здесь нет товаров. Откройте страницу товара или раздела и нажмите ещё раз"); w && w.close && w.close(); return; }
+    note("Trend Büro: сверяю с админкой, найдено товаров: " + links.length, true);
+    var K = await getKnown(), had = 0, st = K.status || {};
+    var fresh = links.filter(function (u) { if (st[codeOf(u)]) { had++; return false; } return true; }), newTotal = fresh.length;
+    links = fresh.slice(0, MAX);
+    var summary = function (added) { try { w.postMessage({ type: "tb-summary", found: had + newTotal, had: had, added: added, left: Math.max(0, newTotal - links.length) }, ADM); } catch (e) {} };
+    if (!links.length) { summary(0); note("Новых товаров нет: все " + had + " уже в админке"); return; }
     var ok = 0, bad = 0;
     for (var i = 0; i < links.length; i++) {
-      note("Trend Büro: товар " + (i + 1) + " из " + links.length + " · готово " + ok + (bad ? " · пропущено " + bad : "") + ". Не закрывайте вкладку", true);
+      note("Trend Büro: новый товар " + (i + 1) + " из " + links.length + (had ? " · уже есть: " + had : "") + " · готово " + ok + (bad ? " · не прочитано " + bad : "") + ". Не закрывайте вкладку", true);
       try { var r = await fetch(links[i], { credentials: "include" }), h = await r.text(); if (!r.ok) throw new Error(r.status);
-        var it = await build(new DOMParser().parseFromString(h, "text/html"), h, links[i], 6, location.pathname.toLowerCase().split(/[/_-]+/)); if (it && it.title) { await send(it); ok++; } else bad++; }
+        var it = await build(new DOMParser().parseFromString(h, "text/html"), h, links[i], 6, location.pathname.toLowerCase().split(/[/_-]+/)); if (it && it.title && st[it.sku]) { had++; } else if (it && it.title) { await send(it); ok++; } else bad++; }
       catch (e) { if (e && e.message === "admin") throw e; bad++; }
       await sleep(PAUSE);
     }
-    note("Готово: " + ok + " товаров в админке" + (bad ? " · пропущено " + bad : ""));
+    summary(ok);
+    note("Готово: новых " + ok + (had ? " · уже были в админке: " + had : "") + (bad ? " · не прочитано: " + bad : "") + (newTotal > links.length ? " · ещё новых: " + (newTotal - links.length) + " — нажмите кнопку ещё раз" : ""));
   } catch (e) { note(e && e.message === "admin" ? "Админка не ответила. Войдите в админку в этом браузере и нажмите кнопку ещё раз" : "Не получилось: " + (e && e.message || e)); }
 }
 document.getElementById("bm").href = "javascript:" + encodeURIComponent("void((" + tbCollect.toString() + ")())");
