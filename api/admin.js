@@ -352,6 +352,13 @@ export default async function handler(req, res) {
         for (const id of ids) { try { await saveOverrides(store, id, { isNew: "on", newUntil: until }, me.name, pricingCfg); marked++; } catch {} }
         return send(res, 200, { marked });
       }
+      case "bulkSubcategory": {
+        const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(i => i.startsWith("product.")).slice(0, 2000);
+        let changed = 0;
+        for (const id of ids) { try { await saveOverrides(store, id, { subcategory: String(body.subcategory || "") || null }, me.name, pricingCfg); changed++; } catch {} }
+        return send(res, 200, { changed });
+      }
+      case "subcats": { const { SUBCATS } = await import("../lib/normalize.js"); return send(res, 200, { subcats: Object.fromEntries(Object.entries(SUBCATS).map(([c, l]) => [c, l.map(([k, n]) => ({ k, n }))])) }); }
       case "bulkCategory": {
         // смена категории у выбранных товаров (правка администратора, как в карточке товара)
         const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(i => i.startsWith("product.")).slice(0, 2000);

@@ -80,3 +80,21 @@ test("наличие по размерам с сайта бренда: прод�
   assert.deepEqual(sf.sizes.map(x => x.size + ":" + x.status), ["XS:online", "S:online", "M:online", "L:online", "XL:online", "XXL:out"]);
   assert.equal(sf.orderable, true);
 });
+
+test("подразделы: обувь, сумки, одежда — по разделу сайта, названию, описанию", async () => {
+  const { detectSubcategory } = await import("../lib/normalize.js");
+  assert.equal(detectSubcategory("shoes", ["sneakers"], "SL/61 low-top"), "sneakers");
+  assert.equal(detectSubcategory("shoes", [], "ISABELLA slingback pumps in TPU"), "sandals"); // slingback — открытая пятка
+  assert.equal(detectSubcategory("shoes", [], "Tribute sandals in patent leather"), "sandals");
+  assert.equal(detectSubcategory("shoes", [], "Wyatt chelsea boots"), "boots");
+  assert.equal(detectSubcategory("bags", [], "ICARE maxi shopping bag"), "totes");
+  assert.equal(detectSubcategory("bags", [], "LOULOU medium", "chain shoulder bag in quilted leather"), "shoulder");
+  assert.equal(detectSubcategory("bags", [], "Kate small chain bag", "a clutch with chain"), "clutches");
+  assert.equal(detectSubcategory("clothing", [], "Airlift High-Waist Legging"), "sport");
+  assert.equal(detectSubcategory("clothing", [], "Wool trousers"), "pants");
+  assert.equal(detectSubcategory("bags", [], "Simone"), null);
+  const s = new MemoryStore();
+  await s.put({ _id: "product.u.l1", _type: "product", brand: "Alo Yoga", title: "Airlift High-Waist Legging", category: "clothing" });
+  await fixBrands(s);
+  assert.equal((await s.get("product.u.l1")).subcategory, "sport");
+});

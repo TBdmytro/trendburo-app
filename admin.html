@@ -2738,8 +2738,10 @@ async function vBrandBoard() {
     const t = e.target.closest("[data-brand]"); if (t) return go("products:brand=" + encodeURIComponent(t.dataset.brand));
   };
 }
+let SUBC = null;
 async function vProducts2(pre) {
   if (!pre) return vBrandBoard();
+  if (!SUBC) api("subcats", { silent: true }).then(r => { SUBC = r.subcats; }).catch(() => {});
   const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "", sec: "" };
   if (pre) pre.split(",").forEach(kv => { const [k, v] = kv.split("="); if (k in F) F[k] = decodeURIComponent(v || ""); });
   let sel = new Set(), list = [], total = 0, shown = 0, facets = { brands: [], cats: [], sources: [] }, LS = null;
@@ -2808,7 +2810,7 @@ async function vProducts2(pre) {
   };
   const bar = () => {
     const n = sel.size;
-    $("#pbar").innerHTML = n ? `<span>Выбрано ${n}${n < total ? ` из ${total}` : ""}</span>${n < total ? `<button class="g" data-selall>Выбрать все ${total}</button>` : ""}<button class="w" data-bulk="published">На сайт</button><button class="g" data-bulk="draft">Скрыть</button><label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Категория<select data-bulkcat style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(CATS).map(([k, v]) => `<option value="${k}">${esc(v.split(":")[0])}</option>`).join("")}</select></label><button class="g" data-bulk="del">Удалить</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
+    $("#pbar").innerHTML = n ? `<span>Выбрано ${n}${n < total ? ` из ${total}` : ""}</span>${n < total ? `<button class="g" data-selall>Выбрать все ${total}</button>` : ""}<button class="w" data-bulk="published">На сайт</button><button class="g" data-bulk="draft">Скрыть</button><label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Категория<select data-bulkcat style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(CATS).map(([k, v]) => `<option value="${k}">${esc(v.split(":")[0])}</option>`).join("")}</select></label>${SUBC ? `<label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Подраздел<select data-bulksub style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(SUBC).map(([c, l]) => `<optgroup label="${esc((CATS[c] || c).split(":")[0])}">${l.map(x => `<option value="${x.k}">${esc(x.n)}</option>`).join("")}</optgroup>`).join("")}</select></label>` : ""}<button class="g" data-bulk="del">Удалить</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
       : `<span>Найдено ${total}</span><button class="g" data-selall>Выбрать все</button><button class="w" data-all="on">Все на сайт</button><button class="g" data-all="off">Скрыть все</button>`;
     $("#pbar").hidden = !total;
     $("#plist").classList.toggle("picking", n > 0);
@@ -2857,6 +2859,11 @@ async function vProducts2(pre) {
   drawHub(); poll().then(() => { if (HUB_AUTO && HUB_AUTO === hubSrc()?.id && LS?.status !== "running") startLoad(false); HUB_AUTO = null; });
   let t; $("#pq").oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(load, 300); };
   $("#main").onchange = async e => {
+    if (e.target.dataset.bulksub !== undefined && e.target.value) { // подраздел у выбранных
+      const ids = [...sel];
+      try { const r = await api("bulkSubcategory", { method: "POST", body: { ids, subcategory: e.target.value } }); toast("Подраздел: " + r.changed); sel.clear(); load(); } catch (err) { toast(err.message); }
+      return;
+    }
     if (e.target.dataset.bulkcat !== undefined && e.target.value) { // сменить категорию у выбранных
       const ids = [...sel], c = e.target.value;
       try { const r = await api("bulkCategory", { method: "POST", body: { ids, category: c } }); toast(`Категория «${(CATS[c] || c).split(":")[0]}»: ${r.changed}`); sel.clear(); load(); } catch (err) { toast(err.message); }
