@@ -2210,28 +2210,30 @@ async function cropToB64(file, box) {
   return toB64(out);
 }
 const SCR = { queue: [], groups: new Map(), running: false, enabled: null, last: 0, one: false, oneKey: null, lastKey: null, pending: [] };
-// Кнопка «В Trend Büro» (mt.html) на странице Mytheresa: товар приходит сюда сообщением из вкладки магазина → карточка на проверку
-const MT_ORIGIN = "https://www.mytheresa.com";
-const MT_CAT = { clothing: "clothing", shoes: "shoes", bags: "bags", accessories: "accessories", jewelry: "jewelry", jewellery: "jewelry", "fine jewelry": "jewelry", sunglasses: "eyewear", eyewear: "eyewear", watches: "watches", beauty: "fragrance", fragrance: "fragrance" };
-function mtPing() { if (!window.opener) return; let n = 0; clearInterval(mtPing.t); mtPing.t = setInterval(() => { try { window.opener.postMessage("tb-ready", MT_ORIGIN); } catch {} if (++n > 60) clearInterval(mtPing.t); }, 1000); }
-window.addEventListener("message", async e => {
-  if (e.origin !== MT_ORIGIN || !e.data || e.data.type !== "tb-import" || !me) return;
+// Кнопка «В Trend Büro» (mt.html) на странице магазина или бренда: товары приходят сюда сообщениями из той вкладки, что открыла админку → карточки на проверку
+const MT_CATS = [[/bag|handbag|tote|clutch|backpack|сумк/, "bags"], [/shoe|sneaker|boot|sandal|pump|loafer|mule|slide|ballerina|espadrille/, "shoes"], [/sunglass|eyewear|optical/, "eyewear"], [/watch/, "watches"], [/jewel|necklace|earring|bracelet|ring\b/, "jewelry"], [/fragrance|parfum|perfume|beauty/, "fragrance"],
+  [/accessor|belt|scarf|wallet|card.?holder|small.leather|hat|cap\b|glove|keyring/, "accessories"], [/cloth|ready.to.wear|dress|coat|jacket|pant|trouser|jean|knit|sweater|shirt|top|skirt|short|blazer|suit|swim/, "clothing"]];
+const mtCat = it => { const parts = [...(it.crumbs || []), String(it.title || "").toLowerCase()].reverse(); for (const t of parts) for (const [re, c] of MT_CATS) if (re.test(t)) return c; return "other"; };
+function mtPing() { if (!window.opener) return; let n = 0; clearInterval(mtPing.t); mtPing.t = setInterval(() => { try { window.opener.postMessage("tb-ready", "*"); } catch {} if (++n > 90) clearInterval(mtPing.t); }, 1000); }
+let mtQueue = Promise.resolve(), mtShown = false;
+window.addEventListener("message", e => {
+  if (!e.source || e.source !== window.opener || !/^https:\/\//.test(e.origin) || !e.data || e.data.type !== "tb-import" || !me) return;
   clearInterval(mtPing.t);
   const items = (Array.isArray(e.data.items) ? e.data.items : []).slice(0, 20);
-  toast("Mytheresa: сохраняю фото…");
-  for (const it of items) {
-    const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30);
-    const images = [];
-    for (const d of (it.images || []).slice(0, 8)) { const b64 = String(d).split(",")[1]; if (!b64) continue; try { images.push((await api("imageUpload", { method: "POST", body: { data: b64 }, silent: true })).url); } catch {} }
-    let category = "other"; for (const c of [...(it.crumbs || [])].reverse()) if (MT_CAT[c]) { category = MT_CAT[c]; break; }
-    const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
-    const key = "mt:" + (sku || scrKey(it));
-    SCR.groups.set(key, { key, id: sku ? "product.manual.mt-" + sku : undefined, src: "Mytheresa", brand: String(it.brand || ""), title: String(it.title || ""), price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur,
-      color: String(it.color || ""), sizes: (it.sizes || []).map(String).slice(0, 40), sku: String(it.sku || ""), category, gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u",
-      images, photos: images, crops: [], count: 0, checked: true, url: String(it.url || ""), description: String(it.description || "") });
-  }
-  toast(items.length ? "Mytheresa: карточка готова — проверьте и сохраните" : "Mytheresa: товар не пришёл");
-  go("screens");
+  mtQueue = mtQueue.then(async () => {
+    for (const it of items) {
+      const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = String(it.host || e.origin.replace(/^https:\/\/(www\.)?/, "")).split(".")[0].replace(/[^a-z0-9]/g, "").slice(0, 12);
+      const images = [];
+      for (const d of (it.images || []).slice(0, 8)) { const b64 = String(d).split(",")[1]; if (!b64) continue; try { images.push((await api("imageUpload", { method: "POST", body: { data: b64 }, silent: true })).url); } catch {} }
+      const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
+      const key = "w:" + hk + ":" + (sku || scrKey(it));
+      SCR.groups.set(key, { key, id: sku ? "product.manual." + (hk === "mytheresa" ? "mt" : hk) + "-" + sku : undefined, src: String(it.src || hk), brand: String(it.brand || ""), title: String(it.title || ""), price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur,
+        color: String(it.color || ""), sizes: (it.sizes || []).map(String).slice(0, 40), sku: String(it.sku || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u",
+        images, photos: images, crops: [], count: 0, checked: true, url: String(it.url || ""), description: String(it.description || "").slice(0, 2000) });
+      if (!mtShown || view !== "screens") { mtShown = true; go("screens"); } else vScreens();
+    }
+    toast("Пришло карточек: " + [...SCR.groups.values()].filter(g => g.src && !g.saved).length + " — проверьте и сохраните");
+  }).catch(() => {});
 });
 const scrKey = r => (r.brand + "|" + r.title).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9а-я|]+/g, "");
 async function vScreens() {
