@@ -130,7 +130,7 @@ async function migrate(res, mode) {
   let out;
   try { const { stores, migrateStep, migrateVerify } = await import("../lib/migrate.js"); const { oldS, newS } = stores();
     out = mode === "step" ? await migrateStep(oldS, newS) : await migrateVerify(oldS, newS); }
-  catch (e) { out = { error: String(e && e.message || e).slice(0, 300) }; }
+  catch (e) { out = { error: String(e && e.message || e).slice(0, 300), cause: String(e && e.cause && (e.cause.code || e.cause.message) || "").slice(0, 120) }; }
   console.log("MIGRATE " + mode + " " + JSON.stringify(out).slice(0, 2000));
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
