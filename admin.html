@@ -758,7 +758,7 @@ async function api(a, { method = "GET", body, query = {}, silent = false } = {})
   try { return await api_(a, { method, body, query }); } finally { if (!silent) busy(-1); }
 }
 async function api_(a, { method, body, query }) {
-  const u = "/api/admin?" + new URLSearchParams({ a, ...query });
+  const u = "/api/admin?" + new URLSearchParams(Object.entries({ a, ...query }).filter(([, v]) => v !== undefined && v !== null && v !== "")); // пустые фильтры не отправляем
   const r = await fetch(u, { method, credentials: "same-origin", headers: body ? { "Content-Type": "application/json", "X-TB": "1" } : { "X-TB": "1" }, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({ error: "Сервер ответил с ошибкой (" + r.status + ")" }));
   if (r.status === 401 && a !== "login") { showLogin(); throw new Error(j.error); }
@@ -2742,7 +2742,7 @@ let SUBC = null;
 async function vProducts2(pre) {
   if (!pre) return vBrandBoard();
   if (!SUBC) api("subcats", { silent: true }).then(r => { SUBC = r.subcats; }).catch(() => {});
-  const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "", sec: "" };
+  const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "", pre: "", sec: "" };
   if (pre) pre.split(",").forEach(kv => { const [k, v] = kv.split("="); if (k in F) F[k] = decodeURIComponent(v || ""); });
   let sel = new Set(), list = [], total = 0, shown = 0, facets = { brands: [], cats: [], sources: [] }, LS = null;
   const srcs = await getSources();
