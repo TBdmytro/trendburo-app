@@ -104,6 +104,7 @@ async function probeYsl(res) {
 import { getStore } from "../lib/store.js";
 async function probeDb(res) {
   const store = await getStore(); const out = {};
+  try { if (store.q) out.docs = await store.q(`{"all":count(*),"product":count(*[_type=="product"]),"ourProduct":count(*[_type=="product" && _id in path("product.**")]),"asset":count(*[_type=="sanity.imageAsset"]),"importItem":count(*[_type=="importItem"]),"importJob":count(*[_type=="importJob"]),"drafts":count(*[_id in path("drafts.**")]),"types":array::unique(*[]._type)}`); } catch (e) { out.docsError = String(e.message).slice(0, 200); }
   try {
     const all = await store.list("product", {}, { limit: 60000, fields: "_id, brand, title, status, category, images[0...1]{url}, offers[0...1]{sourceId}, manual, createdAt" });
     const cnt = (f) => { const m = {}; all.forEach(p => { const k = f(p); m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 25); };
