@@ -2224,7 +2224,8 @@ const MT_CATS = [[/bag|handbag|tote|clutch|backpack|сумк/, "bags"], [/shoe|s
   [/accessor|belt|scarf|wallet|card.?holder|small.leather|hat|cap\b|glove|keyring/, "accessories"], [/cloth|ready.to.wear|dress|coat|jacket|pant|trouser|jean|knit|sweater|shirt|top|skirt|short|blazer|suit|swim/, "clothing"]];
 const mtCat = it => { const parts = [...(it.crumbs || []), String(it.title || "").toLowerCase()].reverse(); for (const t of parts) for (const [re, c] of MT_CATS) if (re.test(t)) return c; return "other"; };
 function mtPing() { if (!window.opener) return; let n = 0; clearInterval(mtPing.t); mtPing.t = setInterval(() => { try { window.opener.postMessage("tb-ready", "*"); } catch {} if (++n > 90) clearInterval(mtPing.t); }, 1000); }
-let mtQueue = Promise.resolve(), mtShown = false, mtSummary = null;
+let mtQueue = Promise.resolve(), mtShown = false, mtSummary = null, mtSaved = [];
+const MT_MARKUP = 10; // наценка к цене бутика для товаров с кнопки «В Trend Büro», %
 const mtPrefix = host => { const h = String(host || "").replace(/^www\./, "").split(".")[0].replace(/[^a-z0-9]/g, "").slice(0, 12); return h === "mytheresa" ? "mt" : h; };
 window.addEventListener("message", async e => {
   if (!e.source || e.source !== window.opener || !/^https:\/\//.test(e.origin) || !e.data) return;
@@ -2261,6 +2262,12 @@ window.addEventListener("message", async e => {
       SCR.groups.set(key, { key, id: sku ? "product.manual." + hk + "-" + sku : undefined, src: String(it.src || hk), brand: String(it.brand || ""), title: String(it.title || ""), price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur,
         color: String(it.color || ""), sizes: (it.sizes || []).map(String).slice(0, 40), sku: String(it.sku || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u",
         images, photos: images, crops: [], count: 0, checked: true, url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), sent: (it.images || []).length, imgErr: [...new Set(imgErr)].slice(0, 2) });
+      // сразу сохраняем в «Товары» скрытым (на сайт — только после «Опубликовать»), цена бутика +10%
+      const g = SCR.groups.get(key);
+      if (g && g.priceEur > 0 && g.images.length) {
+        try { await api("manualSave", { method: "POST", silent: true, body: { id: g.id, brand: g.brand, title: g.title, category: g.category, gender: g.gender, boutique: Number(g.priceEur), sizes: g.sizes, color: g.color, sku: g.sku, availability: "online", images: g.images, url: g.url, description: g.description, markupPct: MT_MARKUP, status: "draft" } });
+          g.saved = true; mtSaved.push({ brand: g.brand, title: g.title }); } catch (err) { g.err = "Не сохранилось: " + err.message; }
+      } else if (g) g.err = g.images.length ? "Нет цены — впишите и сохраните" : "Нет фото — проверьте и сохраните";
       if (!mtShown || view !== "screens") { mtShown = true; go("screens"); } else vScreens();
     }
     toast("Пришло карточек: " + [...SCR.groups.values()].filter(g => g.src && !g.saved).length + " — проверьте и сохраните");
@@ -2284,6 +2291,7 @@ async function vScreens() {
         ${left ? `<p class="hint" style="margin:0">Не закрывайте эту страницу, пока идёт разбор. Бесплатный Gemini — около 14 скриншотов в минуту.</p>` : ""}
         ${q.filter(i => i.state === "err" || i.state === "skip").slice(0, 8).map(i => `<div class="hint err">${esc(i.name)}: ${esc(i.msg)}</div>`).join("")}
       </div>` : SCR.enabled ? `<div class="card empty"><b>Выберите скриншоты из галереи</b>Можно сразу 50–100 штук. Снимайте страницу товара так, чтобы были видны фото, название и цена.</div>` : ""}
+      ${mtSaved.length ? `<div class="note-box" style="margin-bottom:14px;align-items:center"><div style="flex:1"><b>В «Товарах» уже ${mtSaved.length}</b> — сохранены скрытыми, цена бутика +${MT_MARKUP}%. Проверьте и нажмите «Все на сайт».</div><button class="btn sm" data-mtopen="${esc([...new Set(mtSaved.map(x => x.brand))][0] || "")}">Открыть ${esc([...new Set(mtSaved.map(x => x.brand))].slice(0, 2).join(", "))}</button></div>` : ""}
       ${mtSummary ? `<div class="note-box" style="margin-bottom:14px"><div><b>Сбор с сайта:</b> найдено ${mtSummary.found} · уже были в админке ${mtSummary.had} (пропущены) · новых ${mtSummary.added}${mtSummary.left ? ` · ещё новых ${mtSummary.left} — нажмите кнопку на сайте ещё раз` : ""}</div></div>` : ""}
       ${groups.length ? `<div class="row" style="margin:6px 0 12px"><h2 style="margin:0;font-size:18px">Карточки · ${groups.length}</h2><span class="sp"></span>
         <button class="btn ghost" id="scDraft">В черновики</button><button class="btn" id="scPub">Опубликовать</button></div>
@@ -2348,7 +2356,7 @@ async function vScreens() {
     const groups = [...SCR.groups.values()].filter(g => g.checked && !g.saved); let ok = 0;
     for (const g of groups) {
       try {
-        await api("manualSave", { method: "POST", body: { id: g.id, brand: g.brand, title: g.title, category: g.category, gender: g.gender, boutique: Number(g.priceEur), sizes: g.sizes, color: g.color, sku: g.sku, availability: "online", images: g.images, url: g.url, description: g.description, status } });
+        await api("manualSave", { method: "POST", body: { id: g.id, brand: g.brand, title: g.title, category: g.category, gender: g.gender, boutique: Number(g.priceEur), sizes: g.sizes, color: g.color, sku: g.sku, availability: "online", images: g.images, url: g.url, description: g.description, markupPct: g.src ? MT_MARKUP : undefined, status } });
         g.saved = true; g.err = null; ok++;
       } catch (e) { g.err = e.message; }
     }
@@ -2362,6 +2370,7 @@ async function vScreens() {
     if (t.id === "scPick") return $("#scFile").click();
     if (t.id === "scClear") { SCR.queue = []; SCR.oneKey = null; SCR.lastKey = null; SCR.pending = []; return draw(); }
     if (t.id === "scDraft" || t.id === "scPub") return save(t.id === "scDraft" ? "draft" : "published");
+    if (t.dataset.mtopen !== undefined) return go("products:" + (t.dataset.mtopen ? "brand=" + encodeURIComponent(t.dataset.mtopen) + "," : "") + "status=draft");
     if (t.dataset.rmimg) { const g = SCR.groups.get(t.closest("[data-g]").dataset.g), u = g.images[+t.dataset.rmimg]; g.images.splice(+t.dataset.rmimg, 1); g.photos = (g.photos || []).filter(x => x !== u); g.crops = (g.crops || []).filter(x => x !== u); return draw(); }
     if (t.dataset.scone !== undefined) { SCR.one = t.dataset.scone === "1"; SCR.oneKey = null; SCR.lastKey = null; return draw(); }
   };

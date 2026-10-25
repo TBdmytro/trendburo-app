@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 6</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 7</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -35,7 +35,7 @@
       <li>Войдите в админку в этом же браузере.</li>
       <li><b>Один товар:</b> откройте страницу товара и нажмите закладку.</li>
       <li><b>Весь раздел:</b> откройте, например, «Сумки» на ysl.com, пролистайте вниз, чтобы подгрузились все товары, и нажмите закладку — она пройдёт по каждому товару по очереди (до 80 за раз).</li>
-      <li>В админке откроется «Со скриншотов» с карточками → проверьте → «В черновики» или «Опубликовать».</li>
+      <li>Товары сразу сохраняются в админке в «Товары» скрытыми, цена бутика +10%. Проверьте и нажмите «Все на сайт».</li>
     </ol>
     <p style="margin:12px 0 0;font-size:14px">Пока идёт сбор, не закрывайте вкладку магазина. Повторный сбор того же товара обновит карточку, а не создаст дубль. Наценка — по нашим правилам автоматически.</p>
   </div>
@@ -45,7 +45,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 80, PAUSE = 1200;
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v6] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v7] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   var host = location.hostname.replace(/^www\./, "");
   var SITE = { "mytheresa.com": "Mytheresa", "ysl.com": "Saint Laurent" }, siteName = SITE[host] || host.split(".")[0].replace(/^\w/, function (c) { return c.toUpperCase(); });
@@ -60,6 +60,9 @@ async function tbCollect() {
     if (code) { var re = /https?:\/\/[^"'\s()<>\\]+?\.(?:jpe?g|png|webp|avif)(?:\?[^"'\s()<>\\]*)?|\/image\/\d+\/\d+\/\d+\/[^"'\s()<>\\]+?\.(?:jpe?g|png|webp)/gi, m; while ((m = re.exec(html))) { var u = m[0].replace(/&amp;/g, "&"); if (u.toUpperCase().indexOf(code) >= 0) urls.push(new URL(u, location.origin).href); } }
     [].concat(ldImg || []).forEach(function (u) { if (typeof u === "string") urls.push(u); else if (u && u.url) urls.push(u.url); });
     var score = function (u) { var n = (u.match(/\d{3,4}/g) || []).map(Number).filter(function (x) { return x <= 4000; }); return Math.max.apply(null, [0].concat(n)) + (/ecom|large|zoom|original|full/i.test(u) ? 3000 : 0) - (/thumb|small|tiny|icon|swatch/i.test(u) ? 5000 : 0); };
+    // обложка — как на сайте: главное фото товара (из данных страницы) ставим первым
+    var ld0 = [].concat(ldImg || []).map(function (u) { return typeof u === "string" ? u : u && u.url; }).filter(Boolean)[0];
+    if (ld0) { var lk = ld0.split("?")[0].split("/").pop().toLowerCase(); urls.sort(function (a, b) { return (b.split("?")[0].split("/").pop().toLowerCase() === lk) - (a.split("?")[0].split("/").pop().toLowerCase() === lk); }); }
     var best = {}, order = [];
     urls.forEach(function (u) { var k = u.split("?")[0].split("/").pop().toLowerCase(); if (!best[k]) { best[k] = u; order.push(k); } else if (score(u) > score(best[k])) best[k] = u; });
     return order.map(function (k) { return best[k]; }).filter(function (u) { return score(u) > -2000; }).slice(0, limit);

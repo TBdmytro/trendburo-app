@@ -48,3 +48,14 @@ test("сайт одного бренда: все товары поставщик
   assert.deepEqual([...new Set(sr.map(p => p.brand))], ["Sporty & Rich"]);
   assert.equal((await s.get("product.u.mb0")).brand, "Gucci");
 });
+
+test("товар с кнопки: цена бутика +10% во все регионы, вверх до 5 €", async () => {
+  const { saveManualProduct } = await import("../lib/manual.js");
+  const s = new MemoryStore();
+  const p = await saveManualProduct(s, { id: "product.manual.ysl-a1", brand: "Yves Saint Laurent", title: "Simone", category: "bags", boutique: 3200, images: ["https://x.test/a.jpg"], markupPct: 10, status: "draft" });
+  assert.equal(p.brand, "Saint Laurent");
+  assert.deepEqual([p.pricing.ua, p.pricing.eu, p.pricing.dxb], [3520, 3520, 3520]);
+  const q = await saveManualProduct(s, { id: "product.manual.ysl-a2", brand: "Saint Laurent", title: "Le 5 a 7", category: "bags", boutique: 2333, images: ["https://x.test/b.jpg"], markupPct: 10, status: "draft" });
+  assert.equal(q.pricing.eu, 2570); // 2566,3 → вверх до 2570
+  assert.equal(q.status, "draft");
+});
