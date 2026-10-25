@@ -4,7 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
  * Все действия, кроме входа, требуют авторизации; изменяющие — ещё и заголовок X-TB (защита от CSRF).
  */
 import { kickWorker } from "../lib/chain.js";
-import { loadCatalogPage, dbStats, rememberDeleted, fixBrands } from "../lib/catalogload.js";
+import { loadCatalogPage, dbStats, rememberDeleted, fixBrands, askNoSizes } from "../lib/catalogload.js";
 import { brandKey } from "../lib/normalize.js";
 import { startLoad, stopLoad, loadState, kickCatalog, STALE_MS } from "../lib/catalogrun.js";
 import { repriceAll, ensurePrices, PRICE_VER } from "../lib/reprice.js";
@@ -359,7 +359,7 @@ export default async function handler(req, res) {
       case "fixBrands": {
         // выравнивание брендов и подразделов — отдельным запросом в фоне (админка не ждёт его, чтобы «Товары» открывались сразу)
         if (Date.now() - FIXAT < 10 * 60e3) return send(res, 200, { fixed: 0, recent: true });
-        FIXAT = Date.now(); const fixed = await fixBrands(store); if (fixed) PCACHE = null;
+        FIXAT = Date.now(); const fixed = await fixBrands(store) + await askNoSizes(store).catch(e => { console.log("ASKNOSZ err", e.message); return 0; }); if (fixed) PCACHE = null;
         return send(res, 200, { fixed });
       }
       case "sectionKnown": {
