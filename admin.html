@@ -808,6 +808,7 @@ async function start() {
   renderNav();
   $("#loginView").hidden = true; $("#appView").hidden = false;
   go(location.hash.slice(1) || "home");
+  if (location.hash === "#screens:mt") mtPing();
   window.hideSplash && hideSplash();
   pump(); pollLeads();
 }
@@ -2209,6 +2210,29 @@ async function cropToB64(file, box) {
   return toB64(out);
 }
 const SCR = { queue: [], groups: new Map(), running: false, enabled: null, last: 0, one: false, oneKey: null, lastKey: null, pending: [] };
+// Кнопка «В Trend Büro» (mt.html) на странице Mytheresa: товар приходит сюда сообщением из вкладки магазина → карточка на проверку
+const MT_ORIGIN = "https://www.mytheresa.com";
+const MT_CAT = { clothing: "clothing", shoes: "shoes", bags: "bags", accessories: "accessories", jewelry: "jewelry", jewellery: "jewelry", "fine jewelry": "jewelry", sunglasses: "eyewear", eyewear: "eyewear", watches: "watches", beauty: "fragrance", fragrance: "fragrance" };
+function mtPing() { if (!window.opener) return; let n = 0; clearInterval(mtPing.t); mtPing.t = setInterval(() => { try { window.opener.postMessage("tb-ready", MT_ORIGIN); } catch {} if (++n > 60) clearInterval(mtPing.t); }, 1000); }
+window.addEventListener("message", async e => {
+  if (e.origin !== MT_ORIGIN || !e.data || e.data.type !== "tb-import" || !me) return;
+  clearInterval(mtPing.t);
+  const items = (Array.isArray(e.data.items) ? e.data.items : []).slice(0, 20);
+  toast("Mytheresa: сохраняю фото…");
+  for (const it of items) {
+    const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30);
+    const images = [];
+    for (const d of (it.images || []).slice(0, 8)) { const b64 = String(d).split(",")[1]; if (!b64) continue; try { images.push((await api("imageUpload", { method: "POST", body: { data: b64 }, silent: true })).url); } catch {} }
+    let category = "other"; for (const c of [...(it.crumbs || [])].reverse()) if (MT_CAT[c]) { category = MT_CAT[c]; break; }
+    const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
+    const key = "mt:" + (sku || scrKey(it));
+    SCR.groups.set(key, { key, id: sku ? "product.manual.mt-" + sku : undefined, src: "Mytheresa", brand: String(it.brand || ""), title: String(it.title || ""), price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur,
+      color: String(it.color || ""), sizes: (it.sizes || []).map(String).slice(0, 40), sku: String(it.sku || ""), category, gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u",
+      images, photos: images, crops: [], count: 0, checked: true, url: String(it.url || ""), description: String(it.description || "") });
+  }
+  toast(items.length ? "Mytheresa: карточка готова — проверьте и сохраните" : "Mytheresa: товар не пришёл");
+  go("screens");
+});
 const scrKey = r => (r.brand + "|" + r.title).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9а-я|]+/g, "");
 async function vScreens() {
   if (SCR.enabled === null) SCR.enabled = (await api("screenStatus")).enabled;
@@ -2216,7 +2240,7 @@ async function vScreens() {
     const q = SCR.queue, done = q.filter(i => i.state === "done").length, bad = q.filter(i => i.state === "err" || i.state === "skip").length, left = q.filter(i => i.state === "wait" || i.state === "read").length;
     const groups = [...SCR.groups.values()].filter(g => !g.saved);
     $("#main").innerHTML = head("Со скриншотов", "Скриншоты страниц товаров и готовые фото → карточки. Робот читает бренд, название и цену со скриншотов, а уже обрезанные фото без текста кладёт в галерею как есть.",
-      `<button class="btn" id="scPick" ${SCR.enabled ? "" : "disabled"}>${svg("img")}Выбрать скриншоты</button>`) + `
+      `<a class="btn ghost" href="/mt.html" target="_blank" rel="noopener">${svg("link")}Кнопка Mytheresa</a><button class="btn" id="scPick" ${SCR.enabled ? "" : "disabled"}>${svg("img")}Выбрать скриншоты</button>`) + `
       ${SCR.enabled ? "" : `<div class="note-box warn">${svg("warn")}<div><b>Распознавание не подключено.</b> Добавьте в Vercel переменную <b>GEMINI_API_KEY</b> (ключ с aistudio.google.com) и сделайте Redeploy.</div></div>`}
       <div class="seg" style="margin:0 0 14px">${[[false, "Каждый товар отдельно"], [true, "Все выбранные — один товар"]].map(([v, n]) => `<button type="button" data-scone="${v ? 1 : 0}" aria-pressed="${SCR.one === v}">${n}</button>`).join("")}</div>
       <p class="hint" style="margin:-6px 0 14px">${SCR.one ? "Выберите 1–2 скриншота с информацией и обрезанные фото одного товара — получится одна карточка: данные со скриншотов, в галерее ваши фото." : "Скриншоты одного товара склеятся сами. Обрезанные фото без текста прикрепятся к товару со скриншота рядом с ними."}</p>
@@ -2240,7 +2264,7 @@ async function vScreens() {
       <div class="row" style="align-items:flex-end"><label class="f" style="flex:1;min-width:120px">Цена бутика, €<input type="number" data-gk="priceEur" value="${esc(g.priceEur ?? "")}" min="1"></label>
       <label class="f" style="flex:1;min-width:120px">Категория<select data-gk="category">${Object.entries(CATS).map(([k, v]) => `<option value="${k}" ${g.category === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
       <label class="f" style="flex:1;min-width:100px">Для кого<select data-gk="gender">${[["w", "Женское"], ["m", "Мужское"], ["u", "Унисекс"]].map(([k, v]) => `<option value="${k}" ${g.gender === k ? "selected" : ""}>${v}</option>`).join("")}</select></label></div>
-      <div class="hint">${g.price ? `На скриншоте: ${esc(g.price)} ${esc(g.currency)}${g.currency !== "EUR" ? (g.currencyKnown ? " → пересчитано в € по курсу" : " — валюта неизвестна, впишите цену в €") : ""}` : "Цену не нашли — впишите"}${g.color ? " · " + esc(g.color) : ""}${g.sizes.length ? " · размеры " + esc(g.sizes.join(", ")) : ""} · скриншотов: ${g.count}</div>
+      <div class="hint">${g.src ? `${esc(g.src)}: ${esc(g.price ?? "—")} ${esc(g.currency)}${g.color ? " · " + esc(g.color) : ""}${g.sizes.length ? " · размеры " + esc(g.sizes.join(", ")) : ""}${g.url ? ` · <a href="${esc(g.url)}" target="_blank" rel="noopener">страница товара</a>` : ""}` : `${g.price ? `На скриншоте: ${esc(g.price)} ${esc(g.currency)}${g.currency !== "EUR" ? (g.currencyKnown ? " → пересчитано в € по курсу" : " — валюта неизвестна, впишите цену в €") : ""}` : "Цену не нашли — впишите"}${g.color ? " · " + esc(g.color) : ""}${g.sizes.length ? " · размеры " + esc(g.sizes.join(", ")) : ""} · скриншотов: ${g.count}`}</div>
       ${g.err ? `<div class="err hint">${esc(g.err)}</div>` : ""}
     </div></article>`;
   const addFiles = files => {
@@ -2290,7 +2314,7 @@ async function vScreens() {
     const groups = [...SCR.groups.values()].filter(g => g.checked && !g.saved); let ok = 0;
     for (const g of groups) {
       try {
-        await api("manualSave", { method: "POST", body: { brand: g.brand, title: g.title, category: g.category, gender: g.gender, boutique: Number(g.priceEur), sizes: g.sizes, color: g.color, sku: g.sku, availability: "online", images: g.images, status } });
+        await api("manualSave", { method: "POST", body: { id: g.id, brand: g.brand, title: g.title, category: g.category, gender: g.gender, boutique: Number(g.priceEur), sizes: g.sizes, color: g.color, sku: g.sku, availability: "online", images: g.images, url: g.url, description: g.description, status } });
         g.saved = true; g.err = null; ok++;
       } catch (e) { g.err = e.message; }
     }
