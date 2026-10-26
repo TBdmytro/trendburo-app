@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 28</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 29</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v28] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v29] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -164,7 +164,18 @@ async function tbCollect() {
   // пропуск окна с размерами — только если на этом сайте оно ни разу не сработало и подряд не вышло много раз (не на неделю: одна неудачная серия не должна отключать размеры)
   var rSkip = rMem.ok === 0 && rMem.fail >= 12 && Date.now() - (rMem.at || 0) < 864e5;
   var rSave = function () { try { localStorage.setItem("tbRender", JSON.stringify({ ok: (rMem.ok || 0) + rOk > 0 ? 1 : 0, fail: rOk ? 0 : rFail, at: Date.now() })); } catch (e) {} };
-  var rendered = async function (url, p) {
+  // образец для точной настройки под бренд: где на странице лежат размеры (кусок разметки списка размеров и место в коде страницы) — без цен и личных данных
+  var capDom = function (d, labels) { try {
+    var els = [].slice.call(d.querySelectorAll("button, li, label, option, a, span, div, [role='radio'], [role='option']")).filter(function (e) { var t = (e.textContent || "").replace(/\s+/g, " ").trim(); return labels.indexOf(t) >= 0 && e.children.length <= 3; });
+    if (!els.length) return ""; var c = els[0];
+    for (var k = 0; k < 6 && c.parentElement; k++) { c = c.parentElement; var n = 0; els.forEach(function (e) { if (c.contains(e)) n++; }); if (n >= Math.min(3, els.length)) break; }
+    var x = c.cloneNode(true);
+    [x].concat([].slice.call(x.querySelectorAll("*"))).forEach(function (e) { [].slice.call(e.attributes || []).forEach(function (a) { if (!/^(class|data-|aria-|disabled|role|type|name|value|for|id)/.test(a.name)) e.removeAttribute(a.name); }); if (/^(svg|script|style|img|picture|path)$/i.test(e.tagName)) e.innerHTML = ""; });
+    return x.outerHTML.replace(/\s+/g, " ").slice(0, 7000); } catch (e) { return ""; } };
+  var capHtml = function (h, labels) { var out = []; h = String(h || "");
+    labels.slice(0, 3).forEach(function (l) { var re = new RegExp('"[A-Za-z_]{1,40}"\\s*:\\s*"' + l.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + '"', "g"), m, n = 0; while ((m = re.exec(h)) && n < 2) { n++; out.push(h.slice(Math.max(0, m.index - 250), m.index + 250).replace(/\s+/g, " ")); } });
+    return out.join(" || ").slice(0, 4000); };
+  var rendered = async function (url, p, raw) {
     if (rSkip || (rOk === 0 && rFail >= 8)) return { sst: [], blocked: "", dbg: "R skip" };
     var f = document.createElement("iframe"); f.setAttribute("aria-hidden", "true"); f.tabIndex = -1;
     // в пределах экрана (прозрачно, позади страницы): иначе сайт считает блок невидимым и не подгружает размеры
@@ -187,6 +198,7 @@ async function tbCollect() {
         out.dbg = ("R " + info.join(" ") + " · BTN " + bt + " · " + sizeDbg(d2.body ? d2.body.innerHTML : "")).slice(0, 900); } }
       else out.dbg = "R " + info.join(" ") + " · нет доступа к странице в окне";
     } catch (e) {}
+    try { if (out.sst.length && f.contentDocument) { var labs = out.sst.map(function (x) { return x.s; }); out.cap = { url: url.split("?")[0], labels: labs.slice(0, 20), dom: capDom(f.contentDocument, labs), inHtml: capHtml(raw, labs) }; } } catch (e) {}
     f.remove(); if (out.sst.length) rOk++; else rFail++; rSave(); return out;
   };
   var sizeInfo = function (doc, html, p) {
@@ -297,7 +309,7 @@ async function tbCollect() {
         if (it && it.title && !it.blocked && tb[tcode]) it.blocked = tb[tcode];
         if (it && it.title && !it.sizes.length && !/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear)\b/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) {
           note("Trend Büro: жду размеры на странице товара " + (i + 1) + " из " + todo.length + "…", true);
-          var rr = await rendered(todo[i][0], {}); if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked;
+          var rr = await rendered(todo[i][0], {}, h); if (rr.cap && sample && !sample.szCap) sample.szCap = rr.cap; if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked;
         }
         if (it && it.title && (it.blocked || (it.sizeStock.length && it.sizeStock.every(function (x) { return x.ok === false; })))) { it.ask = it.blocked || "wait"; askN++; }
         if (it && it.title) { it.section = section; if (!(await ready)) throw new Error("admin"); w.postMessage({ type: isUpd ? "tb-update" : "tb-import", items: [it] }, ADM); sentN++; if (isUpd) upd++; else ok++; } else bad++; }
