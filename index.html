@@ -2222,7 +2222,8 @@ function similarTo(p){const t=TIER_OF(p.brand),pool=P.filter(x=>x.id!==p.id&&x.c
   let l=pool.filter(x=>Math.abs(TIER_OF(x.brand)-t)<=1&&x.price>=p.price*.6&&x.price<=p.price*1.4);
   if(l.length<4)l=pool;return l.sort((a,b)=>sc(a)-sc(b)).slice(0,10)}
 // «Другие цвета»: та же модель в других цветах (по ключу семьи из каталога)
-let FAMS=null;function famSibs(p){if(!p||!p.fam)return [];if(!FAMS){FAMS=new Map();P.forEach(x=>{if(x.fam){if(!FAMS.has(x.fam))FAMS.set(x.fam,[]);FAMS.get(x.fam).push(x)}})}const L=FAMS.get(p.fam)||[];return L.length>1?L.slice(0,16):[]}
+let FAMS=null;function famSibs(p){if(!p||!p.fam)return [];if(!FAMS){FAMS=new Map();P.forEach(x=>{if(x.fam){if(!FAMS.has(x.fam))FAMS.set(x.fam,[]);FAMS.get(x.fam).push(x)}})}const seen=new Set(),L=[p,...(FAMS.get(p.fam)||[]).filter(x=>x!==p)].filter(x=>{const c=(x.col||"").toLowerCase();if(!c)return true;if(seen.has(c))return false;seen.add(c);return true}); // один цвет — один раз
+  return L.length>1?L.slice(0,16):[]}
 function openProduct(id){popTrack("v",id);
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;
   let d=prefs.dest||"ua",size="",ci=0;
