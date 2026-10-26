@@ -2234,7 +2234,7 @@ function openProduct(id){popTrack("v",id);
   const cws=st?[{name:"",c:it.c,ok:true}]:colorways(it);
   const sizes=st?null:(p&&p.live?(p.sizes&&p.sizes.length?[...new Set(p.sizes.map(z=>z.size))]:null):(p&&SIZES[p.cat]?SIZES[p.cat][p.g]:null));
   // размеры, которых нет у поставщика, показываем зачёркнутыми и не даём выбрать
-  const szOut=new Set(p&&p.live&&p.sizes?[...new Set(p.sizes.map(z=>z.size))].filter(z=>!p.sizes.some(x=>x.size===z&&(x.status==="online"||x.status==="boutique"||x.status==="preorder"||x.status==="ask"))):[]);
+  const szOut=new Set(p&&p.live&&p.sizes?[...new Set(p.sizes.map(z=>z.size))].filter(z=>p.sizes.filter(x=>x.size===z).every(x=>x.status==="out")):[]);
   // онлайн сейчас не купить (предзаказ, лист ожидания, размер распродан на сайте бренда) — вместо корзины «Уточнить наличие»: менеджер найдёт и выкупит в бутике
   const ASK=["preorder","ask"],noSz=!!(p&&p.live&&!st&&(p.cat==="clothing"||p.cat==="shoes")&&!(p.sizes&&p.sizes.length)),isPre=()=>{if(!p||!p.live||r)return false;if(noSz)return true; // одежда/обувь без размеров — размер и наличие уточнит менеджер
 if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size===size);return z.some(x=>ASK.includes(x.status))&&!z.some(x=>x.status==="online"||x.status==="boutique")}return ASK.includes(p.availability)};
