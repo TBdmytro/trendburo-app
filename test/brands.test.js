@@ -168,6 +168,13 @@ test("одежда в «Украшениях»/«Другом» с кнопки:
   assert.equal((await s.get("product.manual.ysl-b3")).category, "other"); // выставлено вручную — не трогаем
 });
 
+test("витрина: копии одного фото в меньших размерах не показываются, разные ракурсы одного размера — да", async () => {
+  const { dropSizeCopies } = await import("../lib/catalog.js");
+  const U = k => ({ url: "https://cdn.sanity.io/images/p/d/" + k });
+  const out = dropSizeCopies([U("a-2608x3260.jpg"), U("b-200x250.jpg"), U("c-400x500.jpg"), U("d-2608x3260.jpg"), U("e-1200x800.jpg"), U("f-600x400.jpg")]).map(x => x.url.split("/").pop());
+  assert.deepEqual(out, ["a-2608x3260.jpg", "d-2608x3260.jpg", "e-1200x800.jpg"]);
+});
+
 test("подразделы: обувь, сумки, одежда — по разделу сайта, названию, описанию", async () => {
   const { detectSubcategory } = await import("../lib/normalize.js");
   assert.equal(detectSubcategory("shoes", ["sneakers"], "SL/61 low-top"), "sneakers");
