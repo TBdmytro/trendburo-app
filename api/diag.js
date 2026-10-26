@@ -224,5 +224,7 @@ async function probeImg(res, u) {
       out[v === u ? "orig" : "w400"] = { status: r.status, type: r.headers.get("content-type"), bytes: b.byteLength, acao: r.headers.get("access-control-allow-origin") }; }
     catch (e) { out[v === u ? "orig" : "w400"] = { error: String(e.message).slice(0, 120) }; }
   }
+  // маленькая копия (для проверки, что на фото — товар, а не пустая заглушка)
+  if (!out.error) { try { const r = await fetch(u + (u.includes("?") ? "&" : "?") + "w=240&fm=jpg&q=70", { headers: { Origin: "https://trendburo-app.vercel.app" } }); out.cors = r.headers.get("access-control-allow-origin"); out.thumb = Buffer.from(await r.arrayBuffer()).toString("base64"); } catch (e) { out.thumbErr = String(e.message).slice(0, 80); } }
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
