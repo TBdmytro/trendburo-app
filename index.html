@@ -258,6 +258,16 @@ button{cursor:pointer}
 .pc .p{font-size:14px;font-weight:600;color:var(--fg)}
 .pc .ct{font-size:11.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px;padding-inline:18px}
+/* сколько товаров в ряд: 2 (как было), 3 или 4 — компактнее подписи */
+.cntrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 18px 10px;min-height:30px}.cntrow .count{margin:0;padding:0}
+.colsw{display:flex;gap:4px;background:var(--soft);border-radius:10px;padding:3px;margin-left:auto}
+.colsw button{border:0;background:none;height:26px;padding:0 7px;border-radius:8px;display:flex;align-items:center;gap:2px;color:var(--g2)}
+.colsw button i{display:block;width:4px;height:12px;border-radius:1.5px;background:currentColor}
+.colsw button[aria-pressed="true"]{background:#fff;color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#grid.c3{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 8px}#grid.c4{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 6px;padding-inline:12px}
+#grid.c3 .pc .m .n,#grid.c4 .pc .m .n{font-size:11.5px;-webkit-line-clamp:1;line-clamp:1}#grid.c3 .pc .m .b,#grid.c4 .pc .m .b{font-size:9.5px;letter-spacing:.06em}
+#grid.c3 .pc .m .p,#grid.c4 .pc .m .p{font-size:12.5px}#grid.c4 .pc .m .n{display:none}#grid.c4 .pc .art,#grid.c3 .pc .art{border-radius:12px}
+#grid.c3 .pc .fav,#grid.c4 .pc .fav{transform:scale(.8);transform-origin:top right}#grid.c4 .pc .newb,#grid.c4 .pc .salb,#grid.c4 .pc .stk{font-size:9px;padding:2px 5px}
 .grid2 .pc{animation:rise .5s var(--ease) both;animation-delay:calc(min(var(--i,0),12) * 35ms)}
 .grid2 .pc.nofx{animation:none}
 .grid2 .pc{content-visibility:auto;contain-intrinsic-size:auto 320px}
@@ -1476,7 +1486,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
         </div>
         <div class="chips" id="catChips" style="margin-top:12px"></div>
         <div class="af" id="af" style="margin-top:12px"></div>
-        <div class="count num" id="count" style="margin:12px 0 10px"></div>
+        <div class="cntrow"><div class="count num" id="count"></div><div class="colsw" role="group" aria-label="Сколько товаров в ряд"><button data-cols="2" aria-label="2 в ряд"><i></i><i></i></button><button data-cols="3" aria-label="3 в ряд"><i></i><i></i><i></i></button><button data-cols="4" aria-label="4 в ряд"><i></i><i></i><i></i><i></i></button></div></div>
         <div class="grid2" id="grid"></div>
       </div>
     </div>
@@ -1762,7 +1772,13 @@ const plural=(n,a)=>n%10===1&&n%100!==11?a[0]:[2,3,4].includes(n%10)&&![12,13,14
 /* ===== Избранное ===== */
 let favs=new Set(store.get("tb_favs",[])), ofavs=new Set(store.get("tb_ofavs",[]));
 let follows=new Set(store.get("tb_follow",[]));
-function toggleFav(id){const isO=id[0]==="o",S=isO?ofavs:favs;S.has(id)?S.delete(id):S.add(id);store.set(isO?"tb_ofavs":"tb_favs",[...S]);
+// популярность: что смотрят, кладут в избранное и в корзину (только номера товаров), отправляется пачкой
+const POPQ={v:new Set(),f:new Set(),c:new Set()};
+function popTrack(k,id){if(!LIVE||!id||!String(id).startsWith("product."))return;POPQ[k].add(id);clearTimeout(popTrack.t);popTrack.t=setTimeout(popFlush,20000)}
+function popFlush(){const b={v:[...POPQ.v],f:[...POPQ.f],c:[...POPQ.c]};if(!b.v.length&&!b.f.length&&!b.c.length)return;POPQ.v.clear();POPQ.f.clear();POPQ.c.clear();
+  const body=JSON.stringify(b);try{if(navigator.sendBeacon&&navigator.sendBeacon("/api/pop",new Blob([body],{type:"application/json"})))return}catch(e){}fetch("/api/pop",{method:"POST",headers:{"Content-Type":"application/json"},body,keepalive:true}).catch(()=>{})}
+document.addEventListener("visibilitychange",()=>{if(document.hidden)popFlush()});
+function toggleFav(id){if(!(id[0]==="o"?ofavs:favs).has(id))popTrack("f",id);const isO=id[0]==="o",S=isO?ofavs:favs;S.has(id)?S.delete(id):S.add(id);store.set(isO?"tb_ofavs":"tb_favs",[...S]);
   $$(`[data-fav="${id}"]`).forEach(b=>b.setAttribute("aria-pressed",S.has(id)));
   if(isO){renderOFavs();return}
   updateCounts();renderFavs();if(F.onlyFav)renderGrid()}
@@ -1811,7 +1827,9 @@ function activeList(){const a=[];
 let AF=[];
 function renderCatalog(){
   const fc=baseSet("cats");
-  $("#catChips").innerHTML=Object.entries(CATS).map(([k,v])=>`<button class="chip" data-act="cat" data-cat="${k}" aria-pressed="${F.cats.has(k)}">${v}<span class="c num">${fc.filter(p=>p.cat===k).length}</span></button>`).join("");
+  // категории без огромных чисел (было «Одежда 2511»): только те, где что-то есть, самые большие — первыми
+  const cn={};fc.forEach(p=>cn[p.cat]=(cn[p.cat]||0)+1);
+  $("#catChips").innerHTML=Object.entries(CATS).filter(([k])=>cn[k]||F.cats.has(k)).sort((a,b)=>(cn[b[0]]||0)-(cn[a[0]]||0)).map(([k,v])=>`<button class="chip" data-act="cat" data-cat="${k}" aria-pressed="${F.cats.has(k)}">${esc(String(v).split(":")[0])}</button>`).join("");
   $$("#gSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
   AF=activeList();
   $("#af").innerHTML=AF.map((x,i)=>`<span>${esc(x[0])}<button data-act="unaf" data-i="${i}" aria-label="Убрать">×</button></span>`).join("");
@@ -1824,20 +1842,29 @@ const CAT_TURN=["clothing","shoes","bags","accessories","jewelry","eyewear","wat
 const DH={d:"",m:new Map()};
 const dayHash=id=>{const d=new Date().toISOString().slice(0,10);if(DH.d!==d){DH.d=d;DH.m.clear()}let h=DH.m.get(id);if(h===undefined){h=+d.replace(/-/g,"");for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;DH.m.set(id,h)}return h};
 function popOrder(list){const best=list.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best),rest=list.filter(p=>p.best==null);
-  const G={};rest.forEach(p=>(G[p.cat]=G[p.cat]||[]).push(p));
-  Object.values(G).forEach(g=>{const k=new Map(g.map(p=>[p,dayHash(p.id)]));g.sort((a,b)=>(!!b.st-!!a.st)||(k.get(a)-k.get(b)))});
+  // популярное у наших покупателей (смотрят, кладут в избранное и корзину) — сразу после хитов продаж
+  const hot=rest.filter(p=>(p.pop||0)>=3).sort((a,b)=>b.pop-a.pop).slice(0,48),hs=new Set(hot),rem=rest.filter(p=>!hs.has(p));
+  const G={};rem.forEach(p=>(G[p.cat]=G[p.cat]||[]).push(p));
+  // внутри категории бренды идут по очереди — один большой бренд (Alo Yoga) не забивает ленту
+  Object.keys(G).forEach(c=>{const B={};G[c].forEach(p=>(B[p.bk]=B[p.bk]||[]).push(p));const bs=Object.values(B);
+    bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)]));b.sort((x,y)=>(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)))});
+    bs.sort((a,b)=>dayHash(a[0].bk)-dayHash(b[0].bk));const o=[];for(let i=0;o.length<G[c].length;i++)for(const b of bs)if(i<b.length)o.push(b[i]);G[c]=o});
   const turn=[...CAT_TURN.filter(c=>G[c]),...Object.keys(G).filter(c=>!CAT_TURN.includes(c))],at={},out=[];
   // «Другое» (книги, коврики, косметика) — реже: одна позиция на три круга
-  for(let k=0;out.length<rest.length;k++)for(const c of turn){if(c==="other"&&k%3)continue;const g=G[c],j=at[c]||0;if(j<g.length){out.push(g[j]);at[c]=j+1}}
-  return [...best,...out]}
+  for(let k=0;out.length<rem.length;k++)for(const c of turn){if(c==="other"&&k%3)continue;const g=G[c],j=at[c]||0;if(j<g.length){out.push(g[j]);at[c]=j+1}}
+  return [...best,...hot,...out]}
 function sorted(list){const s=F.sort;if(s==="pop")return popOrder(list);return list.sort((a,b)=>s==="asc"?a.price-b.price:s==="desc"?b.price-a.price:(!!b.st-!!a.st)||(b.isNew-a.isNew)||(a.price-b.price))}
 let gridList=[],gridShown=0,gridIO=null;const GRID_STEP=24;
 function gridMore(){const g=$("#grid");if(!g)return;const from=gridShown,to=Math.min(gridList.length,gridShown+GRID_STEP);if(from>=to)return;
   g.querySelector(".grid-more")?.remove();
   g.insertAdjacentHTML("beforeend",gridList.slice(from,to).map((p,i)=>pcHTML(p,from?0:i).replace('class="pc press"',from?'class="pc press nofx"':'class="pc press"')).join("")+(to<gridList.length?'<div class="grid-more"></div>':""));
   gridShown=to;const s=g.querySelector(".grid-more");if(s){gridIO=gridIO||new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))gridMore()},{root:g.closest(".scroll"),rootMargin:"900px 0px"});gridIO.observe(s)}}
+let COLS=(()=>{try{return +localStorage.getItem("tb_cols")||2}catch(e){return 2}})();
+function colsApply(){const g=$("#grid");if(g){g.classList.toggle("c3",COLS===3);g.classList.toggle("c4",COLS===4)}document.querySelectorAll(".colsw [data-cols]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.cols===COLS)))}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".colsw [data-cols]");if(!b)return;COLS=+b.dataset.cols;try{localStorage.setItem("tb_cols",String(COLS))}catch(x){}colsApply();try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(x){}});
 function renderGrid(){const list=sorted(baseSet()),n=list.length;
-  $("#count").textContent=n+" "+plural(n,["товар","товара","товаров"]);
+  const filtered=!!(F.q||F.cats.size||F.brands.size||F.cities.size||F.onlyNew||F.onlyFav||F.stock||F.ids||Object.keys(F.budgets).some(k=>F.budgets[k]<catMax(k)));
+  $("#count").textContent=filtered?n+" "+plural(n,["товар","товара","товаров"]):"";colsApply();
   gridIO&&gridIO.disconnect();gridList=list;gridShown=0;
   if(n){$("#grid").innerHTML="";gridMore();return}
   $("#grid").innerHTML=n?"":`<div class="empty" style="grid-column:1/-1"><h3>Ничего не нашли</h3><p>Поднимите бюджет или уберите бренд. Вещь не из витрины найдём по запросу.</p><button class="btn sm" data-act="svc" data-s="concierge" style="margin-top:8px">Найти под заказ</button></div>`}
@@ -2189,7 +2216,7 @@ function similarTo(p){const t=TIER_OF(p.brand),pool=P.filter(x=>x.id!==p.id&&x.c
   const sc=x=>Math.abs(TIER_OF(x.brand)-t)*0.6+Math.abs(Math.log((x.price||1)/(p.price||1)))+(x.bk===p.bk?0.15:0);
   let l=pool.filter(x=>Math.abs(TIER_OF(x.brand)-t)<=1&&x.price>=p.price*.6&&x.price<=p.price*1.4);
   if(l.length<4)l=pool;return l.sort((a,b)=>sc(a)-sc(b)).slice(0,10)}
-function openProduct(id){
+function openProduct(id){popTrack("v",id);
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;
   let d=prefs.dest||"ua",size="",ci=0;
   const st=p&&p.st;if(st&&st.loc==="ua")d="ua";
@@ -2874,7 +2901,7 @@ function renderTopIcons(){$$(".topicons").forEach(el=>el.innerHTML=`<button clas
 function updateCounts(){$$("[data-cnt=fav]").forEach(d=>{d.textContent=favs.size;d.dataset.n=favs.size});$$("[data-cnt=cart]").forEach(d=>{d.textContent=cart.length;d.dataset.n=cart.length})}
 function bumpCart(){$$("[data-act=cart]").forEach(b=>{b.classList.remove("bump");void b.offsetWidth;b.classList.add("bump")})}
 const cartBtnHTML=()=>`<button class="round" data-act="cart" aria-label="Корзина"><svg viewBox="0 0 24 24">${I_BAG}</svg><span class="dotn num" data-cnt="cart" data-n="${cart.length}">${cart.length}</span></button>`;
-function addToCart(id,size,color="",ok=true,hex="",quiet=false){if(cart.some(c=>c.id===id&&c.size===size&&(c.color||"")===color)){toast("Уже в корзине");return false}
+function addToCart(id,size,color="",ok=true,hex="",quiet=false){popTrack("c",id);if(cart.some(c=>c.id===id&&c.size===size&&(c.color||"")===color)){toast("Уже в корзине");return false}
   cart.push({id,size,color,ok,hex});store.set("tb_cart",cart);updateCounts();bumpCart();if(!quiet)toast("Добавлено в корзину");return true}
 function renderFavs(){const el=$("#favGrid");if(!el)return;const l=P.filter(p=>favs.has(p.id)).concat(RESALE.filter(r=>favs.has(r.id)));
   // избранное: первые 60, остальные — кнопкой (страница не раздувается, сколько бы ни сохранили)
@@ -3467,7 +3494,7 @@ function applyLive(list,fresh){PV++;
     const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn?x.oldPrice:x.price;
     P.push({id:x.id,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
       shape:(()=>{const u=x.im?x.im[0]&&szU(XU(x.im[0]),400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),get imgs(){return this._im||(this._im=imgsOf(x))},colors:(x.colors||[]).map(c=>c.image&&c.image[0]==="~"?{...c,image:XU(c.image)}:c),sizes:x.sizes||[],
-      orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null})});
+      orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0})});
   NEWS.length=0;RESALE.length=0;ICONS.length=0;
   BRANDS=[...new Map(P.map(p=>[p.bk,p.brand])).entries()];
   STORY_BRANDS.length=0;STORY_BRANDS.push(...BRANDS.map(b=>b[0]).slice(0,12));

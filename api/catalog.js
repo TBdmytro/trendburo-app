@@ -2,6 +2,7 @@
 import { getStore } from "../lib/store.js";
 import { toStorefront } from "../lib/catalog.js";
 import { publicContent } from "../lib/cms.js";
+import { popKey } from "./pop.js";
 
 /* Каталог собирается не чаще раза в 20 с на экземпляр сервера; одновременные запросы ждут одну сборку (база не получает толпу одинаковых запросов) */
 const MEMO = [null, null];
@@ -18,6 +19,8 @@ async function catalogBody(compact) {
       fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos" });
     const now = Date.now();
     const products = list.map(p => toStorefront(p, now, { compact })).filter(Boolean);
+    // популярность у покупателей (просмотры, избранное, корзина) — витрина ставит такие товары выше
+    try { const pop = (await store.get("stats.pop"))?.scores || {}; for (const x of products) { const v = pop[popKey(x.id)]; if (v > 0) x.pop = v; } } catch {}
     let content = null; try { content = await publicContent(store, new Date(now)); } catch { content = null; }
     return JSON.stringify({ products, content, generatedAt: new Date(now).toISOString(), demo: !!store.demo });
   })();
