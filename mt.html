@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 26</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 27</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v26] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v27] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -275,6 +275,8 @@ async function tbCollect() {
     var rejN = links.filter(function (u) { return st[codeOf(u)] === "rejected"; }).length;
     var known = links.filter(function (u) { var c = st[codeOf(u)]; return !!c && c !== "rejected"; }), fresh = links.filter(function (u) { return !st[codeOf(u)]; });
     had = known.length; var newTotal = fresh.length;
+    // отчёт о сайте: сколько прочитано, с ценой, фото, размерами — чтобы новый бренд (LV, Gucci…) сразу было видно, всё ли кнопка понимает
+    var H = { links: links.length, tried: 0, read: 0, price: 0, newN: 0, img: 0, needSz: 0, sz: 0 }, sample = null;
     var askN = 0; // предзаказ / лист ожидания / «только в бутике» / размеры распроданы — берём, на сайте у них «Уточнить наличие»
     // уже проверенные за последние 12 часов не открываем заново — повторный прогон быстрый
     var freshN = known.filter(function (u) { return !!fr[codeOf(u)]; }).length; known = known.filter(function (u) { return !fr[codeOf(u)]; });
@@ -287,6 +289,10 @@ async function tbCollect() {
       note("Trend Büro: " + (isUpd ? "проверяю добавленный " : "новый товар ") + (i + 1) + " из " + todo.length + " · новых " + ok + " · проверено " + upd + (bad ? " · не прочитано " + bad : "") + ". Не закрывайте вкладку", true);
       try { var r = await fetch(todo[i][0], { credentials: "include", cache: "no-store" }), h = await r.text(); if (!r.ok) throw new Error(r.status);
         var it = await build(new DOMParser().parseFromString(h, "text/html"), h, todo[i][0], isUpd ? 0 : 6, extra);
+        H.tried++;
+        if (it && it.title) { H.read++; if (it.price) H.price++; if (!isUpd) { H.newN++; if (it.images.length) H.img++; }
+          if (!/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear|scarf|scarves|hats?|caps?|books?)\b/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) { H.needSz++; if (it.sizes.length) H.sz++; }
+          if (!sample) sample = { url: it.url, title: it.title, brand: it.brand, price: it.price, currency: it.currency, sku: it.sku, sizes: it.sizes.slice(0, 12), images: it.images.length, crumbs: it.crumbs.slice(0, 12), ld: (function () { try { var d = new DOMParser().parseFromString(h, "text/html"), x = lds(d).find(function (o) { return isT(o, "Product") || isT(o, "ProductGroup"); }); return JSON.stringify(x).slice(0, 3000); } catch (e) { return ""; } })() }; }
         if (it && it.title && !it.blocked && tb[tcode]) it.blocked = tb[tcode];
         if (it && it.title && !it.sizes.length && !/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear)\b/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) {
           note("Trend Büro: жду размеры на странице товара " + (i + 1) + " из " + todo.length + "…", true);
@@ -318,7 +324,7 @@ async function tbCollect() {
       } catch (e) { alive.push(missing[mi].code); }
       await sleep(PAUSE);
     }
-    try { w.postMessage({ type: "tb-section", host: host, section: section, codes: allCodes.concat(alive), url: location.href.split("#")[0], title: document.title }, ADM); } catch (e) {}
+    try { w.postMessage({ type: "tb-section", host: host, section: section, codes: allCodes.concat(alive), url: location.href.split("#")[0], title: document.title, stats: H, sample: sample }, ADM); } catch (e) {}
     summary(ok); await waitSaved(sentN);
     note("Готово: новых " + ok + " · проверено добавленных " + upd + (saved.fail ? " · не сохранилось " + saved.fail + " (причины в админке)" : "") + (bad ? " · не прочитано " + bad : "") + (freshN ? " · недавно проверенных пропущено: " + freshN : "") + (rejN ? " · удалённых вами не берём: " + rejN : "") + (askN ? " · из них «уточнить наличие» (предзаказ, лист ожидания, нет размеров): " + askN : "") + (newTotal > MAX ? " · ещё новых: " + (newTotal - MAX) + " — нажмите кнопку ещё раз" : "") + ". Что продано и что пропало — в админке");
   } catch (e) { if (e && e.message === "noframe") { note("Этот сайт не даёт работать без окна — нажмите кнопку ещё раз: загрузка пойдёт через маленькое окно в углу", true); return; }

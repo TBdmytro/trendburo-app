@@ -2278,7 +2278,7 @@ window.addEventListener("message", async e => {
     try { e.source.postMessage({ type: "tb-secknown", list }, e.origin); } catch {} return;
   }
   if (e.data.type === "tb-section") { // прогон раздела: чего нет на сайте бренда — «продано»
-    try { const r = await api("sectionSync", { method: "POST", silent: true, body: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), section: e.data.section, codes: e.data.codes || [], url: e.data.url, title: e.data.title } }); MTP.gone = (MTP.gone || 0) + (r.gone || 0); if (r.skipped) MTP.sectionSkipped = true; } catch {}
+    try { const r = await api("sectionSync", { method: "POST", silent: true, body: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), host: e.data.host || "", section: e.data.section, codes: e.data.codes || [], url: e.data.url, title: e.data.title, stats: e.data.stats || null, sample: e.data.sample || null } }); MTP.gone = (MTP.gone || 0) + (r.gone || 0); if (r.skipped) MTP.sectionSkipped = true; } catch {}
     mtDraw(); try { e.source.postMessage({ type: "tb-section-done", gone: MTP.gone || 0, skipped: !!MTP.sectionSkipped }, e.origin); } catch {} return;
   }
   if (e.data.type !== "tb-import" && e.data.type !== "tb-update") return;
@@ -2326,6 +2326,13 @@ function tbWidget() {
   clearTimeout(tbWidget.t); tbWidget.t = setTimeout(tbWidget, 16000);
 }
 // «Товары» сами не перезагружаются во время загрузки (мешало работать) — в плашке кнопка «Показать новые»
+// здоровье раздела: что кнопка смогла прочитать (по последнему прогону) — красным то, что ниже 80%
+function siteHealth(x) {
+  const h = x.health; if (!h || !h.tried) return "";
+  const pc = (a, b) => b ? Math.round(a / b * 100) : null, bits = [["прочитано", pc(h.read, h.tried)], ["с ценой", pc(h.price, h.read)], ["с фото", pc(h.img, h.newN)], ["с размерами (одежда, обувь)", pc(h.sz, h.needSz)], ["категория найдена", h.cats ? pc(h.cats.total - (h.cats.other || 0), h.cats.total) : null]].filter(b => b[1] !== null);
+  const bad = bits.filter(b => b[1] < 80);
+  return `<div class="hint" style="margin-top:4px">${bits.map(([t, v]) => `<span style="${v < 80 ? "color:#b4582f;font-weight:600" : ""}">${t} ${v}%</span>`).join(" · ")}${bad.length ? ` — <span style="color:#b4582f">напишите Claude: «проверь сайт ${esc((x.section || "").split("/")[0])}»</span>` : ""}</div>`;
+}
 // разделы сайтов брендов: открыть → нажать кнопку «В Trend Büro» → прогон (новые, цены, размеры, что продано)
 async function vSites() {
   const { sections } = await api("webSections");
@@ -2335,7 +2342,7 @@ async function vSites() {
       const old = Date.now() - Date.parse(x.lastRun) > 7 * 864e5;
       return `<div class="row" style="padding:14px 16px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap">
         <div style="flex:1;min-width:220px"><b>${esc(x.title || x.section)}</b><div class="hint">${esc(x.section)}</div>
-        <div class="hint">${old ? `<span class="err">проверяли ${ago(x.lastRun)}</span>` : "проверяли " + ago(x.lastRun)} · на сайте ${x.found} · у нас из раздела ${x.inSection}${x.gone ? ` · пропало ${x.gone}` : ""}${x.partial ? ` · <span class="err">раздел загрузился не полностью</span>` : ""}</div></div>
+        <div class="hint">${old ? `<span class="err">проверяли ${ago(x.lastRun)}</span>` : "проверяли " + ago(x.lastRun)} · на сайте ${x.found} · у нас из раздела ${x.inSection}${x.gone ? ` · пропало ${x.gone}` : ""}${x.partial ? ` · <span class="err">раздел загрузился не полностью</span>` : ""}</div>${siteHealth(x)}</div>
         ${x.url ? `<a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Открыть раздел</a>` : ""}<button class="btn ghost sm" data-sdel="${esc(x.section)}" aria-label="Убрать из списка">×</button></div>`;
     }).join("")}</div>` : `<div class="card empty"><b>Пока пусто</b>Откройте раздел на сайте бренда (например, сумки на ysl.com) и нажмите кнопку «В Trend Büro» — раздел появится здесь.</div>`);
   $("#main").onclick = async e => {

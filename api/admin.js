@@ -390,7 +390,11 @@ export default async function handler(req, res) {
         const gone = mine.filter(p => !codes.has(p._id.slice(px.length))).map(p => p._id);
         if (mine.length && codes.size < mine.length * 0.5) { await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: 0, partial: true }); return send(res, 200, { gone: 0, skipped: true, inSection: mine.length, found: codes.size }); }
         const goneN = gone.length && !(mine.length && codes.size < mine.length * 0.5) ? await markWebGone(store, gone.slice(0, 500), { by: me.name, pricingCfg }) : 0;
-        await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: goneN });
+        // отчёт о сайте (что кнопка прочитала) + категории товаров раздела + образец страницы товара для разбора
+        const st = body.stats && typeof body.stats === "object" ? Object.fromEntries(["links", "tried", "read", "price", "newN", "img", "needSz", "sz"].map(k => [k, Math.max(0, Math.min(5000, Number(body.stats[k]) || 0))])) : null;
+        if (st) { const all = await allProducts(store), ids = new Set(mine.map(p => p._id)), cats = { total: 0 }; for (const p of all) if (ids.has(p._id)) { const c = p.overrides?.category || p.category || "other"; cats[c] = (cats[c] || 0) + 1; cats.total++; } st.cats = cats; }
+        if (body.sample && typeof body.sample === "object") { const host = String(body.host || "").replace(/[^a-z0-9.-]/gi, "").slice(0, 80); if (host) { const sd = (await store.get("settings.webSamples")) || { _id: "settings.webSamples", _type: "settings", list: {} }; sd.list = sd.list || {}; sd.list[host.replace(/\./g, "_")] = { host, at: new Date().toISOString(), sample: JSON.stringify(body.sample).length < 8000 ? body.sample : { title: String(body.sample.title || "").slice(0, 200), url: String(body.sample.url || "").slice(0, 300), tooBig: true } }; delete sd._rev; delete sd._createdAt; delete sd._updatedAt; try { await store.put(sd); } catch {} } }
+        await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: goneN, health: st });
         return send(res, 200, { gone: goneN, inSection: mine.length });
       }
       case "webSections": {
@@ -585,6 +589,6 @@ async function rememberSection(store, x) {
   const d = (await store.get("settings.webSections")) || { _id: "settings.webSections", _type: "settings", list: {} };
   const url = /^https:\/\//.test(String(x.url || "")) ? String(x.url).slice(0, 500) : (d.list[x.section]?.url || null);
   d.list = d.list || {};
-  d.list[x.section] = { section: x.section, url, title: String(x.title || d.list[x.section]?.title || "").replace(/\s*[|–-]\s*[^|–-]*$/, "").slice(0, 120), lastRun: new Date().toISOString(), found: x.found, inSection: x.inSection, gone: x.gone, partial: !!x.partial };
+  d.list[x.section] = { section: x.section, url, title: String(x.title || d.list[x.section]?.title || "").replace(/\s*[|–-]\s*[^|–-]*$/, "").slice(0, 120), lastRun: new Date().toISOString(), found: x.found, inSection: x.inSection, gone: x.gone, partial: !!x.partial, health: x.health || d.list[x.section]?.health || null };
   const { _rev, _createdAt, _updatedAt, ...save } = d; await store.put(save);
 }
