@@ -2772,7 +2772,7 @@ let SUBC = null;
 async function vProducts2(pre) {
   if (!pre) return vBrandBoard();
   if (!SUBC) api("subcats", { silent: true }).then(r => { SUBC = r.subcats; }).catch(() => {});
-  const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "", pre: "", sec: "" }; let incomingN = 0;
+  const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "", pre: "", sec: "", g: "" }; let incomingN = 0;
   if (pre) pre.split(",").forEach(kv => { const [k, v] = kv.split("="); if (k in F) F[k] = decodeURIComponent(v || ""); });
   let sel = new Set(), list = [], total = 0, shown = 0, facets = { brands: [], cats: [], sources: [] }, LS = null;
   const srcs = await getSources();
@@ -2786,7 +2786,7 @@ async function vProducts2(pre) {
     <input type="search" id="pq" placeholder="Бренд, модель, артикул" value="${esc(F.q)}" aria-label="Поиск">
     <div class="fchips" id="pf"></div>
     <div class="plist" id="plist"></div><div class="more" id="pmore"></div><div class="pbar" id="pbar"></div>`;
-  const q = extra => ({ q: F.q, status: F.status, source: F.source, brand: F.brand, cat: F.cat, avail: F.avail, pre: F.pre, sec: F.sec, ...extra });
+  const q = extra => ({ q: F.q, status: F.status, source: F.source, brand: F.brand, cat: F.cat, avail: F.avail, pre: F.pre, sec: F.sec, g: F.g, ...extra });
   // вкладки разделов магазина поставщика: Все · Бестселлеры · Женское · Мужское · Аксессуары
   let tabs = [], baseTotal = 0;
   // категории — сразу видны кнопками: Одежда · Обувь · Сумки · Аксессуары · Другое (книги, коврики…)
@@ -2817,7 +2817,10 @@ async function vProducts2(pre) {
   const chipSel = (key, label, arr, labf = x => x) => `<span class="fchip ${F[key] ? "on" : ""}">${esc(F[key] ? labf(F[key]) : label)} ${F[key] ? "×" : "▾"}<select data-f="${key}" aria-label="${label}"><option value="">${label}: все</option>${arr.map(x => `<option value="${esc(x.k)}" ${x.k === F[key] ? "selected" : ""}>${esc(labf(x.k))} · ${x.n}</option>`).join("")}</select></span>`;
   const drawFilters = () => {
     // «Новые с сайтов» — то, что принесла кнопка «В Trend Büro»: смотрите и решаете — в товары, сразу на сайт или не брать
-    $("#pf").innerHTML = (incomingN || F.status === "incoming" ? `<button class="fchip ${F.status === "incoming" ? "on" : ""}" data-st="incoming" style="${F.status === "incoming" ? "" : "border-color:#b4582f;color:#b4582f"}">Новые с сайтов · ${incomingN}</button>` : "")
+    // Женское / Мужское — отдельно, для удобства контроля
+    const gn = k => ((facets.genders || []).find(x => x.k === k) || {}).n || 0;
+    const gRow = `<div class="gseg" style="display:flex;gap:6px;margin-bottom:8px;width:100%">${[["", "Все"], ["w", "Женское"], ["m", "Мужское"], ["u", "Унисекс"]].map(([k, v]) => `<button class="fchip ${F.g === k ? "on" : ""}" data-gq="${k}" style="flex:1;justify-content:center;font-weight:600">${v}${k ? " · " + gn(k) : ""}</button>`).join("")}</div>`;
+    $("#pf").innerHTML = gRow + (incomingN || F.status === "incoming" ? `<button class="fchip ${F.status === "incoming" ? "on" : ""}" data-st="incoming" style="${F.status === "incoming" ? "" : "border-color:#b4582f;color:#b4582f"}">Новые с сайтов · ${incomingN}</button>` : "")
       + [["", "Все"], ["published", "На витрине"], ["draft", "Скрытые"]].map(([k, v]) => `<button class="fchip ${F.status === k ? "on" : ""}" data-st="${k}">${v}</button>`).join("")
       + `<button class="fchip ${F.avail ? "on" : ""}" data-avail>Можно купить</button><button class="fchip ${F.pre ? "on" : ""}" data-pre>Уточнить наличие</button>`
       + chipSel("source", "Поставщик", facets.sources, sname) + chipSel("brand", "Бренд", facets.brands) + chipSel("cat", "Категория", facets.cats, k => CATS[k] || k);
@@ -2826,7 +2829,7 @@ async function vProducts2(pre) {
       <input type="checkbox" class="ck" data-psel="${esc(p._id)}" ${sel.has(p._id) ? "checked" : ""} aria-label="Выбрать">
       <div class="th">${p.cover ? `<img src="${esc(thumb(p.cover))}" alt="" loading="lazy" decoding="async">` : svg("img")}</div>
       <div class="tx"><span class="br">${esc(p.brand || "—")} · ${esc(sname(p.source || "manual"))}</span><span class="tt">${esc(p.title)}</span>
-        <span class="pr"><b class="num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</b> <span>· ${esc(CATS[p.category] || "—")}${p.pre ? " · уточнить наличие" : p.avail === false ? " · нет в наличии" : ""}</span></span></div>
+        <span class="pr"><b class="num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</b> <span>· ${esc(CATS[p.category] || "—")}${p.g === "w" ? " · жен." : p.g === "m" ? " · муж." : ""}${p.pre ? " · уточнить наличие" : p.avail === false ? " · нет в наличии" : ""}</span></span></div>
       <input type="checkbox" class="sw" data-show1="${esc(p._id)}" ${p.status === "published" ? "checked" : ""} ${p.price?.ua ? "" : "disabled"} aria-label="На витрине"></div>`;
   const card = p => `<div class="pcard ${sel.has(p._id) ? "sel" : ""}" data-open="${esc(p._id)}">
       <button type="button" class="tick" data-pick1="${esc(p._id)}" aria-label="Выбрать" aria-pressed="${sel.has(p._id)}">${sel.has(p._id) ? "✓" : ""}</button>${p.status === "published" ? `<span class="live">На сайте</span>` : p.createdAt && Date.now() - Date.parse(p.createdAt) < 3 * 864e5 ? `<span class="live" style="background:#eef1fb;color:#3a55c4">Новое</span>` : ""}
@@ -2842,7 +2845,7 @@ async function vProducts2(pre) {
   };
   const bar = () => {
     const n = sel.size;
-    $("#pbar").innerHTML = n ? `<span>Выбрано ${n}${n < total ? ` из ${total}` : ""}</span>${n < total ? `<button class="g" data-selall>Выбрать все ${total}</button>` : ""}<button class="w" data-bulk="published">На сайт</button><button class="g" data-bulk="draft">${F.status === "incoming" ? "В товары (скрыто)" : "Скрыть"}</button><label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Категория<select data-bulkcat style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(CATS).map(([k, v]) => `<option value="${k}">${esc(v.split(":")[0])}</option>`).join("")}</select></label>${SUBC ? `<label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Подраздел<select data-bulksub style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(SUBC).map(([c, l]) => `<optgroup label="${esc((CATS[c] || c).split(":")[0])}">${l.map(x => `<option value="${x.k}">${esc(x.n)}</option>`).join("")}</optgroup>`).join("")}</select></label>` : ""}<button class="g" data-bulk="del">${F.status === "incoming" ? "Не брать" : "Удалить"}</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
+    $("#pbar").innerHTML = n ? `<span>Выбрано ${n}${n < total ? ` из ${total}` : ""}</span>${n < total ? `<button class="g" data-selall>Выбрать все ${total}</button>` : ""}<button class="w" data-bulk="published">На сайт</button><button class="g" data-bulk="draft">${F.status === "incoming" ? "В товары (скрыто)" : "Скрыть"}</button><label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Категория<select data-bulkcat style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(CATS).map(([k, v]) => `<option value="${k}">${esc(v.split(":")[0])}</option>`).join("")}</select></label>${SUBC ? `<label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Подраздел<select data-bulksub style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(SUBC).map(([c, l]) => `<optgroup label="${esc((CATS[c] || c).split(":")[0])}">${l.map(x => `<option value="${x.k}">${esc(x.n)}</option>`).join("")}</optgroup>`).join("")}</select></label>` : ""}<label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Для кого<select data-bulkg style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option><option value="w">Женское</option><option value="m">Мужское</option><option value="u">Унисекс</option></select></label><button class="g" data-bulk="del">${F.status === "incoming" ? "Не брать" : "Удалить"}</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
       : `<span>${F.status === "incoming" ? "Новых с сайтов" : "Найдено"} ${total}</span><button class="g" data-selall>Выбрать все</button><button class="w" data-all="on">Все на сайт</button><button class="g" data-all="off">${F.status === "incoming" ? "Все в товары" : "Скрыть все"}</button>`;
     $("#pbar").hidden = !total;
     $("#plist").classList.toggle("picking", n > 0);
@@ -2896,6 +2899,11 @@ async function vProducts2(pre) {
       try { const r = await api("bulkSubcategory", { method: "POST", body: { ids, subcategory: e.target.value } }); toast("Подраздел: " + r.changed); sel.clear(); load(); } catch (err) { toast(err.message); }
       return;
     }
+    if (e.target.dataset.bulkg !== undefined && e.target.value) { // для кого — у выбранных
+      const ids = [...sel], g = e.target.value;
+      try { const r = await api("bulkGender", { method: "POST", body: { ids, gender: g } }); toast(`${({ w: "Женское", m: "Мужское", u: "Унисекс" })[g]}: ${r.changed}`); sel.clear(); load(); } catch (err) { toast(err.message); }
+      return;
+    }
     if (e.target.dataset.bulkcat !== undefined && e.target.value) { // сменить категорию у выбранных
       const ids = [...sel], c = e.target.value;
       try { const r = await api("bulkCategory", { method: "POST", body: { ids, category: c } }); toast(`Категория «${(CATS[c] || c).split(":")[0]}»: ${r.changed}`); sel.clear(); load(); } catch (err) { toast(err.message); }
@@ -2909,6 +2917,7 @@ async function vProducts2(pre) {
     const s = e.target.closest("[data-st]"); if (s) { F.status = s.dataset.st; return load(); }
     const sc = e.target.closest("[data-sec]"); if (sc) { F.sec = sc.dataset.sec; sel.clear(); return load(); }
     const cq = e.target.closest("[data-catq]"); if (cq) { F.cat = cq.dataset.catq; sel.clear(); return load(); }
+    const gq = e.target.closest("[data-gq]"); if (gq) { F.g = gq.dataset.gq; sel.clear(); return load(); }
     if (e.target.closest("[data-avail]")) { F.avail = F.avail ? "" : "1"; return load(); }
     if (e.target.closest("[data-pre]")) { F.pre = F.pre ? "" : "1"; return load(); }
     if (e.target.id === "pMore") return load(true);

@@ -33,7 +33,7 @@ const JOB_FIELDS = `..., "rows": null, "seen": null, "queue": null, "attempts": 
 // Любое изменение (кроме потока загрузки с кнопки) сбрасывает — после «На сайт», правок и удаления список свежий.
 let PCACHE = null;
 // только лёгкие поля: размеры и наличие по размерам дочитываются для открытой страницы (до 120 товаров), а не для всех тысяч
-const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre";
+const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre, \"nSz\": count(sizes)";
 async function allProducts(store) {
   if (PCACHE && Date.now() - PCACHE.at < 30000) return PCACHE.data;
   const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
@@ -266,7 +266,7 @@ export default async function handler(req, res) {
         // fresh — проверены кнопкой за последние 12 часов: при повторном прогоне их не открываем заново (быстрее)
         const status = {}, fresh = {}, since = Date.now() - 12 * 36e5;
         for (const id of await deletedSet(store)) if (id.startsWith(px)) status[id.slice(px.length).toUpperCase()] = "rejected"; // вы удалили — кнопка не вернёт
-        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; if (ck && Date.parse(ck) > since) fresh[k] = 1; }
+        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; const needSz = ["shoes", "clothing"].includes(p.overrides?.category || p.category) && !p.nSz; if (ck && Date.parse(ck) > since && !needSz) fresh[k] = 1; } // без размеров — проверяем снова
         return send(res, 200, { status, fresh });
       }
       case "brandBoard": {
@@ -298,7 +298,8 @@ export default async function handler(req, res) {
           && (!Q.stock || (l => Q.stock === "any" ? !!l : l === Q.stock)((p.overrides?.stock || p.stock)?.loc || "")));
         // вкладка раздела магазина (Бестселлеры, Женское…) — в том же порядке, что на сайте бренда
         const pos = p => (p.secPos || []).find(x => x.s === Q.sec)?.p ?? 1e9;
-        const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat) && (!Q.sec || (p.sections || []).includes(Q.sec)));
+        const gen = p => p.overrides?.gender || p.gender || "u";
+        const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat) && (!Q.g || gen(p) === Q.g) && (!Q.sec || (p.sections || []).includes(Q.sec)));
         if (Q.sec) list.sort((a, b) => pos(a) - pos(b));
         const srcDoc = Q.source ? await store.get("source." + Q.source) : null;
         const secCounts = {}; base.forEach(p => (p.sections || []).forEach(h => secCounts[h] = (secCounts[h] || 0) + 1));
@@ -308,9 +309,9 @@ export default async function handler(req, res) {
         const det = new Map((await store.list("product", { _id: page.map(p => p._id) }, { limit: 400, fields: "_id, variants[]{_key, size}, offers[]{availability, _av}" })).map(d => [d._id, d]));
         const incoming = all.filter(p => p.status === "incoming" && (!Q.brand || p.brand === Q.brand)).length;
         return send(res, 200, { total: list.length, incoming, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
-          facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId) },
+          facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId), genders: facet(base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat)), gen) },
           shown: list.filter(p => p.status === "published").length,
-          products: page.map(p => ({ _id: p._id, stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null })) });
+          products: page.map(p => ({ _id: p._id, g: p.overrides?.gender || p.gender || "u", stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });
@@ -420,6 +421,15 @@ export default async function handler(req, res) {
         return send(res, 200, { changed });
       }
       case "subcats": { const { SUBCATS } = await import("../lib/normalize.js"); return send(res, 200, { subcats: Object.fromEntries(Object.entries(SUBCATS).map(([c, l]) => [c, l.map(([k, n]) => ({ k, n }))])) }); }
+      case "bulkGender": {
+        // для кого: w — женское, m — мужское, u — унисекс (у выбранных товаров)
+        const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(i => i.startsWith("product.")).slice(0, 2000);
+        if (!["w", "m", "u"].includes(body.gender)) return send(res, 400, { error: "Нет такого значения" });
+        let changed = 0;
+        for (const id of ids) { try { await saveOverrides(store, id, { gender: body.gender }, me.name, pricingCfg); changed++; } catch {} }
+        PCACHE = null;
+        return send(res, 200, { changed });
+      }
       case "bulkCategory": {
         // смена категории у выбранных товаров (правка администратора, как в карточке товара)
         const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(i => i.startsWith("product.")).slice(0, 2000);
