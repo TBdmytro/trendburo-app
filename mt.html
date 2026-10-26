@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 29</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 30</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v29] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v30] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -189,7 +189,7 @@ async function tbCollect() {
         await sleep(450);
         var d = f.contentDocument; if (!d || !d.body) continue;
         // размеры прячутся за кнопкой «Select your size» — нажимаем её один раз (как покупатель), чтобы список появился
-        if (!clicked && t >= 2) { clicked = true; var sb = [].slice.call(d.querySelectorAll("button, [role='button'], a")).filter(function (b) { var tx = (b.textContent || "").replace(/\s+/g, " ").trim(); return tx.length < 40 && /(select|choose|choisir|w[äa]hlen|seleziona)?\s*(your\s*)?(size|taille|gr[öo](ss|ß)e|taglia)/i.test(tx) && !/guide|chart|tabelle/i.test(tx); })[0]; if (sb) try { sb.click(); info.push("click:" + (sb.textContent || "").replace(/\s+/g, " ").trim().slice(0, 30)); } catch (e) {} else info.push("nobtn"); }
+        if (!clicked && t >= 2) { clicked = true; var sb = [].slice.call(d.querySelectorAll("button, [role='button'], a")).filter(function (b) { var tx = (b.textContent || "").replace(/\s+/g, " ").trim(); return tx.length < 40 && /(select|choose|choisir|w[äa]hlen|seleziona)?\s*(your\s*)?(size|taille|gr[öo](ss|ß)e|taglia)/i.test(tx) && !/guide|chart|tabelle/i.test(tx); })[0]; if (sb) try { sb.click(); out.btn = sb; info.push("click:" + (sb.textContent || "").replace(/\s+/g, " ").trim().slice(0, 30)); } catch (e) {} else info.push("nobtn"); }
         var sst = sizeInfo(d, "", p || {}), key = JSON.stringify(sst);
         if (sst.length) { if (key === last) { if (++same >= 2) { out.sst = sst; break; } } else { last = key; same = 0; } }
       }
@@ -198,6 +198,14 @@ async function tbCollect() {
         out.dbg = ("R " + info.join(" ") + " · BTN " + bt + " · " + sizeDbg(d2.body ? d2.body.innerHTML : "")).slice(0, 900); } }
       else out.dbg = "R " + info.join(" ") + " · нет доступа к странице в окне";
     } catch (e) {}
+    // размеры не нашлись — снимаем разметку открывшейся панели размеров (куда ведёт кнопка «Select size»), чтобы настроить чтение под бренд
+    try { if (!out.sst.length && f.contentDocument) { var dd = f.contentDocument, pan = null, bb = out.btn;
+      var ctl = bb && (bb.getAttribute("aria-controls") || bb.getAttribute("data-target") || ""); if (ctl) pan = dd.getElementById(ctl.replace(/^#/, ""));
+      if (!pan) pan = [].slice.call(dd.querySelectorAll("[role='dialog'], [aria-modal='true'], [class*='size' i][class*='panel' i], [class*='size' i][class*='drawer' i], [class*='size' i][class*='modal' i], [class*='sizes' i], [class*='size-selector' i], [data-testid*='size' i]")).filter(function (e) { return (e.textContent || "").replace(/\s+/g, "").length > 4; }).pop();
+      if (!pan && bb) { pan = bb.parentElement; for (var up = 0; up < 3 && pan && pan.parentElement; up++) pan = pan.parentElement; }
+      if (pan) { var x = pan.cloneNode(true); [x].concat([].slice.call(x.querySelectorAll("*"))).forEach(function (e) { [].slice.call(e.attributes || []).forEach(function (a) { if (!/^(class|data-|aria-|disabled|role|type|name|value|for|id)/.test(a.name)) e.removeAttribute(a.name); }); if (/^(svg|script|style|img|picture|path)$/i.test(e.tagName)) e.innerHTML = ""; });
+        out.cap = { url: url.split("?")[0], fail: true, info: info.join(" ").slice(0, 200), dom: x.outerHTML.replace(/\s+/g, " ").slice(0, 9000) }; } } } catch (e) {}
+    delete out.btn;
     try { if (out.sst.length && f.contentDocument) { var labs = out.sst.map(function (x) { return x.s; }); out.cap = { url: url.split("?")[0], labels: labs.slice(0, 20), dom: capDom(f.contentDocument, labs), inHtml: capHtml(raw, labs) }; } } catch (e) {}
     f.remove(); if (out.sst.length) rOk++; else rFail++; rSave(); return out;
   };
@@ -309,7 +317,7 @@ async function tbCollect() {
         if (it && it.title && !it.blocked && tb[tcode]) it.blocked = tb[tcode];
         if (it && it.title && !it.sizes.length && !/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear)\b/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) {
           note("Trend Büro: жду размеры на странице товара " + (i + 1) + " из " + todo.length + "…", true);
-          var rr = await rendered(todo[i][0], {}, h); if (rr.cap && sample && !sample.szCap) sample.szCap = rr.cap; if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked;
+          var rr = await rendered(todo[i][0], {}, h); if (rr.cap && sample && (!sample.szCap || (sample.szCap.fail && !rr.cap.fail))) sample.szCap = rr.cap; if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked;
         }
         if (it && it.title && (it.blocked || (it.sizeStock.length && it.sizeStock.every(function (x) { return x.ok === false; })))) { it.ask = it.blocked || "wait"; askN++; }
         if (it && it.title) { it.section = section; if (!(await ready)) throw new Error("admin"); w.postMessage({ type: isUpd ? "tb-update" : "tb-import", items: [it] }, ADM); sentN++; if (isUpd) upd++; else ok++; } else bad++; }
