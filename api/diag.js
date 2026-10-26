@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   if (req.method === "GET" && /[?&]probe=mockimgs\b/.test(String(req.url || ""))) return probeMockImgs(res);
   if (req.method === "GET" && /[?&]probe=photo\b/.test(String(req.url || ""))) return probePhoto(res);
   if (req.method === "GET" && /[?&]probe=db\b/.test(String(req.url || ""))) return probeDb(res);
+  if (req.method === "GET" && /[?&]probe=img\b/.test(String(req.url || ""))) return probeImg(res, decodeURIComponent((String(req.url).match(/[?&]u=([^&]+)/) || [])[1] || ""));
   if (req.method === "GET" && /[?&]probe=cat\b/.test(String(req.url || ""))) return probeCat(res);
   if (req.method === "GET" && /[?&]probe=sizes\b/.test(String(req.url || ""))) return probeSizes(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "ysl.com");
   if (req.method === "GET" && /[?&]probe=ysl\b/.test(String(req.url || ""))) return probeYsl(res);
@@ -210,5 +211,17 @@ async function probeCat(res) {
     if (!samples[b] || samples[b].length < 3) (samples[b] = samples[b] || []).push({ id: sf.id, t: sf.title, im: ims.slice(0, 4) }); }
   out.imgHosts = hosts; out.prodWithDupImgs = dup; out.isNewByBrand = news; out.samples = samples;
   out.published = list.length; out.noPublishedAt = list.filter(p => !p.publishedAt).length; out.brands = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 25).map(([b, n]) => [b, n, shown[b] || 0]); out.notShown = why;
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
+}
+
+// фото с нашего хранилища: отвечает ли и что отдаёт (только cdn.sanity.io, без личных данных)
+async function probeImg(res, u) {
+  const out = { u };
+  if (!/^https:\/\/cdn\.sanity\.io\/images\/[a-z0-9]+\/[a-z0-9_-]+\/[a-f0-9]+-\d+x\d+\.(jpg|png|webp)(\?[a-z0-9=&_.%-]*)?$/i.test(u)) out.error = "только фото cdn.sanity.io";
+  else for (const v of [u, u + (u.includes("?") ? "&" : "?") + "w=400&fit=max&auto=format&q=82"]) {
+    try { const r = await fetch(v, { headers: { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)", Accept: "image/avif,image/webp,image/*" } }); const b = await r.arrayBuffer();
+      out[v === u ? "orig" : "w400"] = { status: r.status, type: r.headers.get("content-type"), bytes: b.byteLength, acao: r.headers.get("access-control-allow-origin") }; }
+    catch (e) { out[v === u ? "orig" : "w400"] = { error: String(e.message).slice(0, 120) }; }
+  }
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
