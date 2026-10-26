@@ -362,7 +362,7 @@ export default async function handler(req, res) {
         const id = String(body.id || ""), it = body.item || {};
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
         // обложка как на плитке раздела бренда (один раз на товар)
-        if (/^https:\/\//.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile" }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
+        if (/^https:\/\//.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
         return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
       }
       case "fixBrands": {
