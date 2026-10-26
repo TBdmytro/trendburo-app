@@ -200,6 +200,15 @@ async function probeCat(res) {
   const list = await store.list("product", { status: "published" }, { limit: 30000, fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos" });
   const now = Date.now(), by = {}, shown = {}, why = {};
   for (const p of list) { const b = p.brand || "?"; by[b] = (by[b] || 0) + 1; const sf = toStorefront(p, now, { compact: true }); if (sf) shown[b] = (shown[b] || 0) + 1; else { const r = !p.pricing?.ua ? "no-price" : !(p.images || []).length ? "no-images" : p.overrides?.hidden ? "hidden" : "other"; why[r] = (why[r] || 0) + 1; } }
+  // фото: откуда, дубли, примеры; новинки по брендам
+  const hosts = {}, dup = {}, news = {}, samples = {};
+  for (const p of list) { const sf = toStorefront(p, now, { compact: true }); if (!sf) continue; const b = p.brand || "?";
+    const ims = (sf.im || []).map(String); ims.forEach(u => { const h = (u.match(/^https?:\/\/([^/]+)/) || [, u[0] === "~" ? "shopify" : "?"])[1]; hosts[h] = (hosts[h] || 0) + 1; });
+    const names = ims.map(u => u.split("?")[0].split("/").pop().replace(/[-_]\d{2,4}x\d{0,4}|_\d{3,4}(?=\.)/g, "").toLowerCase());
+    if (new Set(names).size < names.length || new Set(ims).size < ims.length) dup[b] = (dup[b] || 0) + 1;
+    if (sf.isNew) news[b] = (news[b] || 0) + 1;
+    if (!samples[b] || samples[b].length < 3) (samples[b] = samples[b] || []).push({ id: sf.id, t: sf.title, im: ims.slice(0, 4) }); }
+  out.imgHosts = hosts; out.prodWithDupImgs = dup; out.isNewByBrand = news; out.samples = samples;
   out.published = list.length; out.noPublishedAt = list.filter(p => !p.publishedAt).length; out.brands = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 25).map(([b, n]) => [b, n, shown[b] || 0]); out.notShown = why;
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
