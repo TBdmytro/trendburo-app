@@ -117,6 +117,56 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .ordl span{flex:1;min-width:0}.ordl small{color:var(--muted);display:block;font-size:12.5px}
 .ordl em{font-style:normal;font-size:12px;font-weight:600;background:var(--soft);padding:3px 9px;border-radius:99px;white-space:nowrap}
 [data-off]{display:none!important}
+
+/* ===== Каталог v3: новости · Для неё/него · бренды плитками · категории · ещё ===== */
+#homeBody>:not(#cv3){display:none!important}
+#cv3{padding-bottom:8px}
+.cvnews{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 18px;scrollbar-width:none;padding:2px 18px 0;overscroll-behavior-x:contain}.cvnews::-webkit-scrollbar{display:none}
+.cvn{flex:0 0 calc(100% - 46px);align-items:flex-start;scroll-snap-align:start;height:156px;border-radius:24px;border:0;padding:16px;position:relative;text-align:left;display:flex;flex-direction:column;justify-content:space-between;font:inherit;color:var(--fg);background:var(--soft);overflow:hidden}
+.cvn.d{background:var(--ink-grad);color:#fff}.cvn>span:first-child{width:100%}
+.cvn .k{font-size:10px;letter-spacing:.16em;font-weight:700;opacity:.6}.cvn b{display:block;font-size:21px;margin-top:4px;max-width:calc(100% - 128px);line-height:1.15}.cvn small{display:block;font-size:12.5px;opacity:.65;margin-top:4px;max-width:calc(100% - 128px)}.cvn .a{font-size:13px;font-weight:600}
+.cvn .pic{position:absolute;right:14px;top:14px;bottom:14px;width:108px;border-radius:16px;background:#fff center/86% no-repeat;display:grid;place-items:center}.cvn .pic svg{width:80%}
+.cvdots{display:flex;gap:5px;justify-content:center;margin-top:9px}.cvdots i{width:6px;height:6px;border-radius:3px;background:#d4d5d9;transition:width .25s,background .25s}.cvdots i.on{width:16px;background:var(--fg)}
+.cvseg{position:relative;display:flex;margin:14px 18px 0;background:var(--soft);border-radius:16px;padding:4px}
+.cvseg:before{content:"";position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:13px;background:var(--ink-grad);box-shadow:0 4px 12px rgba(20,22,25,.18);transition:transform .32s cubic-bezier(.3,.7,.2,1)}
+.cvseg[data-g="m"]:before{transform:translateX(100%)}
+.cvseg button{position:relative;flex:1;height:44px;border:0;background:none;font:600 15.5px var(--f);color:var(--muted);transition:color .25s}
+.cvseg[data-g="w"] button[data-g="w"],.cvseg[data-g="m"] button[data-g="m"]{color:#fff}
+.cvh{display:flex;justify-content:space-between;align-items:baseline;margin:20px 22px 10px}.cvh b{font-size:19px;letter-spacing:-.01em}
+.cvg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 18px}
+.cvt{position:relative;height:76px;border-radius:18px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 34px;cursor:pointer;transition:transform .15s,border-color .2s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
+.cvt:active{transform:scale(.97)}
+.cvt b{font-size:12px;letter-spacing:.16em;font-weight:600;text-transform:uppercase;line-height:1.3}
+.cvt.sp{background:#efe8de;border-color:#efe8de}
+.cvt .ck{position:absolute;right:9px;top:9px;width:22px;height:22px;border-radius:50%;border:1.5px solid #c9cbcf;background:rgba(255,255,255,.7);padding:0;display:grid;place-items:center;transition:background .2s,border-color .2s}
+.cvt .ck:after{content:"";width:9px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px);opacity:0;transition:opacity .15s}
+.cvt.on{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}.cvt.on .ck{background:var(--fg);border-color:var(--fg)}.cvt.on .ck:after{opacity:1}
+.cvt .ck:before{content:"";position:absolute;inset:-10px}
+.cvall{display:flex;align-items:center;justify-content:space-between;margin:8px 18px 0;width:calc(100% - 36px);height:48px;border-radius:15px;border:0;background:var(--soft);padding:0 16px;font:600 14.5px var(--f);color:var(--fg)}.cvall.sp{background:#efe8de}.cvall.dk{background:var(--ink-grad);color:#fff}
+.cvall i{width:8px;height:8px;border-right:2px solid currentColor;border-top:2px solid currentColor;transform:rotate(45deg);opacity:.5}
+.cvl{margin:0 18px;border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.cvl button{display:flex;align-items:center;justify-content:space-between;width:100%;height:52px;border:0;border-top:1px solid var(--line);background:#fff;padding:0 18px;font:500 16px var(--f);color:var(--fg)}.cvl button:first-child{border-top:0}
+.cvl button i{width:8px;height:8px;border-right:2px solid #b5b8bd;border-top:2px solid #b5b8bd;transform:rotate(45deg)}
+.cvfin{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 18px 0}
+.cvfin>button{border:0;font:inherit;text-align:left;position:relative;overflow:hidden;color:var(--fg);display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start}.cvfin>button.cvaz,.cvfin>button.cvox{color:#fff}.cvfin b,.cvfin small,.cvfin span{display:block}
+.cvnv{grid-column:span 2;height:150px;border-radius:24px;border:1px solid var(--line)!important;background:#fff;padding:16px}
+.cvnv b{font-size:19px}.cvnv small{display:block;font-size:12.5px;color:var(--muted);margin-top:3px}.cvnv .a{position:absolute;left:16px;bottom:15px;font-size:13px;font-weight:600}
+.cvnv .st{position:absolute;right:12px;top:12px;bottom:12px;display:flex;gap:6px}.cvnv .st span{width:56px;border-radius:14px;border:1px solid #eeeff1;background:#fff center/contain no-repeat;display:grid;place-items:center}.cvnv .st span svg{width:90%}
+.cvaz{height:150px;border-radius:24px;background:var(--ink-grad);color:#fff;padding:16px}.cvaz b{font-size:19px}.cvaz small{display:block;font-size:12px;opacity:.6;margin-top:3px}.cvaz .lt{position:absolute;right:-6px;bottom:-16px;font:400 76px/1 "Prata",serif;opacity:.14}
+.cvox{height:150px;border-radius:24px;background:linear-gradient(160deg,#22305a,#121a30);color:#fff;padding:16px}.cvox .wm{font:400 28px "Prata",serif;letter-spacing:.08em}.cvox small{display:block;font-size:12px;opacity:.65;margin-top:4px;line-height:1.35}.cvox .ln{position:absolute;left:16px;right:16px;bottom:16px;height:1px;background:rgba(255,255,255,.25)}.cvox .go{position:absolute;right:16px;bottom:25px;font-size:12.5px;font-weight:600;opacity:.85}
+.cvfade .cvt{animation:cvIn .38s cubic-bezier(.3,.7,.2,1) both}
+.cvfade .cvt:nth-child(2){animation-delay:.03s}.cvfade .cvt:nth-child(3){animation-delay:.06s}.cvfade .cvt:nth-child(4){animation-delay:.09s}.cvfade .cvt:nth-child(5){animation-delay:.12s}.cvfade .cvt:nth-child(6){animation-delay:.15s}
+@keyframes cvIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.cvbar{position:fixed;left:12px;right:12px;bottom:calc(96px + var(--sb));z-index:30;margin:0;display:flex;gap:8px;padding:8px;border-radius:20px;background:rgba(255,255,255,.96);box-shadow:0 10px 30px rgba(20,22,25,.18);border:1px solid var(--line);animation:cvIn .3s both}
+.cvbar[hidden]{display:none}
+.pushed .cvbar{bottom:calc(14px + var(--sb))}
+.cvbar button{height:48px;border-radius:14px;border:0;font:600 15px var(--f)}.cvbar .go{flex:1;background:var(--ink-grad);color:#fff}.cvbar .rs{padding:0 14px;background:var(--soft);color:var(--fg)}
+.cvt1{margin:6px 22px 0;font-size:28px;font-weight:700;letter-spacing:-.02em}.cvt1 span{font-size:14px;font-weight:400;color:var(--muted);margin-left:6px;letter-spacing:0}
+.cvhint{margin:6px 22px 0;font-size:13.5px;color:var(--muted);line-height:1.4}
+.cvsrch{display:flex;align-items:center;gap:10px;margin:12px 18px 0;height:44px;border-radius:14px;background:var(--soft);padding:0 14px}.cvsrch svg{width:17px;height:17px;fill:none;stroke:var(--muted);stroke-width:2;flex:none}.cvsrch input{flex:1;border:0;background:none;font:15px var(--f);outline:none;color:var(--fg)}
+.cvlt{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin:16px 22px 8px}
+.cvrem{display:flex;align-items:center;justify-content:space-between;width:100%;margin:12px 0 0;padding:0 22px;font-size:13.5px;color:var(--g2);border:0;background:none;font-family:var(--f)}.cvrem .tg{width:44px;height:26px;border-radius:13px;background:#d4d5d9;position:relative;transition:background .2s}.cvrem .tg:after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}.cvrem[aria-pressed="true"] .tg{background:var(--fg)}.cvrem[aria-pressed="true"] .tg:after{transform:translateX(18px)}
+.cvempty{margin:16px 22px;color:var(--muted);font-size:14px}
 </style>
 <title>Trend Büro</title>
 <link rel="preload" href="/api/catalog?v=2" as="fetch" crossorigin>
@@ -1469,7 +1519,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
         <div class="bigtitle"><h1>Каталог</h1><div class="topicons"></div></div>
         <label class="searchf"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input type="search" id="uq" placeholder="Бренд, вещь или «до 1 500 €»" autocomplete="off" aria-label="Поиск по каталогу"><span class="smb" aria-hidden="true">Умный</span></label>
         <div id="sres" hidden></div>
-        <div id="homeBody">
+        <div id="homeBody"><div id="cv3"></div>
           <div class="gb2"><button class="press" data-act="gopen" data-g="w">Для неё<i class="chev"></i></button><button class="press" data-act="gopen" data-g="m">Для него<i class="chev"></i></button></div>
           <div class="sec" id="nwSec" hidden><div class="sech"><h2>Новое</h2><button class="more" data-act="allbrands">Все бренды</button></div>
             <div class="nrings" id="nRings"></div>
@@ -2411,7 +2461,7 @@ function applyTheme(t){if(!t)return;try{const a=/^#[0-9a-f]{6}$/i.test(t.accent)
   if(a!=="#1f2125"){R.setProperty("--ink-grad",`linear-gradient(180deg,${mixHex(a,"#ffffff",.16)} 0%,${a} 52%,${mixHex(a,"#000000",.2)} 100%)`)}
   Object.entries(t.cats||{}).forEach(([k,v])=>{if(CATC[k]&&Array.isArray(v))CATC[k]=v})}catch(e){}}
 /* Каталог: главный экран */
-function renderCatHome(){try{renderNew()}catch(e){}$$("#hg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
+function renderCatHome(){try{cvInit();cvRender()}catch(e){console.error(e)}try{renderNew()}catch(e){}$$("#hg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===F.g));
   // старые блоки (категории, бренды, культовые модели) скрыты по концепту — не тратим время телефона на их сборку
   renderStockBan();
   if(document.querySelector("#homeBody>.nwhide"))return;
@@ -2432,6 +2482,86 @@ function renderCatHome(){try{renderNew()}catch(e){}$$("#hg button").forEach(b=>b
   $("#iconRail").innerHTML=(F.g==="m"?ICONS.filter(ic=>MEN.includes(ic.bk)||ic.cat==="watches"||ic.name==="B23"):ICONS.filter((ic,i,a)=>a.findIndex(x=>x.bk===ic.bk)===i)).slice(0,12).map(icHTML).join("");
   $("#iconRail").closest(".sec").hidden=!$("#iconRail").children.length;
 }
+
+// ===== Каталог v3 =====
+const CV={g:store.get("tb_g","w"),sel:new Set(),ni:0};
+const SPORT_RE=/^(alo|alo yoga|alo yoga set|skims|sporty ?(&|and) ?rich|on|on running|lululemon|nike|adidas|new balance|asics|hoka|salomon|vuori|varley|beyond yoga|gymshark)$/i;
+const cvName=bk=>{const b=BRANDS.find(x=>x[0]===bk);return b?b[1]:bk};
+const cvSport=bk=>SPORT_RE.test(cvName(bk).trim());
+const cvG=p=>p.g===CV.g||p.g==="u"||!p.g;
+const cvPool=cat=>P.filter(p=>cvG(p)&&p.cat!=="eyewear"&&(!cat||p.cat===cat));
+const cvBrands=(L,sport)=>{const m=new Map();L.forEach(p=>{if(!p.bk||cvSport(p.bk)!==sport)return;m.set(p.bk,(m.get(p.bk)||0)+1+(p.pop||0)/5)});return [...m.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0])};
+const cvPic=p=>{const im=p&&p.imgs&&p.imgs[0];return im?`style="background-image:url(&quot;${esc(im.thumb||im.src)}&quot;)"`:""};
+const cvPicIn=p=>p&&!(p.imgs&&p.imgs[0])?shapeSVG(p.shape,p.c,""):"";
+const cvTile=(bk,sel)=>`<div class="cvt${cvSport(bk)?" sp":""}${sel.has(bk)?" on":""}" data-cvb="${esc(bk)}" role="button" tabindex="0"><b>${esc(cvName(bk))}</b><button type="button" class="ck" data-cvck="${esc(bk)}" aria-label="Отметить ${esc(cvName(bk))}" aria-pressed="${sel.has(bk)}"></button></div>`;
+const cvBarHTML=sel=>`<div class="cvbar" ${sel.size?"":"hidden"}><button class="rs" data-cvrs>Сбросить</button><button class="go" data-cvgo>Показать вещи · ${sel.size} ${plural(sel.size,["бренд","бренда","брендов"])}</button></div>`;
+function cvHaptic(){try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(e){}}
+function cvGo(o){clearFilters();F.g=CV.g;if(o.brands)o.brands.forEach(b=>F.brands.add(b));if(o.cat)F.cats.add(o.cat);if(o.isNew)F.onlyNew=true;tab("catalog");showItems(o.title)}
+function cvTitle(sel,cat){const n=[...sel].map(cvName);return (cat?CATS[cat]+" · ":"")+(n.length<=2?n.join(", "):n.length+" "+plural(n.length,["бренд","бренда","брендов"]))}
+// общая логика плиток: нажал плитку — вещи бренда, нажал кружок — отметил (несколько брендов)
+function cvWire(root,sel,{cat="",onSel}={}){
+  root.addEventListener("click",e=>{
+    const ck=e.target.closest("[data-cvck]");if(ck){e.stopPropagation();const bk=ck.dataset.cvck;sel.has(bk)?sel.delete(bk):sel.add(bk);cvHaptic();
+      root.querySelectorAll(`[data-cvb="${CSS.escape(bk)}"]`).forEach(t=>{t.classList.toggle("on",sel.has(bk));const c=t.querySelector(".ck");if(c)c.setAttribute("aria-pressed",sel.has(bk))});onSel&&onSel();return}
+    const t=e.target.closest("[data-cvb]");if(t){cvGo({brands:[t.dataset.cvb],cat,title:(cat?CATS[cat]+" · ":"")+cvName(t.dataset.cvb)});return}
+    if(e.target.closest("[data-cvrs]")){sel.clear();root.querySelectorAll(".cvt.on").forEach(t=>{t.classList.remove("on");const c=t.querySelector(".ck");if(c)c.setAttribute("aria-pressed","false")});onSel&&onSel();return}
+    if(e.target.closest("[data-cvgo]")&&sel.size){cvGo({brands:[...sel],cat,title:cvTitle(sel,cat)})}
+  })}
+function cvBarUpd(root,sel){const b=root.querySelector(".cvbar");if(!b)return;b.hidden=!sel.size;const g=b.querySelector("[data-cvgo]");if(g)g.textContent=`Показать вещи · ${sel.size} ${plural(sel.size,["бренд","бренда","брендов"])}`}
+function cvRender(anim){const root=$("#cv3");if(!root)return;
+  const pool=cvPool(),H=cvBrands(pool,false),S=cvBrands(pool,true);
+  // новости: новые поступления по брендам (потом — коллекции из админки)
+  const nw=new Map();pool.filter(p=>p.isNew).forEach(p=>{if(!nw.has(p.bk))nw.set(p.bk,[]);nw.get(p.bk).push(p)});
+  const news=[...nw.entries()].sort((a,b)=>b[1].length-a[1].length).slice(0,6);
+  const fresh=pool.filter(p=>p.isNew&&p.imgs&&p.imgs[0]).slice(0,3);
+  root.innerHTML=`${news.length?`<div class="cvnews" id="cvNews">${news.map(([bk,L],i)=>`<button class="cvn press${i%2?"":" d"}" data-cvnew="${esc(bk)}"><span><span class="k">НОВИНКИ</span><b>${esc(cvName(bk))}</b><small>Новые поступления</small></span><span class="a">Смотреть ›</span><span class="pic" ${cvPic(L[0])}>${cvPicIn(L[0])}</span></button>`).join("")}</div><div class="cvdots" id="cvDots">${news.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}
+  <div class="cvseg" id="cvSeg" data-g="${CV.g}" role="group" aria-label="Для кого"><button data-g="w" aria-pressed="${CV.g==="w"}">Для неё</button><button data-g="m" aria-pressed="${CV.g==="m"}">Для него</button></div>
+  <div id="cvBody">
+  ${H.length?`<div class="cvh"><b>Модные дома</b></div><div class="cvg">${H.slice(0,6).map(bk=>cvTile(bk,CV.sel)).join("")}</div><button class="cvall press" data-cvallb="h">Все бренды<i></i></button>`:""}
+  ${S.length?`<div class="cvh"><b>Sport</b></div><div class="cvg">${S.slice(0,4).map(bk=>cvTile(bk,CV.sel)).join("")}</div><button class="cvall sp press" data-cvallb="s">Все бренды Sport<i></i></button>`:""}
+  <div class="cvh"><b>Категории</b></div><div class="cvl">${Object.entries(CATS).filter(([k])=>k!=="eyewear"&&pool.some(p=>p.cat===k)).map(([k,v])=>`<button class="press" data-cvcat="${k}">${v}<i></i></button>`).join("")}</div>
+  <div class="cvfin">${fresh.length?`<button class="cvnv press" data-cvfresh><b>Новинки</b><small>Свежие<br>поступления</small><span class="a">Смотреть ›</span><span class="st">${fresh.map(p=>`<span ${cvPic(p)}></span>`).join("")}</span></button>`:""}
+    <button class="cvaz press" data-cvallb="all"${OPTIX_ON?"":' style="grid-column:span 2"'}><b>Бренды</b><small>от A до Z</small><span class="lt">A–Z</span></button>
+    ${OPTIX_ON?`<button class="cvox press" data-act="optixapp"><span class="wm">OPTIX</span><small>Очки из бутиков<br>Европы</small><span class="go">Войти ›</span><span class="ln"></span></button>`:""}</div>
+  ${cvBarHTML(CV.sel)}</div>`;
+  if(anim){const b=$("#cvBody");b.classList.add("cvfade");setTimeout(()=>b.classList.remove("cvfade"),600)}
+  const nr=$("#cvNews");if(nr){const dots=[...root.querySelectorAll("#cvDots i")];nr.addEventListener("scroll",()=>{const c=nr.firstElementChild;if(!c)return;const k=Math.round(nr.scrollLeft/(c.offsetWidth+10));dots.forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true})}
+}
+function cvInit(){const root=$("#cv3");if(!root||root._w)return;root._w=1;
+  cvWire(root,CV.sel,{onSel:()=>cvBarUpd(root,CV.sel)});
+  root.addEventListener("click",e=>{
+    const sb=e.target.closest("#cvSeg button");if(sb){const g=sb.dataset.g;if(g===CV.g)return;CV.g=g;store.set("tb_g",g);CV.sel.clear();cvHaptic();$("#cvSeg").dataset.g=g;$$("#cvSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===g));setTimeout(()=>{const sc=$("#t-catalog .scroll"),y=sc?sc.scrollTop:0;cvRender(true);if(sc)sc.scrollTop=y},170);return}
+    const n=e.target.closest("[data-cvnew]");if(n){cvGo({brands:[n.dataset.cvnew],isNew:true,title:cvName(n.dataset.cvnew)+" · новинки"});return}
+    const c=e.target.closest("[data-cvcat]");if(c){cvCat(c.dataset.cvcat);return}
+    const a=e.target.closest("[data-cvallb]");if(a){cvAllBrands(a.dataset.cvallb==="s"?"s":"h");return}
+    if(e.target.closest("[data-cvfresh]")){cvGo({isNew:true,title:"Новинки"});return}
+  })}
+// категория: сначала бренды, у которых есть эта категория; плитка — сразу вещи, кружки — несколько брендов
+function cvCat(cat){const pool=cvPool(cat),H=cvBrands(pool,false),S=cvBrands(pool,true),sel=new Set();
+  const s=push(CATS[cat],`<div class="cvt1">${CATS[cat]}<span>· ${CV.g==="m"?"Для него":"Для неё"}</span></div>
+    ${H.length?`<div class="cvh"><b>Модные дома</b></div><div class="cvg">${H.map(bk=>cvTile(bk,sel)).join("")}</div>`:""}
+    ${S.length?`<div class="cvh"><b>Sport</b></div><div class="cvg">${S.map(bk=>cvTile(bk,sel)).join("")}</div>`:""}
+    ${H.length||S.length?"":`<div class="cvempty">Пока нет вещей — напишите, найдём под заказ.</div>`}
+    <button class="cvall dk press" data-cvallcat style="margin-top:16px">${{bags:"Все сумки",shoes:"Вся обувь",clothing:"Вся одежда",accessories:"Все аксессуары",jewelry:"Все украшения",watches:"Все часы"}[cat]||"Все вещи"}<i></i></button>
+    <div style="height:18px"></div>${cvBarHTML(sel)}<div style="height:24px"></div>`);
+  const sc=s.querySelector(".scroll");cvWire(sc,sel,{cat,onSel:()=>cvBarUpd(sc,sel)});
+  sc.querySelector("[data-cvallcat]").onclick=()=>cvGo({cat,title:CATS[cat]})}
+// все бренды: выбор нескольких, поиск, A–Z, «Мои бренды»
+function cvAllBrands(w){const st={w:w==="s"?"s":"h",q:""},sel=new Set([...follows].filter(bk=>BRANDS.some(b=>b[0]===bk)));let rem=sel.size>0;
+  const s=push("Бренды",`<div class="cvt1">Бренды</div><div class="cvhint">Отметьте бренды, которые нравятся — покажем вещи только этих брендов</div>
+    <label class="cvsrch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input type="search" placeholder="Найти бренд" aria-label="Найти бренд"></label>
+    <div class="cvseg" data-g="${st.w==="s"?"m":"w"}" id="cvW"><button data-g="w">Модные дома</button><button data-g="m">Sport</button></div>
+    <div id="cvAb"></div><button class="cvrem" aria-pressed="${rem}">Запомнить как «Мои бренды»<span class="tg"></span></button><div style="height:6px"></div>${cvBarHTML(sel)}<div style="height:24px"></div>`);
+  const sc=s.querySelector(".scroll");
+  const draw=()=>{const q=norm(st.q.trim()),pool=cvPool();const all=cvBrands(pool,st.w==="s").filter(bk=>!q||norm(cvName(bk)).includes(q)).sort((a,b)=>sortKey(cvName(a)).localeCompare(sortKey(cvName(b))));
+    const G={};all.forEach(bk=>{const L=(sortKey(cvName(bk))[0]||"#").toUpperCase();(G[L]=G[L]||[]).push(bk)});
+    sc.querySelector("#cvAb").innerHTML=all.length?Object.keys(G).map(L=>`<div class="cvlt">${L}</div><div class="cvg">${G[L].map(bk=>cvTile(bk,sel)).join("")}</div>`).join(""):`<div class="cvempty">Бренд не найден — напишите менеджеру, выкупим под заказ.</div>`};
+  const saveF=()=>{if(!rem)return;follows=new Set(sel);store.set("tb_follow",[...follows])};
+  cvWire(sc,sel,{onSel:()=>{cvBarUpd(sc,sel);saveF()}});
+  sc.querySelector("input").addEventListener("input",e=>{st.q=e.target.value;draw()});
+  sc.querySelector("#cvW").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;st.w=b.dataset.g==="m"?"s":"h";sc.querySelector("#cvW").dataset.g=b.dataset.g;cvHaptic();draw()});
+  sc.querySelector(".cvrem").onclick=e=>{rem=!rem;e.currentTarget.setAttribute("aria-pressed",rem);if(rem)saveF();else{follows=new Set();store.set("tb_follow",[])}};
+  draw()}
 function renderStockBan(){const l=P.filter(p=>p.st&&(F.g==="all"||(p.g===F.g||p.g==="u"))),ua=l.filter(p=>p.st.loc==="ua").length;
   const html=`<span class="tx"><b><span class="gdot"></span>В наличии</b><span class="num">${l.length} ${plural(l.length,["вещь","вещи","вещей"])} · отправим сразу</span></span><span class="th">${l.slice(0,3).map(p=>`<i>${shapeSVG(p.shape,p.c,"")}</i>`).join("")}</span><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:rgba(255,255,255,.5);fill:none;stroke-width:2;flex:none"><path d="M9 6l6 6-6 6"/></svg>`;
   ["#stockBan","#stockBanFeed"].forEach(id=>{const el=$(id);if(el){el.hidden=!l.length;el.innerHTML=html}});
