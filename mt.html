@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 32</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 33</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v32] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v33] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -175,6 +175,13 @@ async function tbCollect() {
   var capHtml = function (h, labels) { var out = []; h = String(h || "");
     labels.slice(0, 3).forEach(function (l) { var re = new RegExp('"[A-Za-z_]{1,40}"\\s*:\\s*"' + l.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + '"', "g"), m, n = 0; while ((m = re.exec(h)) && n < 2) { n++; out.push(h.slice(Math.max(0, m.index - 250), m.index + 250).replace(/\s+/g, " ")); } });
     return out.join(" || ").slice(0, 4000); };
+  var imgKey = function (u, code) { var f = String(u || "").split("?")[0].split("/").pop(), F = f.toUpperCase(), i = code ? F.indexOf(code) : -1; return (i >= 0 ? F.slice(i) : F).replace(/\.(JPE?G|PNG|WEBP|AVIF)$/, "").toLowerCase(); };
+  // ссылки на другие цвета той же модели: в блоке выбора цвета (swatch / color / colour / variant) на странице товара
+  var colorLinks = function (doc, url) { var me = codeOf(url), out = [], base = new URL(url);
+    [].slice.call(doc.querySelectorAll("a[href]")).forEach(function (a) { var hr = a.getAttribute("href") || ""; var u; try { u = new URL(hr, base).href.split("#")[0]; } catch (e) { return; } var c = codeOf(u); if (!c || c === me || new URL(u).hostname !== base.hostname) return;
+      var el = a, hit = false; for (var d = 0; d < 5 && el; d++) { var s0 = ((el.className && el.className.baseVal != null ? el.className.baseVal : el.className) || "") + " " + (el.getAttribute && (el.getAttribute("aria-label") || "") + " " + (el.getAttribute("data-testid") || "") + " " + (el.id || "")); if (/(swatch|colou?r|variant|farbe|couleur)/i.test(s0)) { hit = true; break; } el = el.parentElement; }
+      if (hit && out.indexOf(u) < 0) out.push(u); });
+    return out.slice(0, 12); };
   var rendered = async function (url, p, raw) {
     if (rSkip || (rOk === 0 && rFail >= 8)) return { sst: [], blocked: "", dbg: "R skip" };
     var f = document.createElement("iframe"); f.setAttribute("aria-hidden", "true"); f.tabIndex = -1;
@@ -284,6 +291,11 @@ async function tbCollect() {
     var countLinks = function () { return [].slice.call(document.querySelectorAll("a[href]")).filter(function (a) { return !!codeOf(a.href); }).length; };
     for (var sc = 0, last = -1, same = 0; sc < 25 && same < 3; sc++) { var n = countLinks(); same = n === last ? same + 1 : 0; last = n; note("Trend Büro: листаю раздел, найдено товаров: " + n, true); window.scrollTo(0, document.documentElement.scrollHeight); await sleep(900); }
     var tb = {}; [].slice.call(document.querySelectorAll("a[href]")).forEach(function (a) { var c = codeOf(a.href); if (c && !tb[c]) { var k = tileBlock(a); if (k) tb[c] = k; } });
+    // главное фото — как на плитке в разделе бренда (у всех товаров одного вида)
+    var ti = {}; [].slice.call(document.querySelectorAll("a[href]")).forEach(function (a) { var c = codeOf(a.href); if (!c || ti[c]) return; var el = a;
+      for (var d = 0; d < 8 && el.parentElement; d++) { var up = el.parentElement; if ([].slice.call(up.querySelectorAll("a[href]")).some(function (x) { var cc = codeOf(x.href); return cc && cc !== c; })) break; el = up; }
+      var im = el.querySelector("img"); if (!im) return; var u = im.currentSrc || im.src || im.getAttribute("data-src") || String(im.getAttribute("srcset") || "").split(" ")[0];
+      if (u && /^https?:/.test(u) && !/^data:/.test(u)) ti[c] = new URL(u, location.href).href; });
     var links = [].slice.call(document.querySelectorAll("a[href]")).map(function (a) { return a.href.split("#")[0]; })
       .filter(function (u) { try { var x = new URL(u); return x.hostname === location.hostname && !!codeOf(u) && x.pathname !== location.pathname && !/(account|login|cart|wishlist|search|help|store-locator)/i.test(x.pathname); } catch (e) { return false; } });
     links = links.filter(function (u, i) { return links.indexOf(u) === i; });
@@ -304,6 +316,7 @@ async function tbCollect() {
     var todo = fresh.slice(0, MAX).map(function (u) { return [u, false]; }).concat(known.slice(0, 400).map(function (u) { return [u, true]; }));
     var summary = function (added) { try { w.postMessage({ type: "tb-summary", found: had + newTotal, had: had, added: added, left: Math.max(0, newTotal - Math.min(newTotal, MAX)) }, ADM); } catch (e) {} };
     var ok = 0, upd = 0, bad = 0, sentN = 0, extra = location.pathname.toLowerCase().split(/[/_-]+/);
+    var qd = {}, extraN = 0; links.forEach(function (u) { var c = codeOf(u); if (c) qd[c] = 1; }); Object.keys(st).forEach(function (c) { qd[c] = 1; });
     // по два товара одновременно (как если бы покупатель открыл две вкладки) — вдвое быстрее и без нагрузки на сайт
     var one1 = async function (i) {
       var isUpd = todo[i][1], tcode = codeOf(todo[i][0]);
@@ -315,6 +328,10 @@ async function tbCollect() {
           if (!/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear|scarf|scarves|hats?|caps?|books?)\b/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) { H.needSz++; if (it.sizes.length) H.sz++; }
           if (!sample) sample = { url: it.url, title: it.title, brand: it.brand, price: it.price, currency: it.currency, sku: it.sku, sizes: it.sizes.slice(0, 12), images: it.images.length, crumbs: it.crumbs.slice(0, 12), ld: (function () { try { var d = new DOMParser().parseFromString(h, "text/html"), x = lds(d).find(function (o) { return isT(o, "Product") || isT(o, "ProductGroup"); }); return JSON.stringify(x).slice(0, 3000); } catch (e) { return ""; } })() }; }
         if (it && it.title && !it.blocked && tb[tcode]) it.blocked = tb[tcode];
+        if (it && it.title && ti[tcode]) { it.tileImg = ti[tcode]; var tk = imgKey(ti[tcode], tcode), at = -1; it.images.forEach(function (x, j) { if (at < 0 && imgKey(x.u, tcode) === tk) at = j; });
+          if (at > 0) it.images.unshift(it.images.splice(at, 1)[0]); else if (at < 0 && !isUpd) it.images.unshift({ u: ti[tcode] }); }
+        // все цвета модели: ссылки на другие цвета на странице товара — добавляем в очередь (если их ещё нет)
+        if (it && it.title && !isUpd && extraN < 40) colorLinks(new DOMParser().parseFromString(h, "text/html"), todo[i][0]).forEach(function (u) { var c = codeOf(u); if (!c || qd[c] || extraN >= 40) return; qd[c] = 1; extraN++; todo.push([u, false]); });
         if (it && it.title && !it.sizes.length && !/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear)\b/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) {
           note("Trend Büro: жду размеры на странице товара " + (i + 1) + " из " + todo.length + "…", true);
           var rr = await rendered(todo[i][0], {}, h); if (rr.cap && sample && (!sample.szCap || (sample.szCap.fail && !rr.cap.fail))) sample.szCap = rr.cap; if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked;
