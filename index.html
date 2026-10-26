@@ -483,6 +483,9 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .seg.dark button{color:rgba(255,255,255,.7)}
 .seg.dark button[aria-pressed="true"]{background:#fff;color:var(--fg);box-shadow:none}
 .dsz{display:flex;flex-wrap:wrap;gap:8px}
+.szpick{display:flex;align-items:center;justify-content:space-between;width:100%;height:52px;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:transparent;color:#fff;font:600 15px Onest,sans-serif;padding:0 16px}.szpick small{font-weight:400;color:rgba(255,255,255,.6);font-size:14px}.szpick svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;opacity:.6}
+.szg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-bottom:6px}.szg button{height:48px;border-radius:13px;border:1px solid #e3e4e7;background:#fff;color:var(--fg);font:500 15px Onest,sans-serif}.szg button[aria-pressed="true"]{background:var(--fg);color:#fff;border-color:var(--fg)}.szg button.q{font-size:13px;grid-column:span 2}.szg button.na{color:#c4c6ca;text-decoration:line-through;background:#f7f7f8}
+.pvs .scroll{padding-bottom:0;overscroll-behavior-y:none}.pvs .pv-panel{padding-bottom:calc(120px + var(--sb))}
 .dsz button{min-width:48px;height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:14px;padding:0 12px}
 .dsz button[aria-pressed="true"]{background:#fff;color:var(--fg);border-color:#fff}
 .dsz button.q{color:rgba(255,255,255,.7);font-size:13px}
@@ -2253,7 +2256,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   setTimeout(()=>{if(!s.isConnected)return;s.querySelectorAll("#pvg img[data-src]").forEach(im=>{im.setAttribute("style",im.dataset.style||"");im.src=im.dataset.src;im.removeAttribute("data-src")})},620);
   // «Похожие» дорисовываем после того, как карточка выехала — открытие без пауз
   if(like.length)setTimeout(()=>{const b=s.querySelector("#pvlike");if(b&&s.isConnected)b.innerHTML=`<div class="sech"><h2>${r?"Ещё в ресейле":"Похожие"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div>`},560);
-  if(hasPh)s.classList.add("pvph");
+  s.classList.add("pvs");if(hasPh)s.classList.add("pvph");
   if(hasPh){const t0=s.querySelector(".navbar .t");if(t0)t0.innerHTML='<i class="nbl" aria-hidden="true">TB</i>'}
   {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];let dk=0,stp0=0;g.addEventListener("scroll",()=>{stp0=stp0||gStep(g);const k=Math.round(g.scrollLeft/stp0);if(k!==dk){dk=k;dots.forEach((d,i)=>d.classList.toggle("on",i===k))}},{passive:true});addEventListener("resize",()=>{stp0=0},{passive:true});
     // листание фото: один свайп — ровно одно фото; делает сам браузер (scroll-snap + snap-stop), без своих доводок — так плавно и без рывков
@@ -2280,14 +2283,17 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     ${st&&st.size?`<div><div class="pv-lbl">Размер</div><div class="fixsz"><b>${st.size}</b><span>один экземпляр</span></div></div>`:""}
     ${r?`<div class="tags"><span class="dark" style="background:#fff;color:var(--fg)">Проверено Trend Büro</span><span style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">${esc(r.set)}</span></div>`:""}
     ${cws.length>1?`<div><div class="pv-lbl">Цвет · ${cw.name}${cw.ok?"":" · под заказ"}</div><div class="cw">${cws.map((c,i)=>`<button data-ci="${i}" class="${c.ok?"":"na"}" aria-pressed="${i===ci}" aria-label="Цвет ${c.name}"><span class="t">${shapeSVG(it.shape,c.c,"")}</span><span>${c.name}</span></button>`).join("")}</div></div>`:""}
+    ${sizes?`<button class="szpick press" type="button" data-szopen><span>Размер <small>· ${size&&size!=="?"?size:size==="?"?"нужна помощь":"выбрать"}</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`:""}
     ${(()=>{const L=famSibs(p);if(!L.length)return "";return `<div><div class="pv-lbl">Другие цвета · ${L.length}</div><div class="pv-sib">${L.map(x=>{const im=x.imgs&&x.imgs[0];return `<button class="${x.id===p.id?"on":""}" ${x.id===p.id?"disabled":`data-sib="${x.id}"`} aria-label="${esc(x.col||x.name)}"><span class="t" style="${im?`background-image:url(&quot;${esc(im.thumb||im.src)}&quot;)`:""}"></span><span class="c">${esc(x.col||"")}</span></button>`}).join("")}</div></div>`})()}
-    ${sizes?`<div><div class="pv-lbl">Размер${size&&size!=="?"?" · "+size:""}</div><div class="dsz">${sizes.map(z=>szOut.has(z)?`<button class="na" disabled aria-label="${z} — нет в наличии">${z}</button>`:`<button data-sz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-sz="?" aria-pressed="${size==="?"}">Не знаю</button></div></div>`:""}
     ${p&&(p.dims||p.material)?`<div class="pv-specs">${p.dims?`<span><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/></svg>${esc(p.dims)}</span>`:""}${p.material?`<span><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/></svg>${esc(p.material)}</span>`:""}</div>`:""}
     ${r?`<div class="trust"><div><svg viewBox="0 0 24 24">${IC.shield}</svg><span>Проверяем подлинность, сделку ведём сами</span></div></div>`:""}`;
-    s.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=size===b.dataset.sz?"":b.dataset.sz;resetBtn();draw()});
+    {const sb=s.querySelector("[data-szopen]");if(sb)sb.onclick=szSheet}
     s.querySelectorAll("[data-sib]").forEach(b=>b.onclick=()=>{const id=b.dataset.sib;pop();setTimeout(()=>openProduct(id),60)});
     s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;{const g=s.querySelector("#pvg"),ix=cws[ci].idx;if(g&&ix>=0)g.scrollTo({left:ix*gStep(g),behavior:"smooth"})}const v=s.querySelector("#pvv");if(v){v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180)}resetBtn();draw()});
   };
+  // размеры — в шторке: в карточке только плашка «Размер · выбрать»
+  const szSheet=()=>{const sh=openSheet("Размер",`<div class="szg">${sizes.map(z=>szOut.has(z)?`<button class="na" disabled aria-label="${z} — нет в наличии">${z}</button>`:`<button data-pz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-pz="?" aria-pressed="${size==="?"}">Не знаю</button></div>`);
+    sh.querySelectorAll("[data-pz]").forEach(b=>b.onclick=()=>{size=b.dataset.pz;resetBtn();draw();setTimeout(()=>closeSheet(),120);sh.querySelectorAll("[data-pz]").forEach(x=>x.setAttribute("aria-pressed",x===b))})};
   const ob=s.querySelector("[data-order]"),fb=s.querySelector("[data-favp]");
   const setLbl=t=>{const l=ob.querySelector(".bl");if(!l){ob.textContent=t;return}ob.classList.add("swap");setTimeout(()=>{l.textContent=t;ob.classList.remove("swap")},180)};
   const resetBtn=()=>{if(!r){delete ob.dataset.added;setLbl(btnLabel())}};
@@ -2310,7 +2316,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     const onR=()=>{if(!s.isConnected)return removeEventListener("resize",onR);size()};addEventListener("resize",onR)}}
   // высота фото задаётся пропорциями снимка (см. --phh в стилях .pv-hero.ph) — фото на всю ширину, без полос и без обрезки
   ob.onclick=()=>{
-    if(sizes&&!size){toast("Выберите размер или «Не знаю»");s.querySelector(".dsz").scrollIntoView({behavior:"smooth",block:"center"});return}
+    if(sizes&&!size){szSheet();return}
     const cw=cws[ci];
     if(isPre()){orderSheet("Уточнить наличие: "+it.brand,`Здравствуйте! Хочу уточнить наличие${p.availability==="preorder"?" (у бутика предзаказ)":""}:\n${it.brand} — ${it.name}${cws.length>1?"\nЦвет: "+cw.name:""}${sizes?"\nРазмер: "+(size==="?"?"нужна помощь":size):""}\nЦена: ${eur(priceFor(it,d))}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`);return}
     // наличие менеджер уточняет после заказа — в карточке всегда «В корзину»
