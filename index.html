@@ -3523,6 +3523,10 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
 })();
 </script>
 <script>
+/* фото, которое не открылось «с разрешением» (crossorigin): показываем как обычное — лучше без подбора фона, чем пустая карточка */
+document.addEventListener("error",function(e){var im=e.target;if(!im||im.tagName!=="IMG"||!im.hasAttribute("crossorigin"))return;im.removeAttribute("crossorigin");var u=im.getAttribute("src");if(u){im.src="";im.src=u}},true);
+</script>
+<script>
 /* Telegram Mini App: полноэкранный режим, ссылки внутри Telegram */
 (function(){var tg=window.Telegram&&window.Telegram.WebApp;if(!tg||!tg.initData)return;
   document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[target="_blank"]');if(!a)return;var u=a.href;e.preventDefault();

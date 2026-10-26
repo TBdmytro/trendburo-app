@@ -35,7 +35,7 @@ export default async function handler(req, res) {
   const step = Math.max(0, Math.min(CHAIN_MAX + 1, Number(req.query?.chain || new URL(req.url, "http://x").searchParams.get("chain")) || 0));
   // шаг цепочки — только продолжение задач; курсы и плановые обновления — в обычном (ночном) запуске
   if (!step) await refreshFx(store).catch(() => {});
-  if (!step) { await fixBrands(store).catch(() => {}); await askNoSizes(store).catch(() => {}); }
+  if (!step) { await fixBrands(store).catch(() => {}); await askNoSizes(store).catch(() => {}); try { const { dedupeAll } = await import("../lib/catalogload.js"); await dedupeAll(store, { budgetMs: 20000 }); } catch {} try { const { ensureSanityCors } = await import("../lib/sanitycors.js"); await ensureSanityCors(); } catch {} }
   if (!step) await ensurePrices(store, { budgetMs: 15000, log: x => console.log("[price]", JSON.stringify(x)) }).catch(() => {});
   const planned = step ? [] : await planRefresh(store);
   for (const p of planned) if (p.catalog) await kickCatalog(publicUrl(req), p.source, p.runId, 1);

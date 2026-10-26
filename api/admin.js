@@ -76,7 +76,9 @@ export default async function handler(req, res) {
         d.list = [{ h: keyHash(key), at: new Date().toISOString() }, ...(d.list || [])].slice(0, 10); delete d._rev; delete d._createdAt; delete d._updatedAt;
         await store.put(d); return send(res, 200, { key });
       }
-      case "me": { if (!me.key) await seedRails(store, me.name).catch(() => {}); return send(res, 200, { name: me.name, store: store.kind, demo: !!store.demo }); }
+      case "me": { if (!me.key) await seedRails(store, me.name).catch(() => {});
+        if (!me.key) { const { ensureSanityCors } = await import("../lib/sanitycors.js"); await ensureSanityCors().catch(() => {}); } // фото с хранилища должны открываться на сайте
+        return send(res, 200, { name: me.name, store: store.kind, demo: !!store.demo }); }
 
       case "overview": {
         const [published, draft, hidden, jobs, waiting, leadsNew] = await Promise.all([
@@ -366,6 +368,12 @@ export default async function handler(req, res) {
         FIXAT = Date.now(); const fixed = await fixBrands(store) + await askNoSizes(store).catch(e => { console.log("ASKNOSZ err", e.message); return 0; }); if (fixed) PCACHE = null;
         return send(res, 200, { fixed });
       }
+      case "imgDedupe": {
+        // у уже загруженных товаров с сайтов брендов: убрать повторы одного фото в разных размерах (частями, с места остановки)
+        const { dedupeAll } = await import("../lib/catalogload.js");
+        const r = await dedupeAll(store, { budgetMs: 40000 }); if (r.changed) PCACHE = null;
+        return send(res, 200, r);
+      }
       case "sectionKnown": {
         // товары этого раздела у нас (артикул + ссылка): кнопка перепроверит по странице те, что не видны в разделе, — прежде чем считать «продано»
         const px = "product.manual." + String(req.query.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-", section = String(req.query.section || "").slice(0, 200);
@@ -431,6 +439,7 @@ export default async function handler(req, res) {
           catch (e) { console.log("IMGURL fail " + JSON.stringify({ host: new URL(u).hostname, why: String(e.message).slice(0, 120) })); return u; } // не скачалось — ставим ссылку магазина
         }))).filter(Boolean);
         if (!images.length) return send(res, 400, { error: "Нет фото" });
+        try { const { dedupeImages } = await import("../lib/imgdedupe.js"); const uniq = await dedupeImages(images); if (uniq.length) images.splice(0, images.length, ...uniq); } catch {} // одно фото в нескольких размерах — оставляем крупное
         const product = await saveManualProduct(store, { ...it, id, images, availability: "online", status: "incoming", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
         return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null });
       }

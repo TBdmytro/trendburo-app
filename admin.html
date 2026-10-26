@@ -2728,7 +2728,10 @@ const BOARD_CATS = ["bags", "shoes", "clothing", "accessories", "jewelry", "eyew
 async function vBrandBoard() {
   const { brands, total, incoming } = await api("brandBoard");
   // бренды и подразделы выравниваются в фоне, не чаще раза в 30 минут — «Товары» не ждут этого
-  try { if (Date.now() - (+localStorage.getItem("tbFixAt") || 0) > 30 * 60e3) { localStorage.setItem("tbFixAt", String(Date.now())); api("fixBrands", { method: "POST", silent: true }).catch(() => {}); } } catch {}
+  try { if (Date.now() - (+localStorage.getItem("tbFixAt") || 0) > 30 * 60e3) { localStorage.setItem("tbFixAt", String(Date.now()));
+    api("fixBrands", { method: "POST", silent: true }).catch(() => {});
+    (async () => { for (let i = 0; i < 15; i++) { const r = await api("imgDedupe", { method: "POST", silent: true }).catch(() => ({ done: true })); if (r.done) break; } })(); // повторы фото — в фоне
+  } } catch {}
   let q = "", letter = "";
   const ini = n => n.replace(/&/g, " ").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
   const plural = n => n % 10 === 1 && n % 100 !== 11 ? "товар" : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "товара" : "товаров";

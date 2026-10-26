@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 25</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 26</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v25] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v26] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -73,9 +73,12 @@ async function tbCollect() {
     var score = function (u) { var n = (u.match(/\d{3,4}/g) || []).map(Number).filter(function (x) { return x <= 4000; }); return Math.max.apply(null, [0].concat(n)) + (/ecom|large|zoom|original|full/i.test(u) ? 3000 : 0) - (/thumb|small|tiny|icon|swatch/i.test(u) ? 5000 : 0); };
     // обложка — как на сайте: главное фото товара (из данных страницы) ставим первым
     var ld0 = [].concat(ldImg || []).map(function (u) { return typeof u === "string" ? u : u && u.url; }).filter(Boolean)[0];
-    if (ld0) { var lk = ld0.split("?")[0].split("/").pop().toLowerCase(); urls.sort(function (a, b) { return (b.split("?")[0].split("/").pop().toLowerCase() === lk) - (a.split("?")[0].split("/").pop().toLowerCase() === lk); }); }
+    if (ld0) { var lk = (function (u) { var f = u.split("?")[0].split("/").pop(), F = f.toUpperCase(), i = code ? F.indexOf(code) : -1; return (i >= 0 ? F.slice(i) : F).replace(/\.(JPE?G|PNG|WEBP|AVIF)$/, "").toLowerCase(); })(ld0);
+      urls.sort(function (a, b) { var ka = a.split("?")[0].split("/").pop().toUpperCase(), kb = b.split("?")[0].split("/").pop().toUpperCase(); return (kb.indexOf(lk.toUpperCase()) >= 0) - (ka.indexOf(lk.toUpperCase()) >= 0); }); }
+    // одно фото в разных размерах (Small-…, Medium-…, eCom-… или ?imwidth=…) — один ключ: часть имени файла начиная с артикула
+    var keyOf = function (u) { var f = u.split("?")[0].split("/").pop(), F = f.toUpperCase(), i = code ? F.indexOf(code) : -1; return (i >= 0 ? F.slice(i) : F).replace(/\.(JPE?G|PNG|WEBP|AVIF)$/, "").toLowerCase(); };
     var best = {}, order = [];
-    urls.forEach(function (u) { var k = u.split("?")[0].split("/").pop().toLowerCase(); if (!best[k]) { best[k] = u; order.push(k); } else if (score(u) > score(best[k])) best[k] = u; });
+    urls.forEach(function (u) { var k = keyOf(u); if (!best[k]) { best[k] = u; order.push(k); } else if (score(u) > score(best[k])) best[k] = u; });
     return order.map(function (k) { return best[k]; }).filter(function (u) { return score(u) > -2000; }).slice(0, limit);
   };
   // фото берём так же, как их показывает страница (через картинку, а не прямой запрос — его могут запрещать правила сайта); не вышло — передаём ссылку на фото
