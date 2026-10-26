@@ -182,6 +182,8 @@ test("другие цвета: одна модель в разных цвета�
   assert.notEqual(k("Saint Laurent", "jacket in lambskin", "785562YCMT22492"), k("Saint Laurent", "jacket in lambskin", "798780YCNF21000"));
   assert.equal(k("Alo Yoga", "Airlift High-Waist Legging - Black"), k("Alo Yoga", "Airlift High-Waist Legging - Forest Green"));
   assert.notEqual(k("Alo Yoga", "Airlift High-Waist Legging"), k("Saint Laurent", "Airlift High-Waist Legging"));
+  // YSL: одна модель, разные линейки артикулов
+  assert.equal(k("Saint Laurent", "LE LOAFER supple in suede", "81890827DTT2319"), k("Saint Laurent", "LE LOAFER SUPPLE in suede", "A001MM27DTT9741"));
 });
 
 test("подразделы: обувь, сумки, одежда — по разделу сайта, названию, описанию", async () => {
