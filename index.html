@@ -258,6 +258,11 @@ button{cursor:pointer}
 .pc .p{font-size:14px;font-weight:600;color:var(--fg)}
 .pc .ct{font-size:11.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px;padding-inline:18px}
+/* «Другие цвета» в карточке: мини-фото той же модели в других цветах */
+.pv-sib{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0 4px}.pv-sib::-webkit-scrollbar{display:none}
+.pv-sib button{flex:none;width:64px;border:0;background:none;padding:0;display:flex;flex-direction:column;gap:5px;align-items:center;color:inherit;font:inherit}
+.pv-sib .t{width:64px;height:76px;border-radius:14px;background:#f6f5f3 center/contain no-repeat;border:2px solid transparent}
+.pv-sib button.on .t{border-color:#fff}.pv-sib .c{font-size:10.5px;opacity:.7;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* сколько товаров в ряд: 2 (как было), 3 или 4 — компактнее подписи */
 .cntrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 18px 10px;min-height:30px}.cntrow .count{margin:0;padding:0}
 .colsw{display:flex;gap:4px;background:var(--soft);border-radius:10px;padding:3px;margin-left:auto}
@@ -885,7 +890,7 @@ textarea{min-height:88px;resize:vertical}
 .mchat.hid{transform:translateX(-140%);opacity:0;pointer-events:none}
 .tabbar.hide+.mchat,#app.in-optix .mchat{transform:translateY(180%);opacity:0;pointer-events:none}
 /* горизонтальные ленты: листаются только вбок, сами вверх-вниз не двигаются */
-.bnr-track,.stories,.hrail,.chips,.gal,.pv-gal,.zv .zg,.cw,.st-prefs,.o-brands,.tops{overflow-y:hidden;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+.bnr-track,.stories,.hrail,.chips,.gal,.pv-gal,.zv .zg,.cw,.pv-sib,.st-prefs,.o-brands,.tops{overflow-y:hidden;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
 .xlock{overflow-y:hidden!important}
 .ylock{overflow-x:hidden!important}
 /* ===== Вход через Telegram ===== */
@@ -2216,6 +2221,8 @@ function similarTo(p){const t=TIER_OF(p.brand),pool=P.filter(x=>x.id!==p.id&&x.c
   const sc=x=>Math.abs(TIER_OF(x.brand)-t)*0.6+Math.abs(Math.log((x.price||1)/(p.price||1)))+(x.bk===p.bk?0.15:0);
   let l=pool.filter(x=>Math.abs(TIER_OF(x.brand)-t)<=1&&x.price>=p.price*.6&&x.price<=p.price*1.4);
   if(l.length<4)l=pool;return l.sort((a,b)=>sc(a)-sc(b)).slice(0,10)}
+// «Другие цвета»: та же модель в других цветах (по ключу семьи из каталога)
+let FAMS=null;function famSibs(p){if(!p||!p.fam)return [];if(!FAMS){FAMS=new Map();P.forEach(x=>{if(x.fam){if(!FAMS.has(x.fam))FAMS.set(x.fam,[]);FAMS.get(x.fam).push(x)}})}const L=FAMS.get(p.fam)||[];return L.length>1?L.slice(0,16):[]}
 function openProduct(id){popTrack("v",id);
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;
   let d=prefs.dest||"ua",size="",ci=0;
@@ -2272,10 +2279,12 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     ${st&&st.size?`<div><div class="pv-lbl">Размер</div><div class="fixsz"><b>${st.size}</b><span>один экземпляр</span></div></div>`:""}
     ${r?`<div class="tags"><span class="dark" style="background:#fff;color:var(--fg)">Проверено Trend Büro</span><span style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">${esc(r.set)}</span></div>`:""}
     ${cws.length>1?`<div><div class="pv-lbl">Цвет · ${cw.name}${cw.ok?"":" · под заказ"}</div><div class="cw">${cws.map((c,i)=>`<button data-ci="${i}" class="${c.ok?"":"na"}" aria-pressed="${i===ci}" aria-label="Цвет ${c.name}"><span class="t">${shapeSVG(it.shape,c.c,"")}</span><span>${c.name}</span></button>`).join("")}</div></div>`:""}
+    ${(()=>{const L=famSibs(p);if(!L.length)return "";return `<div><div class="pv-lbl">Другие цвета · ${L.length}</div><div class="pv-sib">${L.map(x=>{const im=x.imgs&&x.imgs[0];return `<button class="${x.id===p.id?"on":""}" ${x.id===p.id?"disabled":`data-sib="${x.id}"`} aria-label="${esc(x.col||x.name)}"><span class="t" style="${im?`background-image:url(&quot;${esc(im.thumb||im.src)}&quot;)`:""}"></span><span class="c">${esc(x.col||"")}</span></button>`}).join("")}</div></div>`})()}
     ${sizes?`<div><div class="pv-lbl">Размер${size&&size!=="?"?" · "+size:""}</div><div class="dsz">${sizes.map(z=>szOut.has(z)?`<button class="na" disabled aria-label="${z} — нет в наличии">${z}</button>`:`<button data-sz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-sz="?" aria-pressed="${size==="?"}">Не знаю</button></div></div>`:""}
     ${p&&(p.dims||p.material)?`<div class="pv-specs">${p.dims?`<span><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/></svg>${esc(p.dims)}</span>`:""}${p.material?`<span><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/></svg>${esc(p.material)}</span>`:""}</div>`:""}
     ${r?`<div class="trust"><div><svg viewBox="0 0 24 24">${IC.shield}</svg><span>Проверяем подлинность, сделку ведём сами</span></div></div>`:""}`;
     s.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=size===b.dataset.sz?"":b.dataset.sz;resetBtn();draw()});
+    s.querySelectorAll("[data-sib]").forEach(b=>b.onclick=()=>{const id=b.dataset.sib;pop();setTimeout(()=>openProduct(id),60)});
     s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;{const g=s.querySelector("#pvg"),ix=cws[ci].idx;if(g&&ix>=0)g.scrollTo({left:ix*gStep(g),behavior:"smooth"})}const v=s.querySelector("#pvv");if(v){v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180)}resetBtn();draw()});
   };
   const ob=s.querySelector("[data-order]"),fb=s.querySelector("[data-favp]");
@@ -2797,7 +2806,7 @@ function openAuto(ri){
     if(y>ly+6&&y>80&&!end)a.classList.add("hid");else if(y<ly-6||y<80||end)a.classList.remove("hid");ly=y},true);
   a.addEventListener("click",()=>{try{hap("light")}catch(e){}});
   // жест начался вбок — страница не едет вверх-вниз; начался вертикально — лента не дёргается вбок
-  const SEL=".bnr-track,.stories,.hrail,.chips,.gal,.pv-gal,.cw,.st-prefs,.o-brands,.tops";let rail=null,sx=0,sy=0,lock="",page=null;
+  const SEL=".bnr-track,.stories,.hrail,.chips,.gal,.pv-gal,.cw,.pv-sib,.st-prefs,.o-brands,.tops";let rail=null,sx=0,sy=0,lock="",page=null;
   // на iPhone прокрутку по осям браузер разводит сам, а смена overflow посреди жеста останавливает ленту — там замок не нужен
   const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
   document.addEventListener("touchstart",e=>{if(IOS)return;rail=e.target.closest&&e.target.closest(SEL);if(!rail)return;const t=e.touches[0];sx=t.clientX;sy=t.clientY;lock="";page=rail.parentElement&&rail.parentElement.closest(".scroll,.pushed .scroll,[data-scroll]")},{passive:true});
@@ -3494,7 +3503,7 @@ function applyLive(list,fresh){PV++;
     const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn?x.oldPrice:x.price;
     P.push({id:x.id,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
       shape:(()=>{const u=x.im?x.im[0]&&szU(XU(x.im[0]),400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),get imgs(){return this._im||(this._im=imgsOf(x))},colors:(x.colors||[]).map(c=>c.image&&c.image[0]==="~"?{...c,image:XU(c.image)}:c),sizes:x.sizes||[],
-      orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0})});
+      orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0,fam:x.fam||null,col:x.col||""})});FAMS=null;
   NEWS.length=0;RESALE.length=0;ICONS.length=0;
   BRANDS=[...new Map(P.map(p=>[p.bk,p.brand])).entries()];
   STORY_BRANDS.length=0;STORY_BRANDS.push(...BRANDS.map(b=>b[0]).slice(0,12));

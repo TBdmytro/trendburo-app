@@ -175,6 +175,15 @@ test("витрина: копии одного фото в меньших раз�
   assert.deepEqual(out, ["a-2608x3260.jpg", "d-2608x3260.jpg", "e-1200x800.jpg"]);
 });
 
+test("другие цвета: одна модель в разных цветах — одна семья; разные модели с одинаковым названием — разные", async () => {
+  const { famKey } = await import("../lib/catalog.js");
+  const k = (b, t, s = "") => famKey({ brand: b, title: t, modelSku: s });
+  assert.equal(k("Saint Laurent", "Tribute platform sandals in smooth leather", "315487AAAAH2721"), k("Saint Laurent", "TRIBUTE platform sandals in smooth leather", "315487BDA001000"));
+  assert.notEqual(k("Saint Laurent", "jacket in lambskin", "785562YCMT22492"), k("Saint Laurent", "jacket in lambskin", "798780YCNF21000"));
+  assert.equal(k("Alo Yoga", "Airlift High-Waist Legging - Black"), k("Alo Yoga", "Airlift High-Waist Legging - Forest Green"));
+  assert.notEqual(k("Alo Yoga", "Airlift High-Waist Legging"), k("Saint Laurent", "Airlift High-Waist Legging"));
+});
+
 test("подразделы: обувь, сумки, одежда — по разделу сайта, названию, описанию", async () => {
   const { detectSubcategory } = await import("../lib/normalize.js");
   assert.equal(detectSubcategory("shoes", ["sneakers"], "SL/61 low-top"), "sneakers");
