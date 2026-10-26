@@ -444,7 +444,10 @@ export default async function handler(req, res) {
         }))).filter(Boolean);
         if (!images.length) return send(res, 400, { error: "Нет фото" });
         try { const { dedupeImages } = await import("../lib/imgdedupe.js"); const uniq = await dedupeImages(images); if (uniq.length) images.splice(0, images.length, ...uniq); } catch {} // одно фото в нескольких размерах — оставляем крупное
-        const product = await saveManualProduct(store, { ...it, id, images, availability: "online", status: "incoming", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
+        // немецкий сайт (LV и др.) — название, описание и цвета переводим на английский; ошибка перевода не мешает загрузке
+        let itEn = it;
+        try { const { englishItem } = await import("../lib/translate.js"); itEn = await englishItem(it, await store.get(id)); } catch (e) { console.log("TR fail " + JSON.stringify({ id, why: String(e.message).slice(0, 120) })); }
+        const product = await saveManualProduct(store, { ...itEn, id, images, availability: "online", status: "incoming", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
         return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null });
       }
       case "pricePreview": {
