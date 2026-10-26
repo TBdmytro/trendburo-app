@@ -212,6 +212,8 @@ async function probeCat(res) {
     if (new Set(names).size < names.length || new Set(ims).size < ims.length) dup[b] = (dup[b] || 0) + 1;
     if (sf.isNew) news[b] = (news[b] || 0) + 1;
     if (!samples[b] || samples[b].length < 3) (samples[b] = samples[b] || []).push({ id: sf.id, t: sf.title, im: ims.slice(0, 4) }); }
+  { const fam = {}, fb = {}; for (const p of list) { const sf = toStorefront(p, now, { compact: true }); if (sf && sf.fam) { fam[sf.fam] = (fam[sf.fam] || []); fam[sf.fam].push(sf.title + " · " + (sf.col || "?")); fb[sf.fam] = p.brand; } }
+    const multi = Object.entries(fam).filter(([, l]) => l.length > 1); out.colorFamilies = { total: multi.length, byBrand: multi.reduce((a, [k]) => (a[fb[k]] = (a[fb[k]] || 0) + 1, a), {}), examples: multi.slice(0, 6).map(([, l]) => l.slice(0, 5)) }; }
   out.imgHosts = hosts; out.prodWithDupImgs = dup; out.isNewByBrand = news; out.samples = samples;
   out.published = list.length; out.noPublishedAt = list.filter(p => !p.publishedAt).length; out.brands = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 25).map(([b, n]) => [b, n, shown[b] || 0]); out.notShown = why;
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
