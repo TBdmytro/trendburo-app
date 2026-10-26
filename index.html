@@ -2283,7 +2283,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     ${st&&st.size?`<div><div class="pv-lbl">Размер</div><div class="fixsz"><b>${st.size}</b><span>один экземпляр</span></div></div>`:""}
     ${r?`<div class="tags"><span class="dark" style="background:#fff;color:var(--fg)">Проверено Trend Büro</span><span style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">${esc(r.set)}</span></div>`:""}
     ${cws.length>1?`<div><div class="pv-lbl">Цвет · ${cw.name}${cw.ok?"":" · под заказ"}</div><div class="cw">${cws.map((c,i)=>`<button data-ci="${i}" class="${c.ok?"":"na"}" aria-pressed="${i===ci}" aria-label="Цвет ${c.name}"><span class="t">${shapeSVG(it.shape,c.c,"")}</span><span>${c.name}</span></button>`).join("")}</div></div>`:""}
-    ${sizes?`<button class="szpick press" type="button" data-szopen><span>Размер <small>· ${size&&size!=="?"?size:size==="?"?"нужна помощь":"выбрать"}</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`:""}
+    ${sizes?`<button class="szpick press" type="button" data-szopen><span>Размер <small>· ${size&&size!=="?"?size:size==="?"?"подобрать":"выбрать"}</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`:""}
     ${(()=>{const L=famSibs(p);if(!L.length)return "";return `<div><div class="pv-lbl">Другие цвета · ${L.length}</div><div class="pv-sib">${L.map(x=>{const im=x.imgs&&x.imgs[0];return `<button class="${x.id===p.id?"on":""}" ${x.id===p.id?"disabled":`data-sib="${x.id}"`} aria-label="${esc(x.col||x.name)}"><span class="t" style="${im?`background-image:url(&quot;${esc(im.thumb||im.src)}&quot;)`:""}"></span><span class="c">${esc(x.col||"")}</span></button>`}).join("")}</div></div>`})()}
     ${p&&(p.dims||p.material)?`<div class="pv-specs">${p.dims?`<span><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/></svg>${esc(p.dims)}</span>`:""}${p.material?`<span><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/></svg>${esc(p.material)}</span>`:""}</div>`:""}
     ${r?`<div class="trust"><div><svg viewBox="0 0 24 24">${IC.shield}</svg><span>Проверяем подлинность, сделку ведём сами</span></div></div>`:""}`;
@@ -2292,7 +2292,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;{const g=s.querySelector("#pvg"),ix=cws[ci].idx;if(g&&ix>=0)g.scrollTo({left:ix*gStep(g),behavior:"smooth"})}const v=s.querySelector("#pvv");if(v){v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(it.shape,cws[ci].c,"");v.classList.remove("swap")},180)}resetBtn();draw()});
   };
   // размеры — в шторке: в карточке только плашка «Размер · выбрать»
-  const szSheet=()=>{const sh=openSheet("Размер",`<div class="szg">${sizes.map(z=>szOut.has(z)?`<button class="na" disabled aria-label="${z} — нет в наличии">${z}</button>`:`<button data-pz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-pz="?" aria-pressed="${size==="?"}">Не знаю</button></div>`);
+  const szSheet=()=>{const sh=openSheet("Размер",`<div class="szg">${sizes.map(z=>szOut.has(z)?`<button class="na" disabled aria-label="${z} — нет в наличии">${z}</button>`:`<button data-pz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-pz="?" aria-pressed="${size==="?"}">Подобрать</button></div>`);
     sh.querySelectorAll("[data-pz]").forEach(b=>b.onclick=()=>{size=b.dataset.pz;resetBtn();draw();setTimeout(()=>closeSheet(),120);sh.querySelectorAll("[data-pz]").forEach(x=>x.setAttribute("aria-pressed",x===b))})};
   const ob=s.querySelector("[data-order]"),fb=s.querySelector("[data-favp]");
   const setLbl=t=>{const l=ob.querySelector(".bl");if(!l){ob.textContent=t;return}ob.classList.add("swap");setTimeout(()=>{l.textContent=t;ob.classList.remove("swap")},180)};
@@ -2318,7 +2318,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   ob.onclick=()=>{
     if(sizes&&!size){szSheet();return}
     const cw=cws[ci];
-    if(isPre()){orderSheet("Уточнить наличие: "+it.brand,`Здравствуйте! Хочу уточнить наличие${p.availability==="preorder"?" (у бутика предзаказ)":""}:\n${it.brand} — ${it.name}${cws.length>1?"\nЦвет: "+cw.name:""}${sizes?"\nРазмер: "+(size==="?"?"нужна помощь":size):""}\nЦена: ${eur(priceFor(it,d))}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`);return}
+    if(isPre()){orderSheet("Уточнить наличие: "+it.brand,`Здравствуйте! Хочу уточнить наличие${p.availability==="preorder"?" (у бутика предзаказ)":""}:\n${it.brand} — ${it.name}${cws.length>1?"\nЦвет: "+cw.name:""}${sizes?"\nРазмер: "+(size==="?"?"помочь подобрать":size):""}\nЦена: ${eur(priceFor(it,d))}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`);return}
     // наличие менеджер уточняет после заказа — в карточке всегда «В корзину»
     if(!r){if(ob.dataset.added){openCart();return}addToCart(it.id,size,cws.length>1?cw.name:"",cw.ok,cw.c,true);if(st)toast("Один экземпляр — менеджер закрепит его за вами");ob.dataset.added="1";ob.classList.remove("added");void ob.offsetWidth;ob.classList.add("added");setLbl("✓ Добавлено в корзину");
       try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.notificationOccurred("success")}catch(e){}
@@ -2389,7 +2389,7 @@ function openIcon(id){const ic=ICONS.find(x=>x.id===id);if(!ic)return;const bn=b
     <div class="pv-top"><div style="min-width:0"><button class="bl" data-act="brand" data-bk="${ic.bk}">${esc(bn)} ›</button><h2>${esc(ic.name)}</h2></div>
       <div class="pr"><b class="num">от ${eur(price())}</b><span>${d==="ua"?dIcon("ua",13)+"С доставкой в Украину":dIcon(d,13)+"+ доставка "+(d==="eu"?"по Европе":"в Дубай")}</span></div></div>
     <div><div class="pv-lbl">Цвет · ${cw.name}</div><div class="cw">${cws.map((c,i)=>`<button data-ci="${i}" aria-pressed="${i===ci}" aria-label="Цвет ${c.name}"><span class="t">${shapeSVG(ic.shape,c.c,"")}</span><span>${c.name}</span></button>`).join("")}</div></div>
-    ${sizes?`<div><div class="pv-lbl">Размер${size&&size!=="?"?" · "+size:""}</div><div class="dsz">${sizes.map(z=>`<button data-sz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-sz="?" aria-pressed="${size==="?"}">Не знаю</button></div></div>`:""}
+    ${sizes?`<div><div class="pv-lbl">Размер${size&&size!=="?"?" · "+size:""}</div><div class="dsz">${sizes.map(z=>`<button data-sz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-sz="?" aria-pressed="${size==="?"}">Подобрать</button></div></div>`:""}
     <div class="seg dark" role="group" aria-label="Доставка">${[["ua","Украина"],["eu","Европа"],["dxb","Дубай"]].map(([k,v])=>`<button data-d="${k}" aria-pressed="${k===d}">${dIcon(k,15)}${v}</button>`).join("")}</div>
     <div class="trust">
       <div><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="8.5"/></svg><span>${ic.wait?"Продаётся через лист ожидания бутика — менеджер расскажет, как получить и сколько ждать":"Нет в витрине — найдём в бутиках Европы или закажем на сайте бренда"}</span></div>
@@ -2400,7 +2400,7 @@ function openIcon(id){const ic=ICONS.find(x=>x.id===id);if(!ic)return;const bn=b
     s.querySelectorAll("[data-sz]").forEach(b=>b.onclick=()=>{size=size===b.dataset.sz?"":b.dataset.sz;draw()});
     s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const k=+b.dataset.ci;if(k===ci)return;ci=k;const v=s.querySelector("#pvv");v.classList.add("swap");setTimeout(()=>{v.innerHTML=shapeSVG(ic.shape,cws[ci].c,"");v.classList.remove("swap")},180);draw()});
   };
-  const ask=()=>orderSheet("Запрос: "+ic.name,`Здравствуйте! Хочу заказать под запрос:\n${bn} — ${ic.name}\nЦвет: ${cws[ci].name}\n${sizes?"Размер: "+(size?(size==="?"?"нужна помощь":size):"—")+"\n":""}Ориентир: от ${eur(price())}${d==="ua"?"":" + доставка"}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]}`);
+  const ask=()=>orderSheet("Запрос: "+ic.name,`Здравствуйте! Хочу заказать под запрос:\n${bn} — ${ic.name}\nЦвет: ${cws[ci].name}\n${sizes?"Размер: "+(size?(size==="?"?"помочь подобрать":size):"—")+"\n":""}Ориентир: от ${eur(price())}${d==="ua"?"":" + доставка"}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]}`);
   s.querySelector("[data-ask]").onclick=ask;s.querySelector("[data-share]").onclick=ask;
   draw()}
 /* Каталог: цвета и иконки плиток (цвета меняются в админке → Витрина → Настройки → Цвета) */
@@ -3101,7 +3101,7 @@ function checkoutSheet(items,d,q,done){const v=myDelivery();
   sh.querySelector("[data-ck]").onclick=async e=>{const val=readDeliveryForm(sh),pr=deliveryProblem(val,d);
     if(pr){const el=sh.querySelector(pr[0]);if(el){el.focus();el.classList.add("bad");setTimeout(()=>el.classList.remove("bad"),1200)}toast(pr[1]);return}
     const b=e.currentTarget;b.disabled=true;b.textContent="Отправляем…";await saveDelivery(val).catch(()=>{});
-    const lines=items.map((x,i)=>`${i+1}. ${x.p.brand} — ${x.p.name}${x.color?", цвет "+x.color:""}${x.size?", размер "+(x.size==="?"?"нужна помощь":x.size):""} — ${eur(priceFor(x.p,d))}`).join("\n");
+    const lines=items.map((x,i)=>`${i+1}. ${x.p.brand} — ${x.p.name}${x.color?", цвет "+x.color:""}${x.size?", размер "+(x.size==="?"?"помочь подобрать":x.size):""} — ${eur(priceFor(x.p,d))}`).join("\n");
     const msg=`Здравствуйте! Новый заказ:\n${lines}\nИтого: ${eur(q.t)}${d!=="ua"?" + доставка":""}\n\n${deliveryText(val,d)}`;
     const meta={kind:"order",items:items.map(x=>({id:x.id,brand:x.p.brand,title:x.p.name,price:priceFor(x.p,d),size:x.size,color:x.color})),total:q.t,dest:d,delivery:val};
     const r=LIVE?await sendLead(meta,msg):{number:"TB-"+String(1000+Math.floor(Math.random()*9000))};
