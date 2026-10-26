@@ -541,7 +541,8 @@ export default async function handler(req, res) {
           const pub = await store.list("product", { status: "published" }, { limit: 50000 });
           changes = pub.map(p => ({ id: p._id, title: p.title, brand: p.brand, before: p.pricing?.ua ?? null, after: computePricing(p, body.config).ua })).filter(x => x.before !== x.after).slice(0, 300);
         }
-        return send(res, 200, { results: cases.map(c => ({ input: c, ...priceOffer(c, cfg) })), changes });
+        const { unifiedPrice } = await import("../lib/pricing.js");
+        return send(res, 200, { results: cases.map(c => ({ input: c, ...(cfg.unified?.on && c.kind !== "eyewear-supplier" ? unifiedPrice(c.boutique, c.category || null, cfg) : priceOffer(c, cfg)) })), changes });
       }
       case "pricingSave": {
         if (!body.confirmPreview) return send(res, 400, { error: "Сначала посмотрите предпросмотр изменений цен" });

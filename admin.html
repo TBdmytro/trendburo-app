@@ -1494,6 +1494,10 @@ async function vPrices() {
   let previewed = false;
   const n = (id, v, step = "0.01") => `<input type="number" id="${id}" step="${step}" value="${esc(v)}">`;
   $("#main").innerHTML = head("Правила цен", "Клиент видит только итоговую цену. Новые правила сохраняются после просмотра расчётов.") + `
+  <div class="card pad" style="display:flex;flex-direction:column;gap:14px;margin-bottom:16px"><label class="toggle" style="font-size:16px;font-weight:600"><input type="checkbox" id="uOn" ${config.unified?.on ? "checked" : ""}>Единое правило для всех товаров</label>
+     <p class="hint" style="margin:0">Одинаково для всего, что есть в каталоге: сайты брендов, магазины, товары с кнопки «В Trend Büro» и добавленные вручную. Цена = цена бутика + процент, но не меньше минимума за вещь; вверх до 5 €; одна цена во все страны (доставка в Европу и Дубай — отдельно, как сейчас). Очки поставщиков считаются по своим правилам. Закреплённая цена у товара главнее.</p>
+     <div class="row" style="flex-wrap:wrap"><label class="f" style="flex:1;min-width:150px">Наценка ${n("uPct", config.unified?.markup ?? 0.10)}</label><label class="f" style="flex:1;min-width:150px">Минимум за обувь, € ${n("uMinSh", config.unified?.minAdd?.shoes ?? 40, "1")}</label><label class="f" style="flex:1;min-width:150px">Минимум за одежду, € ${n("uMinCl", config.unified?.minAdd?.clothing ?? 15, "1")}</label><label class="f" style="flex:1;min-width:150px">Минимум за остальное, € ${n("uMinDf", config.unified?.minAdd?.default ?? 15, "1")}</label></div>
+     <p class="hint" style="margin:0">0.10 = +10%. Пример при минимуме 40 €: кроссовки 200 € → 240 €; пальто 3 000 € → 3 300 €. Когда включено, правила ниже (кроме очков) не используются.</p></div>
   <div class="brands" style="grid-template-columns:repeat(auto-fill,minmax(340px,1fr))">
    <div class="card pad" style="display:flex;flex-direction:column;gap:14px"><h2 style="margin:0;font-size:16px">Официальные сайты брендов</h2>
      <label class="f">Украина — наценка (доставка включена) ${n("cUa", config.official.markup.ua)}</label>
@@ -1527,9 +1531,10 @@ async function vPrices() {
     $("#fxRef").onclick = async () => { const r = await api("fxRefresh", { method: "POST", body: {} }); drawFx(r); toast(r.refresh?.ok ? "Курсы ЕЦБ обновлены" : "ЕЦБ не ответил: " + (r.refresh?.error || "")); };
   };
   api("fxGet").then(drawFx).catch(() => { $("#fxBox").textContent = "Не удалось загрузить курсы"; });
-  const read = () => ({ rounding: $("#cRound").value, official: { markup: { ua: +$("#cUa").value, eu: +$("#cEu").value, dxb: +$("#cDxb").value }, minAdd: { shoes: +$("#cMinSh").value || 0, clothing: +$("#cMinCl").value || 0 }, retailerMinAdd: { clothing: +$("#cRMinCl").value || 0 } }, shipping: { add: +$("#cShip").value || 0, freeFrom: +$("#cShipFree").value || 0 },
+  const read = () => ({ unified: { on: $("#uOn").checked, markup: +$("#uPct").value || 0, minAdd: { shoes: +$("#uMinSh").value || 0, clothing: +$("#uMinCl").value || 0, default: +$("#uMinDf").value || 0 } }, rounding: $("#cRound").value, official: { markup: { ua: +$("#cUa").value, eu: +$("#cEu").value, dxb: +$("#cDxb").value }, minAdd: { shoes: +$("#cMinSh").value || 0, clothing: +$("#cMinCl").value || 0 }, retailerMinAdd: { clothing: +$("#cRMinCl").value || 0 } }, shipping: { add: +$("#cShip").value || 0, freeFrom: +$("#cShipFree").value || 0 },
     eyewear: { bigDiscountThreshold: +$("#cThr").value, capBoutique: +$("#cCap").value, flatAdd: +$("#cFlat").value, pctAdd: +$("#cPct").value, clientDiscount: +$("#cDisc").value, smallMarkup: +$("#cSm").value, smallFactor: +$("#cSf").value } });
   $("#main").oninput = e => { if (e.target.closest(".card") && !e.target.closest("#fxBox")) { previewed = false; $("#cSave").disabled = true; } };
+  $("#main").onchange = e => { if (e.target.id === "uOn") { previewed = false; $("#cSave").disabled = true; } };
   $("#cPrev").onclick = async () => {
     const { results, changes } = await api("pricingPreview", { method: "POST", body: { config: read() } });
     const KIND = { official: "Сайт бренда", "eyewear-supplier": "Очки" }, KN = r => r.input.retailer ? "Магазин" : (KIND[r.input.kind] || r.input.kind), DEST = { ua: "Украина", eu: "Европа", dxb: "Дубай" };

@@ -136,6 +136,18 @@ test("одежда с сайта бренда без размеров — «ут
   assert.equal(toStorefront(o2, Date.parse(o2.offers[0].checkedAt) + 864e5).availability, "ask");
 });
 
+test("единое правило цен: одинаково для сайтов брендов, магазинов, кнопки и ручных; очки — по своим", async () => {
+  const { priceFor } = await import("../lib/pipeline.js");
+  const { mergeConfig } = await import("../lib/pricing.js");
+  const cfg = mergeConfig({ unified: { on: true, markup: 0.10, minAdd: { shoes: 40, clothing: 40, default: 40 } } });
+  for (const kind of ["official", "retailer"]) assert.equal(priceFor({ sourceKind: kind, boutique: 200 }, cfg, null, "shoes").ua, 240);
+  assert.equal(priceFor({ sourceKind: "official", boutique: 200, flatMarkup: 0.2 }, cfg, null, "clothing").ua, 240); // своя наценка товара не действует — правило одно
+  const r = priceFor({ sourceKind: "retailer", boutique: 3000 }, cfg, null, "clothing"); assert.equal(r.ua, 3300); assert.equal(r.eu, 3300); assert.equal(r.dxb, 3300);
+  assert.equal(priceFor({ sourceKind: "official", boutique: 3000 }, cfg, 2900, "clothing").ua, 2900); // закреплённая цена главнее
+  assert.notEqual(priceFor({ sourceKind: "eyewear-supplier", boutique: 330, purchase: 240 }, cfg, null, "eyewear").rule, "единое: +40 € (минимум)");
+  assert.equal(priceFor({ sourceKind: "official", boutique: 3000, region: "DE" }, mergeConfig({}), null, "clothing").ua, 3300); // выключено — как раньше
+});
+
 test("подразделы: обувь, сумки, одежда — по разделу сайта, названию, описанию", async () => {
   const { detectSubcategory } = await import("../lib/normalize.js");
   assert.equal(detectSubcategory("shoes", ["sneakers"], "SL/61 low-top"), "sneakers");
