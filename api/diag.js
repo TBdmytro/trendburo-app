@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   if (req.method === "GET" && /[?&]probe=mockimgs\b/.test(String(req.url || ""))) return probeMockImgs(res);
   if (req.method === "GET" && /[?&]probe=photo\b/.test(String(req.url || ""))) return probePhoto(res);
   if (req.method === "GET" && /[?&]probe=db\b/.test(String(req.url || ""))) return probeDb(res);
+  if (req.method === "GET" && /[?&]probe=pimg\b/.test(String(req.url || ""))) return (async () => { const id = (String(req.url).match(/[?&]id=(product\.manual\.[a-z0-9-]+)/) || [])[1]; const p = id ? await getStore().get(id) : null; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify({ id, images: (p?.images || []).map(i => ({ url: i.url, src: i.sourceUrl, w: i.width, h: i.height })) }, null, 1)); })();
   if (req.method === "GET" && /[?&]probe=img\b/.test(String(req.url || ""))) return probeImg(res, decodeURIComponent((String(req.url).match(/[?&]u=([^&]+)/) || [])[1] || ""));
   if (req.method === "GET" && /[?&]probe=cat\b/.test(String(req.url || ""))) return probeCat(res);
   if (req.method === "GET" && /[?&]probe=sizes\b/.test(String(req.url || ""))) return probeSizes(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "ysl.com");
