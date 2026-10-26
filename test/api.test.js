@@ -191,7 +191,13 @@ test("кнопка «В Trend Büro»: товар одним запросом �
     assert.equal(r.status, 200, JSON.stringify(r.body));
     assert.equal(r.body.copied, 1); assert.equal(r.body.images, 2); assert.equal(r.body.price, 3520);
     const p = await store.get("product.manual.ysl-a0");
-    assert.equal(p.status, "draft"); assert.equal(p.brand, "Saint Laurent");
+    assert.equal(p.status, "incoming"); assert.equal(p.brand, "Saint Laurent"); // «Новые с сайтов» — ещё не в «Товарах»
+    // удалили — кнопка больше не берёт (rejected); в общем списке «Новых» не видно
+    const lst = await call(handler, { query: { a: "products" }, headers: { cookie } });
+    assert.ok(!lst.body.products.some(x => x._id === "product.manual.ysl-a0")); assert.ok(lst.body.incoming >= 1);
+    await call(handler, { method: "POST", query: { a: "productDelete" }, body: { ids: ["product.manual.ysl-a0"] }, headers: { cookie, "x-tb": "1" } });
+    const kn = await call(handler, { query: { a: "knownProducts", prefix: "ysl" }, headers: { cookie } });
+    assert.equal(kn.body.status.A0, "rejected");
     assert.ok(p.images[0].url.startsWith("https://cdn.sanity.io/")); assert.equal(p.images[1].url, item.images[1]); // обложка — первая, как на сайте; не скачалось — ссылка
     const bad = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "evil", item }, headers: { cookie, "x-tb": "1" } });
     assert.equal(bad.status, 400);

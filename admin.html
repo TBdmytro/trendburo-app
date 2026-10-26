@@ -2234,12 +2234,17 @@ const SCR = { queue: [], groups: new Map(), running: false, enabled: null, last:
 // Кнопка «В Trend Büro» (mt.html) на странице магазина или бренда: товары приходят сюда сообщениями из той вкладки, что открыла админку → карточки на проверку
 // категория: сначала раздел, где нажали кнопку (например «handbags»), потом хлебные крошки страницы, потом название, в конце описание;
 // слова — целиком (иначе «coated canvas» попадало в одежду из-за «coat»)
+const MT_CLOTH = /\b(clothing|ready[- ]to[- ]wear|dress(es)?|gowns?|coats?|trench(es)?|parkas?|capes?|jackets?|blazers?|bombers?|blousons?|vests?|gilets?|pants|trousers|jeans|denim|shorts|bermudas?|skirts?|knit(wear)?|sweaters?|jumpers?|cardigans?|pullovers?|hoodies?|sweatshirts?|shirts?|t-shirts?|tees?|tops?|tanks?|camis?|camisoles?|polos?|blouses?|bodysuits?|body|lingerie|bras?|bralettes?|briefs|corsets?|bustiers?|slips?|leggings?|joggers?|tracksuits?|suits?|jumpsuits?|overalls?|swim(wear|suits?)?|bikinis?|kimonos?|ponchos?)\b/i;
 const MT_CATS = [[/\b(bags?|handbags?|totes?|clutch(es)?|backpacks?|pouch(es)?|crossbody|shoulder bag|hobo|cabas|сумк\w*)\b/i, "bags"], [/\b(shoes?|sneakers?|boots?|sandals?|pumps?|loafers?|mules?|slides?|ballerinas?|espadrilles?|heels?|derbies|moccasins?)\b/i, "shoes"],
   [/\b(sunglasses|eyewear|optical|glasses)\b/i, "eyewear"], [/\b(watch(es)?)\b/i, "watches"], [/\b(jewel(le)?ry|necklaces?|earrings?|bracelets?|rings?|brooch(es)?)\b/i, "jewelry"], [/\b(fragrances?|parfums?|perfumes?|beauty)\b/i, "fragrance"],
   [/\b(accessories|belts?|scarf|scarves|wallets?|card ?holders?|small leather goods|hats?|caps?|gloves?|key ?rings?|keychains?)\b/i, "accessories"],
-  [/\b(clothing|ready[- ]to[- ]wear|dress(es)?|coats?|jackets?|pants|trousers|jeans|knitwear|sweaters?|shirts?|t-shirts?|tops?|skirts?|shorts|blazers?|suits?|swimwear)\b/i, "clothing"]];
+  [MT_CLOTH, "clothing"]];
+// категория товара с кнопки: сначала главное слово названия («tank top with ring detail» → «tank top» — одежда, не украшение),
+// потом хлебные крошки и раздел сайта, в конце — описание
 const mtCat = it => {
-  const parts = [...(it.section || []), ...[...(it.crumbs || [])].reverse(), String(it.title || ""), String(it.description || "")].map(x => String(x).toLowerCase()).filter(Boolean);
+  const title = String(it.title || "").toLowerCase(), head = title.split(/\s+(?:in|with|featuring|and|from|for)\s+/)[0];
+  const sec = String(it.section || "").toLowerCase().replace(/[-_]+/g, " ").split("/").reverse();
+  const parts = [head, ...[...(it.crumbs || [])].reverse(), ...sec, title, String(it.description || "")].map(x => String(x).toLowerCase()).filter(Boolean);
   for (const t of parts) for (const [re, c] of MT_CATS) if (re.test(t)) return c;
   return "other";
 };
@@ -2349,7 +2354,7 @@ async function vImport() {
       <div class="bar"><i style="width:${Math.round((MTP.ok + MTP.fail) / Math.max(1, MTP.total) * 100)}%"></i></div>
       <p class="hint" style="margin:0">${left ? `<span class="spin"></span> ещё ${left}. Эту вкладку не закрывайте — работайте в другой вкладке админки, там видно, как добавляются товары.` : MTP.total ? "Готово. Эту вкладку можно закрыть." : "Жду товары с сайта…"}</p>
       ${MTP.fail ? `<div class="note-box warn">${svg("warn")}<div><b>Не сохранилось: ${MTP.fail}</b><br>${fails.slice(0, 8).map(g => esc(g.title + " — " + g.err)).join("<br>")}${fails.length ? `<br><button class="btn sm" data-go="screens" style="margin-top:8px">Исправить и сохранить вручную</button>` : ""}</div></div>` : ""}
-      <div class="row"><button class="btn ghost" data-go="products:${mtSaved[0] ? "brand=" + encodeURIComponent(mtSaved[0].brand) + "," : ""}status=draft">Открыть в «Товарах»</button></div>
+      <div class="row"><button class="btn ghost" data-go="products:${mtSaved[0] ? "brand=" + encodeURIComponent(mtSaved[0].brand) + "," : ""}status=incoming">Открыть «Новые с сайтов»</button></div>
     </div>`;
   $("#main").onclick = e => { const g = e.target.closest("[data-go]"); if (g) go(g.dataset.go); };
 }
@@ -2365,7 +2370,7 @@ async function mtOne(it, origin) {
   const urls = (it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || ""));
   const datas = (it.images || []).map(x => typeof x === "string" ? (x.startsWith("data:image/") ? x : null) : x && x.d).filter(Boolean);
   const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
-  const base = { brand: String(it.brand || ""), title: String(it.title || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u", boutique: eur, sizes: (it.sizes || []).map(String).slice(0, 40), sizeStock: (Array.isArray(it.sizeStock) ? it.sizeStock : []).slice(0, 40).map(x => ({ s: String(x && x.s || "").slice(0, 20), ok: x && x.ok === false ? false : x && x.ok === true ? true : null, ...(x && x.pre ? { pre: true } : {}) })).filter(x => x.s), preorder: !!it.preorder, ask: String(it.ask || it.blocked || ""), color: String(it.color || ""), sku: String(it.sku || ""), url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), markupPct: MT_MARKUP, isNew: !!it.isNew, section: String(it.section || "").slice(0, 200), szDbg: String(it.szDbg || "").slice(0, 900) };
+  const base = { brand: String(it.brand || ""), title: String(it.title || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u", boutique: eur, sizes: (it.sizes || []).map(String).slice(0, 40), sizeStock: (Array.isArray(it.sizeStock) ? it.sizeStock : []).slice(0, 40).map(x => ({ s: String(x && x.s || "").slice(0, 20), ok: x && x.ok === false ? false : x && x.ok === true ? true : null, ...(x && x.pre ? { pre: true } : {}) })).filter(x => x.s), preorder: !!it.preorder, ask: String(it.ask || it.blocked || ""), color: String(it.color || ""), sku: String(it.sku || ""), url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), markupPct: MT_MARKUP, isNew: !!it.isNew, revive: !!it.revive, section: String(it.section || "").slice(0, 200), szDbg: String(it.szDbg || "").slice(0, 900) };
   const fail = why => { const key = "w:" + hk + ":" + (sku || scrKey(it)); SCR.groups.set(key, { key, id: sku ? "product.manual." + hk + "-" + sku : undefined, src: String(it.src || hk), ...base, price: it.price, currency: it.currency || "EUR", currencyKnown: it.currency === "EUR", priceEur: eur, images: urls, photos: urls, crops: [], count: 0, checked: true, sent: (it.images || []).length, err: why }); MTP.last.unshift("✕ " + base.title + ": " + why); return false; };
   if (!sku) return fail("нет артикула");
   if (!eur) return fail("нет цены в € — впишите и сохраните");
@@ -2721,14 +2726,14 @@ async function vTexts() {
 // «Товары» начинаются с брендов: плитки с категориями и витриной; бренд → его товары с кнопками категорий
 const BOARD_CATS = ["bags", "shoes", "clothing", "accessories", "jewelry", "eyewear"];
 async function vBrandBoard() {
-  const { brands, total } = await api("brandBoard");
+  const { brands, total, incoming } = await api("brandBoard");
   // бренды и подразделы выравниваются в фоне, не чаще раза в 30 минут — «Товары» не ждут этого
   try { if (Date.now() - (+localStorage.getItem("tbFixAt") || 0) > 30 * 60e3) { localStorage.setItem("tbFixAt", String(Date.now())); api("fixBrands", { method: "POST", silent: true }).catch(() => {}); } } catch {}
   let q = "", letter = "";
   const ini = n => n.replace(/&/g, " ").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
   const plural = n => n % 10 === 1 && n % 100 !== 11 ? "товар" : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "товара" : "товаров";
   const letters = [...new Set(brands.map(b => b.brand[0].toUpperCase()))].sort();
-  $("#main").innerHTML = `<div class="vh"><h1>Товары</h1><span class="sp"></span><button class="btn sm" data-go="add">${svg("add")}Новый</button></div><p class="vsub" style="margin-bottom:12px">Сначала бренды — сразу видно, что есть и чего нет</p>
+  $("#main").innerHTML = `<div class="vh"><h1>Товары</h1><span class="sp"></span><button class="btn sm" data-go="add">${svg("add")}Новый</button></div><p class="vsub" style="margin-bottom:12px">Сначала бренды — сразу видно, что есть и чего нет</p>${incoming ? `<button class="note-box warn" data-go="products:status=incoming" style="width:100%;text-align:left;cursor:pointer;margin-bottom:12px;border:0"><div style="flex:1"><b>Новые с сайтов брендов: ${incoming}</b><br>Кнопка «В Trend Büro» принесла товары — посмотрите и выберите: в товары, сразу на сайт или не брать</div><span>›</span></button>` : ""}
     <div class="ptabs"><button role="tab" aria-selected="true">Бренды <span class="num">${brands.length}</span></button><button role="tab" aria-selected="false" data-go="products:all">Все товары <span class="num">${total}</span></button></div>
     <input type="search" id="bq" placeholder="Найти бренд…" aria-label="Найти бренд" style="margin-bottom:12px">
     <div class="baz" id="baz"></div><div class="bboard" id="bboard"></div>`;
@@ -2757,7 +2762,7 @@ let SUBC = null;
 async function vProducts2(pre) {
   if (!pre) return vBrandBoard();
   if (!SUBC) api("subcats", { silent: true }).then(r => { SUBC = r.subcats; }).catch(() => {});
-  const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "", pre: "", sec: "" };
+  const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "", pre: "", sec: "" }; let incomingN = 0;
   if (pre) pre.split(",").forEach(kv => { const [k, v] = kv.split("="); if (k in F) F[k] = decodeURIComponent(v || ""); });
   let sel = new Set(), list = [], total = 0, shown = 0, facets = { brands: [], cats: [], sources: [] }, LS = null;
   const srcs = await getSources();
@@ -2801,7 +2806,9 @@ async function vProducts2(pre) {
   };
   const chipSel = (key, label, arr, labf = x => x) => `<span class="fchip ${F[key] ? "on" : ""}">${esc(F[key] ? labf(F[key]) : label)} ${F[key] ? "×" : "▾"}<select data-f="${key}" aria-label="${label}"><option value="">${label}: все</option>${arr.map(x => `<option value="${esc(x.k)}" ${x.k === F[key] ? "selected" : ""}>${esc(labf(x.k))} · ${x.n}</option>`).join("")}</select></span>`;
   const drawFilters = () => {
-    $("#pf").innerHTML = [["", "Все"], ["published", "На витрине"], ["draft", "Скрытые"]].map(([k, v]) => `<button class="fchip ${F.status === k ? "on" : ""}" data-st="${k}">${v}</button>`).join("")
+    // «Новые с сайтов» — то, что принесла кнопка «В Trend Büro»: смотрите и решаете — в товары, сразу на сайт или не брать
+    $("#pf").innerHTML = (incomingN || F.status === "incoming" ? `<button class="fchip ${F.status === "incoming" ? "on" : ""}" data-st="incoming" style="${F.status === "incoming" ? "" : "border-color:#b4582f;color:#b4582f"}">Новые с сайтов · ${incomingN}</button>` : "")
+      + [["", "Все"], ["published", "На витрине"], ["draft", "Скрытые"]].map(([k, v]) => `<button class="fchip ${F.status === k ? "on" : ""}" data-st="${k}">${v}</button>`).join("")
       + `<button class="fchip ${F.avail ? "on" : ""}" data-avail>Можно купить</button><button class="fchip ${F.pre ? "on" : ""}" data-pre>Уточнить наличие</button>`
       + chipSel("source", "Поставщик", facets.sources, sname) + chipSel("brand", "Бренд", facets.brands) + chipSel("cat", "Категория", facets.cats, k => CATS[k] || k);
   };
@@ -2825,8 +2832,8 @@ async function vProducts2(pre) {
   };
   const bar = () => {
     const n = sel.size;
-    $("#pbar").innerHTML = n ? `<span>Выбрано ${n}${n < total ? ` из ${total}` : ""}</span>${n < total ? `<button class="g" data-selall>Выбрать все ${total}</button>` : ""}<button class="w" data-bulk="published">На сайт</button><button class="g" data-bulk="draft">Скрыть</button><label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Категория<select data-bulkcat style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(CATS).map(([k, v]) => `<option value="${k}">${esc(v.split(":")[0])}</option>`).join("")}</select></label>${SUBC ? `<label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Подраздел<select data-bulksub style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(SUBC).map(([c, l]) => `<optgroup label="${esc((CATS[c] || c).split(":")[0])}">${l.map(x => `<option value="${x.k}">${esc(x.n)}</option>`).join("")}</optgroup>`).join("")}</select></label>` : ""}<button class="g" data-bulk="del">Удалить</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
-      : `<span>Найдено ${total}</span><button class="g" data-selall>Выбрать все</button><button class="w" data-all="on">Все на сайт</button><button class="g" data-all="off">Скрыть все</button>`;
+    $("#pbar").innerHTML = n ? `<span>Выбрано ${n}${n < total ? ` из ${total}` : ""}</span>${n < total ? `<button class="g" data-selall>Выбрать все ${total}</button>` : ""}<button class="w" data-bulk="published">На сайт</button><button class="g" data-bulk="draft">${F.status === "incoming" ? "В товары (скрыто)" : "Скрыть"}</button><label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Категория<select data-bulkcat style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(CATS).map(([k, v]) => `<option value="${k}">${esc(v.split(":")[0])}</option>`).join("")}</select></label>${SUBC ? `<label class="g" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">Подраздел<select data-bulksub style="background:transparent;color:inherit;border:0;font:inherit"><option value="">…</option>${Object.entries(SUBC).map(([c, l]) => `<optgroup label="${esc((CATS[c] || c).split(":")[0])}">${l.map(x => `<option value="${x.k}">${esc(x.n)}</option>`).join("")}</optgroup>`).join("")}</select></label>` : ""}<button class="g" data-bulk="del">${F.status === "incoming" ? "Не брать" : "Удалить"}</button><button class="g" data-bulk="clr" aria-label="Снять выбор">✕</button>`
+      : `<span>${F.status === "incoming" ? "Новых с сайтов" : "Найдено"} ${total}</span><button class="g" data-selall>Выбрать все</button><button class="w" data-all="on">Все на сайт</button><button class="g" data-all="off">${F.status === "incoming" ? "Все в товары" : "Скрыть все"}</button>`;
     $("#pbar").hidden = !total;
     $("#plist").classList.toggle("picking", n > 0);
   };
@@ -2846,7 +2853,7 @@ async function vProducts2(pre) {
   const tot = () => { $("#ptot").textContent = `${total} ${plural(total, ["товар", "товара", "товаров"])} · на витрине ${shown}`; };
   const load = async append => {
     const r = await api("products", { query: q({ offset: append ? list.length : 0 }) });
-    list = append ? list.concat(r.products) : r.products; total = r.total; shown = r.shown; facets = r.facets;
+    list = append ? list.concat(r.products) : r.products; total = r.total; shown = r.shown; facets = r.facets; incomingN = r.incoming || 0;
     tabs = r.tabs || []; baseTotal = r.baseTotal ?? r.total; if (F.sec && !tabs.some(t => t.h === F.sec)) F.sec = "";
     tot(); drawTabs(); drawCats(); drawFilters(); draw();
   };
@@ -2923,9 +2930,10 @@ async function vProducts2(pre) {
     const all = e.target.closest("[data-all]");
     if (all) {
       const on = all.dataset.all === "on"; const { ids } = await api("productIds", { query: q() }); if (!ids.length) return toast("Нет товаров по фильтру");
-      if (!(await confirmBox(`${on ? "Показать" : "Скрыть"} ${ids.length} ${plural(ids.length, ["товар", "товара", "товаров"])}?`, on ? "Все найденные товары появятся на витрине через ~10 секунд. Товары без цены останутся скрытыми." : "Все найденные товары исчезнут с витрины. Вернуть можно в любой момент.", on ? "Показать" : "Скрыть"))) return;
+      const inc = F.status === "incoming";
+      if (!(await confirmBox(`${on ? "Показать" : inc ? "Перенести в «Товары»" : "Скрыть"} ${ids.length} ${plural(ids.length, ["товар", "товара", "товаров"])}?`, on ? "Все найденные товары появятся на витрине через ~10 секунд. Товары без цены останутся скрытыми." : inc ? "Товары появятся в «Товарах» скрытыми — на витрину выложите, когда будете готовы." : "Все найденные товары исчезнут с витрины. Вернуть можно в любой момент.", on ? "Показать" : inc ? "Перенести" : "Скрыть"))) return;
       for (let i = 0; i < ids.length; i += 1000) { if (ids.length > 1000) toast(`${on ? "Выкладываем" : "Скрываем"}: ${Math.min(i + 1000, ids.length)} из ${ids.length}`); await api("status", { method: "POST", body: { ids: ids.slice(i, i + 1000), status: on ? "published" : "draft" } }); }
-      toast((on ? "На витрине: " : "Скрыто: ") + ids.length); return load();
+      toast((on ? "На витрине: " : inc ? "В «Товарах»: " : "Скрыто: ") + ids.length); return load();
     }
     if (e.target.closest("[data-selall]")) {
       const { ids } = await api("productIds", { query: q() }); ids.forEach(id => sel.add(id));
@@ -2939,7 +2947,7 @@ async function vProducts2(pre) {
       // большие выборки — частями, чтобы каждый запрос укладывался по времени
       const chunks = []; for (let i = 0; i < ids.length; i += 1000) chunks.push(ids.slice(i, i + 1000));
       if (k !== "del") { for (let i = 0; i < chunks.length; i++) { if (chunks.length > 1) toast(`${k === "published" ? "Выкладываем" : "Скрываем"}: ${Math.min((i + 1) * 1000, ids.length)} из ${ids.length}`); await api("status", { method: "POST", body: { ids: chunks[i], status: k } }); } toast((k === "published" ? "На сайте: " : "Скрыто: ") + ids.length); sel.clear(); return load(); }
-      if (k === "del") { if (!(await confirmBox(`Удалить ${ids.length} ${plural(ids.length, ["товар", "товара", "товаров"])}?`, "Товары исчезнут из админки и с витрины. Товары поставщика вернутся при следующем обновлении каталога — чтобы не показывать, лучше «Скрыть»."))) return; for (let i = 0; i < ids.length; i += 1000) await api("productDelete", { method: "POST", body: { ids: ids.slice(i, i + 1000) } }); toast("Удалено: " + ids.length); }
+      if (k === "del") { if (!(await confirmBox(F.status === "incoming" ? `Не брать ${ids.length} ${plural(ids.length, ["товар", "товара", "товаров"])}?` : `Удалить ${ids.length} ${plural(ids.length, ["товар", "товара", "товаров"])}?`, F.status === "incoming" ? "Кнопка «В Trend Büro» больше не будет их приносить. Передумаете — откройте товар на сайте бренда и нажмите кнопку на его странице." : "Товары исчезнут из админки и с витрины. Кнопка «В Trend Büro» их больше не вернёт (вернуть — открыть товар на сайте бренда и нажать кнопку на его странице)."))) return; for (let i = 0; i < ids.length; i += 1000) await api("productDelete", { method: "POST", body: { ids: ids.slice(i, i + 1000) } }); toast("Удалено: " + ids.length); }
       else { await api("status", { method: "POST", body: { ids, status: k } }); toast((k === "published" ? "На витрине: " : "Скрыто: ") + ids.length); }
       sel.clear(); return load();
     }

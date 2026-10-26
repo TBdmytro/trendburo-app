@@ -4,7 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
  * Все действия, кроме входа, требуют авторизации; изменяющие — ещё и заголовок X-TB (защита от CSRF).
  */
 import { kickWorker } from "../lib/chain.js";
-import { loadCatalogPage, dbStats, rememberDeleted, fixBrands, askNoSizes } from "../lib/catalogload.js";
+import { loadCatalogPage, dbStats, rememberDeleted, deletedSet, fixBrands, askNoSizes } from "../lib/catalogload.js";
 import { brandKey } from "../lib/normalize.js";
 import { startLoad, stopLoad, loadState, kickCatalog, STALE_MS } from "../lib/catalogrun.js";
 import { repriceAll, ensurePrices, PRICE_VER } from "../lib/reprice.js";
@@ -251,7 +251,7 @@ export default async function handler(req, res) {
         // все товары по текущему фильтру — для «Показать все найденные»
         const all = await allProducts(store);
         const Q = req.query, q = String(Q.q || "").toLowerCase();
-        const ids = all.filter(p => (!Q.sec || (p.sections || []).includes(Q.sec)) && (!Q.avail || (p.offers || []).some(o => o.onlineOrder)) && (!Q.noavail || !(p.offers || []).some(o => o.onlineOrder)) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (!Q.status || p.status === Q.status)
+        const ids = all.filter(p => (!Q.sec || (p.sections || []).includes(Q.sec)) && (!Q.avail || (p.offers || []).some(o => o.onlineOrder)) && (!Q.noavail || !(p.offers || []).some(o => o.onlineOrder)) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (Q.status ? p.status === Q.status : p.status !== "incoming")
           && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source)) && (!Q.brand || p.brand === Q.brand) && (!Q.cat || (p.overrides?.category || p.category) === Q.cat)).map(p => p._id);
         return send(res, 200, { ids });
       }
@@ -263,12 +263,13 @@ export default async function handler(req, res) {
         const all = await allProducts(store);
         // fresh — проверены кнопкой за последние 12 часов: при повторном прогоне их не открываем заново (быстрее)
         const status = {}, fresh = {}, since = Date.now() - 12 * 36e5;
+        for (const id of await deletedSet(store)) if (id.startsWith(px)) status[id.slice(px.length).toUpperCase()] = "rejected"; // вы удалили — кнопка не вернёт
         for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; if (ck && Date.parse(ck) > since) fresh[k] = 1; }
         return send(res, 200, { status, fresh });
       }
       case "brandBoard": {
-        // бренды, которые у нас есть: сколько товаров, что на витрине, разбивка по категориям, 4 обложки
-        const all = await allProducts(store);
+        // бренды, которые у нас есть: сколько товаров, что на витрине, разбивка по категориям, 4 обложки («Новые с сайтов» — отдельно)
+        const every = await allProducts(store), all = every.filter(p => p.status !== "incoming"), incoming = every.length - all.length;
         const m = new Map();
         for (const p of all) {
           const name = String(p.brand || "").trim(); if (!name) continue;
@@ -280,7 +281,7 @@ export default async function handler(req, res) {
         }
         for (const p of all) { const b = m.get(brandKey(p.brand)); const u = (p.images || [])[0]?.url; if (b && u && b.covers.length < 4 && !b.covers.includes(u)) b.covers.push(u); }
         const brands = [...m.values()].sort((a, b) => b.n - a.n);
-        return send(res, 200, { brands, total: all.length });
+        return send(res, 200, { brands, total: all.length, incoming });
       }
       case "products": {
         const all = await allProducts(store);
@@ -288,7 +289,7 @@ export default async function handler(req, res) {
         const cat = p => p.overrides?.category || p.category;
         // фильтры применяются по очереди; списки для выпадающих меню строятся по остальным фильтрам
         const base = all.filter(p => (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q))
-          && (!Q.status || p.status === Q.status) && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source))
+          && (Q.status ? p.status === Q.status : p.status !== "incoming") && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source))
           && (!Q.avail || (p.offers || []).some(o => o.onlineOrder))
           && (!Q.pre || !!p.hasPre)
           // «В наличии»: вещь уже выкуплена и лежит у нас (ua — Украина, eu — Европа, any — любая)
@@ -303,7 +304,8 @@ export default async function handler(req, res) {
         const offset = Math.max(0, Number(Q.offset) || 0), limit = Math.min(300, Math.max(1, Number(Q.limit) || 120));
         const page = list.slice(offset, offset + limit);
         const det = new Map((await store.list("product", { _id: page.map(p => p._id) }, { limit: 400, fields: "_id, variants[]{_key, size}, offers[]{availability, _av}" })).map(d => [d._id, d]));
-        return send(res, 200, { total: list.length, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
+        const incoming = all.filter(p => p.status === "incoming" && (!Q.brand || p.brand === Q.brand)).length;
+        return send(res, 200, { total: list.length, incoming, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId) },
           shown: list.filter(p => p.status === "published").length,
           products: page.map(p => ({ _id: p._id, stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null })) });
@@ -422,13 +424,14 @@ export default async function handler(req, res) {
         const { fetchBinary } = await import("../lib/images.js");
         const urls = [...new Set((Array.isArray(it.images) ? it.images : []).map(String).filter(u => /^https:\/\//.test(u)))].slice(0, 8);
         let copied = 0;
+        if (it.revive) { const dd = await store.get("settings.deleted"); if (dd && (dd.ids || []).includes(id)) { dd.ids = dd.ids.filter(x => x !== id); delete dd._rev; delete dd._createdAt; delete dd._updatedAt; await store.put(dd); } } // открыли товар сами и нажали кнопку — снова берём
         const images = (await Promise.all(urls.map(async u => {
           try { const b = await Promise.race([fetchBinary(u, [new URL(u).hostname]), new Promise((_, no) => setTimeout(() => no(new Error("долго")), 20000))]);
             const up = await store.uploadImage(b.buf, { filename: "web-" + Date.now() + "." + (b.type.split("/")[1] || "jpg"), contentType: b.type, sourceUrl: u }); copied++; return up.url; }
           catch (e) { console.log("IMGURL fail " + JSON.stringify({ host: new URL(u).hostname, why: String(e.message).slice(0, 120) })); return u; } // не скачалось — ставим ссылку магазина
         }))).filter(Boolean);
         if (!images.length) return send(res, 400, { error: "Нет фото" });
-        const product = await saveManualProduct(store, { ...it, id, images, availability: "online", status: "draft", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
+        const product = await saveManualProduct(store, { ...it, id, images, availability: "online", status: "incoming", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
         return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null });
       }
       case "pricePreview": {

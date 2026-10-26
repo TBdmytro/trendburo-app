@@ -148,6 +148,26 @@ test("единое правило цен: одинаково для сайтов
   assert.equal(priceFor({ sourceKind: "official", boutique: 3000, region: "DE" }, mergeConfig({}), null, "clothing").ua, 3300); // выключено — как раньше
 });
 
+test("очки: +10% округляется до 5 € (410 → +40, 420 → +40, 430 → +45), минимум 40 €", async () => {
+  const { unifiedPrice } = await import("../lib/pricing.js");
+  const cfg = { unified: { on: true, markup: 0.10, minAdd: { default: 40, shoes: 40, clothing: 40 } } };
+  assert.equal(unifiedPrice(410, "eyewear", cfg).final, 450);
+  assert.equal(unifiedPrice(420, "eyewear", cfg).final, 460);
+  assert.equal(unifiedPrice(430, "eyewear", cfg).final, 475);
+  assert.equal(unifiedPrice(300, "eyewear", cfg).final, 340);
+});
+
+test("одежда в «Украшениях»/«Другом» с кнопки: по главному слову названия → «Одежда»; кольцо остаётся украшением", async () => {
+  const s = new MemoryStore();
+  await s.put({ _id: "product.manual.ysl-b1", _type: "product", brand: "Saint Laurent", title: "plunge bodysuit in silicone-coated lace", category: "jewelry" });
+  await s.put({ _id: "product.manual.ysl-b2", _type: "product", brand: "Saint Laurent", title: "CASSANDRE ring in metal", category: "jewelry" });
+  await s.put({ _id: "product.manual.ysl-b3", _type: "product", brand: "Saint Laurent", title: "tank top with ring detail", category: "other", overrides: { category: "other" } });
+  await fixBrands(s);
+  assert.equal((await s.get("product.manual.ysl-b1")).category, "clothing");
+  assert.equal((await s.get("product.manual.ysl-b2")).category, "jewelry");
+  assert.equal((await s.get("product.manual.ysl-b3")).category, "other"); // выставлено вручную — не трогаем
+});
+
 test("подразделы: обувь, сумки, одежда — по разделу сайта, названию, описанию", async () => {
   const { detectSubcategory } = await import("../lib/normalize.js");
   assert.equal(detectSubcategory("shoes", ["sneakers"], "SL/61 low-top"), "sneakers");
