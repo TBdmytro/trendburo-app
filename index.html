@@ -1453,7 +1453,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
         <div id="sres" hidden></div>
         <div id="homeBody">
           <div class="gb2"><button class="press" data-act="gopen" data-g="w">Для неё<i class="chev"></i></button><button class="press" data-act="gopen" data-g="m">Для него<i class="chev"></i></button></div>
-          <div class="sec" id="nwSec" hidden><div class="sech"><h2>Новое</h2><button class="more" data-act="allnew">Все бренды</button></div>
+          <div class="sec" id="nwSec" hidden><div class="sech"><h2>Новое</h2><button class="more" data-act="allbrands">Все бренды</button></div>
             <div class="nrings" id="nRings"></div>
             <div class="nsto"><div class="nfr" id="nFr"><div class="nbars" id="nBars"></div><div class="nfh"><span id="nB"></span><span id="nN"></span></div><div id="nIms"></div><div class="ncap" id="nCap"></div><div class="nend" id="nEnd"></div></div><div class="nside" id="nSide"></div></div>
             <button class="nall press" id="nAll"></button></div>
@@ -3247,7 +3247,7 @@ let stylistRemote=false;
 
 /* ===== Навигация ===== */
 const TABS=["feed","catalog","optix","services","stylist"];
-function tab(t){if(!TABS.includes(t))t="feed";if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
+function tab(t){if(!TABS.includes(t))t="feed";if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
   $$(".tab").forEach(s=>s.classList.toggle("on",s.id==="t-"+t));
   const hl=t;
   $$("#tabbar button").forEach(b=>b.dataset.tab===hl?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
@@ -3517,7 +3517,7 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
   window.hideSplash&&hideSplash();
   // свежий каталог после быстрого старта: применяем, только если он отличается и экран свободен (не мешаем листать)
   if(local){let touched=false;const mark=()=>{touched=true};["touchstart","pointerdown","wheel","keydown"].forEach(ev=>addEventListener(ev,mark,{once:true,passive:true,capture:true}));
-    const n=await net;if(n&&n.ok&&!touched&&catSig(n.j.products)!==catSig(local.products)){catApply(n.j,true);catRefreshUI()}}
+    const n=await net;if(n&&n.ok&&catSig(n.j.products)!==catSig(local.products)){if(!touched){catApply(n.j,true);catRefreshUI()}else window.CATPEND=n.j}}
   // заранее разобрать фото для «Это или это» (в фоне, когда приложение уже открыто)
   setTimeout(()=>{try{const d=AUTO.find(r=>r.k==="duel");d&&d.warm&&d.warm()}catch(e){}},2500);
 })();
