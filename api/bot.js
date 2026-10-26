@@ -9,7 +9,8 @@ import { createHash, timingSafeEqual } from "node:crypto";
 
 export const botToken = () => process.env.TELEGRAM_BOT_TOKEN || "";
 export const hookSecret = (t = botToken()) => createHash("sha256").update("tbhook|" + t).digest("hex").slice(0, 40);
-export const publicUrl = req => (process.env.PUBLIC_URL || "https://" + (req.headers["x-forwarded-host"] || req.headers.host || "")).replace(/\/$/, "");
+// основной адрес сайта: ночной запуск приходит на служебный адрес сборки, а он закрыт защитой Vercel — шаги загрузки туда не доходят
+export const publicUrl = req => (process.env.PUBLIC_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? "https://" + process.env.VERCEL_PROJECT_PRODUCTION_URL : "") || "https://" + (req.headers["x-forwarded-host"] || req.headers.host || "")).replace(/\/$/, "");
 
 export async function tg(method, body, { token = botToken(), fetchImpl = fetch } = {}) {
   if (!token) throw new Error("Не задан TELEGRAM_BOT_TOKEN");

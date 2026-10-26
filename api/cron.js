@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   // ночной запуск: загрузки каталога, у которых оборвалась цепочка, продолжаем
   if (!qp.get("chain")) {
     for (const s of await store.list("sourceSettings", {}, { limit: 500, fields: "sourceId, load" }).catch(() => [])) {
-      if (s.load?.status === "running" && Date.now() - Date.parse(s.load.updatedAt || 0) > STALE_MS) await kickCatalog(publicUrl(req), s.sourceId, s.load.runId, 1);
+      if (s.load?.status === "running" && Date.now() - Date.parse(s.load.updatedAt || 0) > STALE_MS) { const L = await startLoad(store, s.sourceId, { resume: true }).catch(() => null); if (L) await kickCatalog(publicUrl(req), s.sourceId, L.runId, 1); }
     }
   }
   const step = Math.max(0, Math.min(CHAIN_MAX + 1, Number(req.query?.chain || new URL(req.url, "http://x").searchParams.get("chain")) || 0));
