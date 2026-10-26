@@ -13,7 +13,8 @@ async function catalogBody(compact) {
   if (m && m.wait) return m.wait;
   const wait = (async () => {
     const store = getStore();
-    const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 5000,
+    // без потолка в 5000: товаров на витрине стало больше — новые бренды (Saint Laurent) не попадали в каталог
+    const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 30000,
       fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos" });
     const now = Date.now();
     const products = list.map(p => toStorefront(p, now, { compact })).filter(Boolean);

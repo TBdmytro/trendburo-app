@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   if (req.method === "GET" && /[?&]probe=mockimgs\b/.test(String(req.url || ""))) return probeMockImgs(res);
   if (req.method === "GET" && /[?&]probe=photo\b/.test(String(req.url || ""))) return probePhoto(res);
   if (req.method === "GET" && /[?&]probe=db\b/.test(String(req.url || ""))) return probeDb(res);
+  if (req.method === "GET" && /[?&]probe=cat\b/.test(String(req.url || ""))) return probeCat(res);
   if (req.method === "GET" && /[?&]probe=sizes\b/.test(String(req.url || ""))) return probeSizes(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "ysl.com");
   if (req.method === "GET" && /[?&]probe=ysl\b/.test(String(req.url || ""))) return probeYsl(res);
   if (req.method === "GET" && /[?&]probe=count\b/.test(String(req.url || ""))) return probeCount(res, (String(req.url).match(/[?&]host=([a-z0-9.-]+)/) || [])[1] || "");
@@ -189,5 +190,16 @@ async function probeSizes(res, host) {
     } catch (e) { out.pages.push({ url: p.sourceUrl, error: String(e && e.message || e).slice(0, 160) }); }
   }
   console.log("PROBE sizes " + JSON.stringify(out).slice(0, 6000));
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
+}
+
+// витрина: сколько товаров опубликовано и сколько реально попадает в каталог, по брендам (только числа)
+async function probeCat(res) {
+  const store = await getStore(); const out = {};
+  const { toStorefront } = await import("../lib/catalog.js");
+  const list = await store.list("product", { status: "published" }, { limit: 30000, fields: "_id, brand, title, sourceTitle, category, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos" });
+  const now = Date.now(), by = {}, shown = {}, why = {};
+  for (const p of list) { const b = p.brand || "?"; by[b] = (by[b] || 0) + 1; const sf = toStorefront(p, now, { compact: true }); if (sf) shown[b] = (shown[b] || 0) + 1; else { const r = !p.pricing?.ua ? "no-price" : !(p.images || []).length ? "no-images" : p.overrides?.hidden ? "hidden" : "other"; why[r] = (why[r] || 0) + 1; } }
+  out.published = list.length; out.noPublishedAt = list.filter(p => !p.publishedAt).length; out.brands = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 25).map(([b, n]) => [b, n, shown[b] || 0]); out.notShown = why;
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }
