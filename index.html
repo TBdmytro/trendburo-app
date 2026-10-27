@@ -25,39 +25,37 @@ html.pvtop .tglogo i::before{background:conic-gradient(from 0deg,rgba(255,255,25
 .tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);will-change:transform;animation:tgspin 6s linear infinite}
 @keyframes tgspin{to{transform:rotate(360deg)}}
 html.nologo .tglogo{opacity:0}
-.splash{position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;cursor:pointer;overflow:hidden}
-.splash::before{content:"";position:absolute;width:150vmax;height:150vmax;border-radius:50%;background:radial-gradient(circle,rgba(31,33,37,.05) 0,rgba(31,33,37,0) 45%);animation:spglow 2.6s ease-out both}
-.sp-logo{position:relative;width:96px;height:96px;border-radius:50%;background:linear-gradient(160deg,#3a3d43,#1f2125 60%,#17181b);color:#fff;display:grid;place-items:center;box-shadow:0 18px 40px rgba(31,33,37,.22);animation:sppop .9s cubic-bezier(.34,1.56,.64,1) both}
-.sp-logo b{font:400 31px/1 "Prata",Georgia,serif;letter-spacing:.02em;display:block;clip-path:inset(100% 0 0 0);animation:spup .7s .35s cubic-bezier(.22,1,.36,1) forwards}
-.sp-logo svg{position:absolute;inset:-14px;width:124px;height:124px;transform:rotate(-90deg);overflow:visible}
-.sp-logo .r1{fill:none;stroke:#1f2125;stroke-width:1.2;stroke-dasharray:327;stroke-dashoffset:327;animation:spring 1s .3s cubic-bezier(.65,0,.35,1) forwards,spfade .5s 1.35s forwards}
-.sp-logo .r2{fill:none;stroke:#1f2125;stroke-width:2;stroke-linecap:round;stroke-dasharray:70 93.5;opacity:0;transform-origin:62px 62px;animation:spin2 1.6s 1.2s linear infinite,spin2in .4s 1.2s forwards}
-.sp-word{display:flex;font:600 23px/1 "Onest",system-ui,sans-serif;letter-spacing:-.01em;color:#1f2125}
-.sp-word i{font-style:normal;display:inline-block;opacity:0;transform:translateY(12px);filter:blur(5px);animation:spl .6s cubic-bezier(.22,1,.36,1) forwards;animation-delay:calc(.55s + var(--k) * 45ms)}
-.sp-sub{font:500 10.5px/1 "Onest",system-ui,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:#8a8d93;opacity:0;animation:spf .6s 1.1s forwards}
-.sp-bar{position:absolute;bottom:calc(var(--sb,0px) + 56px);width:96px;height:1.5px;border-radius:1px;background:rgba(31,33,37,.1);overflow:hidden}
-.sp-bar i{position:absolute;inset:0;background:#1f2125;transform:scaleX(0);transform-origin:left;animation:spbar var(--spd,2.4s) cubic-bezier(.4,0,.2,1) forwards}
-.splash.quick .sp-logo,.splash.quick .sp-logo b,.splash.quick .sp-word i,.splash.quick .sp-sub{animation-duration:.45s;animation-delay:0s}
-/* кольцо логотипа крутится сразу с первого кадра (при коротком повторном входе оно раньше не успевало начать) */
-.sp-logo .r2{animation:spin2 1.2s linear infinite,spin2in .3s .15s forwards}
-.splash.quick .sp-logo .r1{animation:spring .35s cubic-bezier(.65,0,.35,1) forwards,spfade .3s .35s forwards}
-.splash.quick .sp-logo .r2{animation:spin2 1.1s linear infinite,spin2in .2s forwards}
-.splash.out{animation:spout .6s cubic-bezier(.7,0,.2,1) forwards}
-.splash.out .sp-logo{animation:spshrink .6s cubic-bezier(.7,0,.2,1) forwards}
-.splash.out .sp-word,.splash.out .sp-sub,.splash.out .sp-bar{transition:opacity .25s,transform .4s;opacity:0;transform:translateY(-8px)}
+.splash{position:fixed;inset:0;z-index:500;background:radial-gradient(120% 90% at 30% 15%,#45484e 0%,#26282c 52%,#141517 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;overflow:hidden;color:#fff}
+.splash::before{content:"";position:absolute;width:140vmax;height:140vmax;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.07) 0,rgba(255,255,255,0) 40%);animation:spglow 2.8s ease-out both}
+.sp-logo{position:relative;width:132px;height:132px;display:grid;place-items:center;animation:sppop 1s cubic-bezier(.22,1,.36,1) both}
+.sp-logo b{font:400 52px/1 "Prata",Georgia,serif;letter-spacing:.02em;display:block;clip-path:inset(100% 0 0 0);transform:translateY(10px);animation:spup .9s .45s cubic-bezier(.22,1,.36,1) forwards}
+.sp-logo svg{position:absolute;inset:-20px;width:172px;height:172px;transform:rotate(-90deg);overflow:visible}
+.sp-logo .r1{fill:none;stroke:rgba(255,255,255,.55);stroke-width:1;stroke-dasharray:440;stroke-dashoffset:440;animation:spring 1.3s .2s cubic-bezier(.65,0,.35,1) forwards}
+.sp-logo .r0{fill:none;stroke:rgba(255,255,255,.12);stroke-width:1;opacity:0;animation:spf .8s .9s forwards}
+.sp-logo .r2{fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:60 380;opacity:0;transform-origin:86px 86px;animation:spin2 1.6s 1.3s linear infinite,spin2in .4s 1.3s forwards}
+.sp-word{display:flex;margin-top:38px;font:400 30px/1 "Prata",Georgia,serif;letter-spacing:.01em;color:#fff}
+.sp-word i{font-style:normal;display:inline-block;opacity:0;transform:translateY(14px);animation:spl .8s cubic-bezier(.22,1,.36,1) forwards;animation-delay:calc(.8s + var(--k) * 55ms)}
+.sp-sub{margin-top:16px;font:500 10.5px/1 "Onest",system-ui,sans-serif;letter-spacing:.34em;text-transform:uppercase;color:rgba(255,255,255,.5);opacity:0;animation:spf .8s 1.5s forwards}
+.sp-bar{position:absolute;bottom:calc(var(--sb,0px) + 56px);width:110px;height:1.5px;border-radius:1px;background:rgba(255,255,255,.14);overflow:hidden}
+.sp-bar i{position:absolute;inset:0;background:#fff;transform:scaleX(0);transform-origin:left;animation:spbar var(--spd,2.4s) cubic-bezier(.4,0,.2,1) forwards}
+.splash.quick .sp-logo,.splash.quick .sp-logo b,.splash.quick .sp-word i,.splash.quick .sp-sub,.splash.quick .sp-logo .r0{animation-duration:.6s;animation-delay:calc(var(--k,0) * 30ms)}
+.splash.quick .sp-logo .r1{animation:spring .6s cubic-bezier(.65,0,.35,1) forwards}
+.splash.quick .sp-logo .r2{animation:spin2 1.4s linear infinite,spin2in .3s .3s forwards}
+.splash.out{animation:spout .7s cubic-bezier(.7,0,.2,1) forwards}
+.splash.out .sp-logo{animation:spshrink .7s cubic-bezier(.7,0,.2,1) forwards}
+.splash.out .sp-word,.splash.out .sp-sub,.splash.out .sp-bar{transition:opacity .3s,transform .45s;opacity:0;transform:translateY(-10px)}
 html.appin #app{animation:appin .7s cubic-bezier(.22,1,.36,1) both}
-@keyframes sppop{from{transform:scale(.3) rotate(-25deg);opacity:0}to{transform:none;opacity:1}}
-@keyframes spup{to{clip-path:inset(0 0 0 0)}}
+@keyframes sppop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes spup{to{clip-path:inset(0 0 0 0);transform:none}}
 @keyframes spring{to{stroke-dashoffset:0}}
-@keyframes spfade{to{opacity:.12}}
 @keyframes spin2{to{transform:rotate(360deg)}}
 @keyframes spin2in{to{opacity:1}}
-@keyframes spl{to{opacity:1;transform:none;filter:none}}
+@keyframes spl{to{opacity:1;transform:none}}
 @keyframes spf{to{opacity:1}}
 @keyframes spbar{to{transform:scaleX(1)}}
 @keyframes spglow{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
-@keyframes spout{0%{opacity:1}60%{opacity:1}to{opacity:0;visibility:hidden}}
-@keyframes spshrink{to{transform:translateY(-34vh) scale(.32);opacity:0}}
+@keyframes spout{0%{opacity:1}55%{opacity:1}to{opacity:0;visibility:hidden}}
+@keyframes spshrink{to{transform:scale(1.12);opacity:0}}
 @keyframes appin{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.splash{display:none}}
 body{margin:0}img{max-width:100%}/* ===== Наполнение из админки ===== */
@@ -1440,7 +1438,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
   var last=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-last<300&&!ok(e.target)&&!(e.target.closest&&e.target.closest("input,textarea,select,button,a,[role=button],label")))e.preventDefault();last=n},{passive:false});
 })();</script>
 
-<div id="splash" class="splash" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 124 124"><circle class="r1" cx="62" cy="62" r="52"/><circle class="r2" cx="62" cy="62" r="52"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Байер-сервис</div><div class="sp-bar"><i></i></div></div>
+<div id="splash" class="splash" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 172 172"><circle class="r0" cx="86" cy="86" r="80"/><circle class="r1" cx="86" cy="86" r="70"/><circle class="r2" cx="86" cy="86" r="70"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Personal shopping · Europe</div><div class="sp-bar"><i></i></div></div>
 <div class="tglogo" aria-hidden="true"><i>TB</i></div>
 <script>document.documentElement.classList.add("nologo")</script>
 <script>window.__spKey="tb_sp";
@@ -1450,22 +1448,22 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
     R.style.setProperty("--tgst",((s.top||0)+(c.top||0))+"px");R.style.setProperty("--tgsb",((s.bottom||0)+(c.bottom||0))+"px");
     R.style.setProperty("--tgs",(s.top||0)+"px");R.style.setProperty("--tgc",(c.top||0)+"px");R.classList.toggle("fs",!!tg.isFullscreen&&(c.top||0)>0)}
   ["safeAreaChanged","contentSafeAreaChanged","fullscreenChanged","viewportChanged"].forEach(function(e){try{tg.onEvent(e,ins)}catch(x){}});
-  try{tg.ready();tg.expand();if(tg.disableVerticalSwipes)tg.disableVerticalSwipes();if(tg.setHeaderColor)tg.setHeaderColor("#ffffff");if(tg.setBackgroundColor)tg.setBackgroundColor("#ffffff");if(tg.setBottomBarColor)tg.setBottomBarColor("#ffffff")}catch(x){}
+  try{tg.ready();tg.expand();if(tg.disableVerticalSwipes)tg.disableVerticalSwipes();if(tg.setHeaderColor)tg.setHeaderColor(document.getElementById("splash")?"#2c2e33":"#ffffff");if(tg.setBackgroundColor)tg.setBackgroundColor("#ffffff");if(tg.setBottomBarColor)tg.setBottomBarColor("#ffffff")}catch(x){}
   ins();
   var mob=/^(android|ios)$/.test(tg.platform||"");
   if(mob&&tg.requestFullscreen&&tg.isVersionAtLeast&&tg.isVersionAtLeast("8.0")&&!tg.isFullscreen){try{tg.requestFullscreen()}catch(x){}}
   setTimeout(ins,300);setTimeout(ins,1200);
 })();
-/* Заставка: при первом открытии ~1,6 с (пока грузится каталог), при повторном за сессию — 0,8 с.
+/* Заставка: при первом открытии ~2,4 с, при повторном — 1,4 с.
    Уходит не раньше минимума и не позже 6 с; по тапу — сразу. Потом приложение плавно проявляется. */
 window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s.dataset.h)return;s.dataset.h=1;
   var w=Math.max(0,(min==null?(window.__spMin||1600):min)-(performance.now()-(window.__sp0||0)));
-  setTimeout(function(){s.classList.add("out");var R=document.documentElement;setTimeout(function(){R.classList.add("appin")},180);
+  setTimeout(function(){s.classList.add("out");try{var T=window.Telegram&&Telegram.WebApp;T&&T.setHeaderColor&&T.setHeaderColor("#ffffff")}catch(x){}var R=document.documentElement;setTimeout(function(){R.classList.add("appin")},180);
     setTimeout(function(){s.remove();setTimeout(function(){R.classList.remove("appin")},700)},620)},w)};
 (function(){var s=document.getElementById("splash");if(!s)return;window.__sp0=performance.now();var seen=false;
   // заставка: полная — только при самом первом входе, дальше короткая (Telegram каждый раз открывает приложение заново)
   try{seen=!!localStorage.getItem(window.__spKey||"tb_sp");localStorage.setItem(window.__spKey||"tb_sp","1")}catch(x){}
-  window.__spMin=seen?450:1200;if(seen)s.classList.add("quick");s.style.setProperty("--spd",(window.__spMin-100)+"ms");
+  window.__spMin=seen?1400:2400;if(seen)s.classList.add("quick");s.style.setProperty("--spd",(window.__spMin-100)+"ms");
   s.addEventListener("click",function(){window.hideSplash(0)});setTimeout(function(){window.hideSplash(0)},6000)})();
 </script>
 <div id="app">
