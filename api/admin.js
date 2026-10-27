@@ -53,6 +53,7 @@ async function copyWebImages(store, list) {
   return { images: ok.length ? ok : images, copied };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer";
+let FIXPRE = false;
 async function allProducts(store) {
   if (PCACHE && Date.now() - PCACHE.at < 30000) return PCACHE.data;
   const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
@@ -305,6 +306,12 @@ export default async function handler(req, res) {
         return send(res, 200, { brands, total: all.length, incoming });
       }
       case "products": {
+        // один раз: «уточнить наличие» пересчитываем по новому правилу (только если ни один размер не купить)
+        if (!FIXPRE) { FIXPRE = true; try { const fl = await store.get("settings.fixPre"); if (!fl) { const { needAsk } = await import("../lib/manual.js");
+          const L = await store.list("product", { hasPre: true }, { limit: 20000, fields: "_id, offers[]{availability}" });
+          const ch = L.filter(p => !needAsk(p.offers?.[0]?.availability)).map(p => ({ id: p._id, set: { hasPre: false } }));
+          for (let i = 0; i < ch.length; i += 200) await store.patchEach(ch.slice(i, i + 200));
+          await store.put({ _id: "settings.fixPre", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); PCACHE = null; console.log("FIXPRE " + ch.length); } } catch (e) { FIXPRE = false; console.log("FIXPRE fail " + String(e.message).slice(0, 120)); } }
         const all = await allProducts(store);
         const Q = req.query, q = String(Q.q || "").toLowerCase();
         const cat = p => p.overrides?.category || p.category;
