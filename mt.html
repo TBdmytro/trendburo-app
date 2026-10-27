@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v48] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v49] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -198,6 +198,16 @@ async function tbCollect() {
       out.push(PRE.test(full) ? { s: lab, ok: null, pre: true } : { s: lab, ok: OUT.test(full) || dis ? false : true }); });
     return out; } catch (e) { return []; } };
   var rLock = Promise.resolve();
+  // фото галереи с открытой страницы (сайты, где в адресе фото нет артикула — On и др.): крупные картинки товара, без шапки, подвала и «вам может понравиться»
+  var galleryOf = function (doc, url) { var me = codeOf(url), out = [], seen = {};
+    var big = function (im) { var c = [im.currentSrc || im.getAttribute("src") || ""]; String(im.getAttribute("srcset") || im.getAttribute("data-srcset") || "").replace(/(\s\d+(?:\.\d+)?[wx])\s*,\s*/g, "$1\u0001").split("\u0001").forEach(function (x) { var q = x.trim().split(/\s+/); if (q[0]) c.push(q[0]); }); c.push(im.getAttribute("data-src") || ""); return c.filter(function (u) { return /^https?:\/\//.test(u); }).pop() || ""; };
+    [].slice.call(doc.querySelectorAll("img")).forEach(function (im) { if (out.length >= 8) return;
+      if (im.closest && im.closest("header, nav, footer, [role=dialog], [aria-modal=true]")) return;
+      var w = Math.max(im.naturalWidth || 0, im.width || 0, +(im.getAttribute("width") || 0)); if (w && w < 300) return;
+      var ia = im.closest && im.closest("a[href]"); if (ia && codeOf(ia.href) && codeOf(ia.href) !== me) return;
+      for (var el = im, d = 0; d < 4 && el.parentElement; d++) { el = el.parentElement; var other = 0; [].slice.call(el.querySelectorAll("a[href]")).forEach(function (a) { var c = codeOf(a.href); if (c && c !== me) other++; }); if (other) { if (el.querySelectorAll("img").length <= other + 1) return; break; } } // плитка другого товара (одна картинка + ссылка) — не наша галерея
+      var u = big(im); if (!u || /(logo|icon|sprite|placeholder|blank|1x1|svg)/i.test(u)) return; var k = u.split("?")[0]; if (seen[k]) return; seen[k] = 1; out.push(u); });
+    return out; };
   var rendered = async function (url, p, raw) {
     // по одной странице за раз (два окна сразу — тяжело для компьютера)
     var prevL = rLock, rel; rLock = new Promise(function (r) { rel = r; }); await prevL;
@@ -222,6 +232,7 @@ async function tbCollect() {
         if (sst.length) { if (key === last) { if (++same >= 2) { out.sst = sst; break; } } else { last = key; same = 0; } }
       }
       var d2 = f.contentDocument;
+      try { if (d2) out.gal = galleryOf(d2, url); } catch (e) {}
       if (d2) { if (!out.sst.length && last) out.sst = JSON.parse(last); out.blocked = pageBlock(d2, d2.documentElement.outerHTML, p || {}, ""); if (!out.sst.length) { var bt = [].slice.call(d2.querySelectorAll("button, [role='button'], li, label")).map(function (b) { return (b.textContent || "").replace(/\s+/g, " ").trim(); }).filter(function (t) { return t && t.length < 25; }).slice(0, 60).join("|");
         out.dbg = ("R " + info.join(" ") + " · BTN " + bt + " · " + sizeDbg(d2.body ? d2.body.innerHTML : "")).slice(0, 900); } }
       else out.dbg = "R " + info.join(" ") + " · нет доступа к странице в окне";
@@ -389,7 +400,7 @@ async function tbCollect() {
         if (it && it.title && extraN < 300) colorLinks(new DOMParser().parseFromString(h, "text/html"), todo[i][0]).forEach(function (u) { var c = codeOf(u); if (!c || qd[c] || extraN >= 300) return; qd[c] = 1; extraN++; todo.push([u, false]); });
         if (it && it.title && !it.sizes.length && !/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear)\b/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) {
           note("Trend Büro: жду размеры на странице товара " + (i + 1) + " из " + todo.length + "…", true);
-          var rr = await rendered(todo[i][0], {}, h); if (rr.cap && sample && (!sample.szCap || (sample.szCap.fail && !rr.cap.fail))) sample.szCap = rr.cap; if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked;
+          var rr = await rendered(todo[i][0], {}, h); if (rr.cap && sample && (!sample.szCap || (sample.szCap.fail && !rr.cap.fail))) sample.szCap = rr.cap; if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked; if (rr.gal && rr.gal.length && it.images.length < 3) { var hv0 = {}; it.images.forEach(function (x) { hv0[String(x.u).split("?")[0]] = 1; }); rr.gal.forEach(function (u) { if (it.images.length < 8 && !hv0[u.split("?")[0]]) { hv0[u.split("?")[0]] = 1; it.images.push({ u: u }); } }); }
         }
         if (it && it.title && (it.blocked || (it.sizeStock.length && it.sizeStock.every(function (x) { return x.ok === false; })))) { it.ask = it.blocked || "wait"; askN++; }
         if (!(it && it.title) && badL.length < 12) badL.push([todo[i][0].split("/").pop(), "no product " + r.status + " " + (h.match(/<title>([^<]{0,40})/i) || [, ""])[1]]);
