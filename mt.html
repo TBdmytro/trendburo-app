@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v49] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v50] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -199,14 +199,14 @@ async function tbCollect() {
     return out; } catch (e) { return []; } };
   var rLock = Promise.resolve();
   // фото галереи с открытой страницы (сайты, где в адресе фото нет артикула — On и др.): крупные картинки товара, без шапки, подвала и «вам может понравиться»
-  var galleryOf = function (doc, url) { var me = codeOf(url), out = [], seen = {};
-    var big = function (im) { var c = [im.currentSrc || im.getAttribute("src") || ""]; String(im.getAttribute("srcset") || im.getAttribute("data-srcset") || "").replace(/(\s\d+(?:\.\d+)?[wx])\s*,\s*/g, "$1\u0001").split("\u0001").forEach(function (x) { var q = x.trim().split(/\s+/); if (q[0]) c.push(q[0]); }); c.push(im.getAttribute("data-src") || ""); return c.filter(function (u) { return /^https?:\/\//.test(u); }).pop() || ""; };
+  var galleryOf = function (doc, url) { var me = codeOf(url), out = [], seen = {}, base0 = new URL(url).pathname.split("/").slice(0, -1).join("/"), sameModel = function (h) { try { var pp = new URL(h, url).pathname; return base0.length > 10 && pp.indexOf(base0) === 0; } catch (e) { return false; } };
+    var big = function (im) { var c = [im.currentSrc || im.getAttribute("src") || ""]; String(im.getAttribute("srcset") || im.getAttribute("data-srcset") || "").replace(/(\s\d+(?:\.\d+)?[wx])\s*,\s*/g, "$1\u0001").split("\u0001").forEach(function (x) { var q = x.trim().split(/\s+/); if (q[0]) c.push(q[0]); }); c.push(im.getAttribute("data-src") || ""); var pic0 = im.closest && im.closest("picture"); if (pic0) [].slice.call(pic0.querySelectorAll("source")).forEach(function (so) { String(so.getAttribute("srcset") || so.getAttribute("data-srcset") || "").replace(/(\s\d+(?:\.\d+)?[wx])\s*,\s*/g, "$1\u0001").split("\u0001").forEach(function (x) { var q = x.trim().split(/\s+/); if (q[0]) c.push(q[0]); }); }); return c.filter(function (u) { return /^https?:\/\//.test(u); }).pop() || ""; };
     [].slice.call(doc.querySelectorAll("img")).forEach(function (im) { if (out.length >= 8) return;
       if (im.closest && im.closest("header, nav, footer, [role=dialog], [aria-modal=true]")) return;
       var w = Math.max(im.naturalWidth || 0, im.width || 0, +(im.getAttribute("width") || 0)); if (w && w < 300) return;
-      var ia = im.closest && im.closest("a[href]"); if (ia && codeOf(ia.href) && codeOf(ia.href) !== me) return;
-      for (var el = im, d = 0; d < 4 && el.parentElement; d++) { el = el.parentElement; var other = 0; [].slice.call(el.querySelectorAll("a[href]")).forEach(function (a) { var c = codeOf(a.href); if (c && c !== me) other++; }); if (other) { if (el.querySelectorAll("img").length <= other + 1) return; break; } } // плитка другого товара (одна картинка + ссылка) — не наша галерея
-      var u = big(im); if (!u || /(logo|icon|sprite|placeholder|blank|1x1|svg)/i.test(u)) return; var k = u.split("?")[0]; if (seen[k]) return; seen[k] = 1; out.push(u); });
+      var ia = im.closest && im.closest("a[href]"); if (ia && codeOf(ia.href) && codeOf(ia.href) !== me) return; // картинка-ссылка на другой товар или цвет (кружок цвета)
+      for (var el = im, d = 0; d < 4 && el.parentElement; d++) { el = el.parentElement; var other = 0; [].slice.call(el.querySelectorAll("a[href]")).forEach(function (a) { var c = codeOf(a.href); if (c && c !== me && !sameModel(a.href)) other++; }); if (other) { if (el.querySelectorAll("img").length <= other + 1) return; break; } } // плитка другого товара (одна картинка + ссылка) — не наша галерея
+      var u = big(im); if (!u || /(logo|icon|sprite|placeholder|blank|1x1|svg)/i.test(u)) return; var qw = +((u.match(/[?&]w=(\d+)/) || [])[1] || 0); if (qw && qw < 300) return; var k = u.split("?")[0]; if (seen[k]) return; seen[k] = 1; out.push(u); });
     return out; };
   var rendered = async function (url, p, raw) {
     // по одной странице за раз (два окна сразу — тяжело для компьютера)
@@ -355,11 +355,12 @@ async function tbCollect() {
       var im = el.querySelector("img"); if (!im) return; var pic = im.closest && im.closest("picture"), cand = [];
       var fromSet = function (v) { v = String(v || ""); var parts = /\s\d+(?:\.\d+)?[wx]\s*,/.test(v) ? v.replace(/(\s\d+(?:\.\d+)?[wx])\s*,\s*/g, "$1\u0001").split("\u0001") : v.split(/,\s+/); /* запятые бывают внутри адреса (crop=0,0,4000,5000) — режем только после «640w,» */ return parts.map(function (x) { var p = x.trim().split(/\s+/); return { u: p[0], w: parseInt(p[1]) || 0 }; }).filter(function (x) { return x.u && /^https?:\/\//.test(x.u); }).sort(function (a, b) { return b.w - a.w; }).map(function (x) { return x.u; }); };
       cand = cand.concat(fromSet(im.getAttribute("srcset")), fromSet(im.getAttribute("data-srcset")), pic ? [].slice.call(pic.querySelectorAll("source")).reduce(function (a, so) { return a.concat(fromSet(so.getAttribute("srcset")), fromSet(so.getAttribute("data-srcset"))); }, []) : [], [im.getAttribute("data-src"), im.currentSrc, im.getAttribute("src")]);
-      var u = cand.filter(function (x) { return x && /^https?:\/\//.test(x) && !/(placeholder|blank|spacer|1x1)/i.test(x); })[0];
+      var u = cand.filter(function (x) { return x && /^https?:\/\//.test(x) && !/(placeholder|blank|spacer|1x1)/i.test(x) && !(+((x.match(/[?&]w=(\d+)/) || [])[1] || 999) < 300); })[0];
       if (u) try { ti[c] = new URL(u, location.href).href; } catch (e) {} });
     var links = [].slice.call(document.querySelectorAll("a[href]")).map(function (a) { return a.href.split("#")[0]; })
       .filter(function (u) { try { var x = new URL(u); return x.hostname === location.hostname && !!codeOf(u) && x.pathname !== location.pathname && !/(account|login|cart|wishlist|search|help|store-locator)/i.test(x.pathname); } catch (e) { return false; } });
     links = links.filter(function (u, i) { return links.indexOf(u) === i; });
+    links = links.filter(function (u) { return !/gift.?card|gutschein|geschenkkarte|carte-cadeau/i.test(u); }); // подарочные карты — не товар
     // Dior и похожие: в данных страницы раздела лежат артикулы всех товаров (и тех, что ещё не показаны плитками, и других цветов) — достраиваем ссылки по образцу
     try { if (links.length) { var tpl = links[0], c0 = codeOf(tpl), raw0 = (tpl.match(/\/products\/([A-Za-z0-9]+_[A-Za-z0-9]+)/) || [])[1];
       if (raw0 && raw0.replace(/_/g, "").toUpperCase() === c0) { var seen = {}; links.forEach(function (u) { seen[codeOf(u)] = 1; }); var htm = document.documentElement.innerHTML.replace(/\\u002F/gi, "/"), re3 = /(?:\/products\/|"sku"\s*:\s*"|"masterId"\s*:\s*"|"item_master_id"\s*:\s*"|"id"\s*:\s*")([0-9A-Z]{6,12}_[0-9A-Z]{3,5})(?![_0-9A-Za-z])/g, m3, addN = 0;

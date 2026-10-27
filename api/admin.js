@@ -39,7 +39,9 @@ async function copyWebImages(store, list) {
   const { fetchBinary } = await import("../lib/images.js");
   // битые ссылки (обрывок srcset, склеенный с адресом раздела: «…/schuhe/5000&wid=1334…») не берём
   const sane = u => { try { const x = new URL(u); return x.protocol === "https:" && !/[&=]/.test(x.pathname); } catch { return false; } };
-  const urls = [...new Set((Array.isArray(list) ? list : []).map(String).filter(sane))].slice(0, 8);
+  // Contentful (On и др.): оригиналы — PNG 4000×4000 по 10+ МБ, не влезают; берём ту же картинку в 1600 px JPEG
+  const fit = u => { try { const x = new URL(u); if (x.hostname === "images.ctfassets.net") return x.origin + x.pathname + "?w=1600&h=1600&fm=jpg&q=85&fit=pad&bg=rgb:ffffff"; } catch {} return u; };
+  const urls = [...new Set((Array.isArray(list) ? list : []).map(String).filter(sane).map(fit))].slice(0, 8);
   let copied = 0;
   const images = (await Promise.all(urls.map(async u => {
     try { const b = await Promise.race([fetchBinary(u, [new URL(u).hostname]), new Promise((_, no) => setTimeout(() => no(new Error("долго")), 20000))]);
