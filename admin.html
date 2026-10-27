@@ -844,7 +844,7 @@ function go(v) {
   $("#main").innerHTML = `<div class="empty"><span class="spin"></span></div>`; $("#main").onclick = $("#main").oninput = $("#main").onchange = null; $(".actbar")?.remove();
   document.querySelectorAll(".drawer").forEach(x => x.remove()); tgBack.stack = [];
   window.scrollTo(0, 0); navSync();
-  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, customers: vCustomers, screens: vScreens, import: vImport, sites: vSites, finance: vFinance, more: vMore, bot: vBot, stock: vStock }[k] || vHome2;
+  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, customers: vCustomers, screens: vScreens, import: vImport, sites: vSites, finance: vFinance, more: vMore, bot: vBot, stock: vStock, loyalty: vLoyalty }[k] || vHome2;
   fn(v.split(":")[1]).catch(e => { $("#main").innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(e.message)}</div></div>`; });
 }
 async function getSources(force) { if (!sources || force) sources = (await api("sources")).sources; return sources; }
@@ -2521,7 +2521,7 @@ Object.assign(IC, {
   out: '<path d="M14 4h5v16h-5"/><path d="M10 16l4-4-4-4M14 12H4"/>'
 });
 const NAV_MAIN = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"]];
-const NAV_MORE = [["customers", "Клиенты", "users", "кто заходил, доставка, история заказов"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["sites", "Сайты брендов", "link", "разделы для проверки наличия кнопкой"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["stock", "В наличии", "van", "уже выкуплено: Украина и Европа · блок в приложении"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
+const NAV_MORE = [["customers", "Клиенты", "users", "статистика, заказы через менеджера, лояльность"], ["loyalty", "Лояльность", "users", "программа для клиентов · скоро"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["sites", "Сайты брендов", "link", "разделы для проверки наличия кнопкой"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["stock", "В наличии", "van", "уже выкуплено: Украина и Европа · блок в приложении"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
 const chevSvg = '<svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
 const backSvg = '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>';
 const isMainView = v => { const [k, s] = v.split(":"); return ["home", "products", "leads", "more"].includes(k) || (k === "show" && (!s || s === "feed")); };
@@ -2985,7 +2985,7 @@ async function vOrders(st) {
   updateLeadBadge(fresh);
   $("#main").innerHTML = `<div class="vh"><h1>Заказы</h1><a class="btn soft sm" href="#finance">${svg("finance")}Финансы</a></div><p class="vsub">Заказы и вопросы из приложения. Меняете этап — клиент получает сообщение от бота.</p>
     <div class="fchips"><button class="fchip ${!status ? "on" : ""}" data-lst="">Все</button>${Object.entries(ORD_ST).map(([k, v]) => `<button class="fchip ${status === k ? "on" : ""}" data-lst="${k}">${v}${k === "new" && fresh ? " · " + fresh : ""}</button>`).join("")}</div>
-    <div>${leads.map(l => `<div class="orow" data-lead="${esc(l._id)}"><div class="tx"><b>${esc(LEAD_KIND[l.kind] || "Заявка")} ${esc(l.number)}${l.total ? " · " + eur(l.total) : ""}</b>
+    <div>${leads.map(l => `<div class="orow" data-lead="${esc(l._id)}"><div class="tx"><b>${esc(LEAD_KIND[l.kind] || "Заявка")} ${esc(l.number)}${l.total ? " · " + eur(l.total) : ""}${l.source === "manager" ? ` <span class="hint">· через менеджера</span>` : ""}</b>
       <span>${dt(l.createdAt)} · ${esc(l.tg?.username ? "@" + l.tg.username : l.tg?.name || "клиент")}${l.items?.length ? " · " + esc(l.items.map(i => i.title).slice(0, 2).join(", ")) : ""}</span></div><span class="st ${l.status}">${ORD_ST[l.status] || l.status}</span></div>`).join("")
       || `<div class="empty"><b>Пусто</b>${status ? "С этим статусом заказов нет" : "Когда клиент оформит заказ или задаст вопрос в приложении, он появится здесь"}</div>`}</div>`;
   $("#main").onclick = e => {
@@ -3036,27 +3036,87 @@ function orderSheet(l, reload) {
 
 /* ---------- Финансы ---------- */
 
-/* Клиенты: зашли через Telegram в мини-апп */
+/* Клиенты: зашли через Telegram в мини-апп. Статистика, заказы через менеджера, лояльность (правила — позже) */
 async function vCustomers(q) {
-  const { customers } = await api("customers");
+  const { customers, totals: T = {} } = await api("customers");
   const NPT = { branch: "отделение", locker: "почтомат", courier: "курьер" };
   const dlv = p => p ? [p.city, p.npType === "courier" ? p.address : p.npPoint ? NPT[p.npType] + " №" + p.npPoint : ""].filter(Boolean).join(", ") : "";
-  const draw = f => {
-    const l = customers.filter(c => !f || [c.tg?.name, c.tg?.username, c.profile?.name, c.profile?.phone].join(" ").toLowerCase().includes(f.toLowerCase()));
+  let sort = "seen";
+  const SORTS = [["seen", "Недавние"], ["spent", "По сумме"], ["orders", "По заказам"], ["earned", "По заработку"]];
+  const draw = () => {
+    const f = ($("#cFind")?.value || q || "").toLowerCase();
+    const l = customers.filter(c => !f || [c.tg?.name, c.tg?.username, c.profile?.name, c.profile?.phone].join(" ").toLowerCase().includes(f))
+      .sort((a, b) => sort === "seen" ? 0 : (b[sort] || 0) - (a[sort] || 0));
     $("#cList").innerHTML = l.length ? l.map(c => `<div class="orow" data-cu="${esc(c.id)}"><div class="tx"><b>${esc(c.profile?.name || c.tg?.name || "Клиент")}${c.tg?.username ? ` <span class="hint">@${esc(c.tg.username)}</span>` : ""}</b>
-      <span>${[c.profile?.phone, dlv(c.profile), c.orders ? c.orders + " " + plural(c.orders, ["заказ", "заказа", "заказов"]) : "без заказов", c.spent ? eur(c.spent) : ""].filter(Boolean).map(esc).join(" · ")}</span></div><span class="hint">${dt(c.lastSeen)}</span></div>`).join("") : `<div class="hint" style="padding:20px 0">Клиентов пока нет — они появятся, когда войдут в мини-апп через Telegram.</div>`;
+      <span>${[c.orders ? c.orders + " " + plural(c.orders, ["заказ", "заказа", "заказов"]) + (c.viaManager ? ` (${c.viaManager} через менеджера)` : "") : "без заказов", c.spent ? "оплачено " + eur(c.spent) : "", c.earned ? "заработок " + eur(c.earned) : "", c.profile?.city].filter(Boolean).map(esc).join(" · ")}</span></div><span class="hint">${dt(c.lastSeen)}</span></div>`).join("") : `<div class="hint" style="padding:20px 0">Клиентов пока нет — они появятся, когда войдут в мини-апп через Telegram.</div>`;
   };
   $("#main").innerHTML = `<div class="vh"><h1>Клиенты</h1><span class="hint">${customers.length}</span></div>
-    <input type="text" id="cFind" placeholder="Имя, @username или телефон" style="margin:10px 0 14px"><div id="cList"></div>`;
-  draw(q || ""); $("#cFind").oninput = e => draw(e.target.value);
-  $("#cList").onclick = e => { const r = e.target.closest("[data-cu]"); if (!r) return; const c = customers.find(x => x.id === r.dataset.cu), p = c.profile || {};
-    sheet(p.name || c.tg?.name || "Клиент", `<div class="form">
-      <div class="client"><span class="av">${esc(((c.tg?.name || "?")[0] || "?").toUpperCase())}</span><div class="tx"><b>${esc(c.tg?.name || "")}</b><span>${c.tg?.username ? "@" + esc(c.tg.username) + " · " : ""}с ${dt(c.createdAt)}</span></div>
-        ${c.tg?.username ? `<a href="https://t.me/${esc(c.tg.username)}" target="_blank" rel="noopener" aria-label="Написать в Telegram"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4z"/></svg></a>` : ""}</div>
-      <div class="oitem"><div class="tx"><b>Доставка</b><span>${esc([p.name, p.phone].filter(Boolean).join(", ")) || "не заполнено"}<br>${esc(dlv(p))}${p.comment ? "<br>" + esc(p.comment) : ""}</span></div></div>
-      <div class="oitem"><div class="tx"><b>Заказы</b><span>${c.orders} · оплачено ${eur(c.spent)}${c.requests ? " · заявок " + c.requests : ""}</span></div></div>
-      ${c.leads.map(l => `<div class="oitem"><div class="tx"><b>${esc(LEAD_KIND[l.kind] || "Заявка")} ${esc(l.number)}</b><span>${dt(l.createdAt)} · ${esc(ORD_ST[l.status] || l.status)}${l.items?.[0] ? " · " + esc(l.items[0].brand + " " + l.items[0].title) : ""}</span></div>${l.total ? `<b class="num">${eur(l.total)}</b>` : ""}</div>`).join("")}</div>`, "");
+    <p class="vsub">Заказы с сайта и через менеджера, сколько клиент оплатил и сколько вы заработали.</p>
+    <div class="tiles" style="margin-bottom:10px">
+      <div class="tile dark"><span>Оплачено клиентами</span><b class="num">${eur(T.spent || 0)}</b><span>заработок ≈ ${eur(T.earned || 0)}</span></div>
+      <div class="tile"><span>Покупатели</span><b class="num">${T.buyers || 0}</b><span>из ${T.clients || 0} · повторно ${T.repeat || 0}</span></div>
+      <div class="tile"><span>Заказы</span><b class="num">${T.orders || 0}</b><span>через менеджера ${T.viaManager || 0}</span></div>
+      <div class="tile"><span>Заходили за 30 дней</span><b class="num">${T.active30 || 0}</b><span>активные клиенты</span></div>
+    </div>
+    <a class="row2" href="#loyalty" style="margin-bottom:14px"><span class="ic">${svg("users")}</span><span class="tx"><b>Программа лояльности</b><span>Уровни, бонусы, привилегии — настроим, когда определитесь с правилами</span></span><span class="hint">Скоро</span></a>
+    <input type="text" id="cFind" placeholder="Имя, @username или телефон" value="${esc(q || "")}" style="margin:0 0 10px">
+    <div class="fchips" id="cSort" style="margin-bottom:12px">${SORTS.map(([k, v]) => `<button class="fchip ${k === sort ? "on" : ""}" data-cs="${k}">${v}</button>`).join("")}</div>
+    <div id="cList"></div>`;
+  draw(); $("#cFind").oninput = draw;
+  $("#cSort").onclick = e => { const b = e.target.closest("[data-cs]"); if (!b) return; sort = b.dataset.cs; $$("#cSort [data-cs]").forEach(x => x.classList.toggle("on", x === b)); draw(); };
+  $("#cList").onclick = e => { const r = e.target.closest("[data-cu]"); if (r) customerSheet(customers.find(x => x.id === r.dataset.cu), dlv, () => vCustomers($("#cFind")?.value)); };
+}
+function customerSheet(c, dlv, reload) {
+  const p = c.profile || {};
+  const d = sheet(p.name || c.tg?.name || "Клиент", `<div class="form">
+    <div class="client"><span class="av">${esc(((c.tg?.name || "?")[0] || "?").toUpperCase())}</span><div class="tx"><b>${esc(c.tg?.name || "")}</b><span>${c.tg?.username ? "@" + esc(c.tg.username) + " · " : ""}с ${dt(c.createdAt)}${c.lastOrder ? " · последний заказ " + dt(c.lastOrder) : ""}</span></div>
+      ${c.tg?.username ? `<a href="https://t.me/${esc(c.tg.username)}" target="_blank" rel="noopener" aria-label="Написать в Telegram"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4z"/></svg></a>` : ""}</div>
+    <div class="kvs"><div><span>Заказы</span><b class="num">${c.orders}${c.viaManager ? ` · ${c.viaManager} через менеджера` : ""}</b></div><div><span>Оплачено</span><b class="num">${eur(c.spent)}</b></div><div><span>Заработок</span><b class="num">${eur(c.earned)}</b></div><div><span>Средний чек</span><b class="num">${c.avg ? eur(c.avg) : "—"}</b></div><div><span>Лояльность</span><b>${c.loyalty?.level ? esc(c.loyalty.level) : "<span class='hint'>правила настроим позже</span>"}</b></div></div>
+    <div class="oitem"><div class="tx"><b>Доставка</b><span>${esc([p.name, p.phone].filter(Boolean).join(", ")) || "не заполнено"}<br>${esc(dlv(p))}${p.comment ? "<br>" + esc(p.comment) : ""}</span></div></div>
+    <label class="f">Заметка о клиенте (видите только вы)<textarea id="cuNote" style="min-height:60px" placeholder="размеры, любимые бренды, пожелания">${esc(c.note || "")}</textarea></label>
+    <button type="button" class="btn lg" data-addord>+ Добавить заказ вручную</button>
+    <div class="hint" style="margin-top:-4px">Если клиент заказал через менеджера — в том числе вещь, которой нет на сайте. Заказ появится у клиента в «Мои заказы» с маршрутом и в «Финансах».</div>
+    ${c.leads.map(l => `<div class="oitem"><div class="tx"><b>${esc(LEAD_KIND[l.kind] || "Заявка")} ${esc(l.number)}${l.source === "manager" ? ` <span class="hint">· через менеджера</span>` : ""}</b><span>${dt(l.createdAt)} · ${esc(ORD_ST[l.status] || l.status)}${l.items?.[0] ? " · " + esc([l.items[0].brand, l.items[0].title].filter(Boolean).join(" ")) : ""}</span></div>${l.total ? `<b class="num">${eur(l.total)}</b>` : ""}</div>`).join("")}</div>`,
+    `<button class="btn ghost lg" data-cusave>Сохранить заметку</button>`);
+  d.querySelector(".sh-f").onclick = async () => { try { await api("customerNote", { method: "POST", body: { customer: c.id, note: d.querySelector("#cuNote").value } }); c.note = d.querySelector("#cuNote").value; toast("Сохранено"); } catch (err) { toast(err.message); } };
+  d.querySelector("[data-addord]").onclick = () => manualOrderSheet(c, () => { d.close(); reload(); });
+}
+function manualOrderSheet(c, done) {
+  const today = new Date().toISOString().slice(0, 10);
+  const d = sheet("Заказ через менеджера", `<div class="form">
+    <div class="hint">Клиент: <b>${esc(c.profile?.name || c.tg?.name || "")}</b>${c.tg?.username ? " · @" + esc(c.tg.username) : ""}</div>
+    <div class="fg2"><label class="f">Бренд<input type="text" id="moBrand" list="moBrands" placeholder="Hermès"></label><label class="f">Размер<input type="text" id="moSize" placeholder="38 / M / —"></label></div>
+    <datalist id="moBrands">${["Louis Vuitton", "Dior", "Saint Laurent", "Hermès", "Chanel", "Prada", "Gucci", "Bottega Veneta", "Loewe", "Celine", "Miu Miu", "The Row"].map(b => `<option>${b}</option>`).join("")}</datalist>
+    <label class="f">Вещь<input type="text" id="moTitle" placeholder="Birkin 30, Togo, Gold"></label>
+    <div class="fg2"><label class="f">Цвет<input type="text" id="moColor" placeholder="необязательно"></label><label class="f">Дата заказа<input type="date" id="moDate" value="${today}"></label></div>
+    <div class="fg2"><label class="f">Цена для клиента, €<input type="text" inputmode="decimal" id="moPrice" placeholder="0"></label><label class="f">Наша закупка, €<input type="text" inputmode="decimal" id="moCost" placeholder="для расчёта заработка"></label></div>
+    <label class="f">Ссылка или фото (https, необязательно)<input type="text" inputmode="url" id="moUrl" placeholder="https://…"></label>
+    <div><div class="f" style="margin-bottom:8px">Доставка</div><div class="fchips" id="moDest">${[["ua", "Украина"], ["eu", "Европа"], ["dxb", "Дубай"]].map(([k, v], i) => `<button type="button" class="fchip ${i ? "" : "on"}" data-v="${k}">${v}</button>`).join("")}</div></div>
+    <div><div class="f" style="margin-bottom:8px">Этап</div><div class="fchips" id="moSt" style="flex-wrap:wrap">${["work", "paid", "bought", "shipping", "np", "delivered"].map((k, i) => `<button type="button" class="fchip ${i ? "" : "on"}" data-v="${k}">${ORD_ST[k]}</button>`).join("")}</div></div>
+    <label class="f">Заметка<textarea id="moNote" style="min-height:60px" placeholder="только для вас"></textarea></label></div>`,
+    `<button class="btn lg" data-mosave>Добавить заказ</button>`);
+  const pick = id => d.querySelector(id).onclick = e => { const b = e.target.closest("[data-v]"); if (b) d.querySelectorAll(id + " [data-v]").forEach(x => x.classList.toggle("on", x === b)); };
+  pick("#moDest"); pick("#moSt");
+  d.querySelector(".sh-f").onclick = async () => {
+    const v = id => d.querySelector(id).value.trim(), on = id => d.querySelector(id + " .on").dataset.v, url = v("#moUrl");
+    if (!v("#moTitle") && !v("#moBrand")) return toast("Укажите бренд или вещь");
+    try {
+      const r = await api("manualOrder", { method: "POST", body: { customer: c.id, brand: v("#moBrand"), title: v("#moTitle"), size: v("#moSize"), color: v("#moColor"), price: v("#moPrice"), cost: v("#moCost"), date: v("#moDate"), dest: on("#moDest"), status: on("#moSt"), note: v("#moNote"), url: /\.(jpe?g|png|webp)(\?|$)/i.test(url) ? "" : url, photo: /\.(jpe?g|png|webp)(\?|$)/i.test(url) ? url : "" } });
+      toast("Заказ " + r.lead.number + " добавлен"); d.close(); done();
+    } catch (err) { toast(err.message); }
   };
+}
+/* Лояльность: правила появятся позже — пока раздел-заготовка */
+async function vLoyalty() {
+  $("#main").innerHTML = `<div class="vh"><h1>Лояльность</h1><span class="hint">Скоро</span></div>
+    <p class="vsub">Раздел готов к запуску: когда решите, как будет работать программа, здесь появятся уровни, бонусы и привилегии, а у клиентов — карта клуба в кабинете.</p>
+    <div class="kvs"><div><span>Уровни клиентов</span><b class="hint">не настроены</b></div><div><span>Бонусы за заказ</span><b class="hint">не настроены</b></div><div><span>Привилегии</span><b class="hint">не настроены</b></div></div>
+    <div class="h2">Идеи на выбор</div>
+    <div class="kvs"><div><span><b>Уровни по сумме покупок</b><br>Silver → Gold → Black: чем больше покупок, тем меньше наша комиссия</span></div>
+      <div><span><b>Бонусы с каждого заказа</b><br>например, 2% возвращается баллами на следующий заказ</span></div>
+      <div><span><b>Привилегии</b><br>приоритетный поиск редких моделей, бесплатная доставка, ранний доступ к новинкам</span></div>
+      <div><span><b>Приведи друга</b><br>бонус обоим после первого заказа друга</span></div></div>
+    <p class="hint" style="margin-top:14px">Статистика для решения уже есть в «Клиентах»: кто сколько оплатил, повторные покупки, заработок.</p>`;
 }
 async function vFinance(period) {
   const per = ["week", "month", "quarter", "year"].includes(period) ? period : "month";

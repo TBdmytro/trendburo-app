@@ -1216,6 +1216,14 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .done h3{font-size:22px}
 .done p{color:rgba(255,255,255,.72);font-size:14px}
 .done .btn{background:#fff;color:var(--fg);box-shadow:none;margin-top:10px;align-self:flex-start}
+.clubc{margin:14px 18px 4px;padding:18px 18px 16px;border-radius:24px;background:radial-gradient(120% 120% at 20% 0%,#45484e 0%,#26282c 55%,#17181b 100%);color:#fff;display:flex;flex-direction:column;gap:12px}
+.clubc .clt{display:flex;justify-content:space-between;align-items:center}.clubc .clt span{font:400 17px/1 "Prata",Georgia,serif}.clubc .clt em{font-style:normal;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:5px 10px}
+.clubc>b{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.clubc .clm{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.clubc .clm div{display:flex;flex-direction:column;gap:3px}.clubc .clm small{font-size:11.5px;color:rgba(255,255,255,.55)}.clubc .clm i{font-style:normal;font-size:15px;font-weight:600}
+.clubc p{margin:0;font-size:12.5px;line-height:1.45;color:rgba(255,255,255,.62)}
+.mgrc{margin:10px 18px 4px;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:var(--soft);color:inherit;text-decoration:none}
+.mgrc .mav{width:42px;height:42px;border-radius:50%;background:#26282c;color:#fff;display:grid;place-items:center;font:400 15px/1 "Prata",Georgia,serif;flex:none}
+.mgrc .mtx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.mgrc .mtx b{font-size:15px;font-weight:600}.mgrc .mtx small{font-size:12.5px;color:var(--g2);line-height:1.35}.mgrc .mgo{font-size:22px;color:var(--g2)}
 .acc-head{display:flex;align-items:center;gap:14px;padding:calc(64px + var(--st)) 18px 18px}
 .acc-av{width:62px;height:62px;border-radius:50%;background:var(--ink-grad);box-shadow:var(--ink-hi);color:#fff;display:grid;place-items:center;font-size:22px;font-weight:700;flex:none}
 .acc-head h2{font-size:26px;font-weight:700;letter-spacing:-.02em}
@@ -3145,7 +3153,7 @@ function routePos(o){const ua=(o.dest||"ua")==="ua",st=o.status;
   if(ua)return{new:0,work:0,paid:0,bought:0,shipping:.5,np:2,delivered:3}[st]??0;return{new:0,work:0,paid:0,bought:0,shipping:.5,delivered:2}[st]??0}
 const LEAD_ST2={new:"Оформлен",work:"Подтверждён",paid:"Оплачен",bought:"Выкуплен",shipping:"В пути",np:"Новая почта",delivered:"Получен",cancelled:"Отменён"};
 function orderRowHTML(o,i){const{S,cur}=orderSteps(o);const p=o.items&&o.items[0]&&findItem(o.items[0].id);
-  return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):"<i></i>"}</span><span class="otx"><b>Заказ № ${esc(String(o.number).replace(/^TB-/,""))}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
+  return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):o.items&&o.items[0]&&o.items[0].photo?`<img src="${esc(o.items[0].photo)}" alt="" style="width:100%;height:100%;object-fit:contain">`:"<i></i>"}</span><span class="otx"><b>Заказ № ${esc(String(o.number).replace(/^TB-/,""))}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
     <span class="obar">${S.map((_,j)=>`<i class="${j<=cur?"on":""}"></i>`).join("")}</span></span><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}
 /* ===== Экран заказа «Live»: цветной маршрут с кометой, вспышки на городах, стопка пройденных этапов ===== */
 const OST={new:["#5b6474","#cfd6e2",'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'],work:["#4f6bd8","#b3c2ff",'<path d="M5 12.5l4.5 4.5L19 7.5"/>'],
@@ -3244,6 +3252,9 @@ function openAccount(){
     box.innerHTML=`<div class="acc-head">${u?avatarHTML(u,"acc-av"):`<span class="acc-av">TB</span>`}<div><h2>${u?esc(u.name):"Профиль"}</h2><p>${u?(u.username?"@"+esc(u.username)+" · ":"")+"вход через Telegram":authBody()&&!ME_ERR?"Подключаем Telegram…":"вы не вошли"}</p></div></div>
     ${u?"":`<div class="pad" style="margin-bottom:6px"><button class="btn block" data-login>${I_TG} Войти или зарегистрироваться</button><p class="muted" style="font-size:12.5px;margin-top:8px;text-align:center">Через Telegram, без пароля. Заказы и адрес доставки сохранятся в профиле.</p></div>`}
     <div class="qt"><button data-go="orders"><b class="num">${ords.length}</b><span>${plural(ords.length,["заказ","заказа","заказов"])}</span></button><button data-act="favs"><b class="num">${favs.size}</b><span>в избранном</span></button><button data-go="brands"><b class="num">${fb.length}</b><span>${plural(fb.length,["бренд","бренда","брендов"])}</span></button></div>
+    ${(()=>{const paid=ords.filter(o=>["paid","bought","shipping","np","delivered"].includes(o.status)),sum=paid.reduce((a,o)=>a+(o.total||0),0),mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]);
+      return `<div class="clubc"><div class="clt"><span>Trend Büro Club</span><em>Скоро</em></div><b>${u?esc(u.name):"Гость"}</b><div class="clm"><div><small>Покупок</small><i class="num">${paid.length}</i></div><div><small>На сумму</small><i class="num">${sum?eur(sum):"—"}</i></div><div><small>С нами</small><i>${u&&ME&&ME.since?fmtD(ME.since):"с сегодня"}</i></div></div><p>Готовим привилегии для постоянных клиентов: уровни, бонусы и ранний доступ к новинкам.</p></div>
+      <a class="mgrc press" href="${esc(mgr.url)}" target="_blank" rel="noopener"><span class="mav">TB</span><span class="mtx"><b>Ваш персональный менеджер</b><small>Найдёт вещь по фото, подберёт размер, ответит на вопросы</small></span><span class="mgo">›</span></a>`})()}
     <div class="sec" id="accOrders"><div class="sech"><h2>Мои заказы</h2></div><div class="pad ordl2">${ords.length?ords.map(orderRowHTML).join(""):`<div class="empty"><h3>Заказов пока нет</h3><p>Оформленные заказы появятся здесь — с маршрутом посылки от бутика до вашей двери.</p></div>`}</div>
      ${reqs.length?`<div class="sech" style="margin-top:18px"><h2>Мои заявки</h2></div>${reqs.map(l=>`<div class="ordl"><span>${esc(LEAD_KIND[l.kind]||"Запрос")} ${esc(l.number)}<small>${fmtD(l.createdAt)}</small></span><em>${LEAD_ST[l.status]||l.status}</em></div>`).join("")}`:""}</div>
     <div class="sec"><div class="sech"><h2>Доставка</h2></div><div class="pad">${deliveryFormHTML(myDelivery(),"ua")}<button class="btn block" data-dsave style="margin-top:12px">Сохранить</button></div></div>

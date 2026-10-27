@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     } else if (body.a === "save") c = await saveProfile(store, user, body.profile || {});
     else c = await touchCustomer(store, user);
     const orders = await ordersFor(store, user.id, body.client);
-    return send(res, 200, { user: pub, profile: c.profile, orders });
+    return send(res, 200, { user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null });
   } catch (e) {
     console.error("me:", e.message);
     return send(res, 500, { error: "Не удалось загрузить кабинет" });

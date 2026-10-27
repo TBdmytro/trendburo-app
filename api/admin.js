@@ -18,6 +18,7 @@ import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
 import { toStorefront } from "../lib/catalog.js";
 import { saveManualProduct, updateWebProduct, markWebGone } from "../lib/manual.js";
 import { LEAD_STATUS, notifyClient } from "./lead.js";
+import { makeManualOrder, clientStats, customerId } from "../lib/customers.js";
 import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier, listCollections, saveCollections } from "../lib/suppliers.js";
 import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
 import { readScreen, screensEnabled, ScreenError } from "../lib/screens.js";
@@ -517,20 +518,34 @@ export default async function handler(req, res) {
         return send(res, 200, { lead: await store.put(l) });
       }
       case "customers": {
-        // клиенты из Telegram: профиль доставки, сколько заказов и на какую сумму, когда заходили
-        const [cs, ls] = await Promise.all([store.list("customer", {}, { order: "lastSeen desc", limit: 1000 }), store.list("lead", {}, { limit: 5000, fields: "_id, tgId, number, kind, status, total, createdAt, items[]{brand, title}" })]);
+        // клиенты из Telegram: профиль, заказы с сайта и через менеджера, оплачено, заработок, лояльность
+        const [cs, ls] = await Promise.all([store.list("customer", {}, { order: "lastSeen desc", limit: 1000 }), store.list("lead", {}, { limit: 5000, fields: "_id, tgId, number, kind, source, status, total, cost, dest, createdAt, items[]{brand, title, price, size}" })]);
+        const mk = mergeConfig(pricingCfg).official.markup;
         const by = {}; ls.forEach(l => { if (l.tgId) (by[l.tgId] = by[l.tgId] || []).push(l); });
-        return send(res, 200, { customers: cs.map(c => { const o = (by[c.tg?.id] || []).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)), paid = o.filter(l => l.kind === "order" && ["paid", "bought", "shipping", "np", "delivered"].includes(l.status));
-          return { id: c._id, tg: c.tg, profile: c.profile, createdAt: c.createdAt, lastSeen: c.lastSeen, orders: o.filter(l => l.kind === "order").length, requests: o.filter(l => l.kind !== "order").length, spent: paid.reduce((a, l) => a + (l.total || 0), 0), leads: o.slice(0, 30) }; }) });
+        const list = cs.map(c => { const o = (by[c.tg?.id] || []).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+          return { id: c._id, tg: c.tg, profile: c.profile, createdAt: c.createdAt, lastSeen: c.lastSeen, note: c.note || "", loyalty: c.loyalty || null, ...clientStats(o, mk), leads: o.slice(0, 30) }; });
+        const sum = k => list.reduce((a, c) => a + (c[k] || 0), 0);
+        return send(res, 200, { customers: list, totals: { clients: list.length, buyers: list.filter(c => c.spent > 0).length, repeat: list.filter(c => c.orders > 1).length, orders: sum("orders"), viaManager: sum("viaManager"), spent: sum("spent"), earned: sum("earned"), active30: list.filter(c => c.lastSeen && Date.now() - Date.parse(c.lastSeen) < 30 * 864e5).length } });
+      }
+      case "manualOrder": {
+        const c = await store.get(String(body.customer || ""));
+        if (!c || c._type !== "customer") return send(res, 404, { error: "Клиент не найден" });
+        return send(res, 200, { lead: await makeManualOrder(store, c, body, me.name) });
+      }
+      case "customerNote": {
+        const c = await store.get(String(body.customer || ""));
+        if (!c || c._type !== "customer") return send(res, 404, { error: "Клиент не найден" });
+        c.note = String(body.note || "").slice(0, 2000); c.updatedAt = new Date().toISOString();
+        await store.put(c); return send(res, 200, { ok: true });
       }
       case "finance": {
         const days = { week: 7, month: 31, quarter: 92, year: 366 }[req.query.period] || 31;
         const since = new Date(Date.now() - days * 864e5).toISOString();
-        const all = (await store.list("lead", { kind: "order" }, { order: "createdAt desc", limit: 5000, fields: "createdAt, status, total, dest, items[]{brand, price}" })).filter(l => l.status !== "cancelled");
+        const all = (await store.list("lead", { kind: "order" }, { order: "createdAt desc", limit: 5000, fields: "createdAt, status, total, cost, dest, items[]{brand, price}" })).filter(l => l.status !== "cancelled");
         const inPeriod = all.filter(l => l.createdAt >= since);
         const done = inPeriod.filter(l => ["paid", "bought", "shipping", "np", "delivered"].includes(l.status));
         const mk = mergeConfig(pricingCfg).official.markup;
-        const margin = l => (l.total || 0) - (l.total || 0) / (1 + (l.dest === "ua" || !l.dest ? mk.ua : l.dest === "eu" ? mk.eu : mk.dxb));
+        const margin = l => l.cost ? (l.total || 0) - l.cost : (l.total || 0) - (l.total || 0) / (1 + (l.dest === "ua" || !l.dest ? mk.ua : l.dest === "eu" ? mk.eu : mk.dxb));
         const sum = (a, f) => Math.round(a.reduce((s, x) => s + (f(x) || 0), 0));
         const byBrand = {};
         done.forEach(l => (l.items || []).forEach(i => { if (i.brand) byBrand[i.brand] = (byBrand[i.brand] || 0) + (i.price || 0); }));
