@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 35</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 36</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v35] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v36] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -182,7 +182,24 @@ async function tbCollect() {
       var el = a, hit = false; for (var d = 0; d < 5 && el; d++) { var s0 = ((el.className && el.className.baseVal != null ? el.className.baseVal : el.className) || "") + " " + (el.getAttribute && (el.getAttribute("aria-label") || "") + " " + (el.getAttribute("data-testid") || "") + " " + (el.id || "")); if (/(swatch|colou?r|variant|farbe|couleur)/i.test(s0)) { hit = true; break; } el = el.parentElement; }
       if (hit && out.indexOf(u) < 0) out.push(u); });
     return out.slice(0, 12); };
+  // список размеров в панели, куда ведёт кнопка «Select size» (aria-controls): подпись — собственный текст пункта, статус («JOIN THE WAITLIST», «sold out») — отдельно
+  var panelSizes = function (d, sb) { try {
+    var id = sb && (sb.getAttribute("aria-controls") || ""), pan = id ? d.getElementById(id) : null; if (!pan) return [];
+    var items = [].slice.call(pan.querySelectorAll("button, [role='option'], [role='radio'], option, label")); if (!items.length) items = [].slice.call(pan.querySelectorAll("li"));
+    var out = [], seen = {};
+    items.forEach(function (el) { var host = el.querySelector("span") || el, own = "";
+      [].slice.call(host.childNodes).forEach(function (n) { if (n.nodeType === 3) own += n.textContent; });
+      own = own.replace(/\s+/g, " ").trim() || (el.textContent || "").replace(/\s+/g, " ").trim();
+      var lab = okLabel(own); if (!lab || seen[lab]) return; seen[lab] = 1;
+      var full = el.textContent || "", dis = el.disabled || el.getAttribute("aria-disabled") === "true" || /disabled|unavail|sold/i.test(String(el.className || ""));
+      out.push(PRE.test(full) ? { s: lab, ok: null, pre: true } : { s: lab, ok: OUT.test(full) || dis ? false : true }); });
+    return out; } catch (e) { return []; } };
+  var rLock = Promise.resolve();
   var rendered = async function (url, p, raw) {
+    // по одной странице за раз (два окна сразу — тяжело для компьютера)
+    var prevL = rLock, rel; rLock = new Promise(function (r) { rel = r; }); await prevL;
+    try { return await rendered0(url, p, raw); } finally { rel(); } };
+  var rendered0 = async function (url, p, raw) {
     if (rSkip || (rOk === 0 && rFail >= 8)) return { sst: [], blocked: "", dbg: "R skip" };
     var f = document.createElement("iframe"); f.setAttribute("aria-hidden", "true"); f.tabIndex = -1;
     // в пределах экрана (прозрачно, позади страницы): иначе сайт считает блок невидимым и не подгружает размеры
@@ -192,11 +209,12 @@ async function tbCollect() {
       await new Promise(function (ok) { f.onload = ok; f.src = url; document.body.appendChild(f); setTimeout(ok, 8000); });
       var last = "", same = 0, clicked = false, info = [];
       try { info.push(f.contentDocument ? "loaded:" + String(f.contentWindow.location.pathname).slice(0, 60) : "blocked"); } catch (e) { info.push("blocked:" + (e && e.name)); }
-      for (var t = 0; t < 14; t++) {
-        await sleep(450);
+      for (var t = 0; t < 24; t++) {
+        await sleep(t < 2 ? 400 : 250);
         var d = f.contentDocument; if (!d || !d.body) continue;
+        if (out.btn) { var ps = panelSizes(d, out.btn); if (ps.length) { out.sst = ps; break; } }
         // размеры прячутся за кнопкой «Select your size» — нажимаем её один раз (как покупатель), чтобы список появился
-        if (!clicked && t >= 2) { clicked = true; var sb = [].slice.call(d.querySelectorAll("button, [role='button'], a")).filter(function (b) { var tx = (b.textContent || "").replace(/\s+/g, " ").trim(); return tx.length < 40 && /(select|choose|choisir|w[äa]hlen|seleziona)?\s*(your\s*)?(size|taille|gr[öo](ss|ß)e|taglia)/i.test(tx) && !/guide|chart|tabelle/i.test(tx); })[0]; if (sb) try { sb.click(); out.btn = sb; info.push("click:" + (sb.textContent || "").replace(/\s+/g, " ").trim().slice(0, 30)); } catch (e) {} else info.push("nobtn"); }
+        if (!clicked && t >= 1) { var sb = [].slice.call(d.querySelectorAll("button, [role='button'], a")).filter(function (b) { var tx = (b.textContent || "").replace(/\s+/g, " ").trim(); return tx.length < 40 && /(select|choose|choisir|w[äa]hlen|seleziona)?\s*(your\s*)?(size|taille|gr[öo](ss|ß)e|taglia)/i.test(tx) && !/guide|chart|tabelle/i.test(tx); })[0]; if (sb) { clicked = true; try { sb.click(); out.btn = sb; info.push("click:" + (sb.textContent || "").replace(/\s+/g, " ").trim().slice(0, 30)); } catch (e) {} } else if (t >= 8) { clicked = true; info.push("nobtn"); } }
         var sst = sizeInfo(d, "", p || {}), key = JSON.stringify(sst);
         if (sst.length) { if (key === last) { if (++same >= 2) { out.sst = sst; break; } } else { last = key; same = 0; } }
       }
