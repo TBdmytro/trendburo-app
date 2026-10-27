@@ -439,7 +439,13 @@ test("витрина: раскладка Ленты, тексты и станд�
 test("telegram bot: replies and setup", async () => {
   const { replyFor, hookSecret, setupBot } = await import("../api/bot.js");
   const base = "https://shop.example";
-  assert.equal(replyFor("/start", base, 1).reply_markup.inline_keyboard[0][0].web_app.url, base + "/");
+  const st = replyFor("/start", base, 1);
+  assert.equal(st.method, "sendPhoto"); assert.equal(st.photo, base + "/brand/bot-welcome.jpg");
+  assert.ok(st.caption.length <= 1024);
+  assert.equal(st.reply_markup.inline_keyboard[0][0].web_app.url, base + "/#catalog");
+  assert.equal(st.reply_markup.inline_keyboard[1][1].callback_data, "how");
+  assert.equal(replyFor("/orders", base, 1).reply_markup.inline_keyboard[0][0].web_app.url, base + "/#account");
+  assert.match(replyFor("/manager", base, 1).reply_markup.inline_keyboard[0][0].url, /t\.me\/trendburo_manager/);
   assert.equal(replyFor("/admin@tb_bot", base, 1).reply_markup.inline_keyboard[0][0].web_app.url, base + "/admin.html");
   assert.match(replyFor("/id", base, 42).text, /42/);
   assert.equal(hookSecret("a").length, 40); assert.notEqual(hookSecret("a"), hookSecret("b"));
@@ -449,6 +455,10 @@ test("telegram bot: replies and setup", async () => {
   assert.equal(r.username, "tb_bot");
   assert.equal(calls.find(c => c[0] === "setChatMenuButton")[1].menu_button.web_app.url, base + "/");
   assert.equal(calls.find(c => c[0] === "setWebhook")[1].secret_token, hookSecret("T"));
+  assert.ok(calls.find(c => c[0] === "setMyShortDescription")[1].short_description.length <= 120);
+  assert.ok(calls.find(c => c[0] === "setMyDescription")[1].description.length <= 512);
+  assert.deepEqual(calls.find(c => c[0] === "setWebhook")[1].allowed_updates, ["message", "callback_query"]);
+  assert.equal(calls.find(c => c[0] === "setMyCommands")[1].commands.length, 4);
   await assert.rejects(() => setupBot("http://x", { token: "T", fetchImpl }));
 });
 

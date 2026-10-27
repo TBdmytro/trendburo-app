@@ -3658,7 +3658,7 @@ function init(){
   else document.body.insertAdjacentHTML("beforeend",'<div class="demo-badge">ДЕМО-ДАННЫЕ</div>');
   if(LIVE){$("#feedNote").hidden=true;applySite(CMS.site);renderBanners()}
   if(LIVE&&!P.length)$("#t-feed .ship").insertAdjacentHTML("afterend",'<div class="live-empty">Каталог наполняется — новые поступления появятся здесь. Ищете конкретную вещь? Напишите менеджеру, найдём.</div>');
-  {const h=(location.hash||"").slice(1);if(h==="optix"&&!LIVE){tab("feed");playIntro("optix","optix")}else tab(h==="optix"?"feed":h)}
+  {const h=(location.hash||"").slice(1);if(h==="optix"&&!LIVE){tab("feed");playIntro("optix","optix")}else if(h==="account"){tab("feed");setTimeout(()=>{try{openAccount()}catch(e){}},50)}else tab(h==="optix"?"feed":h)}
 }
 /* ===== Личный «Мониторинг»: плитки открывают разделы сайтов брендов внутри Telegram ===== */
 async function loadWatch(){const code=store.get("tb_watch","");const sec=$("#watchSec");if(!sec)return;if(!code){sec.hidden=true;return}
