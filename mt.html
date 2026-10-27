@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 34</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 35</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v34] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v35] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -326,14 +326,14 @@ async function tbCollect() {
       var isUpd = todo[i][1], tcode = codeOf(todo[i][0]);
       note("Trend Büro: " + (isUpd ? "проверяю добавленный " : "новый товар ") + (i + 1) + " из " + todo.length + " · новых " + ok + " · проверено " + upd + (bad ? " · не прочитано " + bad : "") + ". Не закрывайте вкладку", true);
       try { var r = await fetch(todo[i][0], { credentials: "include", cache: "no-store" }), h = await r.text(); if (!r.ok) throw new Error(r.status);
-        var it = await build(new DOMParser().parseFromString(h, "text/html"), h, todo[i][0], isUpd ? 0 : 6, extra);
+        var it = await build(new DOMParser().parseFromString(h, "text/html"), h, todo[i][0], 8, extra);
         H.tried++;
         if (it && it.title) { H.read++; if (it.price) H.price++; if (!isUpd) { H.newN++; if (it.images.length) H.img++; }
           if (!/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear|scarf|scarves|hats?|caps?|books?)\b/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) { H.needSz++; if (it.sizes.length) H.sz++; }
           if (!sample) sample = { url: it.url, title: it.title, brand: it.brand, price: it.price, currency: it.currency, sku: it.sku, sizes: it.sizes.slice(0, 12), images: it.images.length, crumbs: it.crumbs.slice(0, 12), ld: (function () { try { var d = new DOMParser().parseFromString(h, "text/html"), x = lds(d).find(function (o) { return isT(o, "Product") || isT(o, "ProductGroup"); }); return JSON.stringify(x).slice(0, 3000); } catch (e) { return ""; } })() }; }
         if (it && it.title && !it.blocked && tb[tcode]) it.blocked = tb[tcode];
         if (it && it.title && ti[tcode]) { it.tileImg = ti[tcode]; var tk = imgKey(ti[tcode], tcode), at = -1; it.images.forEach(function (x, j) { if (at < 0 && imgKey(x.u, tcode) === tk) at = j; });
-          if (at > 0) it.images.unshift(it.images.splice(at, 1)[0]); else if (at < 0 && !isUpd) it.images.unshift({ u: ti[tcode] }); }
+          if (at > 0) it.images.unshift(it.images.splice(at, 1)[0]); else if (at < 0) it.images.unshift({ u: ti[tcode] }); }
         // все цвета модели: ссылки на другие цвета на странице товара — добавляем в очередь (если их ещё нет)
         if (it && it.title && !isUpd && extraN < 40) colorLinks(new DOMParser().parseFromString(h, "text/html"), todo[i][0]).forEach(function (u) { var c = codeOf(u); if (!c || qd[c] || extraN >= 40) return; qd[c] = 1; extraN++; todo.push([u, false]); });
         if (it && it.title && !it.sizes.length && !/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear)\b/.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) {

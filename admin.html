@@ -2368,7 +2368,7 @@ async function vImport() {
 async function mtUpd(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
   if (!sku) return false;
-  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, unavailable: !!it.unavailable, ask: String(it.ask || it.blocked || ""), isNew: !!it.isNew, section: it.section || "", tileImg: /^https:\/\//.test(String(it.tileImg || "")) ? String(it.tileImg).slice(0, 600) : "", szDbg: String(it.szDbg || "").slice(0, 900) } } });
+  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, unavailable: !!it.unavailable, ask: String(it.ask || it.blocked || ""), isNew: !!it.isNew, section: it.section || "", tileImg: /^https:\/\//.test(String(it.tileImg || "")) ? String(it.tileImg).slice(0, 600) : "", images: (it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || "")).slice(0, 8), szDbg: String(it.szDbg || "").slice(0, 900) } } });
     MTP.upd = (MTP.upd || 0) + 1; if (r.price) MTP.priceCh = (MTP.priceCh || 0) + 1; if (r.changes) MTP.changed = (MTP.changed || 0) + 1; return true; }
   catch (err) { MTP.last.unshift("✕ " + (it.title || sku) + ": " + err.message); return false; }
 }

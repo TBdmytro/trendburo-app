@@ -33,7 +33,19 @@ const JOB_FIELDS = `..., "rows": null, "seen": null, "queue": null, "attempts": 
 // Любое изменение (кроме потока загрузки с кнопки) сбрасывает — после «На сайт», правок и удаления список свежий.
 let PCACHE = null;
 // только лёгкие поля: размеры и наличие по размерам дочитываются для открытой страницы (до 120 товаров), а не для всех тысяч
-const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre, \"nSz\": count(sizes)";
+// фото с сайта бренда → в наше хранилище, в том же порядке (первое — обложка как на плитке бренда). Без «склейки похожих»: перед и зад сумки похожи, их нельзя объединять
+async function copyWebImages(store, list) {
+  const { fetchBinary } = await import("../lib/images.js");
+  const urls = [...new Set((Array.isArray(list) ? list : []).map(String).filter(u => /^https:\/\//.test(u)))].slice(0, 8);
+  let copied = 0;
+  const images = (await Promise.all(urls.map(async u => {
+    try { const b = await Promise.race([fetchBinary(u, [new URL(u).hostname]), new Promise((_, no) => setTimeout(() => no(new Error("долго")), 20000))]);
+      const up = await store.uploadImage(b.buf, { filename: "web-" + Date.now() + "." + (b.type.split("/")[1] || "jpg"), contentType: b.type, sourceUrl: u }); copied++; return up.url; }
+    catch (e) { console.log("IMGURL fail " + JSON.stringify({ host: new URL(u).hostname, why: String(e.message).slice(0, 120) })); return u; }
+  }))).filter(Boolean);
+  return { images, copied };
+}
+const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre, \"nSz\": count(sizes), imgVer";
 async function allProducts(store) {
   if (PCACHE && Date.now() - PCACHE.at < 30000) return PCACHE.data;
   const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
@@ -266,7 +278,7 @@ export default async function handler(req, res) {
         // fresh — проверены кнопкой за последние 12 часов: при повторном прогоне их не открываем заново (быстрее)
         const status = {}, fresh = {}, since = Date.now() - 12 * 36e5;
         for (const id of await deletedSet(store)) if (id.startsWith(px)) status[id.slice(px.length).toUpperCase()] = "rejected"; // вы удалили — кнопка не вернёт
-        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; const needSz = ["shoes", "clothing"].includes(p.overrides?.category || p.category) && !p.nSz; if (ck && Date.parse(ck) > since && !needSz) fresh[k] = 1; } // без размеров — проверяем снова
+        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; const needSz = ["shoes", "clothing"].includes(p.overrides?.category || p.category) && !p.nSz; if (ck && Date.parse(ck) > since && !needSz && p.imgVer === 2) fresh[k] = 1; } // без размеров — проверяем снова
         return send(res, 200, { status, fresh });
       }
       case "brandBoard": {
@@ -361,6 +373,10 @@ export default async function handler(req, res) {
         // прогон: товар уже есть — обновить цену и наличие по размерам
         const id = String(body.id || ""), it = body.item || {};
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
+        // фото заново с сайта бренда — один раз (imgVer 2): прежняя «склейка похожих фото» могла заменить перед сумки на вид сзади. Ваши обложка/порядок фото из админки — не трогаем
+        if (Array.isArray(it.images) && it.images.length) { try { const p0 = await store.get(id);
+          if (p0 && p0.imgVer !== 2 && !p0.overrides?.cover && !(p0.overrides?.imageOrder || []).length) { const { images } = await copyWebImages(store, it.images);
+            if (images.length) { await store.patchMany([id], { images: images.map(u => ({ url: u, sourceUrl: u, rights: "copied" })), imgVer: 2, ...(it.tileImg ? { coverFrom: "tile", coverTile: String(it.tileImg).slice(0, 600) } : {}) }); PCACHE = null; } } } catch (e) { console.log("IMGREF fail " + String(e.message).slice(0, 100)); } }
         // обложка как на плитке раздела бренда (один раз на товар)
         if (/^https:\/\//.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
         return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
@@ -445,21 +461,13 @@ export default async function handler(req, res) {
         // товар с кнопки «В Trend Büro» одним запросом: сервер сам скачивает фото по ссылкам (параллельно) и сохраняет товар скрытым
         const it = body.item || {}, id = String(body.id || "");
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
-        const { fetchBinary } = await import("../lib/images.js");
-        const urls = [...new Set((Array.isArray(it.images) ? it.images : []).map(String).filter(u => /^https:\/\//.test(u)))].slice(0, 8);
-        let copied = 0;
         if (it.revive) { const dd = await store.get("settings.deleted"); if (dd && (dd.ids || []).includes(id)) { dd.ids = dd.ids.filter(x => x !== id); delete dd._rev; delete dd._createdAt; delete dd._updatedAt; await store.put(dd); } } // открыли товар сами и нажали кнопку — снова берём
-        const images = (await Promise.all(urls.map(async u => {
-          try { const b = await Promise.race([fetchBinary(u, [new URL(u).hostname]), new Promise((_, no) => setTimeout(() => no(new Error("долго")), 20000))]);
-            const up = await store.uploadImage(b.buf, { filename: "web-" + Date.now() + "." + (b.type.split("/")[1] || "jpg"), contentType: b.type, sourceUrl: u }); copied++; return up.url; }
-          catch (e) { console.log("IMGURL fail " + JSON.stringify({ host: new URL(u).hostname, why: String(e.message).slice(0, 120) })); return u; } // не скачалось — ставим ссылку магазина
-        }))).filter(Boolean);
+        const { images, copied } = await copyWebImages(store, it.images);
         if (!images.length) return send(res, 400, { error: "Нет фото" });
-        try { const { dedupeImages } = await import("../lib/imgdedupe.js"); const uniq = await dedupeImages(images); if (uniq.length) images.splice(0, images.length, ...uniq); } catch {} // одно фото в нескольких размерах — оставляем крупное
         // немецкий сайт (LV и др.) — название, описание и цвета переводим на английский; ошибка перевода не мешает загрузке
         let itEn = it;
         try { const { englishItem } = await import("../lib/translate.js"); itEn = await englishItem(it, await store.get(id)); } catch (e) { console.log("TR fail " + JSON.stringify({ id, why: String(e.message).slice(0, 120) })); }
-        const product = await saveManualProduct(store, { ...itEn, id, images, availability: "online", status: "incoming", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
+        const product = await saveManualProduct(store, { ...itEn, id, images, imgVer: 2, availability: "online", status: "incoming", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
         return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null });
       }
       case "pricePreview": {
