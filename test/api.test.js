@@ -189,7 +189,7 @@ test("кнопка «В Trend Büro»: товар одним запросом �
     const item = { brand: "Yves Saint Laurent", title: "SIMONE medium", category: "bags", gender: "w", boutique: 3200, images: ["https://saint-laurent.dam.kering.com/x/A0_A.jpg", "https://saint-laurent.dam.kering.com/x/A0_B.jpg"], markupPct: 10 };
     const r = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "product.manual.ysl-a0", item }, headers: { cookie, "x-tb": "1" } });
     assert.equal(r.status, 200, JSON.stringify(r.body));
-    assert.equal(r.body.copied, 1); assert.equal(r.body.images, 2); assert.equal(r.body.price, 3520);
+    assert.equal(r.body.copied, 1); assert.equal(r.body.images, 1); assert.equal(r.body.price, 3520); // не скачавшееся фото не ставим (на витрине была бы пустая картинка)
     const p = await store.get("product.manual.ysl-a0");
     assert.equal(p.status, "incoming"); assert.equal(p.brand, "Saint Laurent"); // «Новые с сайтов» — ещё не в «Товарах»
     // удалили — кнопка больше не берёт (rejected); в общем списке «Новых» не видно
@@ -198,7 +198,7 @@ test("кнопка «В Trend Büro»: товар одним запросом �
     await call(handler, { method: "POST", query: { a: "productDelete" }, body: { ids: ["product.manual.ysl-a0"] }, headers: { cookie, "x-tb": "1" } });
     const kn = await call(handler, { query: { a: "knownProducts", prefix: "ysl" }, headers: { cookie } });
     assert.equal(kn.body.status.A0, "rejected");
-    assert.ok(p.images[0].url.startsWith("https://cdn.sanity.io/")); assert.equal(p.images[1].url, item.images[1]); // обложка — первая, как на сайте; не скачалось — ссылка
+    assert.ok(p.images[0].url.startsWith("https://cdn.sanity.io/")); assert.equal(p.images.length, 1); // обложка — первая, как на сайте; не скачалось — не берём
     const bad = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "evil", item }, headers: { cookie, "x-tb": "1" } });
     assert.equal(bad.status, 400);
   } finally { globalThis.fetch = real; }
