@@ -30,3 +30,11 @@ test("для кого: по разделам магазина, детское, �
   assert.equal(genderOf({ gender: "w", overrides: { gender: "k" } }), "k");
   assert.equal(genderOf({}), "u");
 });
+
+test("взять снова удалённые товары сайта", async () => {
+  const { rememberDeleted, deletedSet, forgetDeleted } = await import("../lib/catalogload.js");
+  const store = new MemoryStore();
+  await rememberDeleted(store, ["product.manual.dior-a1", "product.manual.dior-b2", "product.manual.ysl-c3"]);
+  assert.equal(await forgetDeleted(store, "product.manual.dior-"), 2);
+  assert.deepEqual([...await deletedSet(store)], ["product.manual.ysl-c3"]);
+});

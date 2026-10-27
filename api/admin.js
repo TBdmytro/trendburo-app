@@ -436,10 +436,18 @@ export default async function handler(req, res) {
         await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: goneN, health: st });
         return send(res, 200, { gone: goneN, inSection: mine.length });
       }
+      case "forgetDeleted": {
+        const site = String(body.site || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
+        if (!site) return send(res, 400, { error: "Нет сайта" });
+        const { forgetDeleted } = await import("../lib/catalogload.js");
+        return send(res, 200, { restored: await forgetDeleted(store, "product.manual." + site + "-") });
+      }
       case "webSections": {
         // разделы сайтов брендов, где нажимали кнопку: ссылка, когда прогоняли, что нашли
         const d = await store.get("settings.webSections");
-        return send(res, 200, { sections: Object.values(d?.list || {}).sort((a, b) => String(a.lastRun).localeCompare(String(b.lastRun))) });
+        // сколько удалённых вами товаров по каждому сайту (кнопка их больше не берёт — можно разрешить снова)
+        const del = {}; for (const id of await deletedSet(store)) { const m = id.match(/^product\.manual\.([a-z0-9]+)-/); if (m) del[m[1]] = (del[m[1]] || 0) + 1; }
+        return send(res, 200, { sections: Object.values(d?.list || {}).sort((a, b) => String(a.lastRun).localeCompare(String(b.lastRun))), deleted: del });
       }
       case "webSectionDel": {
         const d = await store.get("settings.webSections"); if (d?.list) { delete d.list[secKey(body.section)]; delete d.list[String(body.section || "")]; await store.put(d); }

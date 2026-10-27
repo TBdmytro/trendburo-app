@@ -2335,7 +2335,8 @@ function siteHealth(x) {
 }
 // разделы сайтов брендов: открыть → нажать кнопку «В Trend Büro» → прогон (новые, цены, размеры, что продано)
 async function vSites() {
-  const { sections } = await api("webSections");
+  const { sections, deleted = {} } = await api("webSections");
+  const delRows = Object.entries(deleted).filter(([, n]) => n > 0);
   const ago = t => { const h = Math.round((Date.now() - Date.parse(t)) / 36e5); return h < 1 ? "только что" : h < 24 ? h + " ч назад" : Math.round(h / 24) + " дн назад"; };
   $("#main").innerHTML = head("Сайты брендов", "Разделы, где вы нажимали кнопку «В Trend Büro». Откройте раздел и нажмите кнопку — добавятся новинки, обновятся цены и размеры, пропавшие товары станут «продано». Сверху — давно не проверенные.",
     `<a class="btn ghost" href="/mt.html" target="_blank" rel="noopener">${svg("link")}Кнопка</a>`) + (sections.length ? `<div class="card" style="overflow:hidden">${sections.map(x => {
@@ -2344,9 +2345,11 @@ async function vSites() {
         <div style="flex:1;min-width:220px"><b>${esc(x.title || x.section)}</b><div class="hint">${esc(x.section)}</div>
         <div class="hint">${old ? `<span class="err">проверяли ${ago(x.lastRun)}</span>` : "проверяли " + ago(x.lastRun)} · на сайте ${x.found} · у нас из раздела ${x.inSection}${x.gone ? ` · пропало ${x.gone}` : ""}${x.partial ? ` · <span class="err">раздел загрузился не полностью</span>` : ""}</div>${siteHealth(x)}</div>
         ${x.url ? `<a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Открыть раздел</a>` : ""}<button class="btn ghost sm" data-sdel="${esc(x.section)}" aria-label="Убрать из списка">×</button></div>`;
-    }).join("")}</div>` : `<div class="card empty"><b>Пока пусто</b>Откройте раздел на сайте бренда (например, сумки на ysl.com) и нажмите кнопку «В Trend Büro» — раздел появится здесь.</div>`);
+    }).join("")}</div>` : `<div class="card empty"><b>Пока пусто</b>Откройте раздел на сайте бренда (например, сумки на ysl.com) и нажмите кнопку «В Trend Büro» — раздел появится здесь.</div>` + (delRows.length ? `<div class="h2">Удалённые вами</div><p class="hint" style="margin:-4px 0 10px">Кнопка «В Trend Büro» не берёт снова то, что вы удалили. Нажмите «Взять снова» — и при следующем прогоне раздела эти товары добавятся заново.</p>
+    <div class="card" style="overflow:hidden">${delRows.map(([site, n]) => `<div class="row" style="padding:14px 16px;border-bottom:1px solid var(--line);gap:12px"><div style="flex:1"><b>${esc(site === "ysl" ? "Saint Laurent (ysl.com)" : site.replace(/^\w/, c => c.toUpperCase()))}</b><div class="hint">удалено ${n} ${plural(n, ["товар", "товара", "товаров"])}</div></div><button class="btn sm" data-undel="${esc(site)}">Взять снова</button></div>`).join("")}</div>` : ""));
   $("#main").onclick = async e => {
     const d = e.target.closest("[data-sdel]"); if (d) { await api("webSectionDel", { method: "POST", body: { section: d.dataset.sdel } }); vSites(); }
+    const u = e.target.closest("[data-undel]"); if (u) { if (!(await confirmBox("Взять снова?", "Удалённые товары этого сайта снова добавятся при следующем прогоне кнопки (скрытыми, во «Входящих»)."))) return; const r = await api("forgetDeleted", { method: "POST", body: { site: u.dataset.undel } }); toast("Готово: " + r.restored + " — прогоните раздел снова"); vSites(); }
   };
 }
 async function vImport() {
