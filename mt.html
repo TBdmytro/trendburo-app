@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 37</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 38</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v37] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v38] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -64,11 +64,14 @@ async function tbCollect() {
   var flat = function (x) { var out = []; (Array.isArray(x) ? x : [x]).forEach(function (o) { if (!o) return; if (o["@graph"]) out = out.concat(flat(o["@graph"])); else out.push(o); }); return out; };
   var lds = function (doc) { var all = []; [].slice.call(doc.querySelectorAll('script[type="application/ld+json"]')).forEach(function (s) { try { all = all.concat(flat(JSON.parse(s.textContent))); } catch (e) {} }); return all; };
   var isT = function (o, t) { var v = o["@type"]; return v === t || (Array.isArray(v) && v.indexOf(t) >= 0); };
-  var codeOf = function (url) { var path = new URL(url, location.href).pathname, m = path.match(/-(p\d{7,9})(?:[/?#]|$)/i) || path.match(/[-_/]([A-Za-z0-9]*\d[A-Za-z0-9]{5,})(?:\.html?)?\/?$/); return m ? m[1].toUpperCase() : ""; };
+  // код товара из адреса: …-P1234567, …-A005ENAAB9S1000.html, Dior: /products/3SN272ZIJ_H80G (подчёркивание убираем — как в артикуле в админке)
+  var codeOf = function (url) { var path = new URL(url, location.href).pathname, m = path.match(/-(p\d{7,9})(?:[/?#]|$)/i) || path.match(/\/products\/([A-Za-z0-9]{5,}_[A-Za-z0-9]{2,8})(?:[-/?#]|$)/i) || path.match(/[-_/]([A-Za-z0-9]*\d[A-Za-z0-9]{5,})(?:\.html?)?\/?$/); return m ? m[1].toUpperCase().replace(/[^A-Z0-9]/g, "") : ""; };
   // фото: из галереи открытой страницы или из HTML товара — все картинки с кодом товара, по одной на кадр, крупнейшего размера
   var pickImages = function (html, code, ldImg, limit) {
     var urls = [];
     if (code) { var re = /https?:\/\/[^"'\s()<>\\]+?\.(?:jpe?g|png|webp|avif)(?:\?[^"'\s()<>\\]*)?|\/image\/\d+\/\d+\/\d+\/[^"'\s()<>\\]+?\.(?:jpe?g|png|webp)/gi, m; while ((m = re.exec(html))) { var u = m[0].replace(/&amp;/g, "&"); if (u.toUpperCase().indexOf(code) >= 0) urls.push(new URL(u, location.origin).href); } }
+    // фото без расширения в адресе (Dior и др.: …/is/image/<бренд>/<артикул>_E01?…)
+    if (code) { var re2 = /https?:\/\/[^"'\s()<>\\]+?\/is\/image\/[^"'\s()<>\\?]+(?:\?[^"'\s()<>\\]*)?/gi, m2; while ((m2 = re2.exec(html))) { var u2 = m2[0].replace(/&amp;/g, "&").replace(/\\u002F/gi, "/"); if (u2.toUpperCase().indexOf(code) >= 0 && urls.indexOf(u2) < 0) urls.push(u2); } }
     [].concat(ldImg || []).forEach(function (u) { if (typeof u === "string") urls.push(u); else if (u && u.url) urls.push(u.url); });
     var score = function (u) { var n = (u.match(/\d{3,4}/g) || []).map(Number).filter(function (x) { return x <= 4000; }); return Math.max.apply(null, [0].concat(n)) + (/ecom|large|zoom|original|full/i.test(u) ? 3000 : 0) - (/thumb|small|tiny|icon|swatch/i.test(u) ? 5000 : 0); };
     // обложка — как на сайте: главное фото товара (из данных страницы) ставим первым
@@ -214,7 +217,7 @@ async function tbCollect() {
         var d = f.contentDocument; if (!d || !d.body) continue;
         if (out.btn) { var ps = panelSizes(d, out.btn); if (ps.length) { out.sst = ps; break; } }
         // размеры прячутся за кнопкой «Select your size» — нажимаем её один раз (как покупатель), чтобы список появился
-        if (!clicked && t >= 1) { var sb = [].slice.call(d.querySelectorAll("button, [role='button'], a")).filter(function (b) { var tx = (b.textContent || "").replace(/\s+/g, " ").trim(); return tx.length < 40 && /(select|choose|choisir|w[äa]hlen|seleziona)?\s*(your\s*)?(size|taille|gr[öo](ss|ß)e|taglia)/i.test(tx) && !/guide|chart|tabelle/i.test(tx); })[0]; if (sb) { clicked = true; try { sb.click(); out.btn = sb; info.push("click:" + (sb.textContent || "").replace(/\s+/g, " ").trim().slice(0, 30)); } catch (e) {} } else if (t >= 8) { clicked = true; info.push("nobtn"); } }
+        if (!clicked && t >= 1) { var sb = [].slice.call(d.querySelectorAll("button, [role='button'], a")).filter(function (b) { var tx = (b.textContent || "").replace(/\s+/g, " ").trim(); return tx.length < 40 && /(select|choose|choisir|w[äa]hlen|seleziona|kies|elige|selecciona)?\s*(your\s*|uw\s*|tu\s*)?(size|taille|gr[öo](ss|ß)e|taglia|maat|talla)/i.test(tx) && !/guide|chart|tabelle/i.test(tx); })[0]; if (sb) { clicked = true; try { sb.click(); out.btn = sb; info.push("click:" + (sb.textContent || "").replace(/\s+/g, " ").trim().slice(0, 30)); } catch (e) {} } else if (t >= 8) { clicked = true; info.push("nobtn"); } }
         var sst = sizeInfo(d, "", p || {}), key = JSON.stringify(sst);
         if (sst.length) { if (key === last) { if (++same >= 2) { out.sst = sst; break; } } else { last = key; same = 0; } }
       }
@@ -301,8 +304,8 @@ async function tbCollect() {
     if (one) {
       if (/(^|\.)mytheresa\.com$/.test(location.hostname)) { var g = [].slice.call(document.querySelectorAll('img[class*="gallery__carousel__media__image"]')).map(function (i) { return i.currentSrc || i.src; }); if (g.length) { one.images = []; for (var gi = 0; gi < Math.min(g.length, 8); gi++) { if (g.indexOf(g[gi]) !== gi) continue; one.images.push({ u: g[gi] }); } } }
       var K1 = await getKnown(); if (one.blocked || (one.sizeStock.length && one.sizeStock.every(function (x) { return x.ok === false; }))) one.ask = one.blocked || "wait";
-      if (K1.status && K1.status[one.sku] === "rejected") one.revive = true; // вы удалили раньше, но сейчас сами открыли товар и нажали — берём снова
-      else if (K1.status && K1.status[one.sku]) { w.postMessage({ type: "tb-update", items: [one] }, ADM); await waitSaved(1); note("Обновил: " + one.title + " — цена и размеры (" + stName(K1.status[one.sku]) + ")"); return; }
+      if (K1.status && K1.status[String(one.sku).toUpperCase().replace(/[^A-Z0-9]/g, "")] === "rejected") one.revive = true; // вы удалили раньше, но сейчас сами открыли товар и нажали — берём снова
+      else if (K1.status && K1.status[String(one.sku).toUpperCase().replace(/[^A-Z0-9]/g, "")]) { w.postMessage({ type: "tb-update", items: [one] }, ADM); await waitSaved(1); note("Обновил: " + one.title + " — цена и размеры (" + stName(K1.status[String(one.sku).toUpperCase().replace(/[^A-Z0-9]/g, "")]) + ")"); return; }
       note("Trend Büro: передаю в админку…", true); await send(one); await waitSaved(1); note(saved.ok ? "Готово: " + one.brand + " — " + one.title + " — в «Новых с сайтов» в админке" : "Не сохранилось — откройте админку, там написана причина"); return;
     }
     // раздел: ссылки на товары этого же сайта (с кодом товара в адресе); сначала листаем вниз, чтобы подгрузились все товары
