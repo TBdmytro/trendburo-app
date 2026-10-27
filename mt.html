@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 36</span></h1>
+  <h1>Кнопка «В Trend Büro» <span style="font-size:15px;color:#6b7077;font-weight:500">· версия 37</span></h1>
   <p>Переносит товары с сайтов брендов и магазинов (Saint Laurent, Mytheresa и другие) в админку: бренд, название, цену в €, размеры, цвет и фото. Сначала карточки попадают на проверку, на витрину — только после вашего «Опубликовать».</p>
   <div class="card">
     <p style="margin-bottom:16px"><b>1. Перетащите кнопку на панель закладок браузера</b></p>
@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v36] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v37] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -116,7 +116,7 @@ async function tbCollect() {
   var OUT = /(sold ?out|notify ?me|join the wait ?list|wait ?list|warteliste|liste d.attente|ausverkauft|esaurit|agotad|épuisé|epuise|not available|unavailable|out of stock|nicht verfügbar)/i;
   var SZL = "(?:x{0,3}s|m|x{0,4}l|[2-6]xl)";
   var SZRE = new RegExp("^(?:" + SZL + "(?:\\s?[\\/-]\\s?" + SZL + ")?|one ?size|os|tu|u|uni|(?:(?:it|eu|fr|uk|us|de|ysl|f)\\s?)?\\d{1,3}(?:[.,]5)?(?:\\s?(?:it|eu|fr|uk|us))?|\\d{2}\\/\\d{2}|w\\d{2}(?:\\s?l\\d{2})?)(?:\\s?[\\/-]\\s?\\S+)?$", "i");
-  var okLabel = function (t) { t = String(t == null ? "" : t).replace(/\s+/g, " ").trim().replace(/\s*[-–—]\s*(join the wait ?list|wait ?list|sold ?out|notify ?me|out of stock|coming soon|pre-?order|low stock|only \d+ left)\b.*$/i, "").replace(/^([^/]{1,14}?)\s\/\s[A-Z]{2,4}\s?\d.*$/i, "$1").replace(/^(ysl|it|eu|fr|uk|us|de)\s(\d)/i, "$2").replace(/(\d)\s?(?:½|1\/2)(?!\d)/g, "$1.5").replace(/(\d),5\b/g, "$1.5"); /* половинки: 40½, 40 1/2, 40,5 → 40.5 */ return t && t.length <= 20 && SZRE.test(t) ? t.split(" / ")[0].trim() : null; };
+  var okLabel = function (t) { t = String(t == null ? "" : t).replace(/\s+/g, " ").trim().replace(/\s*[-–—]\s*(join the wait ?list|wait ?list|sold ?out|notify ?me|out of stock|coming soon|pre-?order|low stock|only \d+ left)\b.*$/i, "").replace(/^([^/]{1,14}?)\s\/\s[A-Z]{2,4}\s?\d.*$/i, "$1").replace(/^ysl\s+/i, "").replace(/^(it|eu|fr|f|uk|us|de)\s?(\d)/i, "$2").replace(/(\d)\s?(?:½|1\/2)(?!\d)/g, "$1.5").replace(/(\d),5\b/g, "$1.5"); /* половинки: 40½, 40 1/2, 40,5 → 40.5 */ return t && t.length <= 20 && SZRE.test(t) ? t.split(" / ")[0].trim() : null; };
   // массив JSON целиком, со вложенными скобками (у сайтов на Salesforce внутри размеров бывают свои списки)
   var arrAt = function (h, i) { var d = 0, q = false, e = false; for (var j = i; j < h.length && j < i + 80000; j++) { var c = h[j]; if (q) { if (e) e = false; else if (c === "\\") e = true; else if (c === '"') q = false; continue; } if (c === '"') q = true; else if (c === "[" || c === "{") d++; else if (c === "]" || c === "}") { d--; if (!d) return h.slice(i, j + 1); } } return null; };
   var jsonSizes = function (html) {
@@ -200,7 +200,7 @@ async function tbCollect() {
     var prevL = rLock, rel; rLock = new Promise(function (r) { rel = r; }); await prevL;
     try { return await rendered0(url, p, raw); } finally { rel(); } };
   var rendered0 = async function (url, p, raw) {
-    if (rSkip || (rOk === 0 && rFail >= 8)) return { sst: [], blocked: "", dbg: "R skip" };
+    if (rSkip || (rOk === 0 && rFail >= 15)) return { sst: [], blocked: "", dbg: "R skip" };
     var f = document.createElement("iframe"); f.setAttribute("aria-hidden", "true"); f.tabIndex = -1;
     // в пределах экрана (прозрачно, позади страницы): иначе сайт считает блок невидимым и не подгружает размеры
     f.style.cssText = "position:fixed;left:0;top:0;width:100vw;height:100vh;opacity:0;pointer-events:none;border:0;z-index:-2147483647";
