@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v46] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v47] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -242,6 +242,10 @@ async function tbCollect() {
     var avail = function (a) { a = String(a || ""); return /InStock|LimitedAvailability|PreOrder|PreSale|BackOrder|OnlineOnly/i.test(a) ? true : /OutOfStock|SoldOut|Discontinued/i.test(a) ? false : null; };
     var preA = function (a) { return /PreOrder|PreSale|BackOrder/i.test(String(a || "")); };
     [].concat(p.hasVariant || []).forEach(function (v) { var o = [].concat(v.offers || [])[0] || {}; add(v.size || v.name, avail(o.availability), preA(o.availability)); });
+    // Dior: размеры и наличие лежат в данных страницы ("sizeLabel":"38.5" … "status":"AVAILABLE") — без открытия окна
+    if (!out.length && /"__typename"\s*:\s*"ProductVariation"/.test(html || "")) { var hv = String(html).replace(/\\"/g, '"'), me0 = String(p.sku || "").toUpperCase(), rv = /"sku"\s*:\s*"([A-Z0-9]+_[A-Z0-9]+)_T\w{1,5}"[\s\S]{0,300}?"sizeLabel"\s*:\s*"([^"]{1,12})"[\s\S]{0,900}?"status"\s*:\s*"([A-Z_]+)"/g, mv; while ((mv = rv.exec(hv))) { if (me0 && mv[1] !== me0) continue; add(mv[2], /^(AVAILABLE|IN_STOCK|LOW_STOCK|LAST_ITEMS?)$/.test(mv[3]) || /PRE/.test(mv[3]), /PRE/.test(mv[3])); } } // только размеры этого товара, не рекомендаций
+    // запасной путь: размер из артикула предложения (…_T385 → 38.5) и его наличие
+    if (!out.length) [].concat(p.offers || []).forEach(function (o) { var m = String(o.sku || "").match(/_T(\d{2})(5?)$/); if (m) add(m[1] + (m[2] ? ".5" : ""), avail(o.availability), preA(o.availability)); });
     if (!out.length) [].concat(p.offers || []).forEach(function (o) { var it = o.itemOffered || {}; if (o.size || it.size || (o.name && okLabel(o.name))) add(o.size || it.size || o.name, avail(o.availability), preA(o.availability)); });
     if (!out.length) { var els = [].slice.call(doc.querySelectorAll('[class*="sizeitem"]:not([class*="placeholder"]):not([class*="__"]), [class*="size-item"], [class*="size__item"], [class*="sizeSelector"] li, [class*="size-selector"] li, [data-size], button[class*="size" i]')).map(function (el) {
         var cls = String(el.className || "") + " " + String((el.firstElementChild || {}).className || "");
@@ -362,13 +366,13 @@ async function tbCollect() {
     var freshN = known.filter(function (u) { return !!fr[codeOf(u)]; }).length; known = known.filter(function (u) { return !fr[codeOf(u)]; });
     var todo = fresh.slice(0, MAX).map(function (u) { return [u, false]; }).concat(known.slice(0, 400).map(function (u) { return [u, true]; }));
     var summary = function (added) { try { w.postMessage({ type: "tb-summary", found: had + newTotal, had: had, added: added, left: Math.max(0, newTotal - Math.min(newTotal, MAX)) }, ADM); } catch (e) {} };
-    var badL = [], ok = 0, upd = 0, bad = 0, sentN = 0, extra = location.pathname.toLowerCase().split(/[/_-]+/);
+    var blk = 0, siteStop = false, badL = [], ok = 0, upd = 0, bad = 0, sentN = 0, extra = location.pathname.toLowerCase().split(/[/_-]+/);
     var qd = {}, extraN = 0; links.forEach(function (u) { var c = codeOf(u); if (c) qd[c] = 1; }); Object.keys(st).forEach(function (c) { qd[c] = 1; });
     // по два товара одновременно (как если бы покупатель открыл две вкладки) — вдвое быстрее и без нагрузки на сайт
     var one1 = async function (i) {
       var isUpd = todo[i][1], tcode = codeOf(todo[i][0]);
       note("Trend Büro: " + (isUpd ? "проверяю добавленный " : "новый товар ") + (i + 1) + " из " + todo.length + " · новых " + ok + " · проверено " + upd + (bad ? " · не прочитано " + bad : "") + ". Не закрывайте вкладку", true);
-      try { var r = await fetch(todo[i][0], { credentials: "include", cache: "no-store" }), h = await r.text(); if (!r.ok) throw new Error(r.status);
+      try { var r = await fetch(todo[i][0], { credentials: "include", cache: "no-store" }), h = await r.text(); if (r.status === 403 || r.status === 429) { if (++blk >= 3) siteStop = true; throw new Error(r.status); } if (!r.ok) throw new Error(r.status); blk = 0;
         var it = await build(new DOMParser().parseFromString(h, "text/html"), h, todo[i][0], 8, extra);
         H.tried++;
         if (it && it.title) { H.read++; if (it.price) H.price++; if (!isUpd) { H.newN++; if (it.images.length) H.img++; }
@@ -389,14 +393,15 @@ async function tbCollect() {
       catch (e) { if (e && e.message === "admin") throw e; bad++; if (badL.length < 12) badL.push([todo[i][0].split("/").pop(), String(e && e.message || e).slice(0, 40)]); }
     };
     var nextI = 0, adminErr = null;
-    var worker = async function () { while (nextI < todo.length && !adminErr) { var k = nextI++; try { await one1(k); } catch (e) { adminErr = e; } await sleep(PAUSE); } };
+    // сайт начал отвечать «доступ запрещён» (403/429) — останавливаемся и не долбим его; уже взятое сохранено, следующий запуск продолжит с того же места
+    var worker = async function () { while (nextI < todo.length && !adminErr && !siteStop) { var k = nextI++; try { await one1(k); } catch (e) { adminErr = e; } await sleep(PAUSE); } };
     await Promise.all([worker(), worker()]);
     if (adminErr) throw adminErr;
     // товары раздела, которых не видно на странице: прежде чем считать «продано», открываем страницу каждого — вдруг просто не подгрузился
     var alive = [];
     var secKnown = await new Promise(function (res) { var f = function (e) { if (e.origin === ADM && e.data && e.data.type === "tb-secknown") { removeEventListener("message", f); res(e.data.list || []); } }; addEventListener("message", f); try { w.postMessage({ type: "tb-secknown", host: host, section: section }, ADM); } catch (e) { res([]); } setTimeout(res, 20000, []); });
     secKnown.forEach(function (x) { if (x && x.code && allCodes.indexOf(x.code) < 0 && fr[x.code]) alive.push(x.code); }); // недавно проверены — не трогаем
-    var missing = secKnown.filter(function (x) { return x && x.code && allCodes.indexOf(x.code) < 0 && x.url && !fr[x.code]; }).slice(0, 300);
+    var missing = secKnown.filter(function (x) { return x && x.code && allCodes.indexOf(x.code) < 0 && x.url && !fr[x.code]; }).slice(0, siteStop ? 0 : 300);
     for (var mi = 0; mi < missing.length; mi++) {
       note("Trend Büro: перепроверяю товары, которых не видно в разделе: " + (mi + 1) + " из " + missing.length + ". Не закрывайте вкладку", true);
       try { var mr = await fetch(missing[mi].url, { credentials: "include", cache: "no-store" });
@@ -413,6 +418,7 @@ async function tbCollect() {
     sample = sample || {}; moreCap.bad = badL; moreCap.siteTotal = siteTotal(); moreCap.links = links.length; moreCap.newQ = newTotal; moreCap.knownQ = had; sample.moreCap = moreCap;
     try { w.postMessage({ type: "tb-section", host: host, section: section, codes: allCodes.concat(alive), url: location.href.split("#")[0], title: document.title, stats: H, sample: sample }, ADM); } catch (e) {}
     summary(ok); await waitSaved(sentN);
+    if (siteStop) { note("Остановился: " + siteName + " временно ограничил доступ (ответ 403). Взято новых " + ok + " · проверено " + upd + ". Запустите кнопку снова через 15–30 минут — продолжит с того места, где остановился"); return; }
     note("Готово: новых " + ok + " · проверено добавленных " + upd + (saved.fail ? " · не сохранилось " + saved.fail + " (причины в админке)" : "") + (bad ? " · не прочитано " + bad : "") + (freshN ? " · недавно проверенных пропущено: " + freshN : "") + (rejN ? " · удалённых вами не берём: " + rejN : "") + (askN ? " · из них «уточнить наличие» (предзаказ, лист ожидания, нет размеров): " + askN : "") + (newTotal > MAX ? " · ещё новых: " + (newTotal - MAX) + " — нажмите кнопку ещё раз" : "") + ". Что продано и что пропало — в админке");
   } catch (e) { if (e && e.message === "noframe") { note("Этот сайт не даёт работать без окна — нажмите кнопку ещё раз: загрузка пойдёт через маленькое окно в углу", true); return; }
     note(e && e.message === "admin" ? "Админка не ответила. Войдите в админку в этом браузере и нажмите кнопку ещё раз" : "Не получилось: " + (e && e.message || e)); }
