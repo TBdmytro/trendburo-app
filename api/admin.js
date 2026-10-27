@@ -412,14 +412,14 @@ export default async function handler(req, res) {
         return send(res, 200, { list });
       }
       case "sectionSync": {
-        // прогон: товары этого раздела, которых больше нет на сайте бренда, — «продано». Если раздел загрузился меньше чем наполовину — ничего не трогаем
+        // прогон: товары этого раздела, которых больше нет на сайте бренда, — «продано». Если раздел загрузился меньше чем на 80% (не дожали «Ещё товары») — ничего не трогаем
         const px = "product.manual." + String(body.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-", section = String(body.section || "").slice(0, 200);
         const codes = new Set((Array.isArray(body.codes) ? body.codes : []).map(c => String(c).toLowerCase().replace(/[^a-z0-9]/g, "")));
         if (px.length < 18 || !section) return send(res, 400, { error: "Нет раздела" });
         const mine = (await store.list("product", {}, { limit: 60000, fields: "_id, webSections" })).filter(p => p._id.startsWith(px) && (p.webSections || []).includes(section));
         const gone = mine.filter(p => !codes.has(p._id.slice(px.length))).map(p => p._id);
-        if (mine.length && codes.size < mine.length * 0.5) { await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: 0, partial: true }); return send(res, 200, { gone: 0, skipped: true, inSection: mine.length, found: codes.size }); }
-        const goneN = gone.length && !(mine.length && codes.size < mine.length * 0.5) ? await markWebGone(store, gone.slice(0, 500), { by: me.name, pricingCfg }) : 0;
+        if (mine.length && codes.size < mine.length * 0.8) { await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: 0, partial: true }); return send(res, 200, { gone: 0, skipped: true, inSection: mine.length, found: codes.size }); }
+        const goneN = gone.length && !(mine.length && codes.size < mine.length * 0.8) ? await markWebGone(store, gone.slice(0, 500), { by: me.name, pricingCfg }) : 0;
         // отчёт о сайте (что кнопка прочитала) + категории товаров раздела + образец страницы товара для разбора
         const st = body.stats && typeof body.stats === "object" ? Object.fromEntries(["links", "tried", "read", "price", "newN", "img", "needSz", "sz"].map(k => [k, Math.max(0, Math.min(5000, Number(body.stats[k]) || 0))])) : null;
         if (st) { const all = await allProducts(store), ids = new Set(mine.map(p => p._id)), cats = { total: 0 }; for (const p of all) if (ids.has(p._id)) { const c = p.overrides?.category || p.category || "other"; cats[c] = (cats[c] || 0) + 1; cats.total++; } st.cats = cats; }

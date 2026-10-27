@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v40] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v41] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -310,7 +310,10 @@ async function tbCollect() {
     }
     // раздел: ссылки на товары этого же сайта (с кодом товара в адресе); сначала листаем вниз, чтобы подгрузились все товары
     var countLinks = function () { return [].slice.call(document.querySelectorAll("a[href]")).filter(function (a) { return !!codeOf(a.href); }).length; };
-    for (var sc = 0, last = -1, same = 0; sc < 25 && same < 3; sc++) { var n = countLinks(); same = n === last ? same + 1 : 0; last = n; note("Trend Büro: листаю раздел, найдено товаров: " + n, true); window.scrollTo(0, document.documentElement.scrollHeight); await sleep(900); }
+    // кнопка «Ещё товары» (Dior: «Mehr laden», 30 из 229) — нажимаем, пока есть; так раздел берётся целиком, а не первые 30
+    var moreBtn = function () { return [].slice.call(document.querySelectorAll("button, a[role=button], a[class*=more], a[class*=load]")).filter(function (b) { var t = (b.innerText || b.textContent || "").replace(/\s+/g, " ").trim(); if (!t || t.length > 40 || b.disabled || b.getAttribute("aria-disabled") === "true") return false; var r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && /^(mehr (laden|anzeigen|produkte|artikel)|weitere (laden|anzeigen|produkte)|load more|show more|view more|see more|meer (laden|tonen|weergeven)|voir plus|afficher plus|charger plus|mostra(re)? (altro|di più)|carica altri|ver más|cargar más|mostrar más|показать ещё|загрузить ещё)/i.test(t); })[0]; };
+    for (var sc = 0, last = -1, same = 0, clicks = 0; sc < 80 && same < 3; sc++) { var n = countLinks(); same = n === last ? same + 1 : 0; last = n; note("Trend Büro: листаю раздел, найдено товаров: " + n, true); window.scrollTo(0, document.documentElement.scrollHeight); await sleep(900);
+      var mb = moreBtn(); if (mb && clicks < 40) { try { mb.scrollIntoView({ block: "center" }); mb.click(); clicks++; same = 0; await sleep(1600); } catch (e) {} } else if (sc >= 25 && !clicks) break; }
     var tb = {}; [].slice.call(document.querySelectorAll("a[href]")).forEach(function (a) { var c = codeOf(a.href); if (c && !tb[c]) { var k = tileBlock(a); if (k) tb[c] = k; } });
     // главное фото — как на плитке в разделе бренда (у всех товаров одного вида)
     var ti = {}; [].slice.call(document.querySelectorAll("a[href]")).forEach(function (a) { var c = codeOf(a.href); if (!c || ti[c]) return; var el = a;
