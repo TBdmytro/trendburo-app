@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v47] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v48] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -262,6 +262,10 @@ async function tbCollect() {
   var gender = function (path) { var t = "/" + path.toLowerCase().replace(/[-_]/g, "/") + "/"; return /\/(women|womens|woman|donna|damen|damenmode|femme|femmes|dames|damesmode|womenswear)\//.test(t) ? "w" : /\/(men|mens|man|uomo|herren|herrenmode|homme|hommes|heren|herenmode|menswear)\//.test(t) ? "m" : "u"; };
   var build = async function (doc, html, url, limit, extra) {
     var all = lds(doc), p = all.find(function (o) { return isT(o, "Product") || isT(o, "ProductGroup"); }); if (!p) return null;
+    // группа товаров (On и др.: одна модель, варианты — цвета): берём вариант этой страницы — его цену, наличие, фото и артикул
+    if (isT(p, "ProductGroup") && p.hasVariant && !p.offers) { var vs = [].concat(p.hasVariant), uc = codeOf(url), pu = url.split(/[?#]/)[0];
+      var v0 = vs.find(function (x) { return String(x.sku || "").toUpperCase().replace(/[^A-Z0-9]/g, "") === uc; }) || vs.find(function (x) { var o = [].concat(x.offers || [])[0] || {}; return o.url && o.url.split(/[?#]/)[0] === pu; }) || vs[0];
+      if (v0) { var pg = {}; Object.keys(p).forEach(function (k) { if (k !== "hasVariant") pg[k] = p[k]; }); pg["@type"] = "Product"; pg.sku = v0.sku || p.productGroupID; pg.offers = v0.offers; pg.image = v0.image || p.image; if (v0.color) pg.color = v0.color; if (v0.size) pg.size = v0.size; p = pg; } }
     var of = [].concat(p.offers || [])[0] || {}; if (of.offers) of = [].concat(of.offers)[0] || of; var ps = of.priceSpecification ? [].concat(of.priceSpecification)[0] : of;
     var price = Number(String(ps.price != null ? ps.price : of.lowPrice != null ? of.lowPrice : "").replace(",", ".")) || null;
     var bc = all.find(function (o) { return isT(o, "BreadcrumbList"); });

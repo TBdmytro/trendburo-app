@@ -433,7 +433,7 @@ export default async function handler(req, res) {
         return send(res, 200, { sections: Object.values(d?.list || {}).sort((a, b) => String(a.lastRun).localeCompare(String(b.lastRun))) });
       }
       case "webSectionDel": {
-        const d = await store.get("settings.webSections"); if (d?.list) { delete d.list[String(body.section || "")]; await store.put(d); }
+        const d = await store.get("settings.webSections"); if (d?.list) { delete d.list[secKey(body.section)]; delete d.list[String(body.section || "")]; await store.put(d); }
         return send(res, 200, { ok: true });
       }
       case "markNew": {
@@ -633,10 +633,13 @@ function sizeList(p) {
 }
 function safeJson(s) { try { return JSON.parse(s); } catch { return {}; } }
 
+// ключ в базе — только буквы, цифры, «_» и «-» (Sanity не принимает «.» и «/» в именах полей: «on.com/en-de/shop/shoes» ронял сохранение)
+const secKey = s => String(s || "").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 180);
 async function rememberSection(store, x) {
   const d = (await store.get("settings.webSections")) || { _id: "settings.webSections", _type: "settings", list: {} };
-  const url = /^https:\/\//.test(String(x.url || "")) ? String(x.url).slice(0, 500) : (d.list[x.section]?.url || null);
-  d.list = d.list || {};
-  d.list[x.section] = { section: x.section, url, title: String(x.title || d.list[x.section]?.title || "").replace(/\s*[|–-]\s*[^|–-]*$/, "").slice(0, 120), lastRun: new Date().toISOString(), found: x.found, inSection: x.inSection, gone: x.gone, partial: !!x.partial, health: x.health || d.list[x.section]?.health || null };
+  d.list = d.list || {}; const k = secKey(x.section), prev = d.list[k] || {};
+  const url = /^https:\/\//.test(String(x.url || "")) ? String(x.url).slice(0, 500) : (prev.url || null);
+  d.list[k] = { section: x.section, url, title: String(x.title || prev.title || "").replace(/\s*[|–-]\s*[^|–-]*$/, "").slice(0, 120), lastRun: new Date().toISOString(), found: x.found, inSection: x.inSection, gone: x.gone, partial: !!x.partial, health: x.health || prev.health || null };
+  for (const kk of Object.keys(d.list)) if (!/^[a-zA-Z0-9_-]+$/.test(kk)) delete d.list[kk]; // старые неправильные ключи
   const { _rev, _createdAt, _updatedAt, ...save } = d; await store.put(save);
 }
