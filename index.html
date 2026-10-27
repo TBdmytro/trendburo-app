@@ -1339,6 +1339,9 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .bhero .acts .btn.soft{background:rgba(255,255,255,.12);color:#fff}
 .bhero .acts .follow[aria-pressed="true"]{background:rgba(255,255,255,.12);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
 .follow[aria-pressed="true"]{background:var(--bg);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line)}
+.bsubs{align-items:center}.bsubs .chip{padding:6px 12px;font-size:13px;background:var(--bg)}
+.bsubs .chip[aria-pressed="true"]{background:var(--bg);color:var(--fg);border-color:var(--ink);box-shadow:inset 0 0 0 .5px var(--ink);font-weight:600}.bsubs .chip[aria-pressed="true"] .c{color:var(--g2)}
+.bsubs .bsl{flex:none;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--g2)}.bsubs .bsep{flex:none;width:1px;height:20px;background:var(--line);margin:0 4px}
 .bsticky{position:sticky;top:calc(52px + var(--st));z-index:3;background:var(--bg);padding:12px 0 10px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)}
 .bsticky .toolrow .seg{flex:none}
 .bsticky select{width:auto;padding:8px 12px;font-size:13.5px;border-radius:10px;margin-left:auto}
@@ -1696,6 +1699,18 @@ const CONTACTS = [
 ];
 const MARKUP=.10, DRIVER_UA=.03, RESALE_FEE=.15;
 const CATS={bags:"Сумки",shoes:"Обувь",clothing:"Одежда",eyewear:"Очки",accessories:"Аксессуары",jewelry:"Украшения",watches:"Часы"};
+/* Виды вещей внутри категории — по названию товара (названия на английском). Что не узнали — «Другое». */
+const SUBCATS={
+ clothing:[["outer","Верхняя одежда",/jacket|coat|trench|puffer|parka|bomber|anorak|\bvest|gilet|cape\b|windbreaker|shearling|blouson|caban|peacoat|shacket/],["blazer","Пиджаки и костюмы",/blazer|tuxedo|\bsuit\b|smoking/],["hood","Худи и свитшоты",/hoodie|hooded|sweatshirt|full[- ]zip|half[- ]zip|quarter[- ]zip|zip[- ]up|pullover/],["knit","Трикотаж",/sweater|cardigan|jumper|\bknit|turtleneck|mock neck|pointelle/],["shirt","Рубашки",/(^|[^-])shirt|blouse|button[- ](down|up)/],["tee","Футболки и топы",/t-shirt|\btee\b|tank|\btop\b|polo|camisole|bodysuit|short sleeve|long sleeve|corset|bustier/],["dress","Платья",/dress|gown/],["skirt","Юбки",/skirt|skort/],["pants","Брюки и джинсы",/\bpants?\b|trouser|jeans?\b|denim|legging|jogger|sweatpant|wide[- ]leg|chino|cargo|capri|flare/],["shorts","Шорты",/\bshorts?\b|bermuda/],["under","Бельё и купальники",/\bbra\b|boxer|brief|thong|swim|bikini|one-piece|underwear|bralette|lingerie|onesie/]],
+ shoes:[["sneak","Кроссовки",/sneaker|trainer|runner|\btrail\b|recovery|court/],["boot","Ботинки и сапоги",/boot|chelsea|ranger/],["loaf","Лоферы и дерби",/loafer|derby|oxford|moccasin|brogue|\bmonk/],["pump","Туфли",/pump|heel|stiletto|slingback|escarpin|mary jane|d'orsay/],["ballet","Балетки",/ballet|ballerina|\bflats?\b/],["sand","Сандалии и мюли",/sandal|slide|mule|espadrille|flip|slipper|clog|thong/]],
+ bags:[["back","Рюкзаки",/backpack|rucksack/],["travel","Дорожные",/duffle|duffel|travel|weekender|keepall|luggage|suitcase/],["beltb","Поясные",/belt bag|bum bag|waist/],["tote","Тоуты и шоперы",/tote|shopper|cabas/],["cross","Через плечо",/crossbody|messenger|camera|saddle/],["mini","Мини и клатчи",/\bmini\b|clutch|pouch|nano|micro|wristlet|vanity|minaudi/],["shoulder","На плечо",/shoulder|hobo|baguette|bucket/]],
+ accessories:[["belt","Ремни",/\bbelt\b/],["scarf","Шарфы и платки",/scarf|stole|shawl|bandana|foulard|carr[eé]/],["glove","Перчатки",/glove|mitten/],["hat","Головные уборы",/\bhat\b|\bcap\b|beanie|beret|visor|cloche|balaclava|headband|bucket hat/],["slg","Кошельки и картхолдеры",/wallet|card|coin|key|case|organi[sz]er/],["jew","Украшения",/earring|necklace|bracelet|\bring\b|brooch|pendant|choker|\bcuff\b/],["eye","Очки",/sunglass|glasses|^sl \d/],["sock","Носки",/sock/]]
+};
+// порядок проверки отличается от порядка показа: «Sweater Pant» — брюки, «Short Sleeve Polo» — футболка, «Bra Tank» — бельё
+const SUBORD={clothing:["outer","blazer","under","dress","skirt","pants","shirt","tee","shorts","hood","knit"]};
+function subOf(p){if(p._sub!==undefined)return p._sub;const t=String(p.name||"").toLowerCase(),L=SUBCATS[p.cat];let k="other";
+  if(L){const ord=SUBORD[p.cat]?SUBORD[p.cat].map(x=>L.find(y=>y[0]===x)):L;for(const [key,,rx] of ord)if(rx.test(t)){k=key;break}}return p._sub=k}
+const subName=(c,k)=>k==="other"?"Другое":((SUBCATS[c]||[]).find(x=>x[0]===k)||[,k])[1];
 const CITIES={de:"Германия",paris:"Париж",milan:"Милан",vienna:"Вена",online:"Онлайн"};
 
 const P=[
@@ -2713,7 +2728,7 @@ function renderFeedFollow(){const box=$("#followRail");if(!box)return;// «Ва�
   const l=P.filter(p=>follows.has(p.bk)).sort((a,b)=>b.isNew-a.isNew).slice(0,20);
   box.innerHTML=l.length?`<div class="sec"><div class="sech"><h2>${esc(FEED_TITLE.follow||"Ваши бренды")}</h2><button class="more" data-act="allbrands">Все бренды</button></div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`:""}
 function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bname(bk);
-  const st={cat:"",g:"all",sort:"pop"};const lead=all.slice().sort((a,b)=>b.isNew-a.isNew)[0];
+  const st={cats:new Set(),subs:{},g:"all",sort:"pop"};const lead=all.slice().sort((a,b)=>b.isNew-a.isNew)[0];
   const cats=[...new Set(all.map(p=>p.cat))],gs=[...new Set(all.map(p=>p.g))];
   const s=push(bn,`<div class="bhero" style="--c:${lead.c}"><span class="mono" aria-hidden="true">${esc(initials(bn))}</span>
      <span class="cap">${BRAND_META[bk]||""}</span><h1>${esc(bn)}</h1>
@@ -2721,22 +2736,28 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
      <div class="acts"><button class="btn sm follow" data-follow aria-pressed="${follows.has(bk)}">${follows.has(bk)?"Вы следите":"Следить"}</button><button class="btn sm soft" data-req>Найти модель</button></div></div>
    ${ICONS.some(ic=>ic.bk===bk)?`<div class="sec"><div class="sech"><h2>Культовые модели</h2><span class="muted" style="font-size:13px">под заказ</span></div><div class="hrail">${ICONS.filter(ic=>ic.bk===bk).map(icHTML).join("")}</div></div>`:""}
    <div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>В витрине сейчас</h2></div></div>
-   <div class="bsticky"><div class="chips" id="bcats"></div>${gs.length>1?`<div class="toolrow"><div class="seg" role="group" aria-label="Для кого" id="bgs"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button></div><select id="bsort" aria-label="Сортировка"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`:`<div class="toolrow"><select id="bsort" aria-label="Сортировка" style="margin-left:0"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`}</div>
+   <div class="bsticky"><div class="chips" id="bcats"></div><div class="chips bsubs" id="bsubs" hidden></div>${gs.length>1?`<div class="toolrow"><div class="seg" role="group" aria-label="Для кого" id="bgs"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button></div><select id="bsort" aria-label="Сортировка"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`:`<div class="toolrow"><select id="bsort" aria-label="Сортировка" style="margin-left:0"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`}</div>
    <div class="grid2" id="bgrid" style="margin-top:14px"></div>
    ${nw.length?`<div class="sec"><div class="sech"><h2>Новости ${esc(bn)}</h2></div>${nw.map(n=>{const p=P.find(x=>x.id===n.pid);return `<button class="newsrow press" data-act="news" data-id="${n.id}" style="--c:${p.c}"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div><span class="cap">${n.tag} · ${n.when}</span><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div></button>`}).join("")}</div>`:""}
    <div class="pad" style="margin:22px 0 10px"><div class="group"><b style="font-weight:600">Нет нужной модели?</b><span class="muted" style="font-size:14px">Напишите менеджеру — найдём в бутиках ${esc(bn)} в Европе или закажем на официальном сайте.</span><button class="btn sm" data-req2 style="align-self:flex-start;margin-top:4px">Написать менеджеру</button></div></div>`,{clear:true});
   const draw=()=>{const f=all.filter(p=>(st.g==="all"||p.g===st.g));
-    s.querySelector("#bcats").innerHTML=`<button class="chip" data-bc="" aria-pressed="${!st.cat}">Все<span class="c num">${f.length}</span></button>`+cats.map(c=>{const n=f.filter(p=>p.cat===c).length;return n?`<button class="chip" data-bc="${c}" aria-pressed="${st.cat===c}">${CATS[c]}<span class="c num">${n}</span></button>`:""}).join("");
+    s.querySelector("#bcats").innerHTML=`<button class="chip" data-bc="" aria-pressed="${!st.cats.size}">Все<span class="c num">${f.length}</span></button>`+cats.map(c=>{const n=f.filter(p=>p.cat===c).length;return n?`<button class="chip" data-bc="${c}" aria-pressed="${st.cats.has(c)}">${CATS[c]||c}<span class="c num">${n}</span></button>`:""}).join("");
+    // вторая строка: виды вещей выбранных категорий (Одежда: Верхняя · Трикотаж | Сумки: Тоуты · Мини)
+    const groups=cats.filter(c=>st.cats.has(c)).map(c=>{const cnt={};f.forEach(p=>{if(p.cat===c){const k=subOf(p);cnt[k]=(cnt[k]||0)+1}});
+      const keys=(SUBCATS[c]||[]).map(x=>x[0]).filter(k=>cnt[k]).concat(cnt.other?["other"]:[]);return {c,cnt,keys}}).filter(g=>g.keys.length>1);
+    const sr=s.querySelector("#bsubs");sr.hidden=!groups.length;
+    sr.innerHTML=groups.map((g,i)=>`${i?'<i class="bsep" aria-hidden="true"></i>':""}${groups.length>1?`<span class="bsl">${esc(CATS[g.c]||g.c)}</span>`:""}`+g.keys.map(k=>`<button class="chip" data-bsc="${g.c}" data-bs="${k}" aria-pressed="${!!(st.subs[g.c]&&st.subs[g.c].has(k))}">${esc(subName(g.c,k))}<span class="c num">${g.cnt[k]}</span></button>`).join("")).join("");
     const bg=s.querySelector("#bgs");if(bg)bg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===st.g));
-    const f2=f.filter(p=>!st.cat||p.cat===st.cat),list=st.sort==="pop"?popOrder(f2):f2.sort((a,b)=>st.sort==="asc"?a.price-b.price:st.sort==="desc"?b.price-a.price:(b.isNew-a.isNew)||(a.price-b.price));
+    const f2=f.filter(p=>(!st.cats.size||st.cats.has(p.cat))&&(!(st.subs[p.cat]&&st.subs[p.cat].size)||st.subs[p.cat].has(subOf(p)))),list=st.sort==="pop"?popOrder(f2):f2.sort((a,b)=>st.sort==="asc"?a.price-b.price:st.sort==="desc"?b.price-a.price:(b.isNew-a.isNew)||(a.price-b.price));
     // товары бренда — порциями по 24 при прокрутке (у больших брендов их тысячи — разом всё рисовать нельзя)
     bl=list;bn0=0;bio&&bio.disconnect();s.querySelector("#bgrid").innerHTML="";bMore()};
   let bl=[],bn0=0,bio=null;
   const bMore=()=>{const g=s.querySelector("#bgrid"),to=Math.min(bl.length,bn0+GRID_STEP);if(bn0>=to)return;g.querySelector(".grid-more")?.remove();
     g.insertAdjacentHTML("beforeend",bl.slice(bn0,to).map(pcHTML).join("")+(to<bl.length?'<div class="grid-more"></div>':""));bn0=to;
     const m=g.querySelector(".grid-more");if(m){bio=bio||new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))bMore()},{root:s.querySelector(".scroll"),rootMargin:"900px 0px"});bio.observe(m)}};
-  s.querySelector("#bcats").addEventListener("click",e=>{const b=e.target.closest("[data-bc]");if(b){st.cat=b.dataset.bc;draw()}});
-  const bg=s.querySelector("#bgs");if(bg)bg.addEventListener("click",e=>{const b=e.target.closest("button");if(b){st.g=b.dataset.g;if(st.cat&&!all.some(p=>p.cat===st.cat&&(st.g==="all"||p.g===st.g)))st.cat="";draw()}});
+  s.querySelector("#bcats").addEventListener("click",e=>{const b=e.target.closest("[data-bc]");if(!b)return;const c=b.dataset.bc;if(!c){st.cats.clear();st.subs={}}else if(st.cats.has(c)){st.cats.delete(c);delete st.subs[c]}else st.cats.add(c);hap&&hap("light");draw()});
+  s.querySelector("#bsubs").addEventListener("click",e=>{const b=e.target.closest("[data-bs]");if(!b)return;const c=b.dataset.bsc,k=b.dataset.bs,S=st.subs[c]=st.subs[c]||new Set();S.has(k)?S.delete(k):S.add(k);hap&&hap("light");draw()});
+  const bg=s.querySelector("#bgs");if(bg)bg.addEventListener("click",e=>{const b=e.target.closest("button");if(b){st.g=b.dataset.g;[...st.cats].forEach(c=>{if(!all.some(p=>p.cat===c&&(st.g==="all"||p.g===st.g))){st.cats.delete(c);delete st.subs[c]}});draw()}});
   s.querySelector("#bsort").onchange=e=>{st.sort=e.target.value;draw()};
   const fb=s.querySelector("[data-follow]");fb.onclick=()=>{toggleFollow(bk);fb.setAttribute("aria-pressed",follows.has(bk));fb.textContent=follows.has(bk)?"Вы следите":"Следить"};
   const req=()=>orderSheet("Запрос по "+bn,`Здравствуйте! Ищу ${bn}.\nМодель: \nЦвет / размер: \nБюджет: \nДоставка: Украина`);
