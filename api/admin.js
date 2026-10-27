@@ -43,7 +43,9 @@ async function copyWebImages(store, list) {
       const up = await store.uploadImage(b.buf, { filename: "web-" + Date.now() + "." + (b.type.split("/")[1] || "jpg"), contentType: b.type, sourceUrl: u }); copied++; return up.url; }
     catch (e) { console.log("IMGURL fail " + JSON.stringify({ host: new URL(u).hostname, why: String(e.message).slice(0, 120) })); return u; }
   }))).filter(Boolean);
-  return { images, copied };
+  // не скачалось — ссылку сайта бренда оставляем, только если других фото нет (иначе на витрине пустая обложка)
+  const ok = images.filter(u => /^https:\/\/cdn\.sanity\.io\//.test(u));
+  return { images: ok.length ? ok : images, copied };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre, \"nSz\": count(sizes), imgVer";
 async function allProducts(store) {
@@ -377,6 +379,12 @@ export default async function handler(req, res) {
         if (Array.isArray(it.images) && it.images.length) { try { const p0 = await store.get(id);
           if (p0 && (p0.imgVer !== 2 || (p0.images || []).length < Math.min(3, it.images.length)) && !p0.overrides?.cover && !(p0.overrides?.imageOrder || []).length) { const { images } = await copyWebImages(store, it.images);
             if (images.length) { await store.patchMany([id], { images: images.map(u => ({ url: u, sourceUrl: u, rights: "copied" })), imgVer: 2, ...(it.tileImg ? { coverFrom: "tile", coverTile: String(it.tileImg).slice(0, 600) } : {}) }); PCACHE = null; } } } catch (e) { console.log("IMGREF fail " + String(e.message).slice(0, 100)); } }
+        // ещё не разобранные «Новые с сайтов»: категория и пол — по новым правилам кнопки (ваши правки из админки важнее)
+        try { const p1 = await store.get(id); const { CATEGORIES } = await import("../lib/normalize.js"); const set = {};
+          if (p1 && p1.status === "incoming") { if (CATEGORIES[it.category] && !p1.overrides?.category && p1.category !== it.category) set.category = it.category; if (["w", "m"].includes(it.gender) && !p1.overrides?.gender && p1.gender !== it.gender) set.gender = it.gender; }
+          if (Object.keys(set).length) { await store.patchMany([id], set); PCACHE = null; } } catch {}
+        // немецкий/нидерландский текст у уже загруженного товара — переводим один раз
+        try { const p2 = await store.get(id); if (p2 && !p2.orig && !p2.overrides?.title) { const { englishItem, looksGerman } = await import("../lib/translate.js"); if (looksGerman(p2.title, p2.description)) { const en = await englishItem({ title: p2.title, description: p2.description, colors: (p2.colors || []).map(c => ({ name: c })) }, null); if (en.orig) { await store.patchMany([id], { title: en.title, sourceTitle: en.title, description: en.description || p2.description, orig: en.orig }); PCACHE = null; } } } } catch (e) { console.log("TR upd fail " + String(e.message).slice(0, 100)); }
         // обложка как на плитке раздела бренда (один раз на товар)
         if (/^https:\/\//.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
         return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
