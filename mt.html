@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 100, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v39] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v40] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -317,7 +317,7 @@ async function tbCollect() {
       for (var d = 0; d < 8 && el.parentElement; d++) { var up = el.parentElement; if ([].slice.call(up.querySelectorAll("a[href]")).some(function (x) { var cc = codeOf(x.href); return cc && cc !== c; })) break; el = up; }
       // первое фото плитки (не второе «при наведении»); у не показанных на экране — из srcset / data-src (ленивая загрузка)
       var im = el.querySelector("img"); if (!im) return; var pic = im.closest && im.closest("picture"), cand = [];
-      var fromSet = function (v) { return String(v || "").split(/,\s+/).map(function (x) { var p = x.trim().split(/\s+/); return { u: p[0], w: parseInt(p[1]) || 0 }; }).filter(function (x) { return x.u && /^https?:\/\//.test(x.u); }).sort(function (a, b) { return b.w - a.w; }).map(function (x) { return x.u; }); };
+      var fromSet = function (v) { v = String(v || ""); var parts = /\s\d+(?:\.\d+)?[wx]\s*,/.test(v) ? v.replace(/(\s\d+(?:\.\d+)?[wx])\s*,\s*/g, "$1\u0001").split("\u0001") : v.split(/,\s+/); /* запятые бывают внутри адреса (crop=0,0,4000,5000) — режем только после «640w,» */ return parts.map(function (x) { var p = x.trim().split(/\s+/); return { u: p[0], w: parseInt(p[1]) || 0 }; }).filter(function (x) { return x.u && /^https?:\/\//.test(x.u); }).sort(function (a, b) { return b.w - a.w; }).map(function (x) { return x.u; }); };
       cand = cand.concat(fromSet(im.getAttribute("srcset")), fromSet(im.getAttribute("data-srcset")), pic ? [].slice.call(pic.querySelectorAll("source")).reduce(function (a, so) { return a.concat(fromSet(so.getAttribute("srcset")), fromSet(so.getAttribute("data-srcset"))); }, []) : [], [im.getAttribute("data-src"), im.currentSrc, im.getAttribute("src")]);
       var u = cand.filter(function (x) { return x && /^https?:\/\//.test(x) && !/(placeholder|blank|spacer|1x1)/i.test(x); })[0];
       if (u) try { ti[c] = new URL(u, location.href).href; } catch (e) {} });

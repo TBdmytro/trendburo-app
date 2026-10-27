@@ -37,7 +37,9 @@ let PCACHE = null;
 // фото с сайта бренда → в наше хранилище, в том же порядке (первое — обложка как на плитке бренда). Без «склейки похожих»: перед и зад сумки похожи, их нельзя объединять
 async function copyWebImages(store, list) {
   const { fetchBinary } = await import("../lib/images.js");
-  const urls = [...new Set((Array.isArray(list) ? list : []).map(String).filter(u => /^https:\/\//.test(u)))].slice(0, 8);
+  // битые ссылки (обрывок srcset, склеенный с адресом раздела: «…/schuhe/5000&wid=1334…») не берём
+  const sane = u => { try { const x = new URL(u); return x.protocol === "https:" && !/[&=]/.test(x.pathname); } catch { return false; } };
+  const urls = [...new Set((Array.isArray(list) ? list : []).map(String).filter(sane))].slice(0, 8);
   let copied = 0;
   const images = (await Promise.all(urls.map(async u => {
     try { const b = await Promise.race([fetchBinary(u, [new URL(u).hostname]), new Promise((_, no) => setTimeout(() => no(new Error("долго")), 20000))]);
@@ -281,7 +283,7 @@ export default async function handler(req, res) {
         // fresh — проверены кнопкой за последние 12 часов: при повторном прогоне их не открываем заново (быстрее)
         const status = {}, fresh = {}, since = Date.now() - 24 * 36e5;
         for (const id of await deletedSet(store)) if (id.startsWith(px)) status[id.slice(px.length).toUpperCase()] = "rejected"; // вы удалили — кнопка не вернёт
-        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; const needSz = ["shoes", "clothing"].includes(p.overrides?.category || p.category) && !p.nSz; if (ck && Date.parse(ck) > since && !needSz && p.imgVer === 2) fresh[k] = 1; } // без размеров — проверяем снова
+        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; const needSz = ["shoes", "clothing"].includes(p.overrides?.category || p.category) && !p.nSz; if (ck && Date.parse(ck) > since && !needSz && p.imgVer === 2 && /^https:\/\/cdn\.sanity\.io\//.test(p.images?.[0]?.url || "")) fresh[k] = 1; } // фото не скопировано — открываем снова // без размеров — проверяем снова
         return send(res, 200, { status, fresh });
       }
       case "brandBoard": {
@@ -378,7 +380,7 @@ export default async function handler(req, res) {
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
         // фото заново с сайта бренда — один раз (imgVer 2): прежняя «склейка похожих фото» могла заменить перед сумки на вид сзади. Ваши обложка/порядок фото из админки — не трогаем
         if (Array.isArray(it.images) && it.images.length) { try { const p0 = await store.get(id);
-          if (p0 && (p0.imgVer !== 2 || (p0.images || []).length < Math.min(3, it.images.length)) && !p0.overrides?.cover && !(p0.overrides?.imageOrder || []).length) { const { images } = await copyWebImages(store, it.images);
+          if (p0 && (p0.imgVer !== 2 || (p0.images || []).length < Math.min(3, it.images.length) || !/^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "")) && !p0.overrides?.cover && !(p0.overrides?.imageOrder || []).length) { const { images } = await copyWebImages(store, it.images);
             if (images.length) { await store.patchMany([id], { images: images.map(u => ({ url: u, sourceUrl: u, rights: "copied" })), imgVer: 2, ...(it.tileImg ? { coverFrom: "tile", coverTile: String(it.tileImg).slice(0, 600) } : {}) }); PCACHE = null; } } } catch (e) { console.log("IMGREF fail " + String(e.message).slice(0, 100)); } }
         // ещё не разобранные «Новые с сайтов»: категория и пол — по новым правилам кнопки (ваши правки из админки важнее)
         try { const p1 = await store.get(id); const { CATEGORIES } = await import("../lib/normalize.js"); const set = {};
@@ -387,7 +389,7 @@ export default async function handler(req, res) {
         // немецкий/нидерландский текст у уже загруженного товара — переводим один раз
         try { const p2 = await store.get(id); if (p2 && !p2.orig && !p2.overrides?.title) { const { englishItem, looksGerman } = await import("../lib/translate.js"); if (looksGerman(p2.title, p2.description)) { const en = await englishItem({ title: p2.title, description: p2.description, colors: (p2.colors || []).map(c => ({ name: c })) }, null); if (en.orig) { await store.patchMany([id], { title: en.title, sourceTitle: en.title, description: en.description || p2.description, orig: en.orig }); PCACHE = null; } } } } catch (e) { console.log("TR upd fail " + String(e.message).slice(0, 100)); }
         // обложка как на плитке раздела бренда (один раз на товар)
-        if (/^https:\/\//.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
+        if (/^https:\/\/[^/]+\/[^&=]*(\?|$)/.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
         return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
       }
       case "fixBrands": {
