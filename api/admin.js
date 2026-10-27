@@ -15,7 +15,7 @@ import { SourceBlocked } from "../lib/http.js";
 import { createJob, tick, cancelJob, deleteJob, ACTIVE } from "../lib/worker.js";
 import { publishItems, setStatus, saveOverrides, computePricing } from "../lib/publish.js";
 import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
-import { toStorefront } from "../lib/catalog.js";
+import { toStorefront, genderOf } from "../lib/catalog.js";
 import { saveManualProduct, updateWebProduct, markWebGone } from "../lib/manual.js";
 import { LEAD_STATUS, notifyClient } from "./lead.js";
 import { makeManualOrder, clientStats, customerId } from "../lib/customers.js";
@@ -315,7 +315,7 @@ export default async function handler(req, res) {
           && (!Q.stock || (l => Q.stock === "any" ? !!l : l === Q.stock)((p.overrides?.stock || p.stock)?.loc || "")));
         // вкладка раздела магазина (Бестселлеры, Женское…) — в том же порядке, что на сайте бренда
         const pos = p => (p.secPos || []).find(x => x.s === Q.sec)?.p ?? 1e9;
-        const gen = p => p.overrides?.gender || p.gender || "u";
+        const gen = p => genderOf(p);
         const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat) && (!Q.g || gen(p) === Q.g) && (!Q.sec || (p.sections || []).includes(Q.sec)));
         if (Q.sec) list.sort((a, b) => pos(a) - pos(b));
         const srcDoc = Q.source ? await store.get("source." + Q.source) : null;
@@ -328,7 +328,7 @@ export default async function handler(req, res) {
         return send(res, 200, { total: list.length, incoming, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId), genders: facet(base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat)), gen) },
           shown: list.filter(p => p.status === "published").length,
-          products: page.map(p => ({ _id: p._id, g: p.overrides?.gender || p.gender || "u", stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null })) });
+          products: page.map(p => ({ _id: p._id, g: genderOf(p), stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });
@@ -453,7 +453,7 @@ export default async function handler(req, res) {
       case "bulkGender": {
         // для кого: w — женское, m — мужское, u — унисекс (у выбранных товаров)
         const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(i => i.startsWith("product.")).slice(0, 2000);
-        if (!["w", "m", "u"].includes(body.gender)) return send(res, 400, { error: "Нет такого значения" });
+        if (!["w", "m", "u", "k"].includes(body.gender)) return send(res, 400, { error: "Нет такого значения" });
         let changed = 0;
         for (const id of ids) { try { await saveOverrides(store, id, { gender: body.gender }, me.name, pricingCfg); changed++; } catch {} }
         PCACHE = null;

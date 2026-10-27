@@ -18,3 +18,15 @@ test("ручной заказ через менеджера: номер, вид�
   assert.equal(s.orders, 3); assert.equal(s.viaManager, 2); assert.equal(s.requests, 1);
   assert.equal(s.spent, 13700); assert.equal(s.earned, 2500 + 200);
 });
+
+test("для кого: по разделам магазина, детское, ваша отметка главнее", async () => {
+  const { genderOf } = await import("../lib/catalog.js");
+  assert.equal(genderOf({ sections: ["womens-shop-all"] }), "w");
+  assert.equal(genderOf({ sections: ["mens"] }), "m");
+  assert.equal(genderOf({ sections: ["womens", "mens", "bestsellers"] }), "u");
+  assert.equal(genderOf({ sections: ["kids"] }), "k");
+  assert.equal(genderOf({ gender: "u", sections: ["women"] }), "w");
+  assert.equal(genderOf({ gender: "m", sections: ["women"] }), "m");
+  assert.equal(genderOf({ gender: "w", overrides: { gender: "k" } }), "k");
+  assert.equal(genderOf({}), "u");
+});
