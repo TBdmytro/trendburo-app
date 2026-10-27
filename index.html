@@ -1701,16 +1701,27 @@ const MARKUP=.10, DRIVER_UA=.03, RESALE_FEE=.15;
 const CATS={bags:"Сумки",shoes:"Обувь",clothing:"Одежда",eyewear:"Очки",accessories:"Аксессуары",jewelry:"Украшения",watches:"Часы"};
 /* Виды вещей внутри категории — по названию товара (названия на английском). Что не узнали — «Другое». */
 const SUBCATS={
- clothing:[["outer","Верхняя одежда",/jacket|coat|trench|puffer|parka|bomber|anorak|\bvest|gilet|cape\b|windbreaker|shearling|blouson|caban|peacoat|shacket/],["blazer","Пиджаки и костюмы",/blazer|tuxedo|\bsuit\b|smoking/],["hood","Худи и свитшоты",/hoodie|hooded|sweatshirt|full[- ]zip|half[- ]zip|quarter[- ]zip|zip[- ]up|pullover/],["knit","Трикотаж",/sweater|cardigan|jumper|\bknit|turtleneck|mock neck|pointelle/],["shirt","Рубашки",/(^|[^-])shirt|blouse|button[- ](down|up)/],["tee","Футболки и топы",/t-shirt|\btee\b|tank|\btop\b|polo|camisole|bodysuit|short sleeve|long sleeve|corset|bustier/],["dress","Платья",/dress|gown/],["skirt","Юбки",/skirt|skort/],["pants","Брюки и джинсы",/\bpants?\b|trouser|jeans?\b|denim|legging|jogger|sweatpant|wide[- ]leg|chino|cargo|capri|flare/],["shorts","Шорты",/\bshorts?\b|bermuda/],["under","Бельё и купальники",/\bbra\b|boxer|brief|thong|swim|bikini|one-piece|underwear|bralette|lingerie|onesie/]],
- shoes:[["sneak","Кроссовки",/sneaker|trainer|runner|\btrail\b|recovery|court/],["boot","Ботинки и сапоги",/boot|chelsea|ranger/],["loaf","Лоферы и дерби",/loafer|derby|oxford|moccasin|brogue|\bmonk/],["pump","Туфли",/pump|heel|stiletto|slingback|escarpin|mary jane|d'orsay/],["ballet","Балетки",/ballet|ballerina|\bflats?\b/],["sand","Сандалии и мюли",/sandal|slide|mule|espadrille|flip|slipper|clog|thong/]],
+ clothing:[["outer","Верхняя одежда",/jacket|coat|trench|puffer|parka|bomber|anorak|\bvest|gilet|cape\b|windbreaker|shearling|blouson|caban|peacoat|shacket/],["blazer","Пиджаки и костюмы",/blazer|tuxedo|\bsuit\b|smoking|tailored jacket|single-breasted|double-breasted/],["hood","Худи и свитшоты",/hoodie|hooded|sweatshirt|full[- ]zip|half[- ]zip|quarter[- ]zip|zip[- ]up|pullover/],["knit","Трикотаж",/sweater|cardigan|jumper|\bknit|turtleneck|mock neck|pointelle/],["shirt","Рубашки",/(^|[^-])shirt|blouse|button[- ](down|up)/],["tee","Футболки и топы",/t-shirt|\btee\b|tank|\btop\b|polo|camisole|bodysuit|short sleeve|long sleeve|corset|bustier/],["dress","Платья",/dress|gown/],["skirt","Юбки",/skirt|skort/],["pants","Брюки и джинсы",/\bpants?\b|trouser|jeans?\b|denim|legging|jogger|sweatpant|wide[- ]leg|chino|cargo|capri|flare|culotte|palazzo/],["shorts","Шорты",/\bshorts?\b|bermuda/],["under","Бельё и купальники",/\bbra\b|boxer|brief|thong|swim|bikini|one-piece|underwear|bralette|lingerie|onesie/]],
+ shoes:[["sneak","Кроссовки",/sneaker|trainer|runner|\btrail\b|recovery|court/],["boot","Ботинки и сапоги",/boot|chelsea|ranger/],["loaf","Лоферы и дерби",/loafer|derb|oxford|moccasin|brogue|\bmonk/],["pump","Туфли",/pump|heel|stiletto|slingback|escarpin|mary jane|d'orsay/],["ballet","Балетки",/ballet|ballerina|\bflats?\b/],["sand","Сандалии и мюли",/sandal|slide|mule|espadrille|flip|slipper|clog|thong/]],
  bags:[["back","Рюкзаки",/backpack|rucksack/],["travel","Дорожные",/duffle|duffel|travel|weekender|keepall|luggage|suitcase/],["beltb","Поясные",/belt bag|bum bag|waist/],["tote","Тоуты и шоперы",/tote|shopper|cabas/],["cross","Через плечо",/crossbody|messenger|camera|saddle/],["mini","Мини и клатчи",/\bmini\b|clutch|pouch|nano|micro|wristlet|vanity|minaudi/],["shoulder","На плечо",/shoulder|hobo|baguette|bucket/]],
- accessories:[["belt","Ремни",/\bbelt\b/],["scarf","Шарфы и платки",/scarf|stole|shawl|bandana|foulard|carr[eé]/],["glove","Перчатки",/glove|mitten/],["hat","Головные уборы",/\bhat\b|\bcap\b|beanie|beret|visor|cloche|balaclava|headband|bucket hat/],["slg","Кошельки и картхолдеры",/wallet|card|coin|key|case|organi[sz]er/],["jew","Украшения",/earring|necklace|bracelet|\bring\b|brooch|pendant|choker|\bcuff\b/],["eye","Очки",/sunglass|glasses|^sl \d/],["sock","Носки",/sock/]]
+ accessories:[["belt","Ремни",/\bbelt\b/],["scarf","Шарфы и платки",/scarf|stole|shawl|bandana|foulard|carr[eé]/],["glove","Перчатки",/glove|mitten/],["hat","Головные уборы",/\bhat\b|\bcap\b|beanie|beret|visor|cloche|balaclava|headband|bucket hat/],["slg","Кошельки и картхолдеры",/wallet|card|coin|key|case|organi[sz]er/],["jew","Украшения",/earring|necklace|bracelet|\bring\b|brooch|pendant|choker|\bcuff\b/],["eye","Очки",/sunglass|glasses|\bsl m?\d|^classic \d|monogram sl/],["sock","Носки",/sock/]]
 };
 // порядок проверки отличается от порядка показа: «Sweater Pant» — брюки, «Short Sleeve Polo» — футболка, «Bra Tank» — бельё
-const SUBORD={clothing:["outer","blazer","under","dress","skirt","pants","shirt","tee","shorts","hood","knit"]};
+const SUBORD={clothing:["blazer","outer","under","dress","skirt","pants","shirt","tee","shorts","hood","knit"]};
 function subOf(p){if(p._sub!==undefined)return p._sub;const t=String(p.name||"").toLowerCase(),L=SUBCATS[p.cat];let k="other";
   if(L){const ord=SUBORD[p.cat]?SUBORD[p.cat].map(x=>L.find(y=>y[0]===x)):L;for(const [key,,rx] of ord)if(rx.test(t)){k=key;break}}return p._sub=k}
-const subName=(c,k)=>k==="other"?"Другое":((SUBCATS[c]||[]).find(x=>x[0]===k)||[,k])[1];
+const BAGLBL={};
+const subName=(c,k)=>k.startsWith("m:")?BAGLBL[k]:k==="other"?(c==="bags"?"Другие модели":"Другое"):((SUBCATS[c]||[]).find(x=>x[0]===k)||[,k])[1];
+/* Сумки бренда — по моделям (Loulou, Sac de Jour, Kate…): у люксовых сумок в названии модель, а не тип.
+   Модель = название без размера и материала; «New Kate», «Kate Clutch» → Kate. Модели с 1 вещью — в «Другие модели». */
+function bagModels(list){const SZ=/\b(small|medium|large|baby|mini|nano|micro|big|east[- ]west|toy|bb|pm|mm|gm|xs|supple)\b/g,STOP=/^(new|soft|the|alo)\s+/;
+  const base=p=>String(p.name||"").toLowerCase().replace(SZ," ").split(/\s(?:in|en|aus|im|with)\s|\s[–—-]\s|,|\(/)[0].replace(/\s+/g," ").trim().replace(STOP,"");
+  const gk=m=>{const w=m.split(" ");return /^(le|la|les|il|lo)$/.test(w[0])?w.slice(0,2).join(" "):w[0]};
+  const G={};list.forEach(p=>{const m=base(p);if(!m)return;const k=gk(m);(G[k]=G[k]||[]).push([p,m.split(" ")])});
+  Object.entries(G).forEach(([k,arr])=>{let pre=arr[0][1];arr.forEach(([,w])=>{let i=0;while(i<pre.length&&i<w.length&&pre[i]===w[i])i++;pre=pre.slice(0,i)});
+    const lbl=(pre.length?pre:k.split(" ")).join(" ").replace(/(^|\s)\S/g,c=>c.toUpperCase()).replace(/ (De|Du|Des|Di|À|Of) /g,m=>m.toLowerCase()),key="m:"+k;
+    arr.forEach(([p])=>p._sub=arr.length>1?key:"other");if(arr.length>1)BAGLBL[key]=lbl});
+  list.forEach(p=>{if(p._sub===undefined)p._sub="other"})}
 const CITIES={de:"Германия",paris:"Париж",milan:"Милан",vienna:"Вена",online:"Онлайн"};
 
 const P=[
@@ -2728,7 +2739,7 @@ function renderFeedFollow(){const box=$("#followRail");if(!box)return;// «Ва�
   const l=P.filter(p=>follows.has(p.bk)).sort((a,b)=>b.isNew-a.isNew).slice(0,20);
   box.innerHTML=l.length?`<div class="sec"><div class="sech"><h2>${esc(FEED_TITLE.follow||"Ваши бренды")}</h2><button class="more" data-act="allbrands">Все бренды</button></div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`:""}
 function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bname(bk);
-  const st={cats:new Set(),subs:{},g:"all",sort:"pop"};const lead=all.slice().sort((a,b)=>b.isNew-a.isNew)[0];
+  const st={cats:new Set(),subs:{},g:"all",sort:"pop"};{const bg=all.filter(p=>p.cat==="bags"&&p._sub===undefined);if(bg.length)bagModels(all.filter(p=>p.cat==="bags"))}const lead=all.slice().sort((a,b)=>b.isNew-a.isNew)[0];
   const cats=[...new Set(all.map(p=>p.cat))],gs=[...new Set(all.map(p=>p.g))];
   const s=push(bn,`<div class="bhero" style="--c:${lead.c}"><span class="mono" aria-hidden="true">${esc(initials(bn))}</span>
      <span class="cap">${BRAND_META[bk]||""}</span><h1>${esc(bn)}</h1>
@@ -2744,7 +2755,7 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
     s.querySelector("#bcats").innerHTML=`<button class="chip" data-bc="" aria-pressed="${!st.cats.size}">Все<span class="c num">${f.length}</span></button>`+cats.map(c=>{const n=f.filter(p=>p.cat===c).length;return n?`<button class="chip" data-bc="${c}" aria-pressed="${st.cats.has(c)}">${CATS[c]||c}<span class="c num">${n}</span></button>`:""}).join("");
     // вторая строка: виды вещей выбранных категорий (Одежда: Верхняя · Трикотаж | Сумки: Тоуты · Мини)
     const groups=cats.filter(c=>st.cats.has(c)).map(c=>{const cnt={};f.forEach(p=>{if(p.cat===c){const k=subOf(p);cnt[k]=(cnt[k]||0)+1}});
-      const keys=(SUBCATS[c]||[]).map(x=>x[0]).filter(k=>cnt[k]).concat(cnt.other?["other"]:[]);return {c,cnt,keys}}).filter(g=>g.keys.length>1);
+      const keys=(c==="bags"?Object.keys(cnt).filter(k=>k!=="other").sort((a,b)=>cnt[b]-cnt[a]).slice(0,16):(SUBCATS[c]||[]).map(x=>x[0]).filter(k=>cnt[k])).concat(cnt.other?["other"]:[]);return {c,cnt,keys}}).filter(g=>g.keys.length>1);
     const sr=s.querySelector("#bsubs");sr.hidden=!groups.length;
     sr.innerHTML=groups.map((g,i)=>`${i?'<i class="bsep" aria-hidden="true"></i>':""}${groups.length>1?`<span class="bsl">${esc(CATS[g.c]||g.c)}</span>`:""}`+g.keys.map(k=>`<button class="chip" data-bsc="${g.c}" data-bs="${k}" aria-pressed="${!!(st.subs[g.c]&&st.subs[g.c].has(k))}">${esc(subName(g.c,k))}<span class="c num">${g.cnt[k]}</span></button>`).join("")).join("");
     const bg=s.querySelector("#bgs");if(bg)bg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===st.g));
