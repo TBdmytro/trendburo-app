@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v50] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v51] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -285,6 +285,9 @@ async function tbCollect() {
     var code = String(p.sku || "").toUpperCase() || codeOf(url), sst = sizeInfo(doc, html, p), sz = sst.map(function (x) { return x.s; });
     var srcs = pickImages(html, String(code || codeOf(url)).replace(/[^A-Za-z0-9]/g, "").toUpperCase(), p.image, limit) /* Dior: артикул 3SN279ZMB_H969, в фото 3SN279ZMBH969_E02 — сравниваем без «_» */, images = [];
     for (var k = 0; k < srcs.length; k++) images.push({ u: srcs[k] }); // фото качает сервер по ссылке — быстро и без нагрузки на браузер
+    // фото на модели и другие кадры галереи, в адресе которых нет артикула (Dior: «LOOK…», On) — из галереи страницы, только с того же сервера фото, что и снимки товара
+    try { if (limit && srcs.length && images.length < limit) { var h0 = new URL(srcs[0]).hostname, hv1 = {}; images.forEach(function (x) { hv1[x.u.split("?")[0]] = 1; });
+      galleryOf(doc, url).forEach(function (u) { try { if (images.length < limit && new URL(u).hostname === h0 && !hv1[u.split("?")[0]]) { hv1[u.split("?")[0]] = 1; images.push({ u: u }); } } catch (e) {} }); } } catch (e) {}
     return { src: siteName, host: host, brand: brand, title: String(p.name || "").replace(/\s+/g, " ").trim(), price: price, currency: ps.priceCurrency || of.priceCurrency || "EUR",
       sizes: sz, sizeStock: sst, blocked: pageBlock(doc, html, p, code) || (sst.some(function (x) { return x.pre; }) && sst.every(function (x) { return x.pre || x.ok === false; }) ? "pre" : ""), szDbg: sz.length || /bag|handbag|tasche|borse|sac\b/.test(crumbs.join(" ")) ? "" : sizeDbg(html), color: String(p.color || ""), sku: code, description: String(p.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
       url: url.split("?")[0].split("#")[0], crumbs: crumbs, isNew: isNewSec, gender: gender(new URL(url).pathname + "/" + (extra || []).join("/")), images: images };

@@ -54,6 +54,8 @@ async function copyWebImages(store, list) {
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer";
 let FIXPRE = false;
+// версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
+const IMGV = id => /^product\.manual\.(dior|on)-/.test(id) ? 3 : 2;
 async function allProducts(store) {
   if (PCACHE && Date.now() - PCACHE.at < 30000) return PCACHE.data;
   const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
@@ -286,7 +288,7 @@ export default async function handler(req, res) {
         // fresh — проверены кнопкой за последние 12 часов: при повторном прогоне их не открываем заново (быстрее)
         const status = {}, fresh = {}, since = Date.now() - 24 * 36e5;
         for (const id of await deletedSet(store)) if (id.startsWith(px)) status[id.slice(px.length).toUpperCase()] = "rejected"; // вы удалили — кнопка не вернёт
-        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; const needSz = ["shoes", "clothing"].includes(p.overrides?.category || p.category) && !p.nSz; if (ck && Date.parse(ck) > since && !needSz && p.imgVer === 2 && /^https:\/\/cdn\.sanity\.io\//.test(p.images?.[0]?.url || "") && (p.nIm || 0) >= 2) fresh[k] = 1; } // фото не скопировано — открываем снова // без размеров — проверяем снова
+        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; const needSz = ["shoes", "clothing"].includes(p.overrides?.category || p.category) && !p.nSz; if (ck && Date.parse(ck) > since && !needSz && p.imgVer === IMGV(p._id) && /^https:\/\/cdn\.sanity\.io\//.test(p.images?.[0]?.url || "") && (p.nIm || 0) >= 2) fresh[k] = 1; } // фото не скопировано — открываем снова // без размеров — проверяем снова
         return send(res, 200, { status, fresh });
       }
       case "brandBoard": {
@@ -389,8 +391,8 @@ export default async function handler(req, res) {
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
         // фото заново с сайта бренда — один раз (imgVer 2): прежняя «склейка похожих фото» могла заменить перед сумки на вид сзади. Ваши обложка/порядок фото из админки — не трогаем
         if (Array.isArray(it.images) && it.images.length) { try { const p0 = await store.get(id);
-          if (p0 && (p0.imgVer !== 2 || (p0.images || []).length < Math.min(3, it.images.length) || !/^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "")) && !p0.overrides?.cover && !(p0.overrides?.imageOrder || []).length) { const { images } = await copyWebImages(store, it.images);
-            if (images.length) { await store.patchMany([id], { images: images.map(u => ({ url: u, sourceUrl: u, rights: "copied" })), imgVer: 2, ...(it.tileImg ? { coverFrom: "tile", coverTile: String(it.tileImg).slice(0, 600) } : {}) }); PCACHE = null; } } } catch (e) { console.log("IMGREF fail " + String(e.message).slice(0, 100)); } }
+          if (p0 && (p0.imgVer !== IMGV(id) || (p0.images || []).length < Math.min(3, it.images.length) || !/^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "")) && !p0.overrides?.cover && !(p0.overrides?.imageOrder || []).length) { const { images } = await copyWebImages(store, it.images);
+            if (images.length) { await store.patchMany([id], { images: images.map(u => ({ url: u, sourceUrl: u, rights: "copied" })), imgVer: IMGV(id), ...(it.tileImg ? { coverFrom: "tile", coverTile: String(it.tileImg).slice(0, 600) } : {}) }); PCACHE = null; } } } catch (e) { console.log("IMGREF fail " + String(e.message).slice(0, 100)); } }
         // ещё не разобранные «Новые с сайтов»: категория и пол — по новым правилам кнопки (ваши правки из админки важнее)
         try { const p1 = await store.get(id); const { CATEGORIES } = await import("../lib/normalize.js"); const set = {};
           if (p1 && p1.status === "incoming") { if (CATEGORIES[it.category] && !p1.overrides?.category && p1.category !== it.category) set.category = it.category; if (["w", "m"].includes(it.gender) && !p1.overrides?.gender && p1.gender !== it.gender) set.gender = it.gender; }
@@ -495,7 +497,7 @@ export default async function handler(req, res) {
         // немецкий сайт (LV и др.) — название, описание и цвета переводим на английский; ошибка перевода не мешает загрузке
         let itEn = it;
         try { const { englishItem } = await import("../lib/translate.js"); itEn = await englishItem(it, await store.get(id)); } catch (e) { console.log("TR fail " + JSON.stringify({ id, why: String(e.message).slice(0, 120) })); }
-        const product = await saveManualProduct(store, { ...itEn, id, images, imgVer: 2, availability: "online", status: "incoming", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
+        const product = await saveManualProduct(store, { ...itEn, id, images, imgVer: IMGV(id), availability: "online", status: "incoming", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
         return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null });
       }
       case "pricePreview": {
