@@ -1457,9 +1457,9 @@ async function editor(id, reload) {
     <div class="sec"><h2>История</h2><div class="card pad hist">${(p.history || []).slice().reverse().map(h => `<div>${dt(h.at)} · <b>${esc(h.by)}</b> · ${esc(h.action)}${h.field ? " «" + esc({ title: "название", category: "категория", pinnedPrice: "цена", hidden: "скрыт", gender: "для кого", isNew: "новинка", newUntil: "новинка до", sale: "скидка", dims: "размер изделия", material: "материал", stock: "в наличии", cover: "обложка", imageOrder: "порядок фото", primaryOffer: "основное предложение" }[h.field] || h.field) + "»" + (["imageOrder", "cover"].includes(h.field) ? " изменено" : ": " + esc(JSON.stringify(h.from)) + " → " + esc(JSON.stringify(h.to))) : ""}${h.to && !h.field ? " → " + esc(h.to) : ""}</div>`).join("") || "—"}</div></div></div>`;
   };
   draw();
-  // «Новинка»: при включении срок сам ставится на месяц вперёд (в среднем новинки висят месяц), дату можно поменять
+  // «Новинка»: при включении срок сам ставится на 2 месяца вперёд, дату можно поменять
   { const nw = d.querySelector("#eNew"), to = d.querySelector("#eNewTo");
-    if (nw && to) nw.addEventListener("change", () => { if (nw.checked && !to.value) { const x = new Date(Date.now() + 30 * 864e5); to.value = x.toISOString().slice(0, 10); } }); }
+    if (nw && to) nw.addEventListener("change", () => { if (nw.checked && !to.value) { const x = new Date(Date.now() + 60 * 864e5); to.value = x.toISOString().slice(0, 10); } }); }
   d.onclick = async e => {
     if (e.target === d || e.target.closest("[data-x]")) return close();
     const b = e.target.closest("button"); if (!b) return;
@@ -2277,6 +2277,9 @@ window.addEventListener("message", async e => {
     let list = []; try { list = (await api("sectionKnown", { query: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), section: e.data.section || "" }, silent: true })).list || []; } catch {}
     try { e.source.postMessage({ type: "tb-secknown", list }, e.origin); } catch {} return;
   }
+  if (e.data.type === "tb-snap") { // копии страниц бренда для автопроверки кнопки — сохраняем молча
+    try { await api("snapSave", { method: "POST", silent: true, body: { host: e.data.host || "", section: e.data.section || "", list: e.data.list || null, pages: e.data.pages || [], ver: e.data.ver || "" } }); } catch {} return;
+  }
   if (e.data.type === "tb-section") { // прогон раздела: чего нет на сайте бренда — «продано»
     try { const r = await api("sectionSync", { method: "POST", silent: true, body: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), host: e.data.host || "", section: e.data.section, codes: e.data.codes || [], url: e.data.url, title: e.data.title, stats: e.data.stats || null, sample: e.data.sample || null, complete: !!e.data.complete } }); MTP.gone = (MTP.gone || 0) + (r.gone || 0); if (r.skipped) MTP.sectionSkipped = true; } catch {}
     mtDraw(); try { e.source.postMessage({ type: "tb-section-done", gone: MTP.gone || 0, skipped: !!MTP.sectionSkipped }, e.origin); } catch {} return;
@@ -2341,7 +2344,7 @@ async function vSites() {
   $("#main").innerHTML = head("Сайты брендов", "Разделы, где вы нажимали кнопку «В Trend Büro». Откройте раздел и нажмите кнопку — добавятся новинки, обновятся цены и размеры, пропавшие товары станут «продано». Сверху — давно не проверенные.",
     `<a class="btn ghost" href="/mt.html" target="_blank" rel="noopener">${svg("link")}Кнопка</a>`) + `<div class="card pad" style="margin-bottom:14px;display:flex;flex-direction:column;gap:8px">
       <b>Новинки брендов</b>
-      <p class="hint" style="margin:0">Первый прогон раздела — всё приходит в «Новые с сайтов», вы сами отбираете: на сайт или скрыть. Скрытое и удалённое остаётся как вы решили.<br>Когда раздел пройден целиком, при следующих прогонах всё, чего у нас ещё нет (новая коллекция), добавляется с отметкой «Новинка» на месяц. Плашки «New / Neu» с сайта бренда тоже становятся «Новинкой».</p>
+      <p class="hint" style="margin:0">Первый прогон раздела — всё приходит в «Новые с сайтов», вы сами отбираете: на сайт или скрыть. Скрытое и удалённое остаётся как вы решили.<br>Когда раздел пройден целиком, при следующих прогонах всё, чего у нас ещё нет (новая коллекция), добавляется с отметкой «Новинка» на 2 месяца. Плашки «New / Neu» с сайта бренда тоже становятся «Новинкой».</p>
       <div class="row" style="gap:8px;flex-wrap:wrap"><span class="hint">Новинки бренда:</span><button class="fchip ${arrivals === "publish" ? "on" : ""}" data-arr="publish">Сразу на сайт</button><button class="fchip ${arrivals === "incoming" ? "on" : ""}" data-arr="incoming">Сначала мне на проверку</button></div></div>` + (sections.length ? `<div class="card" style="overflow:hidden">${sections.map(x => {
       const old = Date.now() - Date.parse(x.lastRun) > 7 * 864e5;
       return `<div class="row" style="padding:14px 16px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap">
@@ -2780,7 +2783,7 @@ let SUBC = null;
 async function vProducts2(pre) {
   if (!pre) return vBrandBoard();
   if (!SUBC) api("subcats", { silent: true }).then(r => { SUBC = r.subcats; }).catch(() => {});
-  const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "", pre: "", sec: "", g: "" }; let incomingN = 0;
+  const F = { q: "", status: "", source: "", brand: "", cat: "", avail: "", pre: "", nw: "", sec: "", g: "" }; let incomingN = 0;
   if (pre) pre.split(",").forEach(kv => { const [k, v] = kv.split("="); if (k in F) F[k] = decodeURIComponent(v || ""); });
   let sel = new Set(), list = [], total = 0, shown = 0, facets = { brands: [], cats: [], sources: [] }, LS = null;
   const srcs = await getSources();
@@ -2794,7 +2797,7 @@ async function vProducts2(pre) {
     <input type="search" id="pq" placeholder="Бренд, модель, артикул" value="${esc(F.q)}" aria-label="Поиск">
     <div class="fchips" id="pf"></div>
     <div class="plist" id="plist"></div><div class="more" id="pmore"></div><div class="pbar" id="pbar"></div>`;
-  const q = extra => ({ q: F.q, status: F.status, source: F.source, brand: F.brand, cat: F.cat, avail: F.avail, pre: F.pre, sec: F.sec, g: F.g, ...extra });
+  const q = extra => ({ q: F.q, status: F.status, source: F.source, brand: F.brand, cat: F.cat, avail: F.avail, pre: F.pre, nw: F.nw, sec: F.sec, g: F.g, ...extra });
   // вкладки разделов магазина поставщика: Все · Бестселлеры · Женское · Мужское · Аксессуары
   let tabs = [], baseTotal = 0;
   // категории — сразу видны кнопками: Одежда · Обувь · Сумки · Аксессуары · Другое (книги, коврики…)
@@ -2830,7 +2833,7 @@ async function vProducts2(pre) {
     const gRow = `<div class="gseg" style="display:flex;gap:6px;margin-bottom:8px;width:100%">${[["", "Все"], ["w", "Женское"], ["m", "Мужское"], ["u", "Унисекс"], ["k", "Детское"]].filter(([k]) => k !== "k" || gn("k")).map(([k, v]) => `<button class="fchip ${F.g === k ? "on" : ""}" data-gq="${k}" style="flex:1;justify-content:center;font-weight:600">${v}${k ? " · " + gn(k) : ""}</button>`).join("")}</div>`;
     $("#pf").innerHTML = gRow + (incomingN || F.status === "incoming" ? `<button class="fchip ${F.status === "incoming" ? "on" : ""}" data-st="incoming" style="${F.status === "incoming" ? "" : "border-color:#b4582f;color:#b4582f"}">Новые с сайтов · ${incomingN}</button>` : "")
       + [["", "Все"], ["published", "На витрине"], ["draft", "Скрытые"]].map(([k, v]) => `<button class="fchip ${F.status === k ? "on" : ""}" data-st="${k}">${v}</button>`).join("")
-      + `<button class="fchip ${F.avail ? "on" : ""}" data-avail>Можно купить</button><button class="fchip ${F.pre ? "on" : ""}" data-pre>Уточнить наличие</button>`
+      + `<button class="fchip ${F.avail ? "on" : ""}" data-avail>Можно купить</button><button class="fchip ${F.pre ? "on" : ""}" data-pre>Уточнить наличие</button><button class="fchip ${F.nw ? "on" : ""}" data-nw>Новинки</button>`
       + chipSel("source", "Поставщик", facets.sources, sname) + chipSel("brand", "Бренд", facets.brands) + chipSel("cat", "Категория", facets.cats, k => CATS[k] || k);
   };
   const row = p => `<div class="prow" data-open="${esc(p._id)}">
@@ -2843,7 +2846,7 @@ async function vProducts2(pre) {
       <button type="button" class="tick" data-pick1="${esc(p._id)}" aria-label="Выбрать" aria-pressed="${sel.has(p._id)}">${sel.has(p._id) ? "✓" : ""}</button>${p.status === "published" ? `<span class="live">На сайте</span>` : p.createdAt && Date.now() - Date.parse(p.createdAt) < 3 * 864e5 ? `<span class="live" style="background:#eef1fb;color:#3a55c4">Новое</span>` : ""}
       <div class="im">${p.cover ? `<img src="${esc(thumb(p.cover))}" alt="" loading="lazy" decoding="async">` : svg("img")}</div>
       <div class="bd"><span class="br">${esc(p.brand || "—")}${p.gender ? " · " + (p.gender === "w" ? "жен" : p.gender === "m" ? "муж" : "унисекс") : ""}</span><span class="tt">${esc(p.title)}</span>
-        <span class="pr num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</span>
+        <span class="pr num">${p.price?.ua ? eur(p.price.ua) : "нет цены"}</span>${p.newTill ? `<span class="hint" style="color:#3a55c4">Новинка${p.newTill !== "—" ? " до " + p.newTill.slice(8, 10) + "." + p.newTill.slice(5, 7) : ""}</span>` : ""}
         ${p.sizes?.length ? `<div class="szs">${p.sizes.map(z => `<span class="${z.ok ? "" : "no"}">${esc(z.s)}</span>`).join("")}</div>` : ""}${p.pre ? `<span class="hint" style="color:#b4582f">уточнить наличие</span>` : !p.sizes?.length && ["clothing", "shoes"].includes(p.category) ? `<span class="hint" style="color:#b4582f">размеры не найдены · уточнить наличие</span>` : !p.sizes?.length && p.avail === false ? `<span class="hint">нет в наличии</span>` : ""}</div>
       <button class="op" data-open="${esc(p._id)}" aria-label="Открыть товар">${svg("edit")}</button></div>`;
   const togglePick = id => {
@@ -2928,6 +2931,7 @@ async function vProducts2(pre) {
     const gq = e.target.closest("[data-gq]"); if (gq) { F.g = gq.dataset.gq; sel.clear(); return load(); }
     if (e.target.closest("[data-avail]")) { F.avail = F.avail ? "" : "1"; return load(); }
     if (e.target.closest("[data-pre]")) { F.pre = F.pre ? "" : "1"; return load(); }
+    if (e.target.closest("[data-nw]")) { F.nw = F.nw ? "" : "1"; return load(); }
     if (e.target.id === "pMore") return load(true);
     const sw = e.target.closest("[data-show1]");
     if (sw) { const on = sw.checked; try { await api("status", { method: "POST", body: { ids: [sw.dataset.show1], status: on ? "published" : "draft" }, silent: true }); } catch (err) { sw.checked = !on; return toast(err.message); } const p = list.find(x => x._id === sw.dataset.show1); if (p) p.status = on ? "published" : "draft"; shown += on ? 1 : -1; tot(); return toast(on ? "На витрине через ~10 секунд" : "Скрыто с витрины"); }

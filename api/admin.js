@@ -63,7 +63,7 @@ async function allProducts(store) {
 }
 // ключ кнопки «В Trend Büro»: даёт только загрузку товаров с сайтов брендов (скрытыми), без доступа к остальной админке.
 // Хранится на сервере только отпечаток (sha256); сам ключ — внутри закладки пользователя
-const KEY_ACTIONS = new Set(["me", "knownProducts", "webImport", "webUpdate", "sectionKnown", "sectionSync", "markNew", "imageUpload", "subcats"]);
+const KEY_ACTIONS = new Set(["me", "knownProducts", "webImport", "webUpdate", "sectionKnown", "sectionSync", "markNew", "imageUpload", "subcats", "snapSave"]);
 const keyHash = k => createHash("sha256").update(String(k)).digest("hex");
 async function keySession(req, a, store) {
   const k = String(req.headers["x-tb-key"] || ""); if (!/^[a-f0-9]{48}$/.test(k) || !KEY_ACTIONS.has(a)) return null;
@@ -86,7 +86,7 @@ export default async function handler(req, res) {
     if (!me) return send(res, 401, { error: "Нужен вход" });
     if (req.method !== "GET" && req.headers["x-tb"] !== "1") return send(res, 403, { error: "Запрос отклонён" });
     const store = getStore();
-    if (req.method !== "GET" && !["webImport", "webUpdate", "imageUpload", "imageFromUrl"].includes(a)) PCACHE = null;
+    if (req.method !== "GET" && !["webImport", "webUpdate", "imageUpload", "imageFromUrl", "snapSave"].includes(a)) PCACHE = null;
     const pricingCfg = (await store.get("settings.pricing"))?.config || null;
 
     switch (a) {
@@ -328,6 +328,8 @@ export default async function handler(req, res) {
           && (Q.status ? p.status === Q.status : p.status !== "incoming") && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source))
           && (!Q.avail || (p.offers || []).some(o => o.onlineOrder))
           && (!Q.pre || !!p.hasPre)
+          // «Новинки»: отметка стоит и срок не истёк
+          && (!Q.nw || (p.overrides?.isNew === "on" && (!p.overrides?.newUntil || p.overrides.newUntil >= new Date().toISOString().slice(0, 10))))
           // «В наличии»: вещь уже выкуплена и лежит у нас (ua — Украина, eu — Европа, any — любая)
           && (!Q.stock || (l => Q.stock === "any" ? !!l : l === Q.stock)((p.overrides?.stock || p.stock)?.loc || "")));
         // вкладка раздела магазина (Бестселлеры, Женское…) — в том же порядке, что на сайте бренда
@@ -345,7 +347,7 @@ export default async function handler(req, res) {
         return send(res, 200, { total: list.length, incoming, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId), genders: facet(base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat)), gen) },
           shown: list.filter(p => p.status === "published").length,
-          products: page.map(p => ({ _id: p._id, g: genderOf(p), stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null })) });
+          products: page.map(p => ({ _id: p._id, g: genderOf(p), stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null, newTill: p.overrides?.isNew === "on" && (!p.overrides?.newUntil || p.overrides.newUntil >= new Date().toISOString().slice(0, 10)) ? (p.overrides?.newUntil || "—") : null })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });
@@ -457,6 +459,16 @@ export default async function handler(req, res) {
         const del = {}; for (const id of await deletedSet(store)) { const m = id.match(/^product\.manual\.([a-z0-9]+)-/); if (m) del[m[1]] = (del[m[1]] || 0) + 1; }
         return send(res, 200, { sections: Object.values(d?.list || {}).sort((a, b) => String(a.lastRun).localeCompare(String(b.lastRun))), deleted: del, arrivals: (await store.get("settings.newArrivals"))?.mode || "publish" });
       }
+      case "snapSave": {
+        // копии страниц сайта бренда (раздел + до 3 товаров, сжатые) и что кнопка из них прочитала — для автопроверки новых версий кнопки
+        const host = String(body.host || "").replace(/[^a-z0-9.-]/gi, "").slice(0, 80), section = String(body.section || "").slice(0, 200);
+        if (!host || !section) return send(res, 400, { error: "Нет раздела" });
+        const pg = x => x && typeof x.gz === "string" && x.gz.length < 2.5e6 && /^[A-Za-z0-9+/=]+$/.test(x.gz) ? { url: String(x.url || "").slice(0, 500), gz: x.gz, got: x.got && typeof x.got === "object" && JSON.stringify(x.got).length < 20000 ? x.got : null } : null;
+        const list = pg(body.list), pages = (Array.isArray(body.pages) ? body.pages : []).slice(0, 3).map(pg).filter(Boolean);
+        if (!list && !pages.length) return send(res, 400, { error: "Пусто" });
+        await store.put({ _id: "snap." + secKey(section), _type: "snap", host, section, ver: String(body.ver || "").slice(0, 10), at: new Date().toISOString(), list, pages, meta: { n: pages.length, lg: list?.got || null, pg: pages.map(x => ({ url: x.url, got: x.got })) } });
+        return send(res, 200, { ok: true, pages: pages.length });
+      }
       case "arrivalsSet": {
         // новинки бренда (появились в уже пройденном разделе): сразу на сайт или сначала в «Новые с сайтов»
         const mode = body.mode === "incoming" ? "incoming" : "publish";
@@ -470,7 +482,7 @@ export default async function handler(req, res) {
       case "markNew": {
         // товары, которые уже есть, но снова встретились в разделе «Новинки» сайта бренда — отмечаем новинками на месяц
         const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(i => /^product\.manual\.[a-z0-9]+-[a-z0-9]+$/.test(i)).slice(0, 500);
-        const until = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10); let marked = 0;
+        const until = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10); let marked = 0;
         for (const id of ids) { try { await saveOverrides(store, id, { isNew: "on", newUntil: until }, me.name, pricingCfg); marked++; } catch {} }
         return send(res, 200, { marked });
       }

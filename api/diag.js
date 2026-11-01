@@ -5,6 +5,9 @@ export default async function handler(req, res) {
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
   // переезд в Postgres (Neon): шаги копирования документов из Sanity — только количество, без содержимого
+  // копии страниц брендов для автопроверки кнопки: список и одна страница (сжатая) — только для разработки кнопки
+  if (req.method === "GET" && /[?&]probe=snaps\b/.test(String(req.url || ""))) return (async () => { const L = await getStore().list("snap", {}, { limit: 500, fields: "_id, host, section, at, ver, meta" }); res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(L.map(x => ({ _id: x._id, host: x.host, section: x.section, at: x.at, ver: x.ver, ...(x.meta || {}) }))));  })();
+  if (req.method === "GET" && /[?&]probe=snap\b/.test(String(req.url || ""))) return (async () => { const id = (String(req.url).match(/[?&]id=(snap\.[A-Za-z0-9_-]{1,180})/) || [])[1], i = +((String(req.url).match(/[?&]i=(\d)/) || [])[1] || -1); const d = id ? await getStore().get(id) : null; const x = !d ? null : i < 0 ? d.list : (d.pages || [])[i]; res.setHeader("Content-Type", "text/plain; charset=utf-8"); res.statusCode = x ? 200 : 404; res.end(x ? x.gz : ""); })();
   if (req.method === "GET" && /[?&]pgmig=run\b/.test(String(req.url || ""))) return pgRunPage(res);
   if (req.method === "GET" && /[?&]pgmig=(step|delta|verify|stats)\b/.test(String(req.url || ""))) return pgMig(res, String(req.url).match(/pgmig=(step|delta|verify|stats)/)[1]);
   if (req.method === "GET" && /[?&]migrate=(step|verify)\b/.test(String(req.url || ""))) return migrate(res, String(req.url).match(/migrate=(step|verify)/)[1]);

@@ -239,7 +239,7 @@ test("новая коллекция: раздел пройден целиком 
     const realNow = Date.now; Date.now = () => realNow() + 60e3; // кэш разделов 30 с
     try { r = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "product.manual.dior-b3", item: item(3) }, headers: H }); } finally { Date.now = realNow; }
     assert.equal(r.body.novelty, true); assert.equal(r.body.status, "published");
-    p = await store.get("product.manual.dior-b3"); assert.equal(p.overrides.isNew, "on"); assert.deepEqual(p.sizes, ["90", "95"]);
+    p = await store.get("product.manual.dior-b3"); assert.equal(p.overrides.isNew, "on"); assert.ok(Date.parse(p.overrides.newUntil) > Date.now() + 55 * 864e5, "новинка живёт 2 месяца"); assert.deepEqual(p.sizes, ["90", "95"]);
     // выбрано «сначала мне» — новинка в «Новые с сайтов», но с отметкой
     await call(handler, { method: "POST", query: { a: "arrivalsSet" }, body: { mode: "incoming" }, headers: H });
     r = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "product.manual.dior-b4", item: item(4) }, headers: H });
@@ -251,4 +251,18 @@ test("новая коллекция: раздел пройден целиком 
     assert.equal((await store.get("settings.webSections")).list[section.replace(/[^a-zA-Z0-9_-]/g, "_")].complete, true);
     await call(handler, { method: "POST", query: { a: "arrivalsSet" }, body: { mode: "publish" }, headers: H });
   } finally { globalThis.fetch = real; }
+});
+
+test("копии страниц бренда для автопроверки кнопки: сохраняются по разделу, читаются через diag", async () => {
+  const login = await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } });
+  const cookie = login.headers["set-cookie"].split(";")[0], H = { cookie, "x-tb": "1" };
+  const { gzipSync } = await import("node:zlib"); const gz = s => gzipSync(Buffer.from(s)).toString("base64");
+  const section = "dior.com/de_de/fashion/herrenmode/accessoires/gurtel";
+  const r = await call(handler, { method: "POST", query: { a: "snapSave" }, body: { host: "dior.com", section, ver: "v54", list: { url: "https://www.dior.com/x", gz: gz("<html>list</html>"), got: { links: 58 } }, pages: [{ url: "https://www.dior.com/p", gz: gz("<html>p</html>"), got: { title: "Belt", sizes: ["90"] } }, { gz: "<script>" }] }, headers: H });
+  assert.equal(r.status, 200, JSON.stringify(r.body)); assert.equal(r.body.pages, 1); // мусор отброшен
+  const diag = (await import("../api/diag.js")).default;
+  const L = await new Promise(res => diag({ method: "GET", url: "/api/diag?probe=snaps", headers: {} }, { statusCode: 200, setHeader() {}, end(b) { res(JSON.parse(b)); } }));
+  const s = L.find(x => x.section === section); assert.ok(s); assert.equal(s.n, 1); assert.equal(s.lg.links, 58); assert.equal(s.pg[0].got.title, "Belt");
+  const g = await new Promise(res => diag({ method: "GET", url: "/api/diag?probe=snap&id=" + s._id + "&i=0", headers: {} }, { statusCode: 200, setHeader() {}, end(b) { res(b); } }));
+  assert.equal(gzipSync && (await import("node:zlib")).gunzipSync(Buffer.from(g, "base64")).toString(), "<html>p</html>");
 });
