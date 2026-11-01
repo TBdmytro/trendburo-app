@@ -50,7 +50,7 @@ async function copyWebImages(store, list) {
     const host = new URL(u).hostname;
     if (BLOCKED.get(host) > Date.now()) return u; // сервер фото недавно ответил «запрещено» — не стучимся повторно (фото показываем по ссылке бренда)
     try { const b = await Promise.race([fetchBinary(u, [new URL(u).hostname]), new Promise((_, no) => setTimeout(() => no(new Error("долго")), 20000))]);
-      const up = await store.uploadImage(b.buf, { filename: "web-" + Date.now() + "." + (b.type.split("/")[1] || "jpg"), contentType: b.type, sourceUrl: u }); copied++; srcOf[up.url] = u; return up.url; }
+      const up = await store.uploadImage(b.buf, { filename: "web-" + Date.now() + "." + (b.type.split("/")[1] || "jpg"), contentType: b.type, sourceUrl: u }); copied++; const { trimUrl } = await import("../lib/imgtrim.js"); const tu = await trimUrl(up.url).catch(() => up.url); srcOf[tu] = u; return tu; }
     catch (e) { if (/\b403\b/.test(String(e.message))) BLOCKED.set(host, Date.now() + 6 * 36e5); console.log("IMGURL fail " + JSON.stringify({ host, why: String(e.message).slice(0, 120) })); return u; }
   }))).filter(Boolean);
   // не скачалось — ссылку сайта бренда оставляем, только если других фото нет (иначе на витрине пустая обложка)
