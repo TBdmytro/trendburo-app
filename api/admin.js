@@ -53,7 +53,7 @@ async function copyWebImages(store, list) {
   return { images: ok.length ? ok : images, copied };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer";
-let FIXPRE = false;
+let FIXPRE = false, FIXOTHER = false;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 4 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 4: + фото на модели (media.christiandior.com)
 async function allProducts(store) {
@@ -273,6 +273,12 @@ export default async function handler(req, res) {
       case "status": return send(res, 200, { results: await setStatus(store, (body.ids || []).slice(0, 5000), ["published", "draft", "hidden"].includes(body.status) ? body.status : "draft", me.name) });
       case "productIds": {
         // все товары по текущему фильтру — для «Показать все найденные»
+        // один раз: товары с сайтов брендов, оставшиеся «Другое» из-за немецких слов (Gürtel, Accessoires, Schmuck…) — в свою категорию
+        if (!FIXOTHER) { FIXOTHER = true; try { if (!(await store.get("settings.fixOther"))) { const { detectCategory, detectSubcategory } = await import("../lib/normalize.js");
+          const L = (await store.list("product", { category: "other" }, { limit: 20000, fields: "_id, title, sourceTitle, description, webSections, orig, overrides" })).filter(p => p._id.startsWith("product.manual.") && !p.overrides?.category);
+          const ch = []; for (const p of L) { let ot = ""; try { ot = typeof p.orig === "string" ? JSON.parse(p.orig).title || "" : p.orig?.title || ""; } catch {} const t = [ot, p.title, p.sourceTitle].filter(Boolean).join(" "), sec = (p.webSections || []).join(" ").replace(/[-_/]+/g, " "); const c = detectCategory(t, sec, p.description); if (c && c !== "other") ch.push({ id: p._id, set: { category: c, subcategory: detectSubcategory(c, t, sec.toLowerCase().split(" ").reverse(), p.description) || null } }); }
+          for (let i = 0; i < ch.length; i += 200) await store.patchEach(ch.slice(i, i + 200));
+          await store.put({ _id: "settings.fixOther", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXOTHER " + ch.length); } } catch (e) { FIXOTHER = false; console.log("FIXOTHER fail " + String(e.message).slice(0, 120)); } }
         const all = await allProducts(store);
         const Q = req.query, q = String(Q.q || "").toLowerCase();
         const ids = all.filter(p => (!Q.sec || (p.sections || []).includes(Q.sec)) && (!Q.avail || (p.offers || []).some(o => o.onlineOrder)) && (!Q.noavail || !(p.offers || []).some(o => o.onlineOrder)) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (Q.status ? p.status === Q.status : p.status !== "incoming")
@@ -429,13 +435,13 @@ export default async function handler(req, res) {
         if (px.length < 18 || !section) return send(res, 400, { error: "Нет раздела" });
         const mine = (await store.list("product", {}, { limit: 60000, fields: "_id, webSections" })).filter(p => p._id.startsWith(px) && (p.webSections || []).includes(section));
         const gone = mine.filter(p => !codes.has(p._id.slice(px.length))).map(p => p._id);
-        if (mine.length && codes.size < mine.length * 0.8) { await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: 0, partial: true }); return send(res, 200, { gone: 0, skipped: true, inSection: mine.length, found: codes.size }); }
+        if (mine.length && codes.size < mine.length * 0.8) { await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: 0, partial: true, complete: !!body.complete }); return send(res, 200, { gone: 0, skipped: true, inSection: mine.length, found: codes.size }); }
         const goneN = gone.length && !(mine.length && codes.size < mine.length * 0.8) ? await markWebGone(store, gone.slice(0, 500), { by: me.name, pricingCfg }) : 0;
         // отчёт о сайте (что кнопка прочитала) + категории товаров раздела + образец страницы товара для разбора
         const st = body.stats && typeof body.stats === "object" ? Object.fromEntries(["links", "tried", "read", "price", "newN", "img", "needSz", "sz"].map(k => [k, Math.max(0, Math.min(5000, Number(body.stats[k]) || 0))])) : null;
         if (st) { const all = await allProducts(store), ids = new Set(mine.map(p => p._id)), cats = { total: 0 }; for (const p of all) if (ids.has(p._id)) { const c = p.overrides?.category || p.category || "other"; cats[c] = (cats[c] || 0) + 1; cats.total++; } st.cats = cats; }
         if (body.sample && typeof body.sample === "object") { const host = String(body.host || "").replace(/[^a-z0-9.-]/gi, "").slice(0, 80); if (host) { const sd = (await store.get("settings.webSamples")) || { _id: "settings.webSamples", _type: "settings", list: {} }; sd.list = sd.list || {}; sd.list[host.replace(/\./g, "_")] = { host, at: new Date().toISOString(), sample: JSON.stringify(body.sample).length < 24000 ? body.sample : { title: String(body.sample.title || "").slice(0, 200), url: String(body.sample.url || "").slice(0, 300), tooBig: true, moreCap: body.sample.moreCap } }; delete sd._rev; delete sd._createdAt; delete sd._updatedAt; try { await store.put(sd); } catch {} } }
-        await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: goneN, health: st });
+        await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: goneN, health: st, complete: !!body.complete });
         return send(res, 200, { gone: goneN, inSection: mine.length });
       }
       case "forgetDeleted": {
@@ -449,7 +455,13 @@ export default async function handler(req, res) {
         const d = await store.get("settings.webSections");
         // сколько удалённых вами товаров по каждому сайту (кнопка их больше не берёт — можно разрешить снова)
         const del = {}; for (const id of await deletedSet(store)) { const m = id.match(/^product\.manual\.([a-z0-9]+)-/); if (m) del[m[1]] = (del[m[1]] || 0) + 1; }
-        return send(res, 200, { sections: Object.values(d?.list || {}).sort((a, b) => String(a.lastRun).localeCompare(String(b.lastRun))), deleted: del });
+        return send(res, 200, { sections: Object.values(d?.list || {}).sort((a, b) => String(a.lastRun).localeCompare(String(b.lastRun))), deleted: del, arrivals: (await store.get("settings.newArrivals"))?.mode || "publish" });
+      }
+      case "arrivalsSet": {
+        // новинки бренда (появились в уже пройденном разделе): сразу на сайт или сначала в «Новые с сайтов»
+        const mode = body.mode === "incoming" ? "incoming" : "publish";
+        await store.put({ _id: "settings.newArrivals", _type: "settings", mode, by: me.name, at: new Date().toISOString() });
+        return send(res, 200, { mode });
       }
       case "webSectionDel": {
         const d = await store.get("settings.webSections"); if (d?.list) { delete d.list[secKey(body.section)]; delete d.list[String(body.section || "")]; await store.put(d); }
@@ -497,8 +509,15 @@ export default async function handler(req, res) {
         // немецкий сайт (LV и др.) — название, описание и цвета переводим на английский; ошибка перевода не мешает загрузке
         let itEn = it;
         try { const { englishItem } = await import("../lib/translate.js"); itEn = await englishItem(it, await store.get(id)); } catch (e) { console.log("TR fail " + JSON.stringify({ id, why: String(e.message).slice(0, 120) })); }
-        const product = await saveManualProduct(store, { ...itEn, id, images, imgVer: IMGV(id), availability: "online", status: "incoming", boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
-        return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null });
+        // категория не определилась на стороне админки — пробуем по немецким/французским словам (Gürtel, Accessoires, Schmuck…)
+        if (!it.category || it.category === "other") { const { detectCategory } = await import("../lib/normalize.js"); const c = detectCategory(it.title, String(it.section || "").replace(/[-_/]+/g, " "), (it.crumbs || []).join(" "), it.description); if (c && c !== "other") itEn = { ...itEn, category: c }; }
+        // новинка бренда: раздел уже был пройден целиком, а этого товара в нём не было — значит, вышел новым.
+        // Такие товары сразу на витрине с отметкой «Новинка» (или в «Новых с сайтов», если так выбрано в админке). Первый прогон раздела — всё в «Новые с сайтов» на ваш отбор
+        const novelty = await isNovelty(store, it.section);
+        const arrivals = novelty ? ((await store.get("settings.newArrivals"))?.mode || "publish") : null;
+        const product = await saveManualProduct(store, { ...itEn, id, images, imgVer: IMGV(id), availability: "online", status: novelty && arrivals === "publish" ? "published" : "incoming", isNew: !!it.isNew || novelty, boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
+        if (novelty) PCACHE = null;
+        return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null, novelty, status: product.status });
       }
       case "pricePreview": {
         const { priceFor } = await import("../lib/pipeline.js");
@@ -653,12 +672,21 @@ function sizeList(p) {
 function safeJson(s) { try { return JSON.parse(s); } catch { return {}; } }
 
 // ключ в базе — только буквы, цифры, «_» и «-» (Sanity не принимает «.» и «/» в именах полей: «on.com/en-de/shop/shoes» ронял сохранение)
+// раздел сайта бренда уже проходили целиком? (кэш на 30 с — товары раздела приходят пачкой)
+let SECC = null;
+async function isNovelty(store, section) {
+  if (!section) return false;
+  if (!SECC || Date.now() - SECC.at > 30e3) SECC = { at: Date.now(), d: await store.get("settings.webSections").catch(() => null) };
+  return !!SECC.d?.list?.[secKey(section)]?.complete;
+}
 const secKey = s => String(s || "").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 180);
 async function rememberSection(store, x) {
   const d = (await store.get("settings.webSections")) || { _id: "settings.webSections", _type: "settings", list: {} };
   d.list = d.list || {}; const k = secKey(x.section), prev = d.list[k] || {};
   const url = /^https:\/\//.test(String(x.url || "")) ? String(x.url).slice(0, 500) : (prev.url || null);
-  d.list[k] = { section: x.section, url, title: String(x.title || prev.title || "").replace(/\s*[|–-]\s*[^|–-]*$/, "").slice(0, 120), lastRun: new Date().toISOString(), found: x.found, inSection: x.inSection, gone: x.gone, partial: !!x.partial, health: x.health || prev.health || null };
+  d.list[k] = { section: x.section, url, title: String(x.title || prev.title || "").replace(/\s*[|–-]\s*[^|–-]*$/, "").slice(0, 120), lastRun: new Date().toISOString(), found: x.found, inSection: x.inSection, gone: x.gone, partial: !!x.partial, health: x.health || prev.health || null,
+    // раздел хоть раз пройден целиком — дальше всё, что в нём появляется, это новинки бренда (новая коллекция)
+    complete: !!(x.complete || prev.complete), completeAt: prev.completeAt || (x.complete ? new Date().toISOString() : null) };
   for (const kk of Object.keys(d.list)) if (!/^[a-zA-Z0-9_-]+$/.test(kk)) delete d.list[kk]; // старые неправильные ключи
   const { _rev, _createdAt, _updatedAt, ...save } = d; await store.put(save);
 }

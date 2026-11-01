@@ -2236,8 +2236,8 @@ const SCR = { queue: [], groups: new Map(), running: false, enabled: null, last:
 // слова — целиком (иначе «coated canvas» попадало в одежду из-за «coat»)
 const MT_CLOTH = /\b(clothing|ready[- ]to[- ]wear|dress(es)?|gowns?|coats?|trench(es)?|parkas?|capes?|jackets?|blazers?|bombers?|blousons?|vests?|gilets?|pants|trousers|jeans|denim|shorts|bermudas?|skirts?|knit(wear)?|sweaters?|jumpers?|cardigans?|pullovers?|hoodies?|sweatshirts?|shirts?|t-shirts?|tees?|tops?|tanks?|camis?|camisoles?|polos?|blouses?|bodysuits?|body|lingerie|bras?|bralettes?|briefs|corsets?|bustiers?|slips?|leggings?|joggers?|tracksuits?|suits?|jumpsuits?|overalls?|swim(wear|suits?)?|bikinis?|kimonos?|ponchos?)\b/i;
 const MT_CATS = [[/\b(bags?|handbags?|totes?|clutch(es)?|backpacks?|pouch(es)?|crossbody|shoulder bag|hobo|cabas|сумк\w*|tasche|taschen|handtasche|umhängetasche|rucksack|tassen|tas|borsa|borse|sacs?)\b/i, "bags"], [/\b(shoes?|sneakers?|boots?|sandals?|pumps?|loafers?|mules?|slides?|ballerinas?|espadrilles?|heels?|derby|derbies|moccasins?|oxfords?|brogues?|slippers?|schuhe?|halbschuhe?|stiefel\w*|sandalen|sandaletten|mokassins?|pantoletten|turnschuhe|pumps|schoenen|laarzen|scarpe|stivali|chaussures|bottines|baskets|mocassins)\b/i, "shoes"],
-  [/\b(sunglasses|eyewear|optical|glasses)\b/i, "eyewear"], [/\b(watch(es)?)\b/i, "watches"], [/\b(jewel(le)?ry|necklaces?|earrings?|bracelets?|rings?|brooch(es)?)\b/i, "jewelry"], [/\b(fragrances?|parfums?|perfumes?|beauty)\b/i, "fragrance"],
-  [/\b(accessories|belts?|scarf|scarves|wallets?|card ?holders?|small leather goods|hats?|caps?|gloves?|key ?rings?|keychains?)\b/i, "accessories"],
+  [/\b(sunglasses|eyewear|optical|glasses|sonnenbrillen?|brillen?|lunettes)\b/i, "eyewear"], [/\b(watch(es)?|uhren|uhr|montres?)\b/i, "watches"], [/\b(jewel(le)?ry|necklaces?|earrings?|bracelets?|rings?|brooch(es)?|schmuck|ketten?|halsketten?|ohrringe?|armb[aä]nder|armband|ringe|anh[aä]nger|broschen?|bijoux)\b/i, "jewelry"], [/\b(fragrances?|parfums?|perfumes?|beauty|d[uü]fte?)\b/i, "fragrance"],
+  [/\b(accessories|accessoires|belts?|g[uü]rtel|gurtel|ceintures?|cinture|scarf|scarves|schals?|t[uü]cher|tuch|foulards?|wallets?|portemonnaies?|geldb[oö]rsen?|kartenetuis?|card ?holders?|small leather goods|kleinlederwaren|hats?|h[uü]te|m[uü]tzen?|caps?|gloves?|handschuhe|krawatten?|key ?rings?|keychains?|schl[uü]sselanh[aä]nger)\b/i, "accessories"],
   [MT_CLOTH, "clothing"]];
 // категория товара с кнопки: сначала главное слово названия («tank top with ring detail» → «tank top» — одежда, не украшение),
 // потом хлебные крошки и раздел сайта, в конце — описание
@@ -2278,7 +2278,7 @@ window.addEventListener("message", async e => {
     try { e.source.postMessage({ type: "tb-secknown", list }, e.origin); } catch {} return;
   }
   if (e.data.type === "tb-section") { // прогон раздела: чего нет на сайте бренда — «продано»
-    try { const r = await api("sectionSync", { method: "POST", silent: true, body: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), host: e.data.host || "", section: e.data.section, codes: e.data.codes || [], url: e.data.url, title: e.data.title, stats: e.data.stats || null, sample: e.data.sample || null } }); MTP.gone = (MTP.gone || 0) + (r.gone || 0); if (r.skipped) MTP.sectionSkipped = true; } catch {}
+    try { const r = await api("sectionSync", { method: "POST", silent: true, body: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), host: e.data.host || "", section: e.data.section, codes: e.data.codes || [], url: e.data.url, title: e.data.title, stats: e.data.stats || null, sample: e.data.sample || null, complete: !!e.data.complete } }); MTP.gone = (MTP.gone || 0) + (r.gone || 0); if (r.skipped) MTP.sectionSkipped = true; } catch {}
     mtDraw(); try { e.source.postMessage({ type: "tb-section-done", gone: MTP.gone || 0, skipped: !!MTP.sectionSkipped }, e.origin); } catch {} return;
   }
   if (e.data.type !== "tb-import" && e.data.type !== "tb-update") return;
@@ -2335,19 +2335,23 @@ function siteHealth(x) {
 }
 // разделы сайтов брендов: открыть → нажать кнопку «В Trend Büro» → прогон (новые, цены, размеры, что продано)
 async function vSites() {
-  const { sections, deleted = {} } = await api("webSections");
+  const { sections, deleted = {}, arrivals = "publish" } = await api("webSections");
   const delRows = Object.entries(deleted).filter(([, n]) => n > 0);
   const ago = t => { const h = Math.round((Date.now() - Date.parse(t)) / 36e5); return h < 1 ? "только что" : h < 24 ? h + " ч назад" : Math.round(h / 24) + " дн назад"; };
   $("#main").innerHTML = head("Сайты брендов", "Разделы, где вы нажимали кнопку «В Trend Büro». Откройте раздел и нажмите кнопку — добавятся новинки, обновятся цены и размеры, пропавшие товары станут «продано». Сверху — давно не проверенные.",
-    `<a class="btn ghost" href="/mt.html" target="_blank" rel="noopener">${svg("link")}Кнопка</a>`) + (sections.length ? `<div class="card" style="overflow:hidden">${sections.map(x => {
+    `<a class="btn ghost" href="/mt.html" target="_blank" rel="noopener">${svg("link")}Кнопка</a>`) + `<div class="card pad" style="margin-bottom:14px;display:flex;flex-direction:column;gap:8px">
+      <b>Новинки брендов</b>
+      <p class="hint" style="margin:0">Первый прогон раздела — всё приходит в «Новые с сайтов», вы сами отбираете: на сайт или скрыть. Скрытое и удалённое остаётся как вы решили.<br>Когда раздел пройден целиком, при следующих прогонах всё, чего у нас ещё нет (новая коллекция), добавляется с отметкой «Новинка» на месяц. Плашки «New / Neu» с сайта бренда тоже становятся «Новинкой».</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><span class="hint">Новинки бренда:</span><button class="fchip ${arrivals === "publish" ? "on" : ""}" data-arr="publish">Сразу на сайт</button><button class="fchip ${arrivals === "incoming" ? "on" : ""}" data-arr="incoming">Сначала мне на проверку</button></div></div>` + (sections.length ? `<div class="card" style="overflow:hidden">${sections.map(x => {
       const old = Date.now() - Date.parse(x.lastRun) > 7 * 864e5;
       return `<div class="row" style="padding:14px 16px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap">
         <div style="flex:1;min-width:220px"><b>${esc(x.title || x.section)}</b><div class="hint">${esc(x.section)}</div>
-        <div class="hint">${old ? `<span class="err">проверяли ${ago(x.lastRun)}</span>` : "проверяли " + ago(x.lastRun)} · на сайте ${x.found} · у нас из раздела ${x.inSection}${x.gone ? ` · пропало ${x.gone}` : ""}${x.partial ? ` · <span class="err">раздел загрузился не полностью</span>` : ""}</div>${siteHealth(x)}</div>
+        <div class="hint">${old ? `<span class="err">проверяли ${ago(x.lastRun)}</span>` : "проверяли " + ago(x.lastRun)} · на сайте ${x.found} · у нас из раздела ${x.inSection}${x.gone ? ` · пропало ${x.gone}` : ""}${x.partial ? ` · <span class="err">раздел загрузился не полностью</span>` : ""} · ${x.complete ? "пройден целиком — новое отмечается «Новинкой»" : `<span class="err">ещё не пройден целиком — нажмите кнопку в разделе ещё раз</span>`}</div>${siteHealth(x)}</div>
         ${x.url ? `<a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Открыть раздел</a>` : ""}<button class="btn ghost sm" data-sdel="${esc(x.section)}" aria-label="Убрать из списка">×</button></div>`;
     }).join("")}</div>` : `<div class="card empty"><b>Пока пусто</b>Откройте раздел на сайте бренда (например, сумки на ysl.com) и нажмите кнопку «В Trend Büro» — раздел появится здесь.</div>` + (delRows.length ? `<div class="h2">Удалённые вами</div><p class="hint" style="margin:-4px 0 10px">Кнопка «В Trend Büro» не берёт снова то, что вы удалили. Нажмите «Взять снова» — и при следующем прогоне раздела эти товары добавятся заново.</p>
     <div class="card" style="overflow:hidden">${delRows.map(([site, n]) => `<div class="row" style="padding:14px 16px;border-bottom:1px solid var(--line);gap:12px"><div style="flex:1"><b>${esc(site === "ysl" ? "Saint Laurent (ysl.com)" : site.replace(/^\w/, c => c.toUpperCase()))}</b><div class="hint">удалено ${n} ${plural(n, ["товар", "товара", "товаров"])}</div></div><button class="btn sm" data-undel="${esc(site)}">Взять снова</button></div>`).join("")}</div>` : ""));
   $("#main").onclick = async e => {
+    const ar = e.target.closest("[data-arr]"); if (ar) { await api("arrivalsSet", { method: "POST", body: { mode: ar.dataset.arr } }); toast(ar.dataset.arr === "publish" ? "Новинки будут сразу на сайте" : "Новинки — сначала в «Новые с сайтов»"); return vSites(); }
     const d = e.target.closest("[data-sdel]"); if (d) { await api("webSectionDel", { method: "POST", body: { section: d.dataset.sdel } }); vSites(); }
     const u = e.target.closest("[data-undel]"); if (u) { if (!(await confirmBox("Взять снова?", "Удалённые товары этого сайта снова добавятся при следующем прогоне кнопки (скрытыми, во «Входящих»)."))) return; const r = await api("forgetDeleted", { method: "POST", body: { site: u.dataset.undel } }); toast("Готово: " + r.restored + " — прогоните раздел снова"); vSites(); }
   };
@@ -2358,6 +2362,7 @@ async function vImport() {
   $("#main").innerHTML = head("Загрузка с сайта", tbHost ? esc(tbHost) : "Кнопка «В Trend Büro»") + `
     <div class="card pad" style="display:flex;flex-direction:column;gap:10px">
       <div class="row"><b style="font-size:18px">${MTP.ok} из ${MTP.total || "…"} обработано (новые — скрыты, цена +${MT_MARKUP}%)</b></div>
+      ${MTP.novel ? `<p class="hint" style="margin:0"><b>Новинки бренда: ${MTP.novel}</b> — ${MTP.novelPub ? "сразу на сайте с отметкой «Новинка»" : "в «Новых с сайтов» с отметкой «Новинка»"}</p>` : ""}
       ${MTP.marked ? `<p class="hint" style="margin:0">Уже были в админке и отмечены новинками: ${MTP.marked}</p>` : ""}
       ${MTP.upd || MTP.gone ? `<p class="hint" style="margin:0">Прогон: проверено уже добавленных ${MTP.upd || 0}${MTP.changed ? `, изменилось ${MTP.changed}${MTP.priceCh ? ` (цена — у ${MTP.priceCh})` : ""}` : ", без изменений"} · пропало с сайта бренда (отмечены «продано»): ${MTP.gone || 0}</p>` : ""}
       ${MTP.sectionSkipped ? `<p class="hint err" style="margin:0">Раздел на сайте загрузился не полностью — проданные не отмечали. Пролистайте раздел до конца и нажмите кнопку ещё раз.</p>` : ""}
@@ -2389,7 +2394,7 @@ async function mtOne(it, origin) {
     if (!urls.length && datas.length) { images = []; for (const d of datas.slice(0, 8)) { try { images.push((await api("imageUpload", { method: "POST", body: { data: d.split(",")[1] }, silent: true })).url); } catch {} } } // старая версия кнопки
     if (!images.length) return fail("сайт не отдал фото");
     const r = await api("webImport", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { ...base, images } } });
-    mtSaved.push({ brand: base.brand, title: base.title, id: r.id }); return true;
+    mtSaved.push({ brand: base.brand, title: base.title, id: r.id }); if (r.novelty) { MTP.novel = (MTP.novel || 0) + 1; if (r.status === "published") MTP.novelPub = (MTP.novelPub || 0) + 1; } return true;
   } catch (err) { return fail(String(err.message || err).slice(0, 120)); }
 }
 const scrKey = r => (r.brand + "|" + r.title).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9а-я|]+/g, "");

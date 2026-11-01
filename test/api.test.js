@@ -216,3 +216,39 @@ test("раздел «Новинки»: новый товар сохраняет�
   const p2 = await store.get("product.manual.ysl-n2");
   assert.equal(p2.overrides.isNew, "on"); assert.equal(p2.status, "published"); // витрину не трогаем
 });
+
+test("новая коллекция: раздел пройден целиком — новый товар сразу на сайте с «Новинкой»; первый прогон — на отбор; Gürtel — аксессуары", async () => {
+  const login = await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } });
+  const cookie = login.headers["set-cookie"].split(";")[0], H = { cookie, "x-tb": "1" };
+  const real = globalThis.fetch;
+  const jpg = Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAA//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AN//Z", "base64");
+  globalThis.fetch = async () => new Response(jpg, { status: 200, headers: { "content-type": "image/jpeg" } });
+  try {
+    const section = "dior.com/de_de/fashion/herrenmode/accessoires/gurtel";
+    const item = n => ({ brand: "Dior", title: "Dior Médaillon Gürtel " + n, category: "other", gender: "m", boutique: 890, images: ["https://assets.christiandior.com/x/" + n + ".jpg"], markupPct: 10, section, sizeStock: [{ s: "90", ok: true }, { s: "95", ok: false }] });
+    // первый прогон раздела: на отбор
+    let r = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "product.manual.dior-b1", item: item(1) }, headers: H });
+    assert.equal(r.status, 200, JSON.stringify(r.body)); assert.equal(r.body.novelty, false);
+    let p = await store.get("product.manual.dior-b1"); assert.equal(p.status, "incoming"); assert.equal(p.category, "accessories"); assert.equal(p.overrides?.isNew, undefined);
+    // раздел пройден не целиком — следующий товар ещё не новинка
+    await call(handler, { method: "POST", query: { a: "sectionSync" }, body: { prefix: "dior", section, codes: ["b1"], complete: false }, headers: H });
+    r = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "product.manual.dior-b2", item: item(2) }, headers: H });
+    assert.equal(r.body.novelty, false);
+    // пройден целиком — дальше всё новое: сразу на сайт, «Новинка»
+    await call(handler, { method: "POST", query: { a: "sectionSync" }, body: { prefix: "dior", section, codes: ["b1", "b2"], complete: true }, headers: H });
+    const realNow = Date.now; Date.now = () => realNow() + 60e3; // кэш разделов 30 с
+    try { r = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "product.manual.dior-b3", item: item(3) }, headers: H }); } finally { Date.now = realNow; }
+    assert.equal(r.body.novelty, true); assert.equal(r.body.status, "published");
+    p = await store.get("product.manual.dior-b3"); assert.equal(p.overrides.isNew, "on"); assert.deepEqual(p.sizes, ["90", "95"]);
+    // выбрано «сначала мне» — новинка в «Новые с сайтов», но с отметкой
+    await call(handler, { method: "POST", query: { a: "arrivalsSet" }, body: { mode: "incoming" }, headers: H });
+    r = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "product.manual.dior-b4", item: item(4) }, headers: H });
+    assert.equal(r.body.novelty, true); assert.equal(r.body.status, "incoming");
+    const ws = await call(handler, { query: { a: "webSections" }, headers: { cookie } });
+    assert.equal(ws.body.arrivals, "incoming"); assert.equal(ws.body.sections.find(x => x.section === section).complete, true);
+    // повторный неполный прогон не снимает отметку «пройден целиком»
+    await call(handler, { method: "POST", query: { a: "sectionSync" }, body: { prefix: "dior", section, codes: ["b1"], complete: false }, headers: H });
+    assert.equal((await store.get("settings.webSections")).list[section.replace(/[^a-zA-Z0-9_-]/g, "_")].complete, true);
+    await call(handler, { method: "POST", query: { a: "arrivalsSet" }, body: { mode: "publish" }, headers: H });
+  } finally { globalThis.fetch = real; }
+});
