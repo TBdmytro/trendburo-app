@@ -7,6 +7,9 @@ test("Dior: лицевой кадр первым, мелкий дубль «в �
     ...[8, 9, 10, 11, 12, 13].map(n => A + "2BTCA649JAXH65E_SBG_E" + n + "?$r4x5_raw$"), A + "LOOK_H_27_1_LOOK_330_E19?$r4x5_raw$", A + "LOOK_H_27_1_LOOK_330_E20?$r4x5_raw$"];
   const o = orderImages(src, { max: 10 });
   assert.equal(o.length, 10);
+  // все 4 кадра на модели со страницы товара — берём все
+  const all = orderImages([A + "1DUME239TORH121_E01?g", ...[1, 6, 7, 9, 10].map(n => A + "1DUME239TORH121_SBG_E" + String(n).padStart(2, "0") + "?r"), ...[19, 20, 21, 22].map(n => A + "LOOK_H_27_1_LOOK_089_E" + n + "?r")]);
+  assert.equal(all.length, 9); assert.equal(all.filter(u => u.includes("LOOK_")).length, 4); assert.match(all[0], /SBG_E01/);
   assert.match(o[0], /_SBG_E01/); assert.match(o[1], /_SBG_E07/);
   assert.ok(!o.some(u => u.includes("default_GH")));
   assert.deepEqual(o.slice(-3).map(u => u.includes("LOOK_") || u.includes("media.")), [true, true, true]);
