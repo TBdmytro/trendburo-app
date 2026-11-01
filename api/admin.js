@@ -36,7 +36,7 @@ let PCACHE = null;
 // только лёгкие поля: размеры и наличие по размерам дочитываются для открытой страницы (до 120 товаров), а не для всех тысяч
 // фото с сайта бренда → в наше хранилище, в том же порядке (первое — обложка как на плитке бренда). Без «склейки похожих»: перед и зад сумки похожи, их нельзя объединять
 const BLOCKED = new Map();
-async function copyWebImages(store, list) {
+async function copyWebImages(store, list, id = "") {
   const { fetchBinary } = await import("../lib/images.js");
   // битые ссылки (обрывок srcset, склеенный с адресом раздела: «…/schuhe/5000&wid=1334…») не берём
   const sane = u => { try { const x = new URL(u); return x.protocol === "https:" && !/&/.test(x.pathname) && (!/=/.test(x.pathname) || /^\/cdn-cgi\/image\//.test(x.pathname)); } catch { return false; } }; // /cdn-cgi/image/width=…/ — нормальный адрес фото (Dior: фото на модели)
@@ -44,7 +44,7 @@ async function copyWebImages(store, list) {
   const fit = u => { try { const x = new URL(u); if (x.hostname === "images.ctfassets.net") return x.origin + x.pathname + "?w=1600&h=1600&fm=jpg&q=85&fit=pad&bg=rgb:ffffff"; } catch {} return u; };
   // порядок: лицевой кадр первым, на модели — в конце (Dior: без мелкого дубля «в рамке»), до 10 фото
   const { orderImages } = await import("../lib/imgorder.js");
-  const urls = orderImages([...new Set((Array.isArray(list) ? list : []).map(String).filter(sane).map(fit))], { max: 12 });
+  const urls = orderImages([...new Set((Array.isArray(list) ? list : []).map(String).filter(sane).map(fit))], { max: 12, sku: String(id).replace(/^product\.manual\.[a-z0-9]+-/, "") });
   let copied = 0; const srcOf = {}; // наша копия → адрес фото на сайте бренда (по нему потом можно навести порядок)
   const images = (await Promise.all(urls.map(async u => {
     const host = new URL(u).hostname;
@@ -319,13 +319,13 @@ export default async function handler(req, res) {
           const ch = L.filter(p => !needAsk(p.offers?.[0]?.availability)).map(p => ({ id: p._id, set: { hasPre: false } }));
           for (let i = 0; i < ch.length; i += 200) await store.patchEach(ch.slice(i, i + 200));
           await store.put({ _id: "settings.fixPre", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); PCACHE = null; console.log("FIXPRE " + ch.length); } } catch (e) { FIXPRE = false; console.log("FIXPRE fail " + String(e.message).slice(0, 120)); } }
-        // один раз: фото Dior — лицевой кадр первым, мелкий дубль «в рамке» убрать, на модели — в конце (ваш порядок/обложку из админки не трогаем)
-        if (!FIXDIOR) { FIXDIOR = true; try { if (!(await store.get("settings.fixDiorImg"))) { const { orderImages } = await import("../lib/imgorder.js");
+        // один раз: фото Dior — убрать фото других товаров (рекомендации со страницы), лицевой кадр первым, на модели — в конце (ваш порядок/обложку из админки не трогаем)
+        if (!FIXDIOR) { FIXDIOR = true; try { if (!(await store.get("settings.fixDiorImg2"))) { const { orderImages } = await import("../lib/imgorder.js");
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides, coverFrom" })).filter(p => p._id.startsWith("product.manual.dior-") && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
-          const ch = []; for (const p of L) { const im = p.images || [], src = im.map(i => i.sourceUrl || i.url), ord = orderImages(src, { max: 12 }); const next = ord.map(u => im[src.indexOf(u)]).filter(Boolean);
+          const ch = []; for (const p of L) { const im = p.images || [], src = im.map(i => i.sourceUrl || i.url), ord = orderImages(src, { max: 12, sku: p._id.replace(/^product\.manual\.dior-/, "") }); const next = ord.map(u => im[src.indexOf(u)]).filter(Boolean);
             if (next.length && next.map(i => i.url).join("|") !== im.map(i => i.url).join("|")) ch.push({ id: p._id, set: { images: next, coverFrom: null } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
-          await store.put({ _id: "settings.fixDiorImg", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXDIOR " + ch.length); } } catch (e) { FIXDIOR = false; console.log("FIXDIOR fail " + String(e.message).slice(0, 120)); } }
+          await store.put({ _id: "settings.fixDiorImg2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXDIOR " + ch.length); } } catch (e) { FIXDIOR = false; console.log("FIXDIOR fail " + String(e.message).slice(0, 120)); } }
         // один раз: товары с сайтов брендов, оставшиеся «Другое» из-за немецких слов (Gürtel, Accessoires, Schmuck…) — в свою категорию
         if (!FIXOTHER) { FIXOTHER = true; try { if (!(await store.get("settings.fixOther"))) { const { detectCategory, detectSubcategory } = await import("../lib/normalize.js");
           const L = (await store.list("product", { category: "other" }, { limit: 20000, fields: "_id, title, sourceTitle, description, webSections, orig, overrides" })).filter(p => p._id.startsWith("product.manual.") && !p.overrides?.category);
@@ -411,7 +411,7 @@ export default async function handler(req, res) {
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
         // фото заново с сайта бренда — один раз (imgVer 2): прежняя «склейка похожих фото» могла заменить перед сумки на вид сзади. Ваши обложка/порядок фото из админки — не трогаем
         if (Array.isArray(it.images) && it.images.length) { try { const p0 = await store.get(id);
-          if (p0 && (p0.imgVer !== IMGV(id) || (p0.images || []).length < Math.min(3, it.images.length) || !/^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "")) && !p0.overrides?.cover && !(p0.overrides?.imageOrder || []).length) { const { images, copied, srcOf } = await copyWebImages(store, it.images); const dior = /^product\.manual\.dior-/.test(id);
+          if (p0 && (p0.imgVer !== IMGV(id) || (p0.images || []).length < Math.min(3, it.images.length) || !/^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "")) && !p0.overrides?.cover && !(p0.overrides?.imageOrder || []).length) { const { images, copied, srcOf } = await copyWebImages(store, it.images, id); const dior = /^product\.manual\.dior-/.test(id);
             const hadCopies = /^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "");
             // скопировать к себе не вышло (сайт не отдаёт фото серверу), а на странице фото больше, чем у нас, — показываем все по ссылке сайта
             if (images.length && (copied || !hadCopies || images.length > (p0.images || []).length)) { await store.patchMany([id], { images: images.map(u => ({ url: u, sourceUrl: srcOf[u] || u, rights: "copied" })), imgVer: IMGV(id), ...(it.tileImg && !dior ? { coverFrom: "tile", coverTile: String(it.tileImg).slice(0, 600) } : {}) }); PCACHE = null; } else if (images.length) await store.patchMany([id], { imgVer: IMGV(id) }); } } catch (e) { console.log("IMGREF fail " + String(e.message).slice(0, 100)); } }
@@ -537,7 +537,7 @@ export default async function handler(req, res) {
         const it = body.item || {}, id = String(body.id || "");
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
         if (it.revive) { const dd = await store.get("settings.deleted"); if (dd && (dd.ids || []).includes(id)) { dd.ids = dd.ids.filter(x => x !== id); delete dd._rev; delete dd._createdAt; delete dd._updatedAt; await store.put(dd); } } // открыли товар сами и нажали кнопку — снова берём
-        const { images, copied, srcOf } = await copyWebImages(store, it.images);
+        const { images, copied, srcOf } = await copyWebImages(store, it.images, id);
         if (!images.length) return send(res, 400, { error: "Нет фото" });
         // немецкий сайт (LV и др.) — название, описание и цвета переводим на английский; ошибка перевода не мешает загрузке
         let itEn = it;

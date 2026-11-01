@@ -19,3 +19,7 @@ test("Dior: нет SBG — берём кадр «в рамке»; не Dior — 
   const ysl = ["https://saint-laurent.dam.kering.com/a_A.jpg", "https://saint-laurent.dam.kering.com/a_B.jpg"];
   assert.deepEqual(orderImages(ysl), ysl);
 });
+test("Dior: фото других товаров со страницы (футболка на странице кепки, другой цвет) не берём", () => {
+  const o = orderImages([A + "693J608A3282C089_E01-5?x", A + "693D192A3090C000_E01-3?x", A + "693C901A3175C284_SBG_E03-1?x", A + "693C901A3175C685_SBG_E03?x", A + "693C901A3175C284_SBG_E06?x", A + "LOOK_H_26_3_LOOK_046_E26?x"], { sku: "693c901a3175c284" });
+  assert.deepEqual(o.map(u => u.replace(A, "").split("?")[0]), ["693C901A3175C284_SBG_E03-1", "693C901A3175C284_SBG_E06", "LOOK_H_26_3_LOOK_046_E26"]);
+});
