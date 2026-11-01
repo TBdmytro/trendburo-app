@@ -4,6 +4,8 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
+  // переезд в Postgres (Neon): шаги копирования документов из Sanity — только количество, без содержимого
+  if (req.method === "GET" && /[?&]pgmig=(step|delta|verify|stats)\b/.test(String(req.url || ""))) return pgMig(res, String(req.url).match(/pgmig=(step|delta|verify|stats)/)[1]);
   if (req.method === "GET" && /[?&]migrate=(step|verify)\b/.test(String(req.url || ""))) return migrate(res, String(req.url).match(/migrate=(step|verify)/)[1]);
   if (req.method === "GET" && /[?&]probe=mockimgs\b/.test(String(req.url || ""))) return probeMockImgs(res);
   if (req.method === "GET" && /[?&]probe=photo\b/.test(String(req.url || ""))) return probePhoto(res);
@@ -270,4 +272,19 @@ async function probeImg(res, u) {
   // маленькая копия (для проверки, что на фото — товар, а не пустая заглушка)
   if (!out.error) { try { const r = await fetch(u + (u.includes("?") ? "&" : "?") + "w=240&fm=jpg&q=70", { headers: { Origin: "https://trendburo-app.vercel.app" } }); out.cors = r.headers.get("access-control-allow-origin"); out.thumb = Buffer.from(await r.arrayBuffer()).toString("base64"); } catch (e) { out.thumbErr = String(e.message).slice(0, 80); } }
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
+}
+
+async function pgMig(res, mode) {
+  res.setHeader("Content-Type", "application/json; charset=utf-8"); let out;
+  try {
+    const { sanityStore, pgUrl } = await import("../lib/store.js"); const { PgStore, lazyNeon } = await import("../lib/pgstore.js");
+    if (!pgUrl()) throw new Error("Нет DATABASE_URL — база Neon не подключена к проекту");
+    const pg = new PgStore({ exec: lazyNeon(pgUrl()) }), san = sanityStore();
+    const m = await import("../lib/pgmigrate.js");
+    if (mode === "stats") out = { backend: process.env.DB_BACKEND || "sanity", pg: await pg.stats() };
+    else if (mode === "step") out = await m.pgMigrateStep(san, pg);
+    else if (mode === "delta") { const st = await pg.get("settings.pgmigrate"); if (!st?.startedAt) throw new Error("Сначала step"); out = await m.pgMigrateDelta(san, pg, st.startedAt); }
+    else out = await m.pgMigrateVerify(san, pg);
+  } catch (e) { out = { error: String(e.message).slice(0, 300) }; }
+  res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
 }

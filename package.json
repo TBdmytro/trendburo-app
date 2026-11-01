@@ -4,9 +4,17 @@
   "private": true,
   "type": "module",
   "description": "Trend Büro — витрина байер-сервиса, админка и импорт каталога",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "node --test test/*.test.js",
     "check": "node scripts/check.js && node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.14"
   }
 }
