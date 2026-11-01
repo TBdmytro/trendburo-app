@@ -2278,7 +2278,7 @@ window.addEventListener("message", async e => {
     try { e.source.postMessage({ type: "tb-secknown", list }, e.origin); } catch {} return;
   }
   if (e.data.type === "tb-snap") { // копии страниц бренда для автопроверки кнопки — сохраняем молча
-    try { await api("snapSave", { method: "POST", silent: true, body: { host: e.data.host || "", section: e.data.section || "", list: e.data.list || null, pages: e.data.pages || [], ver: e.data.ver || "" } }); } catch {} return;
+    try { await api("snapSave", { method: "POST", silent: true, body: { host: e.data.host || "", section: e.data.section || "", part: e.data.part || "", idx: e.data.idx || 0, list: e.data.list || null, pages: e.data.pages || [], ver: e.data.ver || "" } }); } catch {} return;
   }
   if (e.data.type === "tb-section") { // прогон раздела: чего нет на сайте бренда — «продано»
     try { const r = await api("sectionSync", { method: "POST", silent: true, body: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), host: e.data.host || "", section: e.data.section, codes: e.data.codes || [], url: e.data.url, title: e.data.title, stats: e.data.stats || null, sample: e.data.sample || null, complete: !!e.data.complete } }); MTP.gone = (MTP.gone || 0) + (r.gone || 0); if (r.skipped) MTP.sectionSkipped = true; } catch {}
@@ -2379,7 +2379,7 @@ async function vImport() {
 async function mtUpd(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
   if (!sku) return false;
-  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, unavailable: !!it.unavailable, ask: String(it.ask || it.blocked || ""), isNew: !!it.isNew, section: it.section || "", tileImg: /^https:\/\//.test(String(it.tileImg || "")) ? String(it.tileImg).slice(0, 600) : "", images: (it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || "")).slice(0, 8), category: mtCat(it), gender: ["w", "m"].includes(it.gender) ? it.gender : "", szDbg: String(it.szDbg || "").slice(0, 900) } } });
+  try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, unavailable: !!it.unavailable, ask: String(it.ask || it.blocked || ""), isNew: !!it.isNew, section: it.section || "", tileImg: /^https:\/\//.test(String(it.tileImg || "")) ? String(it.tileImg).slice(0, 600) : "", images: (it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || "")).slice(0, 14), category: mtCat(it), gender: ["w", "m"].includes(it.gender) ? it.gender : "", szDbg: String(it.szDbg || "").slice(0, 900) } } });
     MTP.upd = (MTP.upd || 0) + 1; if (r.price) MTP.priceCh = (MTP.priceCh || 0) + 1; if (r.changes) MTP.changed = (MTP.changed || 0) + 1; return true; }
   catch (err) { MTP.last.unshift("✕ " + (it.title || sku) + ": " + err.message); return false; }
 }
