@@ -5,6 +5,7 @@ export default async function handler(req, res) {
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
   // переезд в Postgres (Neon): шаги копирования документов из Sanity — только количество, без содержимого
+  if (req.method === "GET" && /[?&]pgmig=run\b/.test(String(req.url || ""))) return pgRunPage(res);
   if (req.method === "GET" && /[?&]pgmig=(step|delta|verify|stats)\b/.test(String(req.url || ""))) return pgMig(res, String(req.url).match(/pgmig=(step|delta|verify|stats)/)[1]);
   if (req.method === "GET" && /[?&]migrate=(step|verify)\b/.test(String(req.url || ""))) return migrate(res, String(req.url).match(/migrate=(step|verify)/)[1]);
   if (req.method === "GET" && /[?&]probe=mockimgs\b/.test(String(req.url || ""))) return probeMockImgs(res);
@@ -286,5 +287,15 @@ async function pgMig(res, mode) {
     else if (mode === "delta") { const st = await pg.get("settings.pgmigrate"); if (!st?.startedAt) throw new Error("Сначала step"); out = await m.pgMigrateDelta(san, pg, st.startedAt); }
     else out = await m.pgMigrateVerify(san, pg);
   } catch (e) { out = { error: String(e.message).slice(0, 300) }; }
+  console.log("[pgmig]", mode, JSON.stringify(out).slice(0, 1500)); // только количества, без данных
   res.statusCode = 200; res.end(JSON.stringify(out, null, 1));
+}
+/** Страница переезда: открыть один раз — сама гоняет step до конца, затем verify. Показывает только количества. */
+function pgRunPage(res) {
+  res.setHeader("Content-Type", "text/html; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.statusCode = 200;
+  res.end(`<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Переезд базы</title>
+<body style="font:16px/1.5 system-ui;padding:20px;max-width:560px;margin:auto;background:#f2f3f4;color:#26282c"><h2>Переезд базы в Neon</h2><div id=s>Начинаю…</div><pre id=o style="white-space:pre-wrap;font-size:12px"></pre>
+<script>const s=document.getElementById('s'),o=document.getElementById('o');const j=m=>fetch('?pgmig='+m+'&t='+Date.now()).then(r=>r.json());
+(async()=>{let r,i=0;do{r=await j('step');if(r.error){s.textContent='Ошибка: '+r.error;return}s.textContent='Перенесено документов: '+(r.copied||0)+(r.done?' — готово':' …');}while(!r.done&&++i<60);
+s.textContent+=' · сверяю…';const v=await j('verify');s.textContent=v.ok?'✅ Готово, всё сходится. Можно закрыть страницу.':'⚠️ Есть расхождения — Claude посмотрит.';o.textContent=Object.entries(v.types||{}).map(([k,x])=>k+': '+x.sanity+' → '+x.postgres+(x.ok?'':' ✗')).join('\\n');})();</script>`);
 }
