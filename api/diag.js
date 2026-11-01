@@ -297,5 +297,5 @@ function pgRunPage(res) {
 <body style="font:16px/1.5 system-ui;padding:20px;max-width:560px;margin:auto;background:#f2f3f4;color:#26282c"><h2>Переезд базы в Neon</h2><div id=s>Начинаю…</div><pre id=o style="white-space:pre-wrap;font-size:12px"></pre>
 <script>const s=document.getElementById('s'),o=document.getElementById('o');const j=m=>fetch('?pgmig='+m+'&t='+Date.now()).then(r=>r.json());
 (async()=>{let r,i=0;do{r=await j('step');if(r.error){s.textContent='Ошибка: '+r.error;return}s.textContent='Перенесено документов: '+(r.copied||0)+(r.done?' — готово':' …');}while(!r.done&&++i<60);
-s.textContent+=' · сверяю…';const v=await j('verify');s.textContent=v.ok?'✅ Готово, всё сходится. Можно закрыть страницу.':'⚠️ Есть расхождения — Claude посмотрит.';o.textContent=Object.entries(v.types||{}).map(([k,x])=>k+': '+x.sanity+' → '+x.postgres+(x.ok?'':' ✗')).join('\\n');})();</script>`);
+const d=await j('delta');s.textContent+=' · догнал изменений: '+(d.copied||0)+' · сверяю…';const v=await j('verify');s.textContent=v.ok?'✅ Готово, всё сходится. Можно закрыть страницу.':'⚠️ Есть расхождения — Claude посмотрит.';o.textContent=Object.entries(v.types||{}).map(([k,x])=>k+': '+x.sanity+' → '+x.postgres+(x.ok?'':' ✗')).join('\\n');})();</script>`);
 }
