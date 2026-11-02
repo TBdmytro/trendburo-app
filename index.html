@@ -3229,16 +3229,16 @@ const avatarHTML=(u,cls="")=>u&&u.photo?`<img class="${cls}" src="${esc(u.photo)
 const I_TG='<svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><path d="M9 13l8-6"/></svg>';
 /* Вход: Telegram решает, кто вы. Есть учётная запись — «Войти», нет — «Регистрация» с именем. Один Telegram = одна учётная запись. */
 function authGate(force){if(!LIVE)return;const b=authBody();
-  if(b&&store.get("tb_signed",0)&&!force){loadMe();return}
+  if(b&&store.get("tb_signed",0)&&!force){loadMe().then(r=>{if(r&&r.closed&&r.access!=="ok")authGate(true);else if(r&&CLOSED)catReload()});return}
   document.querySelectorAll(".gate").forEach(x=>x.remove());
   const g=document.createElement("div");g.className="gate";g.setAttribute("role","dialog");g.setAttribute("aria-label","Вход");
   g.innerHTML=`<div class="gt-top"><span class="gt-logo">TB</span><h1>Trend Büro</h1><p>Байер-сервис из бутиков Европы</p></div><div class="gt-card" id="gtc"></div>`;
   $("#app").append(g);requestAnimationFrame(()=>requestAnimationFrame(()=>g.classList.add("in")));
   const card=g.querySelector("#gtc"),close=()=>{g.classList.add("out");setTimeout(()=>g.remove(),520)};
-  const skip=`<button type="button" class="gt-skip" data-skip>Смотреть без входа</button>`;
+  const skip=CLOSED?"":`<button type="button" class="gt-skip" data-skip>Смотреть без входа</button>`;
   const note=`<p class="gt-note">Без пароля: Telegram подтверждает, что это вы. Один аккаунт Telegram — одна учётная запись, по номеру аккаунта, а не по нику. <a href="#" data-pv>Ваши данные</a></p>`;
   const wire=()=>{const k=card.querySelector("[data-skip]");if(k)k.onclick=close;const p=card.querySelector("[data-pv]");if(p)p.onclick=e=>{e.preventDefault();close();openPrivacy()}};
-  const done=r=>{store.set("tb_signed",1);close();toast("Вы вошли как "+((r.profile&&r.profile.name)||r.user.name));hap("medium")};
+  const done=r=>{store.set("tb_signed",1);if(r.closed&&r.access!=="ok")return state.wait(r);if(CLOSED)catReload();close();toast("Вы вошли как "+((r.profile&&r.profile.name)||r.user.name));hap("medium")};
   const tgu=()=>{const u=TGW&&TGW.initDataUnsafe&&TGW.initDataUnsafe.user,l=store.get("tb_login",null);const x=u||l||{};return{name:[x.first_name,x.last_name].filter(Boolean).join(" ")||x.username||"",username:x.username||"",photo:x.photo_url||""}};
   const state={
     load(t){card.innerHTML=`<span class="gt-k">Вход через Telegram</span><div class="gt-load"><i></i>${esc(t||"Проверяем аккаунт…")}</div>`},
@@ -3254,9 +3254,18 @@ function authGate(force){if(!LIVE)return;const b=authBody();
       <button class="btn block gt-go" data-go>${I_TG}Зарегистрироваться</button>${note}`;wire();
       card.querySelector("[data-go]").onclick=async e=>{const nm=card.querySelector("#gtName").value.trim();if(nm.length<2){card.querySelector("#gtName").focus();toast("Напишите, как к вам обращаться");return}
         const bt=e.currentTarget;bt.disabled=true;bt.classList.add("busy");const r=await loadMe({a:"register",name:nm});if(r)done(r);else{bt.disabled=false;bt.classList.remove("busy");state.err(ME_ERR||{})}}},
+    // закрытый сайт: вошёл, но доступ ещё не открыт
+    wait(r){const n=(r.profile&&r.profile.name)||r.user.name,u=r.user,bl=r.access==="blocked",mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]);
+      card.innerHTML=`<span class="gt-k">Доступ по приглашению</span>
+      <div class="gt-u">${avatarHTML({photo:u.photo,name:n},"gt-av")}<div><b>${esc(n)}</b><small>${u.username?"@"+esc(u.username)+" · ":""}${bl?"доступ закрыт":"заявка отправлена"}</small></div></div>
+      <div class="gt-msg"><p>${bl?"Доступ к сайту закрыт. Если это ошибка — напишите менеджеру.":"Trend Büro — закрытый сервис. Мы посмотрим заявку и откроем доступ — сообщение придёт в Telegram, а сайт откроется сам."}</p></div>
+      ${bl?"":`<div class="gt-load"><i></i>Ждём открытия доступа…</div>`}
+      ${mgr?`<a class="btn block gt-go soft" href="${esc(mgr.url)}" target="_blank" rel="noopener">Написать менеджеру</a>`:""}<button type="button" class="gt-skip" data-out>Выйти</button>`;
+      card.querySelector("[data-out]").onclick=()=>{alive=false;g.remove();logout()};
+      let alive=!bl;const tick=async()=>{if(!alive||!g.isConnected)return;if(!document.hidden){const x=await loadMe();if(x&&x.access==="ok"){alive=false;return done(x)}if(x&&x.access==="blocked"){alive=false;return state.wait(x)}}setTimeout(tick,15000)};setTimeout(tick,15000)},
     async web(){state.load("Загружаем…");let info={};try{info=await (await fetch("/api/me",{cache:"no-store"})).json()}catch(e){}
       if(!info.ready)return state.err({code:"no_token"});
-      card.innerHTML=`<span class="gt-k">Вход и регистрация</span><div class="gt-msg"><b>Войдите через Telegram</b><p>Без пароля и кодов из СМС. Впервые у нас — аккаунт создастся сам, уже были — откроется ваш кабинет.</p></div>
+      card.innerHTML=`<span class="gt-k">Вход и регистрация</span><div class="gt-msg"><b>Войдите через Telegram</b><p>${CLOSED?"Trend Büro работает по приглашению. Войдите через Telegram — мы откроем доступ после проверки.":"Без пароля и кодов из СМС. Впервые у нас — аккаунт создастся сам, уже были — откроется ваш кабинет."}</p></div>
         <ul class="gt-why"><li>Маршрут посылки от бутика до двери</li><li>Избранное и размеры на любом устройстве</li><li>Менеджер видит ваши заказы</li></ul>
         <button class="btn block gt-go" data-go>${I_TG}Войти через Telegram</button>${skip}${note}`;wire();
       card.querySelector("[data-go]").onclick=()=>state.bot()},
@@ -3282,7 +3291,7 @@ function authGate(force){if(!LIVE)return;const b=authBody();
   if(vv)vv.addEventListener("resize",()=>{if(g.classList.contains("kb"))kb()});
   g.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("input")){e.preventDefault();e.target.blur();const b=card.querySelector("[data-go]");if(b)b.click()}});
   async function start(auto){if(!authBody())return state.web();state.load();const j=await meCall({a:"check"});if(j.error)return state.err(j);
-    if(j.exists&&auto){const r=await loadMe();return r?done(r):state.err(ME_ERR||{})}j.exists?state.login(j):state.reg(j)}
+    if(j.exists&&(auto||(j.closed&&j.access!=="ok"))){const r=await loadMe();return r?done(r):state.err(ME_ERR||{})}j.exists?state.login(j):state.reg(j)}
   start()}
 function logout(){store.set("tb_signed",0);store.set("tb_login",null);ME=null;renderTopIcons();popAll();toast("Вы вышли из профиля");setTimeout(()=>authGate(true),400)}
 
@@ -3870,9 +3879,14 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act=watch-
 const CATK="/api/catalog?v=2",CATSTO="tb-cat-1";
 async function catLocal(){try{if(!window.caches)return null;const c=await caches.open(CATSTO),r=await c.match(CATK);return r?await r.json():null}catch(e){return null}}
 async function catSave(txt){try{if(!window.caches)return;const c=await caches.open(CATSTO);await c.put(CATK,new Response(txt,{headers:{"content-type":"application/json"}}))}catch(e){}}
-async function catNet(){const r=await fetch(CATK);const t=await r.text();const j=JSON.parse(t);const ok=r.ok&&Array.isArray(j.products);if(ok&&j.products.length){const sv=()=>catSave(t);window.requestIdleCallback?requestIdleCallback(sv,{timeout:4000}):setTimeout(sv,1500)}return {j,ok}}
+let CLOSED=false;
+async function catNet(){const b=authBody(),r=await fetch(b?CATK+"&a=1":CATK,b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});
+  // закрытый сайт: каталог только с открытым доступом; сохранённый на телефоне каталог стираем
+  if(r.status===403){CLOSED=true;try{window.caches&&caches.delete(CATSTO)}catch(e){}return {j:{products:[]},ok:false,closed:true}}
+  const t=await r.text();const j=JSON.parse(t);const ok=r.ok&&Array.isArray(j.products);if(ok&&j.products.length){const sv=()=>catSave(t);window.requestIdleCallback?requestIdleCallback(sv,{timeout:4000}):setTimeout(sv,1500)}return {j,ok}}
 const catSig=l=>(l||[]).length+":"+(l||[]).reduce((a,x)=>(a+((x.price&&x.price.ua)||0)+x.id.length*7+(x.stock?1:0))%1e9,0);
 function catApply(j,fresh){COLL=Array.isArray(j.collections)?j.collections:[];if(j.content)CMS={banners:[],stories:[],news:[],rails:[],site:null,...j.content};applySite(CMS.site);applyLive(j.products||[],fresh)}
+async function catReload(){CLOSED=false;const n=await catNet().catch(()=>null);if(n&&n.ok){catApply(n.j,true);catRefreshUI()}}
 function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();renderCatHome();if(LIVE)renderBanners()}catch(e){}}
 (async()=>{
   loadWatch();
@@ -3885,7 +3899,8 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
   window.hideSplash&&hideSplash();
   // свежий каталог после быстрого старта: применяем, только если он отличается и экран свободен (не мешаем листать)
   if(local){let touched=false;const mark=()=>{touched=true};["touchstart","pointerdown","wheel","keydown"].forEach(ev=>addEventListener(ev,mark,{once:true,passive:true,capture:true}));
-    const n=await net;if(n&&n.ok&&catSig(n.j.products)!==catSig(local.products)){if(!touched){catApply(n.j,true);catRefreshUI()}else window.CATPEND=n.j}}
+    const n=await net;if(n&&n.closed){catApply({products:[]},false);catRefreshUI();try{authGate(true)}catch(e){}}
+    else if(n&&n.ok&&catSig(n.j.products)!==catSig(local.products)){if(!touched){catApply(n.j,true);catRefreshUI()}else window.CATPEND=n.j}}
   // заранее разобрать фото для «Это или это» (в фоне, когда приложение уже открыто)
   setTimeout(()=>{try{const d=AUTO.find(r=>r.k==="duel");d&&d.warm&&d.warm()}catch(e){}},2500);
 })();

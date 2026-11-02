@@ -666,6 +666,7 @@ body:has(.sv) .tglogo,body:has(.splash) .tglogo{opacity:0}
 .fcimgs button{width:46px;height:46px;border-radius:10px;border:2px solid transparent;padding:0;overflow:hidden;background:var(--soft)}
 .fcimgs button[aria-pressed="true"]{border-color:var(--fg)}
 .fcimgs img{width:100%;height:100%;object-fit:cover}
+.acb{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;color:#fff;background:var(--c);vertical-align:2px}
 </style>
 </head>
 <body>
@@ -3076,16 +3077,18 @@ function orderSheet(l, reload) {
 
 /* Клиенты: зашли через Telegram в мини-апп. Статистика, заказы через менеджера, лояльность (правила — позже) */
 async function vCustomers(q) {
-  const { customers, totals: T = {} } = await api("customers");
+  const { customers, totals: T = {}, closed } = await api("customers");
+  const ACC = { pending: ["ждёт доступа", "#c8902e"], blocked: ["доступ закрыт", "#b23a48"] };
+  let only = closed && customers.some(c => c.access === "pending") ? "pending" : "";
   const NPT = { branch: "отделение", locker: "почтомат", courier: "курьер" };
   const dlv = p => p ? [p.city, p.npType === "courier" ? p.address : p.npPoint ? NPT[p.npType] + " №" + p.npPoint : ""].filter(Boolean).join(", ") : "";
   let sort = "seen";
   const SORTS = [["seen", "Недавние"], ["spent", "По сумме"], ["orders", "По заказам"], ["earned", "По заработку"]];
   const draw = () => {
     const f = ($("#cFind")?.value || q || "").toLowerCase();
-    const l = customers.filter(c => !f || [c.tg?.name, c.tg?.username, c.profile?.name, c.profile?.phone].join(" ").toLowerCase().includes(f))
+    const l = customers.filter(c => !only || c.access === only).filter(c => !f || [c.tg?.name, c.tg?.username, c.profile?.name, c.profile?.phone].join(" ").toLowerCase().includes(f))
       .sort((a, b) => sort === "seen" ? 0 : (b[sort] || 0) - (a[sort] || 0));
-    $("#cList").innerHTML = l.length ? l.map(c => `<div class="orow" data-cu="${esc(c.id)}"><div class="tx"><b>${esc(c.profile?.name || c.tg?.name || "Клиент")}${c.tg?.username ? ` <span class="hint">@${esc(c.tg.username)}</span>` : ""}</b>
+    $("#cList").innerHTML = l.length ? l.map(c => `<div class="orow" data-cu="${esc(c.id)}"><div class="tx"><b>${esc(c.profile?.name || c.tg?.name || "Клиент")}${c.tg?.username ? ` <span class="hint">@${esc(c.tg.username)}</span>` : ""}${closed && ACC[c.access] ? ` <span class="acb" style="--c:${ACC[c.access][1]}">${ACC[c.access][0]}</span>` : ""}</b>
       <span>${[c.orders ? c.orders + " " + plural(c.orders, ["заказ", "заказа", "заказов"]) + (c.viaManager ? ` (${c.viaManager} через менеджера)` : "") : "без заказов", c.spent ? "оплачено " + eur(c.spent) : "", c.earned ? "заработок " + eur(c.earned) : "", c.profile?.city].filter(Boolean).map(esc).join(" · ")}</span></div><span class="hint">${dt(c.lastSeen)}</span></div>`).join("") : `<div class="hint" style="padding:20px 0">Клиентов пока нет — они появятся, когда войдут в мини-апп через Telegram.</div>`;
   };
   $("#main").innerHTML = `<div class="vh"><h1>Клиенты</h1><span class="hint">${customers.length}</span></div>
@@ -3096,19 +3099,30 @@ async function vCustomers(q) {
       <div class="tile"><span>Заказы</span><b class="num">${T.orders || 0}</b><span>через менеджера ${T.viaManager || 0}</span></div>
       <div class="tile"><span>Заходили за 30 дней</span><b class="num">${T.active30 || 0}</b><span>активные клиенты</span></div>
     </div>
+    <div class="card pad" style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px">
+      <label class="toggle"><input type="checkbox" id="cClosed" ${closed ? "checked" : ""}><b>Закрытый сайт</b></label>
+      <div class="hint">${closed ? "Каталог видят только клиенты с открытым доступом. Новые после входа через Telegram попадают в «Ждут доступа» — откройте доступ здесь или кнопкой в боте (в чате менеджера). Клиенту придёт сообщение." : "Сейчас каталог видят все. Включите — и новые клиенты после входа будут ждать, пока вы откроете доступ. Все, кто уже есть в базе, получат доступ автоматически."}</div>
+    </div>
     <a class="row2" href="#loyalty" style="margin-bottom:14px"><span class="ic">${svg("users")}</span><span class="tx"><b>Программа лояльности</b><span>Уровни, бонусы, привилегии — настроим, когда определитесь с правилами</span></span><span class="hint">Скоро</span></a>
     <input type="text" id="cFind" placeholder="Имя, @username или телефон" value="${esc(q || "")}" style="margin:0 0 10px">
+    ${closed ? `<div class="fchips" id="cAcc" style="margin-bottom:8px">${[["", "Все"], ["pending", "Ждут доступа · " + customers.filter(c => c.access === "pending").length], ["ok", "С доступом"], ["blocked", "Закрыт"]].map(([k, v]) => `<button class="fchip ${k === only ? "on" : ""}" data-ca="${k}">${v}</button>`).join("")}</div>` : ""}
     <div class="fchips" id="cSort" style="margin-bottom:12px">${SORTS.map(([k, v]) => `<button class="fchip ${k === sort ? "on" : ""}" data-cs="${k}">${v}</button>`).join("")}</div>
     <div id="cList"></div>`;
   draw(); $("#cFind").oninput = draw;
+  $("#cClosed").onchange = async e => { const on = e.target.checked;
+    if (on && !(await confirmBox("Закрыть сайт?", "Каталог будут видеть только клиенты с открытым доступом. Все, кто уже есть в базе, получат доступ сразу.", "Закрыть сайт"))) { e.target.checked = false; return; }
+    try { const r = await api("accessMode", { method: "POST", body: { closed: on } }); toast(on ? "Сайт закрыт" + (r.approved ? ` · доступ открыт ${r.approved} клиентам` : "") : "Сайт открыт для всех"); vCustomers($("#cFind")?.value); } catch (err) { toast(err.message); e.target.checked = !on; } };
+  if ($("#cAcc")) $("#cAcc").onclick = e => { const b = e.target.closest("[data-ca]"); if (!b) return; only = b.dataset.ca; $$("#cAcc [data-ca]").forEach(x => x.classList.toggle("on", x === b)); draw(); };
   $("#cSort").onclick = e => { const b = e.target.closest("[data-cs]"); if (!b) return; sort = b.dataset.cs; $$("#cSort [data-cs]").forEach(x => x.classList.toggle("on", x === b)); draw(); };
-  $("#cList").onclick = e => { const r = e.target.closest("[data-cu]"); if (r) customerSheet(customers.find(x => x.id === r.dataset.cu), dlv, () => vCustomers($("#cFind")?.value)); };
+  $("#cList").onclick = e => { const r = e.target.closest("[data-cu]"); if (r) customerSheet(customers.find(x => x.id === r.dataset.cu), dlv, () => vCustomers($("#cFind")?.value), closed); };
 }
-function customerSheet(c, dlv, reload) {
+function customerSheet(c, dlv, reload, closed) {
   const p = c.profile || {};
   const d = sheet(p.name || c.tg?.name || "Клиент", `<div class="form">
     <div class="client"><span class="av">${esc(((c.tg?.name || "?")[0] || "?").toUpperCase())}</span><div class="tx"><b>${esc(c.tg?.name || "")}</b><span>${c.tg?.username ? "@" + esc(c.tg.username) + " · " : ""}с ${dt(c.createdAt)}${c.lastOrder ? " · последний заказ " + dt(c.lastOrder) : ""}</span></div>
       ${c.tg?.username ? `<a href="https://t.me/${esc(c.tg.username)}" target="_blank" rel="noopener" aria-label="Написать в Telegram"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4z"/></svg></a>` : ""}</div>
+    ${closed ? `<div class="oitem" style="align-items:center"><div class="tx"><b>Доступ к сайту: ${{ ok: "открыт", pending: "ждёт", blocked: "закрыт" }[c.access] || "—"}</b><span>${c.accessAt ? dt(c.accessAt) + (c.accessBy ? " · " + esc(c.accessBy) : "") : "заявка после входа через Telegram"}</span></div>
+      ${c.access === "ok" ? `<button type="button" class="btn ghost" data-acc="blocked">Закрыть</button>` : `<button type="button" class="btn" data-acc="ok">Открыть доступ</button>`}</div>` : ""}
     <div class="kvs"><div><span>Заказы</span><b class="num">${c.orders}${c.viaManager ? ` · ${c.viaManager} через менеджера` : ""}</b></div><div><span>Оплачено</span><b class="num">${eur(c.spent)}</b></div><div><span>Заработок</span><b class="num">${eur(c.earned)}</b></div><div><span>Средний чек</span><b class="num">${c.avg ? eur(c.avg) : "—"}</b></div><div><span>Лояльность</span><b>${c.loyalty?.level ? esc(c.loyalty.level) : "<span class='hint'>правила настроим позже</span>"}</b></div></div>
     <div class="oitem"><div class="tx"><b>Доставка</b><span>${esc([p.name, p.phone].filter(Boolean).join(", ")) || "не заполнено"}<br>${esc(dlv(p))}${p.comment ? "<br>" + esc(p.comment) : ""}</span></div></div>
     <label class="f">Заметка о клиенте (видите только вы)<textarea id="cuNote" style="min-height:60px" placeholder="размеры, любимые бренды, пожелания">${esc(c.note || "")}</textarea></label>
@@ -3118,6 +3132,8 @@ function customerSheet(c, dlv, reload) {
     `<button class="btn ghost lg" data-cusave>Сохранить заметку</button>`);
   d.querySelector(".sh-f").onclick = async () => { try { await api("customerNote", { method: "POST", body: { customer: c.id, note: d.querySelector("#cuNote").value } }); c.note = d.querySelector("#cuNote").value; toast("Сохранено"); } catch (err) { toast(err.message); } };
   d.querySelector("[data-addord]").onclick = () => manualOrderSheet(c, () => { d.close(); reload(); });
+  d.querySelectorAll("[data-acc]").forEach(b => b.onclick = async () => { b.disabled = true;
+    try { await api("accessSet", { method: "POST", body: { customer: c.id, access: b.dataset.acc } }); toast(b.dataset.acc === "ok" ? "Доступ открыт — клиенту придёт сообщение" : "Доступ закрыт"); d.close(); reload(); } catch (err) { toast(err.message); b.disabled = false; } });
 }
 function manualOrderSheet(c, done) {
   const today = new Date().toISOString().slice(0, 10);

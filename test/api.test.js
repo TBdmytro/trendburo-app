@@ -333,3 +333,46 @@ test("названия на немецком (перевод упёрся в л�
   try { const r = await call(handler, { method: "POST", query: { a: "trPending" }, headers: H }); assert.equal(r.body.limited, true); }
   finally { globalThis.fetch = real; if (key === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = key; }
 });
+
+test("закрытый сайт: заявка после входа, доступ из админки и из бота, каталог только с доступом", async () => {
+  const { signSess } = await import("../lib/tgauth.js");
+  const me = (await import("../api/me.js")).default, bot = (await import("../api/bot.js")).default, { hookSecret } = await import("../api/bot.js");
+  const { resetAccessMemo } = await import("../lib/access.js");
+  const T = "9:tok"; process.env.TELEGRAM_BOT_TOKEN = T; process.env.TELEGRAM_MANAGER_CHAT = "-100";
+  const sent = [], f0 = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { sent.push({ m: String(u).split("/").pop(), b: JSON.parse(o.body) }); return { ok: true, status: 200, json: async () => ({ ok: true, result: { username: "tb_bot" } }) }; };
+  const ck = await adminCookie(), H = { cookie: ck, "x-tb": "1" };
+  const auth = id => ({ "x-tb-auth": encodeURIComponent(JSON.stringify({ sess: signSess({ id, name: "N" + id }, T) })) });
+  const cat = async h => { _resetCatalogMemo(); resetAccessMemo(); return call(catalog, { query: { v: "2" }, headers: h || {} }); };
+  try {
+    await store.put({ _id: "customer.11", _type: "customer", tg: { id: 11, name: "Старый" } });
+    assert.equal((await cat()).status, 200, "пока открыт — всем");
+    const r = await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: true }, headers: H });
+    assert.ok(r.body.approved >= 1);
+    assert.equal((await cat()).status, 403);
+    assert.equal((await cat(auth(11))).status, 200, "старый клиент получил доступ");
+    // новый: входит → ждёт, менеджеру уходит заявка с кнопками
+    resetAccessMemo();
+    const m = await call(me, { method: "POST", body: { sess: signSess({ id: 22, name: "Новый" }, T), a: "register", name: "Новый" } });
+    assert.equal(m.body.access, "pending"); assert.deepEqual(m.body.orders, []);
+    const ask = sent.find(x => x.m === "sendMessage" && x.b.chat_id === "-100");
+    assert.equal(ask.b.reply_markup.inline_keyboard[0][0].callback_data, "ac:ok:22");
+    assert.equal((await cat(auth(22))).status, 403);
+    const n0 = sent.length; await call(me, { method: "POST", body: { sess: signSess({ id: 22, name: "Новый" }, T) } });
+    assert.equal(sent.filter(x => x.b.chat_id === "-100").length, 1, "заявка менеджеру — один раз"); void n0;
+    // кнопка из чужого чата не работает
+    const run = body => new Promise(res => { const r = { statusCode: 0, setHeader() {}, end() { res(r); } }; bot({ method: "POST", headers: { "x-telegram-bot-api-secret-token": hookSecret(T), host: "x.test" }, body }, r); });
+    await run({ callback_query: { id: "q1", data: "ac:ok:22", from: { id: 22 }, message: { chat: { id: 22 }, message_id: 1, text: "x" } } });
+    assert.equal((await cat(auth(22))).status, 403);
+    await run({ callback_query: { id: "q2", data: "ac:ok:22", from: { id: 5, username: "mgr" }, message: { chat: { id: -100 }, message_id: 1, text: "Заявка" } } });
+    assert.equal((await cat(auth(22))).status, 200);
+    assert.ok(sent.some(x => x.m === "sendMessage" && x.b.chat_id === 22), "клиенту сообщили");
+    // закрыть из админки
+    await call(handler, { method: "POST", query: { a: "accessSet" }, body: { customer: "customer.22", access: "blocked" }, headers: H });
+    assert.equal((await cat(auth(22))).status, 403);
+    const list = await call(handler, { query: { a: "customers" }, headers: { cookie: ck } });
+    assert.equal(list.body.closed, true); assert.equal(list.body.customers.find(c => c.id === "customer.22").access, "blocked");
+    await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H });
+    assert.equal((await cat()).status, 200);
+  } finally { globalThis.fetch = f0; delete process.env.TELEGRAM_BOT_TOKEN; delete process.env.TELEGRAM_MANAGER_CHAT; resetAccessMemo(); }
+});

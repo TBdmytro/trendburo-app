@@ -19,6 +19,7 @@ import { toStorefront, genderOf } from "../lib/catalog.js";
 import { saveManualProduct, updateWebProduct, markWebGone } from "../lib/manual.js";
 import { LEAD_STATUS, notifyClient } from "./lead.js";
 import { makeManualOrder, clientStats, customerId } from "../lib/customers.js";
+import { accessSettings, accessOf, setClosed, setAccess } from "../lib/access.js";
 import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier, listCollections, saveCollections } from "../lib/suppliers.js";
 import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
 import { readScreen, screensEnabled, ScreenError } from "../lib/screens.js";
@@ -689,17 +690,28 @@ export default async function handler(req, res) {
       case "customers": {
         // клиенты из Telegram: профиль, заказы с сайта и через менеджера, оплачено, заработок, лояльность
         const [cs, ls] = await Promise.all([store.list("customer", {}, { order: "lastSeen desc", limit: 1000 }), store.list("lead", {}, { limit: 5000, fields: "_id, tgId, number, kind, source, status, total, cost, dest, createdAt, items[]{brand, title, price, size}" })]);
-        const mk = mergeConfig(pricingCfg).official.markup;
+        const mk = mergeConfig(pricingCfg).official.markup, acc = await accessSettings(store, { fresh: true });
         const by = {}; ls.forEach(l => { if (l.tgId) (by[l.tgId] = by[l.tgId] || []).push(l); });
         const list = cs.map(c => { const o = (by[c.tg?.id] || []).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-          return { id: c._id, tg: c.tg, profile: c.profile, createdAt: c.createdAt, lastSeen: c.lastSeen, note: c.note || "", loyalty: c.loyalty || null, ...clientStats(o, mk), leads: o.slice(0, 30) }; });
+          return { id: c._id, tg: c.tg, profile: c.profile, createdAt: c.createdAt, lastSeen: c.lastSeen, note: c.note || "", loyalty: c.loyalty || null, access: accessOf(c, acc), accessAt: c.accessAt || null, accessBy: c.accessBy || "", ...clientStats(o, mk), leads: o.slice(0, 30) }; });
         const sum = k => list.reduce((a, c) => a + (c[k] || 0), 0);
-        return send(res, 200, { customers: list, totals: { clients: list.length, buyers: list.filter(c => c.spent > 0).length, repeat: list.filter(c => c.orders > 1).length, orders: sum("orders"), viaManager: sum("viaManager"), spent: sum("spent"), earned: sum("earned"), active30: list.filter(c => c.lastSeen && Date.now() - Date.parse(c.lastSeen) < 30 * 864e5).length } });
+        return send(res, 200, { closed: acc.closed, customers: list, totals: { clients: list.length, buyers: list.filter(c => c.spent > 0).length, repeat: list.filter(c => c.orders > 1).length, orders: sum("orders"), viaManager: sum("viaManager"), spent: sum("spent"), earned: sum("earned"), active30: list.filter(c => c.lastSeen && Date.now() - Date.parse(c.lastSeen) < 30 * 864e5).length } });
       }
       case "manualOrder": {
         const c = await store.get(String(body.customer || ""));
         if (!c || c._type !== "customer") return send(res, 404, { error: "Клиент не найден" });
         return send(res, 200, { lead: await makeManualOrder(store, c, body, me.name) });
+      }
+      case "accessMode": {
+        // закрытый сайт: включить/выключить; при включении все текущие клиенты получают доступ
+        return send(res, 200, await setClosed(store, !!body.closed));
+      }
+      case "accessSet": {
+        const id = String(body.customer || "").replace(/^customer\./, "");
+        if (!/^\d{1,15}$/.test(id)) return send(res, 400, { error: "Нет клиента" });
+        const c = await setAccess(store, id, body.access, { by: me.name });
+        if (!c) return send(res, 404, { error: "Клиент не найден" });
+        return send(res, 200, { access: c.access });
       }
       case "customerNote": {
         const c = await store.get(String(body.customer || ""));

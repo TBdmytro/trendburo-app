@@ -8,6 +8,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { getStore } from "../lib/store.js";
 import { confirmLoginCode } from "../lib/tgauth.js";
+import { setAccess } from "../lib/access.js";
 
 export const botToken = () => process.env.TELEGRAM_BOT_TOKEN || "";
 export const hookSecret = (t = botToken()) => createHash("sha256").update("tbhook|" + t).digest("hex").slice(0, 40);
@@ -80,7 +81,16 @@ export default async function handler(req, res) {
   } else if (m?.chat?.id && typeof m.text === "string" && m.text.startsWith("/")) {
     try { await send(m.chat.id, replyFor(m.text, publicUrl(req), m.chat.id)); } catch {}
   } else if (cq?.id) {
-    if (!/^lg:/.test(cq.data || "")) { try { await tg("answerCallbackQuery", { callback_query_id: cq.id }); } catch {} }
+    if (!/^(lg|ac):/.test(cq.data || "")) { try { await tg("answerCallbackQuery", { callback_query_id: cq.id }); } catch {} }
+    const ac = String(cq.data || "").match(/^ac:(ok|no):(\d{1,15})$/);
+    if (ac) {
+      // открыть доступ можно только из чата менеджера
+      const own = process.env.TELEGRAM_MANAGER_CHAT && String(cq.message?.chat?.id) === String(process.env.TELEGRAM_MANAGER_CHAT);
+      let c = null; if (own) { try { c = await setAccess(getStore(), ac[2], ac[1] === "ok" ? "ok" : "blocked", { by: cq.from?.username ? "@" + cq.from.username : cq.from?.first_name || "бот" }); } catch {} }
+      try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: !own ? "Только из чата менеджера" : c ? (ac[1] === "ok" ? "Доступ открыт" : "Заявка отклонена") : "Клиент не найден" }); } catch {}
+      if (own && c && cq.message?.chat?.id) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: (cq.message.text || "Заявка") + "\n\n" + (ac[1] === "ok" ? "✓ Доступ открыт" : "✕ Отклонено") }); } catch {} }
+      return done();
+    }
     if (/^lg:[a-f0-9]{24}$/.test(cq.data || "")) {
       let ok = null; try { ok = await confirmLoginCode(getStore(), cq.data.slice(3), cq.from); } catch {}
       try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: ok ? "Готово — вы вошли на сайте" : "Ссылка устарела. Нажмите «Войти» на сайте ещё раз." }); } catch {}

@@ -3,6 +3,9 @@ import { getStore } from "../lib/store.js";
 import { toStorefront } from "../lib/catalog.js";
 import { publicContent } from "../lib/cms.js";
 import { popKey } from "./pop.js";
+import { userFrom } from "../lib/tgauth.js";
+import { customerId } from "../lib/customers.js";
+import { accessSettings, accessOf } from "../lib/access.js";
 
 /* Каталог собирается не чаще раза в 20 с на экземпляр сервера; одновременные запросы ждут одну сборку (база не получает толпу одинаковых запросов) */
 const MEMO = [null, null];
@@ -42,17 +45,29 @@ export default async function handler(req, res) {
       res.statusCode = 200; return res.end(JSON.stringify({ tiles: w.tiles || [] }));
     } catch (e) { res.statusCode = 503; return res.end(JSON.stringify({ error: "Недоступно" })); }
   }
+  // закрытый сайт: каталог только клиентам с открытым доступом (подпись Telegram в заголовке x-tb-auth)
+  let closed = false;
+  try {
+    const store = getStore(), acc = await accessSettings(store);
+    if (acc.closed) {
+      closed = true;
+      let b = null; try { b = JSON.parse(decodeURIComponent(String(req.headers["x-tb-auth"] || ""))); } catch {}
+      const u = b ? userFrom(b) : null, c = u ? await store.get(customerId(u.id)) : null;
+      if (accessOf(c, acc) !== "ok") { res.statusCode = 403; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Доступ по приглашению", code: "closed", access: c ? accessOf(c, acc) : "none" })); }
+    }
+  } catch (e) { console.error("catalog access:", e.message); res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Недоступно" })); }
   const compact = /[?&]v=2\b/.test(String(req.url || ""));
   try {
     const body = await catalogBody(compact);
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     // кэш на CDN: свежий 30 с; дальше (до суток) отдаётся сразу из кэша, а обновление идёт в фоне — первый покупатель после простоя не ждёт сборку каталога
-    res.setHeader("Cache-Control", "public, s-maxage=30, stale-while-revalidate=86400");
+    res.setHeader("Cache-Control", closed ? "private, no-store" : "public, s-maxage=30, stale-while-revalidate=86400");
+    if (closed) res.setHeader("Vary", "x-tb-auth");
     res.statusCode = 200;
     res.end(body);
   } catch (e) {
     const last = MEMO[compact ? 1 : 0];
-    if (last && last.body) { res.statusCode = 200; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "public, s-maxage=10"); return res.end(last.body); }
+    if (last && last.body) { res.statusCode = 200; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", closed ? "private, no-store" : "public, s-maxage=10"); return res.end(last.body); }
     res.statusCode = 503; res.setHeader("Content-Type", "application/json; charset=utf-8");
     // Код причины без секретов — чтобы по ответу было видно, что чинить
     const m = String(e && e.message || "");
