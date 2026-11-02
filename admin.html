@@ -826,7 +826,7 @@ async function start() {
   // обложка товара по ссылке сайта бренда не открылась — сразу убираем это фото, обложкой становится следующее
   if (!start.badImg) { start.badImg = true; document.addEventListener("error", async e => { const im = e.target; if (!(im instanceof HTMLImageElement) || im.dataset.tbBad) return;
     const box = im.closest("[data-open]"), id = box && box.dataset.open, u = im.getAttribute("src") || ""; if (!id || !/^product\.manual\./.test(id) || /cdn\.sanity\.io/.test(u) || !/^https:\/\//.test(u)) return;
-    im.dataset.tbBad = "1"; try { const r = await api("imgDrop", { method: "POST", silent: true, body: { id, urls: [u] } }); if (r.cover) im.src = thumb(r.cover); } catch {} }, true); }
+    im.dataset.tbBad = "1"; try { const alt = await imgFix(u); const r = await api("imgDrop", { method: "POST", silent: true, body: alt ? { id, urls: [], swap: { [u]: alt } } : { id, urls: [u] } }); if (r.cover) im.src = thumb(r.cover); } catch {} }, true); }
   if (!BRIDGE) try { if (Date.now() - (+localStorage.getItem("tbBrokenAt") || 0) > 15 * 60e3) { localStorage.setItem("tbBrokenAt", String(Date.now())); setTimeout(brokenScan, 4000); } } catch {}
   if (location.hash === "#screens:mt" || location.hash === "#import") { mtPing(); if (location.search && !BRIDGE) history.replaceState(null, "", location.pathname + location.hash); }
   window.hideSplash && hideSplash();
@@ -2391,7 +2391,9 @@ async function mtUpd(it, origin) {
 }
 // фото по ссылке сайта бренда: открывается ли оно вообще (у Dior бывают ссылки на несуществующие версии кадра — на витрине пустая картинка)
 const imgOk = u => /^https:\/\/cdn\.sanity\.io\//.test(u) ? Promise.resolve(true) : new Promise(ok => { const im = new Image(); const t = setTimeout(() => ok(true), 12000); im.onload = () => { clearTimeout(t); ok(im.naturalWidth > 10); }; im.onerror = () => { clearTimeout(t); ok(false); }; im.src = u; });
-const liveImgs = async urls => { const ok = await Promise.all(urls.map(imgOk)); const keep = urls.filter((u, i) => ok[i]); return keep.length ? keep : urls; };
+// не открылось, а в адресе версия кадра («…_E02-8») — у Dior часто есть тот же кадр без версии: берём его
+const imgFix = async u => { if (await imgOk(u)) return u; const alt = u.replace(/-\d+(\?|$)/, "$1"); return alt !== u && await imgOk(alt) ? alt : null; };
+const liveImgs = async urls => { const fx = await Promise.all(urls.map(imgFix)); const keep = [...new Set(fx.filter(Boolean))]; return keep.length ? keep : urls; };
 async function mtOne(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
   const urls = await liveImgs((it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || "")));
@@ -2757,8 +2759,9 @@ async function brokenScan() {
   try { let seen = {}; try { seen = JSON.parse(localStorage.getItem("tbImgChk") || "{}"); } catch {}
     const { list = [] } = await api("hotlinked", { silent: true }); const todo = list.filter(p => seen[p.id] !== p.sig);
     for (let i = 0; i < todo.length; i += 6) await Promise.all(todo.slice(i, i + 6).map(async p => {
-      const ok = await Promise.all(p.urls.map(imgOk)), bad = p.urls.filter((u, k) => !ok[k]);
-      if (bad.length && bad.length < p.urls.length + (p.sanity ? 1 : 0)) await api("imgDrop", { method: "POST", silent: true, body: { id: p.id, urls: bad } }).catch(() => {});
+      const fx = await Promise.all(p.urls.map(imgFix)), swap = {}, bad = [];
+      p.urls.forEach((u, k) => { if (!fx[k]) bad.push(u); else if (fx[k] !== u) swap[u] = fx[k]; });
+      if (Object.keys(swap).length || (bad.length && bad.length < p.urls.length + (p.sanity ? 1 : 0))) await api("imgDrop", { method: "POST", silent: true, body: { id: p.id, urls: bad, swap } }).catch(() => {});
       seen[p.id] = p.sig; }));
     try { localStorage.setItem("tbImgChk", JSON.stringify(seen)); } catch {}
   } catch {}

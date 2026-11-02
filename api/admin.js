@@ -359,7 +359,7 @@ export default async function handler(req, res) {
         return send(res, 200, { total: list.length, incoming, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId), genders: facet(base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat)), gen) },
           shown: list.filter(p => p.status === "published").length,
-          products: page.map(p => ({ _id: p._id, g: genderOf(p), stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null, newTill: p.overrides?.isNew === "on" && (!p.overrides?.newUntil || p.overrides.newUntil >= new Date().toISOString().slice(0, 10)) ? (p.overrides?.newUntil || "—") : null })) });
+          products: page.map(p => ({ _id: p._id, g: genderOf(p), stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: p.overrides?.cover || (p.overrides?.imageOrder || [])[0] || (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null, newTill: p.overrides?.isNew === "on" && (!p.overrides?.newUntil || p.overrides.newUntil >= new Date().toISOString().slice(0, 10)) ? (p.overrides?.newUntil || "—") : null })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });
@@ -411,7 +411,7 @@ export default async function handler(req, res) {
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
         // фото заново с сайта бренда — один раз (imgVer 2): прежняя «склейка похожих фото» могла заменить перед сумки на вид сзади. Ваши обложка/порядок фото из админки — не трогаем
         if (Array.isArray(it.images) && it.images.length) { try { const p0 = await store.get(id);
-          if (p0 && (p0.imgVer !== IMGV(id) || (p0.images || []).length < Math.min(3, it.images.length) || !/^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "")) && !p0.overrides?.cover && !(p0.overrides?.imageOrder || []).length) { const { images, copied, srcOf } = await copyWebImages(store, it.images, id); const dior = /^product\.manual\.dior-/.test(id);
+          if (p0 && (p0.imgVer !== IMGV(id) || (p0.images || []).length < Math.min(3, it.images.length) || !/^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "") || it.images.length > (p0.images || []).length) && (!p0.overrides?.cover || it.images.includes(p0.overrides.cover)) && !(p0.overrides?.imageOrder || []).length) { // ваша обложка остаётся, если это фото есть на странице const { images, copied, srcOf } = await copyWebImages(store, it.images, id); const dior = /^product\.manual\.dior-/.test(id);
             const hadCopies = /^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "");
             // скопировать к себе не вышло (сайт не отдаёт фото серверу), а на странице фото больше, чем у нас, — показываем все по ссылке сайта
             if (images.length && (copied || !hadCopies || images.length > (p0.images || []).length)) { await store.patchMany([id], { images: images.map(u => ({ url: u, sourceUrl: srcOf[u] || u, rights: "copied" })), imgVer: IMGV(id), ...(it.tileImg && !dior ? { coverFrom: "tile", coverTile: String(it.tileImg).slice(0, 600) } : {}) }); PCACHE = null; } else if (images.length) await store.patchMany([id], { imgVer: IMGV(id) }); } } catch (e) { console.log("IMGREF fail " + String(e.message).slice(0, 100)); } }
@@ -498,13 +498,16 @@ export default async function handler(req, res) {
       }
       case "imgDrop": {
         // убрать из товара фото, которые не открываются (проверила админка); последнее фото не убираем
+        // swap: { старый адрес: рабочий } — тот же кадр без версии в адресе (Dior «…_E02-8» → «…_E02»)
         const id = String(body.id || ""), bad = new Set((Array.isArray(body.urls) ? body.urls : []).map(String));
-        if (!/^product\.manual\.[a-z0-9]+-[a-z0-9]+$/.test(id) || !bad.size) return send(res, 400, { error: "Нет товара" });
+        const swap = Object.fromEntries(Object.entries(body.swap && typeof body.swap === "object" ? body.swap : {}).filter(([a, b]) => /^https:\/\//.test(a) && /^https:\/\//.test(String(b)) && new URL(a).hostname === new URL(String(b)).hostname).slice(0, 20));
+        if (!/^product\.manual\.[a-z0-9]+-[a-z0-9]+$/.test(id) || (!bad.size && !Object.keys(swap).length)) return send(res, 400, { error: "Нет товара" });
         const p = await store.get(id); if (!p) return send(res, 404, { error: "Товар не найден" });
-        const keep = (p.images || []).filter(i => !bad.has(i.url)); if (!keep.length || keep.length === (p.images || []).length) return send(res, 200, { dropped: 0 });
+        const sw = u => swap[u] || u, keep = (p.images || []).filter(i => !bad.has(i.url)).map(i => swap[i.url] ? { ...i, url: swap[i.url], sourceUrl: swap[i.url] } : i);
+        if (!keep.length || (keep.length === (p.images || []).length && !Object.keys(swap).length)) return send(res, 200, { dropped: 0 });
         const o = p.overrides || {}, set = { images: keep };
-        if (o.cover && bad.has(o.cover)) set.overrides = { ...o, cover: null };
-        if ((o.imageOrder || []).some(u => bad.has(u))) set.overrides = { ...(set.overrides || o), imageOrder: o.imageOrder.filter(u => !bad.has(u)) };
+        if (o.cover && (bad.has(o.cover) || swap[o.cover])) set.overrides = { ...o, cover: bad.has(o.cover) ? null : sw(o.cover) };
+        if ((o.imageOrder || []).some(u => bad.has(u) || swap[u])) set.overrides = { ...(set.overrides || o), imageOrder: o.imageOrder.filter(u => !bad.has(u)).map(sw) };
         await store.patchMany([id], set); PCACHE = null;
         return send(res, 200, { dropped: (p.images || []).length - keep.length, cover: (set.overrides ? set.overrides.cover : o.cover) || keep[0]?.url || null });
       }

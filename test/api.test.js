@@ -280,3 +280,16 @@ test("фото по ссылке сайта бренда, которые не о
   r = await call(handler, { method: "POST", query: { a: "imgDrop" }, body: { id: "product.manual.dior-kco576", urls: [A + "K_SBG_E05?x"] }, headers: H });
   assert.equal(r.body.dropped, 0); // последнее фото не убираем
 });
+
+test("фото Dior с битой версией в адресе (…_E02-8) заменяется тем же кадром без версии; обложка из админки видна в списке", async () => {
+  const login = await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } });
+  const cookie = login.headers["set-cookie"].split(";")[0], H = { cookie, "x-tb": "1" };
+  const A = "https://assets.christiandior.com/is/image/diorprod/";
+  await store.put({ _id: "product.manual.dior-kco577", _type: "product", brand: "Dior", title: "Bow 2", category: "shoes", status: "incoming", images: [{ url: A + "K_SBG_E02-8?x" }, { url: A + "K_SBG_E05?x" }], overrides: { cover: A + "K_SBG_E02-8?x" }, offers: [] });
+  const r = await call(handler, { method: "POST", query: { a: "imgDrop" }, body: { id: "product.manual.dior-kco577", urls: [], swap: { [A + "K_SBG_E02-8?x"]: A + "K_SBG_E02?x", [A + "K_SBG_E05?x"]: "https://evil.test/x.jpg" } }, headers: H });
+  assert.equal(r.body.cover, A + "K_SBG_E02?x");
+  const p = await store.get("product.manual.dior-kco577"); assert.deepEqual(p.images.map(i => i.url), [A + "K_SBG_E02?x", A + "K_SBG_E05?x"]); // чужой сайт в замене не принимаем
+  await store.patchMany(["product.manual.dior-kco577"], { overrides: { cover: A + "K_SBG_E05?x" } });
+  const l = await call(handler, { query: { a: "products", status: "incoming", q: "bow 2" }, headers: { cookie } });
+  assert.equal(l.body.products.find(x => x._id === "product.manual.dior-kco577").cover, A + "K_SBG_E05?x");
+});
