@@ -823,6 +823,11 @@ async function start() {
   renderNav();
   $("#loginView").hidden = true; $("#appView").hidden = false;
   go(location.hash.slice(1) || "home");
+  // обложка товара по ссылке сайта бренда не открылась — сразу убираем это фото, обложкой становится следующее
+  if (!start.badImg) { start.badImg = true; document.addEventListener("error", async e => { const im = e.target; if (!(im instanceof HTMLImageElement) || im.dataset.tbBad) return;
+    const box = im.closest("[data-open]"), id = box && box.dataset.open, u = im.getAttribute("src") || ""; if (!id || !/^product\.manual\./.test(id) || /cdn\.sanity\.io/.test(u) || !/^https:\/\//.test(u)) return;
+    im.dataset.tbBad = "1"; try { const r = await api("imgDrop", { method: "POST", silent: true, body: { id, urls: [u] } }); if (r.cover) im.src = thumb(r.cover); } catch {} }, true); }
+  if (!BRIDGE) try { if (Date.now() - (+localStorage.getItem("tbBrokenAt") || 0) > 15 * 60e3) { localStorage.setItem("tbBrokenAt", String(Date.now())); setTimeout(brokenScan, 4000); } } catch {}
   if (location.hash === "#screens:mt" || location.hash === "#import") { mtPing(); if (location.search && !BRIDGE) history.replaceState(null, "", location.pathname + location.hash); }
   window.hideSplash && hideSplash();
   if (BRIDGE) return; // мост: только приём товаров, остальное не нужно
@@ -2764,7 +2769,6 @@ async function vBrandBoard() {
   try { if (Date.now() - (+localStorage.getItem("tbFixAt") || 0) > 30 * 60e3) { localStorage.setItem("tbFixAt", String(Date.now()));
     api("fixBrands", { method: "POST", silent: true }).catch(() => {});
     (async () => { for (let i = 0; i < 15; i++) { const r = await api("imgDedupe", { method: "POST", silent: true }).catch(() => ({ done: true })); if (r.done) break; } })(); // фото во всю рамку — в фоне
-    brokenScan(); // фото по ссылке сайта бренда, которые не открываются, — убрать (в фоне)
   } } catch {}
   let q = "", letter = "";
   const ini = n => n.replace(/&/g, " ").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();

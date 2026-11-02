@@ -506,7 +506,7 @@ export default async function handler(req, res) {
         if (o.cover && bad.has(o.cover)) set.overrides = { ...o, cover: null };
         if ((o.imageOrder || []).some(u => bad.has(u))) set.overrides = { ...(set.overrides || o), imageOrder: o.imageOrder.filter(u => !bad.has(u)) };
         await store.patchMany([id], set); PCACHE = null;
-        return send(res, 200, { dropped: (p.images || []).length - keep.length });
+        return send(res, 200, { dropped: (p.images || []).length - keep.length, cover: (set.overrides ? set.overrides.cover : o.cover) || keep[0]?.url || null });
       }
       case "arrivalsSet": {
         // новинки бренда (появились в уже пройденном разделе): сразу на сайт или сначала в «Новые с сайтов»
