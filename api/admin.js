@@ -640,7 +640,10 @@ export default async function handler(req, res) {
         let itEn = it;
         try { const { englishItem } = await import("../lib/translate.js"); itEn = await englishItem(it, await store.get(id)); } catch (e) { console.log("TR fail " + JSON.stringify({ id, why: String(e.message).slice(0, 120) })); }
         // категория не определилась на стороне админки — пробуем по немецким/французским словам (Gürtel, Accessoires, Schmuck…)
-        if (!it.category || it.category === "other") { const { detectCategory } = await import("../lib/normalize.js"); const c = detectCategory(it.title, String(it.section || "").replace(/[-_/]+/g, " "), (it.crumbs || []).join(" "), it.description); if (c && c !== "other") itEn = { ...itEn, category: c }; }
+        { const { detectCategory, headCategory } = await import("../lib/normalize.js");
+          if (!it.category || it.category === "other") { const c = detectCategory(it.title, String(it.section || "").replace(/[-_/]+/g, " "), (it.crumbs || []).join(" "), it.description); if (c && c !== "other") itEn = { ...itEn, category: c }; }
+          // главное слово названия важнее описания: «Ausgestellter Rock» с «Anhänger» в описании — юбка, а не украшение
+          const hc = headCategory(it.title) || headCategory(itEn.title); if (hc && itEn.category !== hc) itEn = { ...itEn, category: hc, subcategory: null }; }
         // новинка бренда: раздел уже был пройден целиком, а этого товара в нём не было — значит, вышел новым.
         // Такие товары сразу на витрине с отметкой «Новинка» (или в «Новых с сайтов», если так выбрано в админке). Первый прогон раздела — всё в «Новые с сайтов» на ваш отбор
         const novelty = await isNovelty(store, it.section);
