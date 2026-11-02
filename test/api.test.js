@@ -307,3 +307,14 @@ test("прогон: на странице бренда фото больше, ч
   const p = await store.get("product.manual.dior-kco578");
   assert.equal(p.images.length, 2); assert.equal(p.overrides.cover, A + "KCO578_SBG_E05?x");
 });
+
+test("удалили бренд целиком — ночная загрузка поставщика его не возвращает, обновление поставщика выключается", async () => {
+  const login = await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } });
+  const cookie = login.headers["set-cookie"].split(";")[0], H = { cookie, "x-tb": "1" };
+  await store.put({ _id: "source.s-therow-test", _type: "sourceSettings", sourceId: "s-therow-test", schedule: "daily" });
+  for (const n of [1, 2]) await store.put({ _id: "product.u.therow" + n, _type: "product", brand: "The Row", title: "Coat " + n, category: "clothing", status: "draft", offers: [{ sourceId: "s-therow-test" }] });
+  const r = await call(handler, { method: "POST", query: { a: "productDelete" }, body: { ids: ["product.u.therow1", "product.u.therow2"] }, headers: H });
+  assert.deepEqual(r.body.blockedBrands, ["The Row"]); assert.deepEqual(r.body.pausedSources, ["s-therow-test"]);
+  assert.equal((await store.get("source.s-therow-test")).schedule, "off");
+  assert.ok((await store.get("settings.blockedBrands")).list.includes("therow"));
+});

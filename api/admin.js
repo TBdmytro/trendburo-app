@@ -61,6 +61,19 @@ const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, 
 let FIXPRE = false, FIXOTHER = false, FIXDIOR = false;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
+/** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
+async function blockEmptied(store, removed) {
+  const brands = new Set(removed.map(p => String(p.brand || "").trim()).filter(Boolean)), srcs = new Set(removed.flatMap(p => (p.offers || []).map(o => o.sourceId)).filter(s => s && s !== "manual"));
+  if (!brands.size && !srcs.size) return {};
+  const left = await store.list("product", {}, { limit: 60000, fields: "_id, brand, offers[]{sourceId}" });
+  const { brandKey } = await import("../lib/normalize.js");
+  const keepB = new Set(left.map(p => brandKey(p.brand))), keepS = new Set(left.flatMap(p => (p.offers || []).map(o => o.sourceId)));
+  const goneB = [...brands].filter(b => !keepB.has(brandKey(b))), goneS = [...srcs].filter(s => !keepS.has(s));
+  if (goneB.length) { const d = (await store.get("settings.blockedBrands")) || { _id: "settings.blockedBrands", _type: "settings", list: [] };
+    const set = new Set(d.list || []); goneB.forEach(b => set.add(brandKey(b))); await store.put({ _id: d._id, _type: "settings", list: [...set], at: new Date().toISOString() }); }
+  for (const s of goneS) { const doc = await store.get("source." + s); if (doc && doc.schedule !== "off") await store.patchMany([doc._id], { schedule: "off", pausedBy: "deleted", pausedAt: new Date().toISOString() }); }
+  return { blockedBrands: goneB, pausedSources: goneS };
+}
 async function allProducts(store) {
   if (PCACHE && Date.now() - PCACHE.at < 30000) return PCACHE.data;
   const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
@@ -232,6 +245,11 @@ export default async function handler(req, res) {
       }
       // загрузка каталога на сервере: старт / стоп / состояние (админка опрашивает раз в несколько секунд)
       case "catalogStart": {
+        // вы сами запустили загрузку поставщика — его бренды снова можно брать, ночное обновление снова включено
+        try { const sd = await store.get("source." + String(body.sourceId || "")); const { brandKey } = await import("../lib/normalize.js"); const bb = await store.get("settings.blockedBrands");
+          const mine = [sd?.brand, sd?.custom?.brand, ...(sd?.brands || []), ...(sd?.custom?.brands || [])].filter(Boolean).map(brandKey);
+          if (bb?.list?.length && mine.length) await store.put({ _id: bb._id, _type: "settings", list: bb.list.filter(b => !mine.includes(b)), at: new Date().toISOString() });
+          if (sd?.pausedBy === "deleted") await store.patchMany([sd._id], { schedule: "daily", pausedBy: null }); } catch {}
         const L = await startLoad(store, String(body.sourceId || ""), { resume: !!body.resume, mode: body.mode === "sort" ? "sort" : "full" });
         await kickCatalog(publicUrl(req), String(body.sourceId), L.runId, 1);
         return send(res, 200, { load: L });
@@ -259,10 +277,13 @@ export default async function handler(req, res) {
         const ids = (body.ids || []).filter(i => typeof i === "string" && i.startsWith("product.")).slice(0, 2000);
         const linked = await store.list("importItem", { publishedAs: ids }, { limit: 20000, fields: "_id" });
         if (linked.length) await store.patchMany(linked.map(i => i._id), { publishedAs: null, publishedAt: null });
+        const was = (await store.getMany(ids)).filter(Boolean);
         await store.delMany(ids);
         // запоминаем удалённые — загрузка каталога поставщика (в том числе ночная) не вернёт их скрытыми
         await rememberDeleted(store, ids);
-        return send(res, 200, { ok: true, deleted: ids.length });
+        // удалили бренд или поставщика целиком — ночная загрузка его больше не приносит (новые товары тоже)
+        const off = await blockEmptied(store, was);
+        return send(res, 200, { ok: true, deleted: ids.length, ...off });
       }
 
       case "items": {
