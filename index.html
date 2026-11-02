@@ -1908,7 +1908,7 @@ const catMax=c=>{const l=P.filter(p=>p.cat===c);return l.length?Math.ceil(Math.m
 const F={subs:{},g:"all",q:"",cats:new Set(),brands:new Set(),budgets:{},cities:new Set(),onlyNew:false,onlyFav:false,sort:"pop",stock:""};
 const resetBudgets=()=>Object.keys(CATS).forEach(c=>F.budgets[c]=catMax(c)); resetBudgets();
 function baseSet(skip){const q=F.q.trim().toLowerCase();
-  return P.filter(p=>(F.g==="all"||p.g===F.g||(p.g==="u"&&F.g!=="k"))&&(skip==="cats"||!F.cats.size||F.cats.has(p.cat))&&(skip==="cats"||!(F.subs[p.cat]&&F.subs[p.cat].size)||F.subs[p.cat].has(subTypeOf(p)))&&(skip==="brands"||!F.brands.size||F.brands.has(p.bk))&&(!F.cities.size||F.cities.has(p.city))&&p.price<=F.budgets[p.cat]&&(!F.onlyNew||p.isNew)&&(!F.stock||(p.st&&(F.stock==="any"||p.st.loc===F.stock)))&&(!F.onlyFav||favs.has(p.id))&&(!F.ids||F.ids.has(p.id))&&(!q||(p.brand+" "+p.name+" "+CATS[p.cat]).toLowerCase().includes(q)))}
+  return P.filter(p=>(F.g==="all"||p.g===F.g||(p.g==="u"&&F.g!=="k"))&&(skip==="cats"||!F.cats.size||F.cats.has(p.cat))&&(skip==="cats"||!(F.subs[p.cat]&&F.subs[p.cat].size)||F.subs[p.cat].has(subTypeOf(p)))&&(skip==="brands"||!F.brands.size||F.brands.has(p.bk))&&(!F.cities.size||F.cities.has(p.city))&&p.price<=F.budgets[p.cat]&&(!F.onlyNew||p.isNew)&&(!F.stock||(p.st&&(F.stock==="any"||p.st.loc===F.stock)))&&(!F.onlyFav||favs.has(p.id))&&(!F.ids||F.ids.has(p.id))&&(!q||qMatcher(F.q).test(p)))}
 function activeList(){const a=[];
   F.cats.forEach(c=>a.push([CATS[c],()=>F.cats.delete(c)]));
   F.brands.forEach(b=>a.push([BRANDS.find(x=>x[0]===b)[1],()=>F.brands.delete(b)]));
@@ -2432,6 +2432,30 @@ function openNews(id){const n=NEWS.find(x=>x.id===id),p=P.find(x=>x.id===n.pid),
 const bname=bk=>BRANDS.find(b=>b[0]===bk)[1];
 const bItems=bk=>P.filter(p=>p.bk===bk);
 const norm=n=>String(n).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/ё/g,"е");
+// умный поиск на любом языке: товары у нас на английском, клиент пишет по-украински/по-русски/по-английски.
+// 1) украинский → русские основы (кросівки→кроссовки, сукня→платье, жіночі→женские), 2) русские основы → английские слова в названиях
+const uaN=s=>norm(s).replace(/[ії]/g,"и").replace(/є/g,"е").replace(/ґ/g,"г").replace(/['’ʼ`]/g,"");
+const UA_RU=[[/взутт\w*/g,"обувь"],[/сукн\w*/g,"платье"],[/спидниц\w*/g,"юбка"],[/сорочк\w*/g,"рубашка"],[/светр\w*/g,"свитер"],[/кросивк\w*|кросовк\w*/g,"кроссовки"],[/черевик\w*/g,"ботинки"],[/чоб[оі]т\w*|чобит\w*/g,"сапоги"],[/капелюх\w*/g,"шляпа"],[/окуляр\w*/g,"очки"],[/сережк\w*/g,"серьги"],[/намист\w*/g,"колье"],[/гаман\w*/g,"кошелек"],[/жиноч\w*/g,"женское"],[/чолович\w*/g,"мужское"],[/дитяч\w*/g,"детское"],[/чорн/g,"черн"],[/\bбил(?=[аеиоуя])/g,"бел"],[/червон/g,"красн"],[/блакит\w*/g,"голубой"],[/рожев/g,"розов"],[/\bсир(?=[аеиоуя])/g,"сер"],[/торб\w*/g,"сумка"],[/ремин\w*|пас[оі]к\w*/g,"ремень"],[/хустк\w*/g,"платок"],[/шкарпетк\w*/g,"носки"],[/годинник\w*/g,"часы"],[/парфум\w*/g,"духи"],[/каблучк\w*|персн\w*|перстен\w*/g,"кольцо"],[/ланцюж\w*/g,"цепочка"],[/для неи\b/g,"для нее"],[/для нього\b/g,"для него"],[/штани\b/g,"брюки"],[/плаття/g,"платье"],[/панамк\w*/g,"панама"]];
+const ruQ=raw=>{let q=uaN(raw);UA_RU.forEach(([re,to])=>{q=q.replace(re,to)});return q};
+// русская основа → что искать в английском названии товара
+const SX=[[/сумк|сумоч/,/\bbags?\b|tote|pouch|clutch|backpack|crossbody|messenger|saddle|shopper|hobo/],[/рюкзак/,/backpack|rucksack/],[/клатч/,/clutch|pouch/],[/кошел|портмоне|визитниц|картхолд/,/wallet|card ?holder|card ?case|pouch/],[/шопер|тоут/,/tote|shopper/],[/поясн/,/belt bag|waist|bum bag/],
+ [/кросс|кед/,/sneak|trainer|runner|cloud/],[/туфл|лодочк/,/pump|heel|slingback/],[/лофер/,/loafer/],[/ботин|сапог|ботфорт/,/boot/],[/сандал|босонож/,/sandal/],[/шлеп|тапк|тапоч|слайд|мюл/,/slide|mule|slipper|clog/],[/балетк/,/ballerina|ballet|flat/],[/обув/,/sneak|boot|loafer|sandal|pump|mule|slide|shoe|trainer|derby|moccasin|espadrille|ballerina/],
+ [/футболк/,/t-?shirt|\btees?\b/],[/майк/,/tank|\btees?\b/],[/рубаш/,/shirt|blouse/],[/блуз/,/blouse/],[/худи/,/hood/],[/свитш|кофт/,/sweat|crew|cardigan|zip/],[/свитер|джемпер|трикотаж/,/sweater|jumper|knit|pullover|cardigan/],[/кардиган/,/cardigan/],[/водолазк/,/turtleneck|roll ?neck/],[/куртк|ветровк|бомбер/,/jacket|bomber|blouson|windbreaker/],[/пуховик/,/puffer|down/],[/пальт/,/coat/],[/тренч|плащ/,/trench|raincoat/],[/пиджак|жакет/,/blazer|jacket/],[/жилет/,/vest|gilet/],
+ [/брюк|штан/,/pant|trouser|jogger/],[/джинс/,/jean|denim/],[/шорт/,/short/],[/юбк/,/skirt/],[/плать/,/dress/],[/костюм/,/suit|\bset\b/],[/леггин|легин|лосин/,/legging/],[/купальн/,/swim|bikini/],[/бель|бра\b/,/bra\b|brief|lingerie/],[/носк/,/sock/],
+ [/шапк/,/beanie|\bhat\b|knit cap/],[/кепк|бейсболк/,/\bcap\b/],[/панам/,/bucket/],[/шляп/,/\bhat\b|fedora|bucket/],[/ремен|ремн|пояс/,/belt/],[/шарф|платок|палантин/,/scarf|shawl|stole|bandana|twilly/],[/очк/,/sunglass|eyewear|glasses/],[/перчат/,/glove/],[/брелок/,/key ?ring|charm|keychain/],
+ [/серьг/,/earring/],[/кольц/,/\brings?\b/],[/браслет/,/bracelet/],[/колье|ожерел|цепоч/,/necklace|chain|pendant/],[/часы/,/watch/],[/духи|аромат/,/fragrance|parfum|perfume|eau/],
+ [/черн/,/black|noir/],[/бел/,/white|blanc/],[/беж/,/beige|sand|nude|camel/],[/коричн/,/brown|cognac|chocolate|camel/],[/сер[ыоа]/,/grey|gray/],[/зелен/,/green|olive|khaki/],[/розов/,/pink|rose/],[/син|голуб/,/blue|navy/],[/красн|бордо/,/red|burgundy/],[/молоч|крем/,/ivory|cream|ecru/],[/золот/,/gold/],[/серебр/,/silver/],
+ [/кож/,/leather|calfskin|lambskin/],[/замш/,/suede/],[/кашемир/,/cashmere/],[/шелк/,/silk/],[/лен\b|льнян/,/linen/],[/шерст/,/wool/],[/хлопок|хлопк/,/cotton/],[/джинсов/,/denim/]];
+const QSTOP=/^(для|и|в|на|с|со|из|по|до|от|под|мне|хочу|ищу|нужн\w*|какие|какой|есть|the|for|and|a|an|in|of|with|купить|цена)$/;
+const QM_MEMO={};
+// матчер запроса: каждое слово должно найтись — в бренде (в т.ч. по-русски/украински), в названии (прямо или через перевод), в категории/подразделе/цвете
+function qMatcher(raw){const key=raw;if(QM_MEMO[key])return QM_MEMO[key];
+  const q=ruQ(raw),toks=q.split(/[\s,.;:!?/]+/).filter(t=>t&&!QSTOP.test(t)&&!/^\d/.test(t)&&t.length>1);
+  const g=/женск/.test(q)?"w":/мужск/.test(q)?"m":/детск/.test(q)?"k":"";
+  const tk=toks.filter(t=>!/^(женск|мужск|детск)/.test(t)).map(t=>({t,en:SX.filter(([re])=>re.test(t)).map(x=>x[1]),bk:BRANDS.filter(b=>uaN(b[1]).includes(t)||uaN(RU[b[0]]||"").split(" ").some(w=>w&&(w.startsWith(t)||t.startsWith(w)&&w.length>3))).map(b=>b[0])}));
+  const hay=p=>p._hay||(p._hay=uaN(p.brand+" "+p.name+" "+(CATS[p.cat]||"")+" "+(typeof subTypeOf==="function"?subName(p.cat,subTypeOf(p)):"")+" "+(p.colors||[]).map(c=>c.name||"").join(" ")));
+  const m={toks:tk,g,test:p=>(!g||p.g===g||p.g==="u")&&tk.every(x=>hay(p).includes(x.t)||x.bk.includes(p.bk)||x.en.some(re=>re.test(hay(p))))};
+  if(Object.keys(QM_MEMO).length>50)for(const k in QM_MEMO)delete QM_MEMO[k];return QM_MEMO[key]=m}
 const sortKey=n=>norm(n).toUpperCase();
 const RU={chanel:"шанель",hermes:"эрмес гермес",lv:"луи виттон вюиттон",dior:"диор",prada:"прада",bv:"боттега венета",loewe:"лоеве лоэве",celine:"селин",ysl:"сен лоран ив сен лоран",miumiu:"миу миу",gucci:"гуччи",therow:"зе роу",lp:"лоро пиана",bc:"брунелло кучинелли",moncler:"монклер",balenciaga:"баленсиага",alaia:"алайя",cartier:"картье",vca:"ван клиф",rolex:"ролекс",valentino:"валентино",fendi:"фенди",maxmara:"макс мара",tomford:"том форд",jilsander:"джил сандер",khaite:"кхайт",zegna:"зенья",burberry:"барберри",givenchy:"живанши",chloe:"хлое"};
 /* Культовые модели под заказ: [бренд, модель, категория, цена от €, силуэт, цвет, флаг, рус.] — ориентир */
@@ -2619,8 +2643,9 @@ function hl(text,q){const n=norm(text),i=n.indexOf(q);if(!q||i<0)return esc(text
 function runSearch(raw){const q=norm(raw.trim());const box=$("#sres"),body=$("#homeBody");
   if(!q){box.hidden=true;body.hidden=false;return}
   box.hidden=false;body.hidden=true;
-  const brands=BRANDS.map(b=>b[0]).filter(bk=>norm(bname(bk)).includes(q)||(RU[bk]||"").includes(q));
-  const items=P.filter(p=>norm(p.brand+" "+p.name).includes(q)||(RU[p.bk]||"").includes(q)||norm(CATS[p.cat]).includes(q)).slice(0,8);
+  const QX=qMatcher(raw),uq=uaN(raw.trim());
+  const brands=BRANDS.map(b=>b[0]).filter(bk=>uaN(bname(bk)).includes(uq)||uaN(RU[bk]||"").includes(uq)||(QX.toks.length===1&&QX.toks[0].bk.includes(bk)));
+  const items=P.filter(p=>QX.toks.length||QX.g?QX.test(p):norm(p.brand+" "+p.name).includes(q)).slice(0,8);
   const icons=ICONS.filter(ic=>norm(bname(ic.bk)+" "+ic.name).includes(q)||ic.ru.includes(q)||(RU[ic.bk]||"").includes(q)).slice(0,8);
   const resale=RESALE.filter(r=>norm(r.brand+" "+r.name).includes(q)||ICONS.some(ic=>ic.ru.includes(q)&&norm(r.name).includes(norm(ic.name.split(" ")[0])))).slice(0,4);
   let h="";
@@ -2700,7 +2725,7 @@ $("#nAll").addEventListener("click",e=>{e.stopPropagation();nwOpenAll(NW.G[NW.gi
 const SQ_CAT=[[/сумк|рюкзак|клатч|тоут|bag/,"bags"],[/обув|кросс|кед|лофер|ботин|туфл|сандал|мюл|sneak/,"shoes"],[/одежд|худи|легг|леггин|футбол|кофт|свитш|куртк|пальт|брюк|джинс|плать|юбк|рубаш|топ\b|костюм/,"clothing"],[/аксесс|ремен|ремн|кошел|платок|шарф|кепк|шапк/,"accessories"],[/очк|eyewear/,"eyewear"],[/украш|серьг|браслет|кольц|колье/,"jewelry"],[/часы|часов/,"watches"]];
 const SQ_COL=[[/чёрн|черн|black/,"black"],[/бел|white/,"white"],[/беж|beige|sand|nude/,"beige"],[/коричн|brown|camel|кэмел|cognac/,"brown"],[/сер[ыоа]|grey|gray/,"grey"],[/зел|олив|green|olive|khaki/,"green"],[/роз|pink/,"pink"],[/син|голуб|blue|navy/,"blue"],[/красн|бордо|red|burgundy/,"red"],[/молоч|крем|ivory|cream|ecru/,"ivory"]];
 const SQ_ITEM=[[/леггин|легин/,/legging|tight/],[/худи/,/hood/],[/свитш/,/sweat|crew/],[/футболк/,/t-?shirt|tee/],[/кроссов/,/sneak|trainer|runner|cloud/],[/лофер/,/loafer/],[/ботин|сапог/,/boot/],[/шопер|тоут/,/tote|shopper/],[/рюкзак/,/backpack/],[/кепк/,/cap\b|hat/],[/юбк/,/skirt/],[/плать/,/dress/],[/брюк|штан/,/pant|trouser|jogger/],[/куртк/,/jacket|puffer|coat/],[/шорт/,/short/],[/бра\b|топ\b/,/bra|tank|top/]];
-function smartParse(raw){const q=raw.toLowerCase(),f={max:0,min:0,cats:[],cols:[],size:"",g:"",nw:false,any:false,item:null};SQ_ITEM.forEach(([re,en])=>{if(!f.item&&re.test(q))f.item=en});
+function smartParse(raw){const q=ruQ(raw),f={max:0,min:0,cats:[],cols:[],size:"",g:"",nw:false,any:false,item:null};SQ_ITEM.forEach(([re,en])=>{if(!f.item&&re.test(q))f.item=en});
   const m=q.match(/(?:до|не дороже|under|<)\s*€?\s*(\d[\d\s]*)\s*(к|k|тыс)?/);if(m){f.max=+m[1].replace(/\s/g,"")*(m[2]?1000:1)}
   const n=q.match(/(?:от|from)\s*€?\s*(\d[\d\s]*)/);if(n)f.min=+n[1].replace(/\s/g,"");
   const s=q.match(/(?:размер[а-я]*\s*|size\s*)([a-z0-9]{1,4})/i)||q.replace(/(?:до|от|не дороже)\s*\d[\d\s]*/g,"").match(/\b(3[4-9]|4[0-7])\b/)||raw.match(/\b(XXS|XS|S|M|L|XL|XXL)\b/);if(s)f.size=s[1].toUpperCase();
