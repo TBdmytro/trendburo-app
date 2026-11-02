@@ -712,6 +712,14 @@ export default async function handler(req, res) {
         let n = 0; for (const id of ids) if (await setAccess(store, id, body.access, { by: me.name })) n++;
         return send(res, 200, { n });
       }
+      case "accessPending": {
+        // новые заявки на вход — для счётчика и уведомления в админке
+        const acc = await accessSettings(store, { fresh: true });
+        if (!acc.closed) return send(res, 200, { closed: false, n: 0, latest: [] });
+        const cs = await store.list("customer", {}, { limit: 5000, fields: "_id, tg, profile, access, registeredAt, createdAt" });
+        const p = cs.filter(c => accessOf(c, acc) === "pending").sort((a, b) => String(b.registeredAt || b.createdAt).localeCompare(String(a.registeredAt || a.createdAt)));
+        return send(res, 200, { closed: true, n: p.length, latest: p.slice(0, 5).map(c => ({ id: c._id, name: c.profile?.name || c.tg?.name || "Клиент", username: c.tg?.username || "", at: c.registeredAt || c.createdAt })) });
+      }
       case "customerDelete": {
         // удалить аккаунт: человек выйдет и при следующем входе заново пройдёт регистрацию (и заявку, если вход по заявкам). Заказы остаются.
         const id = String(body.customer || "");

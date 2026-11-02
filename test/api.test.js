@@ -398,3 +398,25 @@ test("закрытый сайт: заявка после входа, досту�
     assert.equal((await cat(auth(45))).status, 200);
   } finally { globalThis.fetch = f0; delete process.env.TELEGRAM_BOT_TOKEN; delete process.env.TELEGRAM_MANAGER_CHAT; resetAccessMemo(); }
 });
+
+test("заявка на вход: клиенту «заявка принята» в боте, в админке счётчик новых заявок", async () => {
+  const { signSess } = await import("../lib/tgauth.js");
+  const me = (await import("../api/me.js")).default;
+  const { resetAccessMemo } = await import("../lib/access.js");
+  const T = "9:tok"; process.env.TELEGRAM_BOT_TOKEN = T;
+  const sent = [], f0 = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { sent.push({ m: String(u).split("/").pop(), b: JSON.parse(o.body) }); return { ok: true, status: 200, json: async () => ({ ok: true, result: {} }) }; };
+  const ck = await adminCookie(), H = { cookie: ck, "x-tb": "1" };
+  try {
+    await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: true }, headers: H }); resetAccessMemo();
+    let p = await call(handler, { query: { a: "accessPending" }, headers: { cookie: ck } });
+    const n0 = p.body.n;
+    await call(me, { method: "POST", body: { sess: signSess({ id: 77, name: "Марта" }, T), a: "register", name: "Марта" } });
+    assert.ok(sent.some(x => x.b.chat_id === 77 && /Заявка принята/.test(x.b.text)), "клиенту — заявка принята");
+    p = await call(handler, { query: { a: "accessPending" }, headers: { cookie: ck } });
+    assert.equal(p.body.n, n0 + 1); assert.equal(p.body.latest[0].name, "Марта");
+    await call(handler, { method: "POST", query: { a: "accessSet" }, body: { customer: "customer.77", access: "ok" }, headers: H });
+    assert.ok(sent.some(x => x.b.chat_id === 77 && /Доступ к приложению Trend Büro открыт/.test(x.b.text)));
+    assert.equal((await call(handler, { query: { a: "accessPending" }, headers: { cookie: ck } })).body.n, n0);
+  } finally { await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H }); globalThis.fetch = f0; delete process.env.TELEGRAM_BOT_TOKEN; resetAccessMemo(); }
+});

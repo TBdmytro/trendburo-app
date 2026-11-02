@@ -842,7 +842,21 @@ async function start() {
   pump(); pollLeads();
 }
 // новые заявки: счётчик в меню обновляется раз в минуту
-async function pollLeads() { try { const { fresh } = await api("leads", { query: { status: "new" }, silent: true }); updateLeadBadge(fresh); } catch {} clearTimeout(pollLeads.t); pollLeads.t = setTimeout(pollLeads, 60000); }
+async function pollLeads() { try { const { fresh } = await api("leads", { query: { status: "new" }, silent: true }); updateLeadBadge(fresh); } catch {} pollAccess(); clearTimeout(pollLeads.t); pollLeads.t = setTimeout(pollLeads, 60000); }
+// заявки на вход: счётчик у «Клиентов», плашка на «Обзоре» и уведомление, когда пришла новая
+let ACC_P = { n: 0, latest: [] };
+async function pollAccess() {
+  let r; try { r = await api("accessPending", { silent: true }); } catch { return; }
+  const seen = (() => { try { return localStorage.getItem("tbAccSeen") || ""; } catch { return ""; } })();
+  const fresh = (r.latest || []).filter(x => String(x.at) > seen);
+  ACC_P = r;
+  const c = $("#accCnt"); if (c) { c.hidden = !r.n; c.textContent = r.n; }
+  const hb = $("#accHome"); if (hb) hb.outerHTML = accHomeHTML();
+  if (fresh.length && seen) { const x = fresh[0]; toast(fresh.length > 1 ? `Новые заявки на вход: ${fresh.length}` : `Новая заявка на вход: ${x.name}${x.username ? " @" + x.username : ""}`);
+    try { if (window.Notification && Notification.permission === "granted") new Notification("Trend Büro · заявка на вход", { body: fresh.map(x => x.name).join(", ") }); } catch {} }
+  try { if (r.latest?.[0]) localStorage.setItem("tbAccSeen", String(r.latest[0].at)); else if (!seen) localStorage.setItem("tbAccSeen", new Date().toISOString()); } catch {}
+}
+const accHomeHTML = () => ACC_P.n ? `<a class="row2" id="accHome" href="#customers" style="margin-top:10px;border:1.5px solid var(--ink)"><span class="ic">${svg("users")}</span><span class="tx"><b>Заявки на вход: ${ACC_P.n}</b><span>${esc(ACC_P.latest.slice(0, 3).map(x => x.name).join(", "))}${ACC_P.n > 3 ? " и ещё " + (ACC_P.n - 3) : ""} — принять или отклонить ›</span></span></a>` : `<span id="accHome" hidden></span>`;
 document.addEventListener("click", e => {
   const b = e.target.closest("#nav [data-v],#nav2 [data-v]"); if (b) return go(b.dataset.v);
   const m = e.target.closest("#mnav2 [data-m]"); if (m) return m.dataset.m === "plus" ? plusSheet() : go(m.dataset.m);
@@ -2558,7 +2572,7 @@ const isMainView = v => { const [k, s] = v.split(":"); return ["home", "products
 
 function renderNav() {
   $("#nav").innerHTML = NAV_MAIN.map(([k, v, ic]) => `<button data-v="${k}">${svg(ic)}<span>${v}</span>${k === "leads" ? '<span class="cnt red" id="leadCnt" hidden></span>' : ""}</button>`).join("");
-  $("#nav2").innerHTML = NAV_MORE.map(([k, v, ic]) => `<button data-v="${k}">${svg(ic)}<span>${v}</span>${k === "jobs" ? '<span class="cnt" id="jobCnt" hidden></span>' : ""}</button>`).join("");
+  $("#nav2").innerHTML = NAV_MORE.map(([k, v, ic]) => `<button data-v="${k}">${svg(ic)}<span>${v}</span>${k === "jobs" ? '<span class="cnt" id="jobCnt" hidden></span>' : k === "customers" ? '<span class="cnt red" id="accCnt" hidden></span>' : ""}</button>`).join("");
   $("#mnav2").innerHTML = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["plus", "Добавить", "add"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"]]
     .map(([k, v, ic]) => `<button data-m="${k}" class="${k === "plus" ? "plus" : ""}" aria-label="${v}">${svg(ic)}${k === "leads" ? '<i class="cnt" id="mLeadCnt" hidden></i>' : ""}</button>`).join("");
 }
@@ -2612,6 +2626,7 @@ async function vHome2() {
       <a class="tile dark" href="#leads:new"><span>Новые заявки</span><b class="num">${o.leadsNew}</b><span>${o.leadsNew ? "ответить ›" : "всё отвечено"}</span></a>
       <a class="tile" href="#leads"><span>Заказы в работе</span><b class="num">${o.ordersActive || 0}</b><span>${o.ordersPaid ? o.ordersPaid + " ждут выкупа" : "открыть ›"}</span></a>
     </div>
+    ${accHomeHTML()}
     <a class="row2" href="#finance" style="margin-top:10px"><span class="ic">${svg("finance")}</span><span class="tx"><b>Финансы</b><span>${fin && fin.revenue ? `выручка за месяц ${eur(fin.revenue)} · ${fin.orders} ${plural(fin.orders, ["заказ", "заказа", "заказов"])}` : "выручка, маржа, деньги в пути"}</span></span>${chevSvg}</a>
     <div class="h2">Требует внимания</div>
     ${o.attention?.length ? `<div class="att">${o.attention.map(a => `<a href="#${esc(a.go)}"><span class="d ${a.level}"></span><span style="flex:1">${esc(a.text)}</span>${chevSvg}</a>`).join("")}</div>` : `<div class="att"><a style="cursor:default"><span class="d" style="background:var(--ok)"></span><span>Всё спокойно — новых заявок и проблем нет</span></a></div>`}
@@ -3109,6 +3124,7 @@ async function vCustomers(q) {
     <div class="card pad" style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px">
       <label class="toggle"><input type="checkbox" id="cClosed" ${closed ? "checked" : ""}><b>Вход по заявкам</b></label>
       <div class="hint">${closed ? "Сайт закрыт: человек регистрируется через Telegram и оставляет заявку — вы принимаете или отклоняете. Пока заявка ждёт, каталог ему не виден. Можно принимать здесь или кнопкой в боте (в чате менеджера); принятому придёт сообщение." : "Сейчас каталог видят все. Включите — и новые люди после регистрации через Telegram будут ждать вашего решения. Все, кто уже есть в базе, получат доступ автоматически. Заблокировать человека можно и сейчас — в его карточке."}</div>
+      ${closed && window.Notification && Notification.permission === "default" ? `<button type="button" class="btn soft sm" id="cNotif" style="align-self:flex-start">Уведомлять о новых заявках в браузере</button>` : ""}
     </div>
     ${pend.length ? `<div class="sec" style="margin-bottom:14px"><h2>Заявки на вход <small>${pend.length}</small></h2>
       <div class="card list" id="cReq">${pend.map(c => `<div class="li acr" data-rq="${esc(c.id)}"><label class="acx"><input type="checkbox" data-sel="${esc(c.id)}"></label>
@@ -3125,7 +3141,8 @@ async function vCustomers(q) {
   $("#cClosed").onchange = async e => { const on = e.target.checked;
     if (on && !(await confirmBox("Закрыть сайт?", "Каталог будут видеть только клиенты с открытым доступом. Все, кто уже есть в базе, получат доступ сразу.", "Закрыть сайт"))) { e.target.checked = false; return; }
     try { const r = await api("accessMode", { method: "POST", body: { closed: on } }); toast(on ? "Сайт закрыт" + (r.approved ? ` · доступ открыт ${r.approved} клиентам` : "") : "Сайт открыт для всех"); vCustomers($("#cFind")?.value); } catch (err) { toast(err.message); e.target.checked = !on; } };
-  const setMany = async (ids, access) => { try { const r = await api("accessSetMany", { method: "POST", body: { customers: ids, access } }); toast(access === "ok" ? `Принято: ${r.n} — им придёт сообщение` : `Отклонено: ${r.n}`); vCustomers($("#cFind")?.value); } catch (err) { toast(err.message); } };
+  if ($("#cNotif")) $("#cNotif").onclick = async () => { try { const p = await Notification.requestPermission(); toast(p === "granted" ? "Готово — о новых заявках придёт уведомление, пока админка открыта" : "Уведомления не разрешены"); $("#cNotif").remove(); } catch {} };
+  const setMany = async (ids, access) => { try { const r = await api("accessSetMany", { method: "POST", body: { customers: ids, access } }); toast(access === "ok" ? `Принято: ${r.n} — им придёт сообщение` : `Отклонено: ${r.n}`); pollAccess(); vCustomers($("#cFind")?.value); } catch (err) { toast(err.message); } };
   if ($("#cReq")) {
     const upd = () => { $("#cSelN").textContent = sel.size ? "выбрано " + sel.size : ""; $$("[data-many]").forEach(b => b.disabled = !sel.size); };
     $("#cReq").onclick = e => { const one = e.target.closest("[data-one]"); if (one) { one.disabled = true; return setMany([one.closest("[data-rq]").dataset.rq], one.dataset.one); }

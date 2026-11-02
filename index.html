@@ -958,6 +958,8 @@ textarea{min-height:88px;resize:vertical}
 .xlock{overflow-y:hidden!important}
 .ylock{overflow-x:hidden!important}
 /* ===== Вход через Telegram ===== */
+.gt-ok2{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:16px;background:var(--soft);margin:12px 0 14px}.gt-ok2>span{width:30px;height:30px;border-radius:50%;background:#26282c;display:grid;place-items:center;flex:none}
+.gt-ok2 svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.gt-ok2 b{display:block;font-size:16px;margin-bottom:3px}.gt-ok2 p{font-size:13.5px;color:var(--g2);line-height:1.45}
 .gt-why{list-style:none;margin:12px 0 14px;padding:0;display:flex;flex-direction:column;gap:8px}
 .gt-why li{position:relative;padding-left:24px;font-size:13.5px;color:var(--fg);line-height:1.35}
 .gt-why li::before{content:"";position:absolute;left:2px;top:3px;width:14px;height:14px;border-radius:50%;background:#26282c;-webkit-mask:none}
@@ -3260,8 +3262,8 @@ function authGate(force){if(!LIVE)return;const b=authBody();
     wait(r){const n=(r.profile&&r.profile.name)||r.user.name,u=r.user,bl=r.access==="blocked"||r.access==="rejected",rj=r.access==="rejected",mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]);
       card.innerHTML=`<span class="gt-k">Доступ по приглашению</span>
       <div class="gt-u">${avatarHTML({photo:u.photo,name:n},"gt-av")}<div><b>${esc(n)}</b><small>${u.username?"@"+esc(u.username)+" · ":""}${rj?"заявка не одобрена":bl?"доступ закрыт":"заявка отправлена"}</small></div></div>
-      <div class="gt-msg">${bl?"":"<b>Заявка принята в работу</b>"}<p>${rj?"Сейчас мы не можем открыть доступ. Если хотите что-то уточнить — напишите менеджеру.":bl?"Доступ к сайту закрыт. Если это ошибка — напишите менеджеру.":"Trend Büro работает по приглашению. Мы посмотрим заявку и откроем доступ — сообщение придёт в Telegram, а сайт откроется сам."}</p></div>
-      ${bl?"":`<div class="gt-load"><i></i>Ждём открытия доступа…</div>`}
+      ${bl?`<div class="gt-msg"><p>${rj?"Сейчас мы не можем открыть доступ. Если хотите что-то уточнить — напишите менеджеру.":"Доступ к сайту закрыт. Если это ошибка — напишите менеджеру."}</p></div>`
+        :`<div class="gt-ok2"><span><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div><b>Заявка принята</b><p>Скоро откроем доступ — вы получите уведомление в Telegram, а приложение откроется само.</p></div></div>`}
       ${mgr?`<a class="btn block gt-go soft" href="${esc(mgr.url)}" target="_blank" rel="noopener">Написать менеджеру</a>`:""}<button type="button" class="gt-skip" data-out>Выйти</button>`;
       card.querySelector("[data-out]").onclick=()=>{alive=false;g.remove();logout()};
       let alive=!bl;const tick=async()=>{if(!alive||!g.isConnected)return;if(!document.hidden){const x=await loadMe();if(x&&x.access==="ok"){alive=false;return done(x)}if(x&&(x.access==="blocked"||x.access==="rejected")){alive=false;return state.wait(x)}}setTimeout(tick,15000)};setTimeout(tick,15000)},
