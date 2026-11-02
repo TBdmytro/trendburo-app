@@ -533,6 +533,23 @@ export default async function handler(req, res) {
         await store.patchMany([id], set); PCACHE = null;
         return send(res, 200, { dropped: (p.images || []).length - keep.length, cover: (set.overrides ? set.overrides.cover : o.cover) || keep[0]?.url || null });
       }
+      case "trPending": {
+        // товары с сайтов брендов, оставшиеся на немецком (перевод упёрся в лимит), — переводим пачками по 8, пока лимит не кончится
+        const { translateBatch, looksGerman, trHash } = await import("../lib/translate.js");
+        const L = (await store.list("product", {}, { limit: 60000, fields: "_id, title, description, colors, orig, overrides" })).filter(p => p._id.startsWith("product.manual.") && !p.orig && !p.overrides?.title && looksGerman(p.title, p.description, (p.colors || []).join(" ")));
+        let done = 0, err = null; const t0 = Date.now();
+        for (let i = 0; i < L.length && Date.now() - t0 < 40000; i += 8) {
+          const part = L.slice(i, i + 8);
+          let en; try { en = await translateBatch(part.map(p => ({ title: p.title, description: p.description, colors: p.colors || [] }))); } catch (e) { err = String(e.message).slice(0, 160); break; }
+          await store.patchEach(part.map((p, k) => ({ id: p._id, set: { title: en[k].title || p.title, sourceTitle: en[k].title || p.title, description: en[k].description || p.description || null,
+            ...(en[k].colors?.length && (p.colors || []).length === en[k].colors.length ? { colors: en[k].colors } : {}),
+            orig: JSON.stringify({ lang: "auto", h: trHash(p.title, p.description, p.colors || []), title: p.title, description: p.description || null, colors: p.colors || [], en: en[k] }) } })));
+          done += part.length;
+        }
+        if (done) PCACHE = null;
+        if (err) console.log("TRPENDING stop " + JSON.stringify({ done, err }));
+        return send(res, 200, { done, left: L.length - done, limited: /429/.test(err || ""), err });
+      }
       case "arrivalsSet": {
         // новинки бренда (появились в уже пройденном разделе): сразу на сайт или сначала в «Новые с сайтов»
         const mode = body.mode === "incoming" ? "incoming" : "publish";

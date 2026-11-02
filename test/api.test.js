@@ -318,3 +318,18 @@ test("удалили бренд целиком — ночная загрузка
   assert.equal((await store.get("source.s-therow-test")).schedule, "off");
   assert.ok((await store.get("settings.blockedBrands")).list.includes("therow"));
 });
+
+test("названия на немецком (перевод упёрся в лимит) переводятся в фоне пачкой; лимит — останавливаемся", async () => {
+  const login = await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } });
+  const cookie = login.headers["set-cookie"].split(";")[0], H = { cookie, "x-tb": "1" };
+  await store.put({ _id: "product.manual.dior-hut1", _type: "product", brand: "Dior", title: "Teddy-D Hut mit breiter Krempe", category: "accessories", status: "incoming", offers: [] });
+  const real = globalThis.fetch, key = process.env.GEMINI_API_KEY; process.env.GEMINI_API_KEY = "test";
+  globalThis.fetch = async (u, o) => { const items = JSON.parse(JSON.parse(o.body).contents[0].parts[0].text.split("\n\n").pop()); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(items.map(i => ({ title: i.title.includes("Teddy-D Hut") ? "Teddy-D Wide-Brim Hat" : i.title, description: "", colors: [] }))) }] } }] }), { status: 200 }); };
+  try { const r = await call(handler, { method: "POST", query: { a: "trPending" }, headers: H }); assert.ok(r.body.done >= 1, JSON.stringify(r.body)); }
+  finally { globalThis.fetch = real; if (key === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = key; }
+  const p = await store.get("product.manual.dior-hut1"); assert.equal(p.title, "Teddy-D Wide-Brim Hat"); assert.equal(JSON.parse(p.orig).title, "Teddy-D Hut mit breiter Krempe");
+  globalThis.fetch = async () => new Response("", { status: 429 }); process.env.GEMINI_API_KEY = "test";
+  await store.put({ _id: "product.manual.dior-hut2", _type: "product", brand: "Dior", title: "Hut mit kurzer Krempe", category: "accessories", status: "incoming", offers: [] });
+  try { const r = await call(handler, { method: "POST", query: { a: "trPending" }, headers: H }); assert.equal(r.body.limited, true); }
+  finally { globalThis.fetch = real; if (key === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = key; }
+});

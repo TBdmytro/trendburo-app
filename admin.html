@@ -827,6 +827,8 @@ async function start() {
   if (!start.badImg) { start.badImg = true; document.addEventListener("error", async e => { const im = e.target; if (!(im instanceof HTMLImageElement) || im.dataset.tbBad) return;
     const box = im.closest("[data-open]"), id = box && box.dataset.open, u = im.getAttribute("src") || ""; if (!id || !/^product\.manual\./.test(id) || /cdn\.sanity\.io/.test(u) || !/^https:\/\//.test(u)) return;
     im.dataset.tbBad = "1"; try { const alt = await imgFix(u); const r = await api("imgDrop", { method: "POST", silent: true, body: alt ? { id, urls: [], swap: { [u]: alt } } : { id, urls: [u] } }); if (r.cover) im.src = thumb(r.cover); } catch {} }, true); }
+  // названия, оставшиеся на немецком (перевод упёрся в дневной лимит), — дописываем в фоне, пока админка открыта
+  if (!BRIDGE && !start.tr) { start.tr = true; const trLoop = async () => { for (let i = 0; i < 20; i++) { const r = await api("trPending", { method: "POST", silent: true }).catch(() => null); if (!r || !r.left || r.limited || r.err) break; } }; setTimeout(trLoop, 6000); setInterval(trLoop, 20 * 60e3); }
   if (!BRIDGE) try { if (Date.now() - (+localStorage.getItem("tbBrokenAt") || 0) > 15 * 60e3) { localStorage.setItem("tbBrokenAt", String(Date.now())); setTimeout(brokenScan, 4000); } } catch {}
   if (location.hash === "#screens:mt" || location.hash === "#import") { mtPing(); if (location.search && !BRIDGE) history.replaceState(null, "", location.pathname + location.hash); }
   window.hideSplash && hideSplash();
