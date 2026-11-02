@@ -1234,7 +1234,15 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .clubc>b{font-size:20px;font-weight:600;letter-spacing:-.01em}
 .clubc .clm{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.clubc .clm div{display:flex;flex-direction:column;gap:3px}.clubc .clm small{font-size:11.5px;color:rgba(255,255,255,.55)}.clubc .clm i{font-style:normal;font-size:15px;font-weight:600}
 .clubc p{margin:0;font-size:12.5px;line-height:1.45;color:rgba(255,255,255,.62)}
-.mgrc{margin:10px 18px 4px;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:var(--soft);color:inherit;text-decoration:none}
+.acc-live{margin:14px 0 0}.acc-live .olv-live{display:block;width:calc(100% - 24px);border:0;font:inherit;text-align:left;cursor:pointer}
+.acl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--g2);font-weight:700;padding:22px 18px 10px}
+.acm{display:flex;flex-direction:column;gap:8px;padding:0 18px}
+.acm .s{min-height:62px;border:0;border-radius:20px;background:var(--soft);display:flex;align-items:center;gap:12px;padding:0 14px;font:inherit;color:inherit;text-align:left;width:100%;cursor:pointer}
+.acm .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:#26282c;color:#fff}
+.acm .ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.acm .s>div{flex:1;min-width:0}.acm b{font-size:15px;font-weight:600;display:block}.acm small{font-size:12.5px;color:var(--g2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acm .go{color:var(--g2);font-size:20px}.acm .bd{font-size:11px;font-weight:700;background:#26282c;color:#fff;border-radius:99px;min-width:20px;text-align:center;padding:2px 7px}
+.mgrc{margin:14px 18px 4px;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:var(--soft);color:inherit;text-decoration:none}
 .mgrc .mav{width:42px;height:42px;border-radius:50%;background:#26282c;color:#fff;display:grid;place-items:center;font:400 15px/1 "Prata",Georgia,serif;flex:none}
 .mgrc .mtx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.mgrc .mtx b{font-size:15px;font-weight:600}.mgrc .mtx small{font-size:12.5px;color:var(--g2);line-height:1.35}.mgrc .mgo{font-size:22px;color:var(--g2)}
 .acc-head{display:flex;align-items:center;gap:14px;padding:calc(64px + var(--st)) 18px 18px}
@@ -3258,6 +3266,19 @@ function routeNodes(o){const ua=(o.dest||"ua")==="ua",c=(o.route&&o.route.buyCit
 function routePos(o){const ua=(o.dest||"ua")==="ua",st=o.status;
   if(ua)return{new:0,work:0,paid:0,bought:0,shipping:.5,np:2,delivered:3}[st]??0;return{new:0,work:0,paid:0,bought:0,shipping:.5,delivered:2}[st]??0}
 const LEAD_ST2={new:"Оформлен",work:"Подтверждён",paid:"Оплачен",bought:"Выкуплен",shipping:"В пути",np:"Новая почта",delivered:"Получен",cancelled:"Отменён"};
+/* мини-карточка «Сейчас в пути» в кабинете — тот же маршрут, что на экране заказа */
+function accLiveHTML(o,i){const{S,cur}=orderSteps(o),z=S[Math.max(0,cur)],col=OST[z.k]||OST.new,p0=findItem(o.items&&o.items[0]&&o.items[0].id),e=orderEta(o);
+  const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
+  return `<div class="olv acc-live" style="--acc:${col[0]};--acc2:${col[1]}"><button class="olv-live press" data-oi="${i}"><div class="olv-l1"><span class="olv-th">${p0?shapeSVG(p0.shape,p0.c,""):o.items&&o.items[0]&&o.items[0].photo?`<img src="${esc(o.items[0].photo)}" alt="">`:""}</span><div class="olv-tx"><span class="olv-chip"><i></i>${esc(LEAD_ST2[z.k]||"")}</span><h2>Заказ № ${esc(String(o.number).replace(/^TB-/,""))}</h2></div>
+    ${e?`<div class="olv-cd"><small>ждём у вас</small><div class="n num">${esc(e.date)}</div><small>${e.days===1?"завтра":"через "+e.days+" "+plural(e.days,["день","дня","дней"])}</small></div>`:""}</div>
+    <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#e0566a"/><stop offset=".38" stop-color="#3d93ea"/><stop offset=".72" stop-color="#9677f0"/><stop offset="1" stop-color="#2fc77a"/></linearGradient></defs>
+    <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g><g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${(routePos(o)>0?OST.shipping:OST.bought)[2]}</g></g></svg></div><div class="olv-lbl"></div></button></div>`}
+function accLiveDraw(w,o){const rf=w.querySelector(".rf");if(!o||!rf||!rf.getTotalLength)return;
+  const N=routeNodes(o),last=N.length-1,ua=(o.dest||"ua")==="ua",f=routePos(o)/last,L=rf.getTotalLength();if(!L)return;
+  const ks=ua?["bought","shipping","np","delivered"]:["bought","shipping","delivered"],on=i=>i/last<=f+1e-3&&(i>0||["bought","shipping","np","delivered"].includes(o.status));
+  w.querySelector(".nds").innerHTML=N.map((_,i)=>{const p=rf.getPointAtLength(L*i/last);return `<g class="nd ${on(i)?"on":""}" style="--c:${OST[ks[i]][0]}"><circle class="o" cx="${p.x}" cy="${p.y}" r="7"/></g>`}).join("");
+  const lb=w.querySelector(".olv-lbl");lb.innerHTML=N.map((n,i)=>`<span class="${i===0?"a0":i===last?"a1":""} ${on(i)?"on":""}">${esc(n)}</span>`).join("");lb.style.gridTemplateColumns="minmax(0,1fr) ".repeat(last)+"auto";
+  rf.style.strokeDasharray=L;rf.style.strokeDashoffset=L*(1-f);const p=rf.getPointAtLength(L*f);w.querySelector(".cm").style.transform=`translate(${p.x}px,${p.y}px)`}
 function orderRowHTML(o,i){const{S,cur}=orderSteps(o);const p=o.items&&o.items[0]&&findItem(o.items[0].id);
   return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):o.items&&o.items[0]&&o.items[0].photo?`<img src="${esc(o.items[0].photo)}" alt="" style="width:100%;height:100%;object-fit:contain">`:"<i></i>"}</span><span class="otx"><b>Заказ № ${esc(String(o.number).replace(/^TB-/,""))}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
     <span class="obar">${S.map((_,j)=>`<i class="${j<=cur?"on":""}"></i>`).join("")}</span></span><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}
@@ -3358,13 +3379,22 @@ function openAccount(){
     box.innerHTML=`<div class="acc-head">${u?avatarHTML(u,"acc-av"):`<span class="acc-av">TB</span>`}<div><h2>${u?esc(u.name):"Профиль"}</h2><p>${u?(u.username?"@"+esc(u.username)+" · ":"")+"вход через Telegram":authBody()&&!ME_ERR?"Подключаем Telegram…":"вы не вошли"}</p></div></div>
     ${u?"":`<div class="pad" style="margin-bottom:6px"><button class="btn block" data-login>${I_TG} Войти или зарегистрироваться</button><p class="muted" style="font-size:12.5px;margin-top:8px;text-align:center">Через Telegram, без пароля. Заказы и адрес доставки сохранятся в профиле.</p></div>`}
     <div class="qt"><button data-go="orders"><b class="num">${ords.length}</b><span>${plural(ords.length,["заказ","заказа","заказов"])}</span></button><button data-act="favs"><b class="num">${favs.size}</b><span>в избранном</span></button><button data-go="brands"><b class="num">${fb.length}</b><span>${plural(fb.length,["бренд","бренда","брендов"])}</span></button></div>
-    ${(()=>{const paid=ords.filter(o=>["paid","bought","shipping","np","delivered"].includes(o.status)),sum=paid.reduce((a,o)=>a+(o.total||0),0),mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]);
-      return `<div class="clubc"><div class="clt"><span>Trend Büro Club</span><em>Скоро</em></div><b>${u?esc(u.name):"Гость"}</b><div class="clm"><div><small>Покупок</small><i class="num">${paid.length}</i></div><div><small>На сумму</small><i class="num">${sum?eur(sum):"—"}</i></div><div><small>С нами</small><i>${u&&ME&&ME.since?fmtD(ME.since):"с сегодня"}</i></div></div><p>Готовим привилегии для постоянных клиентов: уровни, бонусы и ранний доступ к новинкам.</p></div>
+    ${(()=>{const mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]),act=ords.find(o=>!["delivered","cancelled"].includes(o.status));
+      const nIn=ords.filter(o=>["shipping","np"].includes(o.status)).length,nOk=ords.filter(o=>o.status==="delivered").length,dv=myDelivery()||{};
+      const row=(go,ic,t,sub,bd)=>`<button class="s press" ${go}><span class="ic"><svg viewBox="0 0 24 24">${ic}</svg></span><div><b>${t}</b><small>${sub}</small></div>${bd?`<span class="bd num">${bd}</span>`:""}<span class="go">›</span></button>`;
+      return `${act?accLiveHTML(act,ords.indexOf(act)):""}
+      <div class="acl">Мой профиль</div><div class="acm">
+      ${row('data-go="orders"',OST.shipping[2],"Мои заказы",ords.length?[nIn&&nIn+" в пути",nOk&&nOk+" "+plural(nOk,["получен","получено","получено"]),!nIn&&!nOk&&ords.length+" "+plural(ords.length,["заказ","заказа","заказов"])].filter(Boolean).join(" · "):"пока нет заказов",nIn)}
+      ${row('data-act="favs"','<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',"Избранное",favs.size?favs.size+" "+plural(favs.size,["вещь","вещи","вещей"]):"сохраняйте понравившееся")}
+      ${row('data-go="sizes"','<path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/>',"Мои размеры",[prefs.shoe&&"обувь "+esc(prefs.shoe),prefs.cloth&&"одежда "+esc(prefs.cloth)].filter(Boolean).join(" · ")||"укажите — менеджер подберёт точнее")}
+      ${row('data-go="deliv"',OST.np[2],"Доставка",esc([dv.city,(dv.npType==="courier"?dv.address&&"курьер":dv.npPoint&&(dv.npType==="locker"?"почтомат ":"отделение ")+dv.npPoint)].filter(Boolean).join(" · "))||"город и отделение Новой почты")}
+      ${row('data-go="brands"','<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',"Мои бренды",fb.length?fb.slice(0,3).map(bk=>esc(bname(bk))).join(", ")+(fb.length>3?" и ещё "+(fb.length-3):""):"следите за новинками любимых брендов")}
+      </div>
       <a class="mgrc press" href="${esc(mgr.url)}" target="_blank" rel="noopener"><span class="mav">TB</span><span class="mtx"><b>Ваш персональный менеджер</b><small>Найдёт вещь по фото, подберёт размер, ответит на вопросы</small></span><span class="mgo">›</span></a>`})()}
     <div class="sec" id="accOrders"><div class="sech"><h2>Мои заказы</h2></div><div class="pad ordl2">${ords.length?ords.map(orderRowHTML).join(""):`<div class="empty"><h3>Заказов пока нет</h3><p>Оформленные заказы появятся здесь — с маршрутом посылки от бутика до вашей двери.</p></div>`}</div>
      ${reqs.length?`<div class="sech" style="margin-top:18px"><h2>Мои заявки</h2></div>${reqs.map(l=>`<div class="ordl"><span>${esc(LEAD_KIND[l.kind]||"Запрос")} ${esc(l.number)}<small>${fmtD(l.createdAt)}</small></span><em>${LEAD_ST[l.status]||l.status}</em></div>`).join("")}`:""}</div>
-    <div class="sec"><div class="sech"><h2>Доставка</h2></div><div class="pad">${deliveryFormHTML(myDelivery(),"ua")}<button class="btn block" data-dsave style="margin-top:12px">Сохранить</button></div></div>
-    <div class="sec"><div class="sech"><h2>Мои размеры</h2></div>
+    <div class="sec" id="accDeliv"><div class="sech"><h2>Доставка</h2></div><div class="pad">${deliveryFormHTML(myDelivery(),"ua")}<button class="btn block" data-dsave style="margin-top:12px">Сохранить</button></div></div>
+    <div class="sec" id="accSizes"><div class="sech"><h2>Мои размеры</h2></div>
      <div class="prefs">
       <div class="pr2"><label for="pShoe">Размер обуви</label><select id="pShoe"><option value="">Не указан</option>${["35","36","37","38","39","40","41","42","43","44","45"].map(z=>`<option ${prefs.shoe===z?"selected":""}>${z}</option>`).join("")}</select></div>
       <div class="pr2"><label for="pCloth">Размер одежды</label><select id="pCloth"><option value="">Не указан</option>${["XS","S","M","L","XL","XXL"].map(z=>`<option ${prefs.cloth===z?"selected":""}>${z}</option>`).join("")}</select></div>
@@ -3378,10 +3408,10 @@ function openAccount(){
     {const lg=box.querySelector("[data-login]");if(lg)lg.onclick=()=>authGate(true);const lo=box.querySelector("[data-logout]");if(lo)lo.onclick=logout}
     wireDeliveryForm(box);box.querySelector("[data-priv]").onclick=e=>{e.preventDefault();openPrivacy()};
     box.querySelector("[data-dsave]").onclick=async e=>{const v=readDeliveryForm(box),b=e.currentTarget;b.disabled=true;await saveDelivery(v).catch(()=>{});b.disabled=false;toast("Данные доставки сохранены")};
-    box.querySelectorAll("[data-oi]").forEach(b=>b.onclick=()=>openOrder(ords[+b.dataset.oi]));
+    box.querySelectorAll("[data-oi]").forEach(b=>b.onclick=()=>openOrder(ords[+b.dataset.oi]));box.querySelectorAll(".acc-live").forEach(w=>accLiveDraw(w,ords[+w.querySelector("[data-oi]").dataset.oi]));
     const save=()=>{prefs={shoe:box.querySelector("#pShoe").value,cloth:box.querySelector("#pCloth").value,dest:box.querySelector("#pDest").value};store.set("tb_prefs",prefs);toast("Сохранено")};
     ["#pShoe","#pCloth","#pDest"].forEach(id=>box.querySelector(id).onchange=save);
-    box.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{const t=box.querySelector(b.dataset.go==="orders"?"#accOrders":"#accBrands");s.querySelector(".scroll").scrollTo({top:t.offsetTop-60,behavior:"smooth"})});
+    box.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{const t=box.querySelector({orders:"#accOrders",sizes:"#accSizes",deliv:"#accDeliv"}[b.dataset.go]||"#accBrands");s.querySelector(".scroll").scrollTo({top:t.offsetTop-60,behavior:"smooth"})});
   };
   draw();if(authBody()&&LIVE)loadMe().then(()=>{if(s.isConnected)draw()})}
 
