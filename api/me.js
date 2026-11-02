@@ -7,7 +7,7 @@
  * POST {initData|login, a:"save", profile} → сохранить данные доставки
  */
 import { getStore } from "../lib/store.js";
-import { userFrom } from "../lib/tgauth.js";
+import { userFrom, newLoginCode, pollLoginCode } from "../lib/tgauth.js";
 import { touchCustomer, saveProfile, ordersFor, customerId, cleanProfile } from "../lib/customers.js";
 import { tg } from "./bot.js";
 
@@ -25,6 +25,8 @@ export default async function handler(req, res) {
     if (req.method !== "POST") return send(res, 405, { error: "Метод не поддерживается" });
     const body = readBody(req);
     if (!process.env.TELEGRAM_BOT_TOKEN && process.env.DEV_AUTH !== "1") return send(res, 503, { error: "Вход через Telegram ещё не подключён", code: "no_token" });
+    if (body.a === "code") { const code = await newLoginCode(getStore()); if (!BOT) { try { BOT = (await tg("getMe", {})).username || null; } catch {} } return send(res, 200, { code, bot: BOT }); }
+    if (body.a === "poll") return send(res, 200, await pollLoginCode(getStore(), body.code));
     const user = userFrom(body);
     if (!user) return send(res, 401, { error: "Telegram не подтвердил вход — откройте приложение заново", code: "bad_sign" });
     const store = getStore();

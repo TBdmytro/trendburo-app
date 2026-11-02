@@ -958,6 +958,14 @@ textarea{min-height:88px;resize:vertical}
 .xlock{overflow-y:hidden!important}
 .ylock{overflow-x:hidden!important}
 /* ===== Вход через Telegram ===== */
+.gt-why{list-style:none;margin:12px 0 14px;padding:0;display:flex;flex-direction:column;gap:8px}
+.gt-why li{position:relative;padding-left:24px;font-size:13.5px;color:var(--fg);line-height:1.35}
+.gt-why li::before{content:"";position:absolute;left:2px;top:3px;width:14px;height:14px;border-radius:50%;background:#26282c;-webkit-mask:none}
+.gt-why li::after{content:"";position:absolute;left:6.5px;top:6px;width:4px;height:7px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(45deg)}
+.gt-steps{display:flex;flex-direction:column;gap:10px;margin:10px 0 14px}
+.gt-steps div{display:flex;align-items:center;gap:10px;font-size:13.5px;line-height:1.35}
+.gt-steps i{width:24px;height:24px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font:700 12px/1 var(--f);font-style:normal;flex:none}
+.gt-steps .on i{background:#26282c;color:#fff}
 .gate{position:absolute;inset:0;z-index:90;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:radial-gradient(120% 70% at 50% 0%,#fff,#f1f1f3);display:flex;flex-direction:column;justify-content:space-between;padding:calc(48px + var(--st)) 20px calc(22px + var(--sb));opacity:0;transition:opacity .35s,transform .5s var(--ease)}
 .gate.in{opacity:1}.gate.out{opacity:0;transform:scale(1.04)}
 .gt-top{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:6vh}
@@ -1234,8 +1242,18 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .clubc>b{font-size:20px;font-weight:600;letter-spacing:-.01em}
 .clubc .clm{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.clubc .clm div{display:flex;flex-direction:column;gap:3px}.clubc .clm small{font-size:11.5px;color:rgba(255,255,255,.55)}.clubc .clm i{font-style:normal;font-size:15px;font-weight:600}
 .clubc p{margin:0;font-size:12.5px;line-height:1.45;color:rgba(255,255,255,.62)}
-.acc-live{margin:14px 0 0}.acc-live .olv-live{display:block;width:calc(100% - 24px);border:0;font:inherit;text-align:left;cursor:pointer}
-.acl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--g2);font-weight:700;padding:22px 18px 10px}
+.acc-live{margin:14px 0 0}.acc-cta{position:relative;display:block;margin:10px 2px 2px;font-size:13px;font-weight:600;color:rgba(255,255,255,.85)}.acc-live .olv-live{display:block;width:calc(100% - 24px);border:0;font:inherit;text-align:left;cursor:pointer}
+.acl{display:flex;align-items:baseline;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--g2);font-weight:700;padding:24px 18px 10px}
+.acl em{font-style:normal;letter-spacing:0}.acl button{border:0;background:none;font:600 13px/1 var(--f);letter-spacing:0;text-transform:none;color:var(--fg);padding:0;cursor:pointer}
+.acx{margin:0 18px;background:var(--soft);border-radius:20px;overflow:hidden}
+.acx .li{display:flex;align-items:center;gap:12px;width:100%;min-height:68px;padding:10px 14px;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;position:relative}
+.acx .li+.li::before{content:"";position:absolute;top:0;left:76px;right:14px;height:1px;background:rgba(38,40,44,.08)}
+.acx .th{width:48px;height:48px;border-radius:12px;background:#fff;display:grid;place-items:center;overflow:hidden;flex:none}
+.acx .th img,.acx .th svg{width:90%!important;height:90%!important;object-fit:contain}
+.acx .li>div{flex:1;min-width:0}.acx b{font-size:14.5px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.acx b i{font-style:normal;color:var(--g2);font-weight:500}
+.acx small{font-size:12.5px;color:var(--g2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.acx .pr{font-size:14px;font-weight:600;white-space:nowrap}
+.ace{margin:0 18px;padding:16px;border-radius:20px;background:var(--soft);font-size:13.5px;color:var(--g2);line-height:1.4}
 .acm{display:flex;flex-direction:column;gap:8px;padding:0 18px}
 .acm .s{min-height:62px;border:0;border-radius:20px;background:var(--soft);display:flex;align-items:center;gap:12px;padding:0 14px;font:inherit;color:inherit;text-align:left;width:100%;cursor:pointer}
 .acm .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:#26282c;color:#fff}
@@ -3202,7 +3220,7 @@ const STAGES=["У менеджера","Выкуплен","В пути","Дост
 let ME=null,ME_ERR=null;
 const DEV_AUTH=()=>/^(localhost|127\.0\.0\.1)$/.test(location.hostname)&&/[?&]devauth=1/.test(location.search);
 /* подпись Telegram: в мини-аппе — initData, на сайте — сохранённые данные виджета входа (действуют 30 дней) */
-const authBody=()=>{const b={client:CLIENT};if(TGW&&TGW.initData)b.initData=TGW.initData;else if(DEV_AUTH())b.initData="dev:42:Дмитрий";else{const l=store.get("tb_login",null);if(l&&l.hash&&Date.now()/1000-l.auth_date<29*864e2)b.login=l;else return null}return b};
+const authBody=()=>{const b={client:CLIENT};if(TGW&&TGW.initData)b.initData=TGW.initData;else if(DEV_AUTH())b.initData="dev:42:Дмитрий";else{const l=store.get("tb_login",null);if(l&&l.sess&&l.exp>Date.now())b.sess=l.sess;else if(l&&l.hash&&Date.now()/1000-l.auth_date<29*864e2)b.login=l;else return null}return b};
 async function meCall(extra){const b=authBody();if(!b||!LIVE)return{error:"Нет входа",code:"no_auth"};
   try{const r=await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...b,...(extra||{})})});const j=await r.json().catch(()=>({}));return r.ok?j:{error:j.error||"Ошибка "+r.status,code:j.code||String(r.status)}}catch(e){return{error:"Нет связи с сервером",code:"net"}}}
 async function loadMe(extra){const j=await meCall(extra);if(j.error){ME_ERR=j;return null}ME=j;ME_ERR=null;renderTopIcons();return ME}
@@ -3225,7 +3243,7 @@ function authGate(force){if(!LIVE)return;const b=authBody();
   const state={
     load(t){card.innerHTML=`<span class="gt-k">Вход через Telegram</span><div class="gt-load"><i></i>${esc(t||"Проверяем аккаунт…")}</div>`},
     err(j){card.innerHTML=`<span class="gt-k">Вход через Telegram</span><div class="gt-msg"><b>${j.code==="no_token"?"Вход скоро заработает":"Не получилось войти"}</b><p>${esc(j.code==="no_token"?"Мы подключаем вход через Telegram. Пока можно смотреть каталог и оформлять заказы — менеджер свяжется с вами.":j.error||"Попробуйте ещё раз.")}</p></div>
-      ${j.code==="no_token"?"":`<button class="btn block gt-go" data-retry>Попробовать снова</button>`}${skip}`;wire();const r=card.querySelector("[data-retry]");if(r)r.onclick=start},
+      ${j.code==="no_token"?"":`<button class="btn block gt-go" data-retry>Попробовать снова</button>`}${skip}`;wire();const r=card.querySelector("[data-retry]");if(r)r.onclick=()=>start()},
     login(j){const n=(j.profile&&j.profile.name)||j.user.name,u=j.user;card.innerHTML=`<span class="gt-k">Вход</span>
       <div class="gt-u">${avatarHTML({photo:u.photo,name:n},"gt-av")}<div><b>С возвращением, ${esc(String(n).split(" ")[0])}</b><small>${u.username?"@"+esc(u.username)+" · ":""}аккаунт найден</small></div><svg class="gt-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
       <button class="btn block gt-go" data-go>${I_TG}Войти</button>${note}`;wire();
@@ -3238,17 +3256,33 @@ function authGate(force){if(!LIVE)return;const b=authBody();
         const bt=e.currentTarget;bt.disabled=true;bt.classList.add("busy");const r=await loadMe({a:"register",name:nm});if(r)done(r);else{bt.disabled=false;bt.classList.remove("busy");state.err(ME_ERR||{})}}},
     async web(){state.load("Загружаем…");let info={};try{info=await (await fetch("/api/me",{cache:"no-store"})).json()}catch(e){}
       if(!info.ready)return state.err({code:"no_token"});
-      card.innerHTML=`<span class="gt-k">Вход и регистрация</span><div class="gt-msg"><b>Войдите через Telegram</b><p>Если вы у нас впервые — аккаунт создастся сам. Если уже были — откроется ваш профиль с заказами.</p></div>
-        ${info.bot?`<div class="gt-widget" id="gtw"></div><a class="btn block gt-go soft" href="https://t.me/${esc(info.bot)}" target="_blank" rel="noopener">${I_TG}Открыть в Telegram</a>`:""}${note}`;wire();
-      if(info.bot){window.tbOnTgAuth=u=>{store.set("tb_login",u);start()};const sc=document.createElement("script");sc.async=true;sc.src="https://telegram.org/js/telegram-widget.js?22";
-        sc.setAttribute("data-telegram-login",info.bot);sc.setAttribute("data-size","large");sc.setAttribute("data-radius","14");sc.setAttribute("data-request-access","write");sc.setAttribute("data-onauth","tbOnTgAuth(user)");card.querySelector("#gtw").append(sc)}}};
+      card.innerHTML=`<span class="gt-k">Вход и регистрация</span><div class="gt-msg"><b>Войдите через Telegram</b><p>Без пароля и кодов из СМС. Впервые у нас — аккаунт создастся сам, уже были — откроется ваш кабинет.</p></div>
+        <ul class="gt-why"><li>Маршрут посылки от бутика до двери</li><li>Избранное и размеры на любом устройстве</li><li>Менеджер видит ваши заказы</li></ul>
+        <button class="btn block gt-go" data-go>${I_TG}Войти через Telegram</button>${skip}${note}`;wire();
+      card.querySelector("[data-go]").onclick=()=>state.bot()},
+    // вход через бота: одноразовый код → t.me/бот?start=login_код → «Войти на сайт» в боте → сайт получает подписанную сессию
+    async bot(){const tab=window.open("about:blank","_blank");state.load("Готовим вход…");let j={};
+      try{j=await (await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"code"})})).json()}catch(e){}
+      if(!j.code||!j.bot){if(tab)tab.close();return state.err({error:"Не получилось начать вход. Попробуйте ещё раз."})}
+      const url=`https://t.me/${encodeURIComponent(j.bot)}?start=login_${j.code}`;if(tab)tab.location.href=url;else location.href=url;
+      card.innerHTML=`<span class="gt-k">Вход через Telegram</span><div class="gt-steps"><div class="on"><i>1</i><span>Откройте бота Trend Büro</span></div><div><i>2</i><span>Нажмите «Запустить», затем «Войти на сайт»</span></div><div><i>3</i><span>Вернитесь сюда — кабинет откроется сам</span></div></div>
+        <div class="gt-load"><i></i>Ждём подтверждения в Telegram…</div><a class="btn block gt-go soft" href="${esc(url)}" target="_blank" rel="noopener">${I_TG}Открыть Telegram ещё раз</a>
+        <button type="button" class="gt-skip" data-back>Назад</button>`;
+      card.querySelector("[data-back]").onclick=()=>{alive=false;state.web()};
+      let alive=true;const t0=Date.now(),poll=async()=>{if(!alive||!g.isConnected)return;let r={};
+        try{r=await (await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"poll",code:j.code})})).json()}catch(e){}
+        if(r.status==="ok"&&r.sess){alive=false;document.removeEventListener("visibilitychange",vis);store.set("tb_login",{sess:r.sess,exp:Date.now()+29*864e5});state.load("Входим…");return start(true)}
+        if(r.status==="expired"||r.status==="gone"||Date.now()-t0>10*60e3){alive=false;document.removeEventListener("visibilitychange",vis);return state.err({error:"Время на вход вышло. Нажмите «Попробовать снова»."})}
+        setTimeout(poll,document.hidden?4000:1800)},vis=()=>{if(!document.hidden&&alive)poll()};
+      document.addEventListener("visibilitychange",vis);setTimeout(poll,1500)}};
   // клавиатура: экран поднимается, карточка с кнопкой остаётся видна; Enter = отправить
   const vv=window.visualViewport,kb=()=>{const h=vv?Math.max(0,innerHeight-vv.height-(vv.offsetTop||0)):0;g.style.setProperty("--kbh",(h||300)+"px")};
   g.addEventListener("focusin",e=>{if(!e.target.matches("input"))return;g.classList.add("kb");kb();setTimeout(()=>{kb();const b=card.querySelector("[data-go]")||card;b.scrollIntoView({block:"end",behavior:"smooth"})},320)});
   g.addEventListener("focusout",()=>setTimeout(()=>{if(!g.contains(document.activeElement)||!document.activeElement.matches("input"))g.classList.remove("kb")},120));
   if(vv)vv.addEventListener("resize",()=>{if(g.classList.contains("kb"))kb()});
   g.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("input")){e.preventDefault();e.target.blur();const b=card.querySelector("[data-go]");if(b)b.click()}});
-  async function start(){if(!authBody())return state.web();state.load();const j=await meCall({a:"check"});if(j.error)return state.err(j);j.exists?state.login(j):state.reg(j)}
+  async function start(auto){if(!authBody())return state.web();state.load();const j=await meCall({a:"check"});if(j.error)return state.err(j);
+    if(j.exists&&auto){const r=await loadMe();return r?done(r):state.err(ME_ERR||{})}j.exists?state.login(j):state.reg(j)}
   start()}
 function logout(){store.set("tb_signed",0);store.set("tb_login",null);ME=null;renderTopIcons();popAll();toast("Вы вышли из профиля");setTimeout(()=>authGate(true),400)}
 
@@ -3273,12 +3307,22 @@ function accLiveHTML(o,i){const{S,cur}=orderSteps(o),z=S[Math.max(0,cur)],col=OS
     ${e?`<div class="olv-cd"><small>ждём у вас</small><div class="n num">${esc(e.date)}</div><small>${e.days===1?"завтра":"через "+e.days+" "+plural(e.days,["день","дня","дней"])}</small></div>`:""}</div>
     <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#e0566a"/><stop offset=".38" stop-color="#3d93ea"/><stop offset=".72" stop-color="#9677f0"/><stop offset="1" stop-color="#2fc77a"/></linearGradient></defs>
     <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g><g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${(routePos(o)>0?OST.shipping:OST.bought)[2]}</g></g></svg></div><div class="olv-lbl"></div></button></div>`}
-function accLiveDraw(w,o){const rf=w.querySelector(".rf");if(!o||!rf||!rf.getTotalLength)return;
+/* нет заказа в пути: маршрут уже готов — ждёт первую (или следующую) посылку */
+const ACC_EMPTY_O={dest:"ua",status:"new",route:{buyCity:"Бутик"}};
+function accEmptyHTML(had){const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
+  return `<div class="olv acc-live" data-empty="1" style="--acc:#3d93ea;--acc2:#a6d4ff"><button class="olv-live press" data-act="gocat"><div class="olv-l1"><div class="olv-tx"><span class="olv-chip"><i></i>${had?"Маршрут свободен":"Маршрут готов"}</span><h2>${had?"Готовы к новой посылке":"Здесь поедет ваш заказ"}</h2></div>
+    <div class="olv-cd"><small>в Украину</small><div class="n">0 €</div><small>доставка</small></div></div>
+    <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#e0566a"/><stop offset=".38" stop-color="#3d93ea"/><stop offset=".72" stop-color="#9677f0"/><stop offset="1" stop-color="#2fc77a"/></linearGradient></defs>
+    <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g><g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${OST.shipping[2]}</g></g></svg></div><div class="olv-lbl"></div>
+    <span class="acc-cta">${had?"Выбрать следующую вещь":"Выбрать первую вещь"} ›</span></button></div>`}
+function accLiveDraw(w,o,idle){const rf=w.querySelector(".rf");if(!o||!rf||!rf.getTotalLength)return;
   const N=routeNodes(o),last=N.length-1,ua=(o.dest||"ua")==="ua",f=routePos(o)/last,L=rf.getTotalLength();if(!L)return;
   const ks=ua?["bought","shipping","np","delivered"]:["bought","shipping","delivered"],on=i=>i/last<=f+1e-3&&(i>0||["bought","shipping","np","delivered"].includes(o.status));
   w.querySelector(".nds").innerHTML=N.map((_,i)=>{const p=rf.getPointAtLength(L*i/last);return `<g class="nd ${on(i)?"on":""}" style="--c:${OST[ks[i]][0]}"><circle class="o" cx="${p.x}" cy="${p.y}" r="7"/></g>`}).join("");
   const lb=w.querySelector(".olv-lbl");lb.innerHTML=N.map((n,i)=>`<span class="${i===0?"a0":i===last?"a1":""} ${on(i)?"on":""}">${esc(n)}</span>`).join("");lb.style.gridTemplateColumns="minmax(0,1fr) ".repeat(last)+"auto";
-  rf.style.strokeDasharray=L;rf.style.strokeDashoffset=L*(1-f);const p=rf.getPointAtLength(L*f);w.querySelector(".cm").style.transform=`translate(${p.x}px,${p.y}px)`}
+  const set=f=>{rf.style.strokeDashoffset=L*(1-f);const p=rf.getPointAtLength(L*f);w.querySelector(".cm").style.transform=`translate(${p.x}px,${p.y}px)`};rf.style.strokeDasharray=L;set(f);
+  // пустой маршрут: машинка «пробует дорогу» — доезжает до трети пути и возвращается
+  if(idle&&!matchMedia("(prefers-reduced-motion: reduce)").matches){const t0=performance.now(),D=5200,tick=t=>{if(!w.isConnected)return;const k=((t-t0)%D)/D,e=k<.5?k*2:2-k*2;set(.34*(e<.5?2*e*e:1-Math.pow(-2*e+2,2)/2));requestAnimationFrame(tick)};requestAnimationFrame(tick)}}
 function orderRowHTML(o,i){const{S,cur}=orderSteps(o);const p=o.items&&o.items[0]&&findItem(o.items[0].id);
   return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):o.items&&o.items[0]&&o.items[0].photo?`<img src="${esc(o.items[0].photo)}" alt="" style="width:100%;height:100%;object-fit:contain">`:"<i></i>"}</span><span class="otx"><b>Заказ № ${esc(String(o.number).replace(/^TB-/,""))}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
     <span class="obar">${S.map((_,j)=>`<i class="${j<=cur?"on":""}"></i>`).join("")}</span></span><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}
@@ -3378,21 +3422,25 @@ function openAccount(){
     const reqs=srv?srv.filter(o=>o.kind!=="order"):[];
     box.innerHTML=`<div class="acc-head">${u?avatarHTML(u,"acc-av"):`<span class="acc-av">TB</span>`}<div><h2>${u?esc(u.name):"Профиль"}</h2><p>${u?(u.username?"@"+esc(u.username)+" · ":"")+"вход через Telegram":authBody()&&!ME_ERR?"Подключаем Telegram…":"вы не вошли"}</p></div></div>
     ${u?"":`<div class="pad" style="margin-bottom:6px"><button class="btn block" data-login>${I_TG} Войти или зарегистрироваться</button><p class="muted" style="font-size:12.5px;margin-top:8px;text-align:center">Через Telegram, без пароля. Заказы и адрес доставки сохранятся в профиле.</p></div>`}
-    <div class="qt"><button data-go="orders"><b class="num">${ords.length}</b><span>${plural(ords.length,["заказ","заказа","заказов"])}</span></button><button data-act="favs"><b class="num">${favs.size}</b><span>в избранном</span></button><button data-go="brands"><b class="num">${fb.length}</b><span>${plural(fb.length,["бренд","бренда","брендов"])}</span></button></div>
-    ${(()=>{const mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]),act=ords.find(o=>!["delivered","cancelled"].includes(o.status));
-      const nIn=ords.filter(o=>["shipping","np"].includes(o.status)).length,nOk=ords.filter(o=>o.status==="delivered").length,dv=myDelivery()||{};
-      const row=(go,ic,t,sub,bd)=>`<button class="s press" ${go}><span class="ic"><svg viewBox="0 0 24 24">${ic}</svg></span><div><b>${t}</b><small>${sub}</small></div>${bd?`<span class="bd num">${bd}</span>`:""}<span class="go">›</span></button>`;
-      return `${act?accLiveHTML(act,ords.indexOf(act)):""}
-      <div class="acl">Мой профиль</div><div class="acm">
-      ${row('data-go="orders"',OST.shipping[2],"Мои заказы",ords.length?[nIn&&nIn+" в пути",nOk&&nOk+" "+plural(nOk,["получен","получено","получено"]),!nIn&&!nOk&&ords.length+" "+plural(ords.length,["заказ","заказа","заказов"])].filter(Boolean).join(" · "):"пока нет заказов",nIn)}
-      ${row('data-act="favs"','<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',"Избранное",favs.size?favs.size+" "+plural(favs.size,["вещь","вещи","вещей"]):"сохраняйте понравившееся")}
-      ${row('data-go="sizes"','<path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/>',"Мои размеры",[prefs.shoe&&"обувь "+esc(prefs.shoe),prefs.cloth&&"одежда "+esc(prefs.cloth)].filter(Boolean).join(" · ")||"укажите — менеджер подберёт точнее")}
+    ${(()=>{const mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]),act=ords.find(o=>!["delivered","cancelled"].includes(o.status)),dv=myDelivery()||{};
+      const row=(go,ic,t,sub)=>`<button class="s press" ${go}><span class="ic"><svg viewBox="0 0 24 24">${ic}</svg></span><div><b>${t}</b><small>${sub}</small></div><span class="go">›</span></button>`;
+      const th=(p,ph)=>`<span class="th">${p?shapeSVG(p.shape,p.c,""):ph?`<img src="${esc(ph)}" alt="">`:""}</span>`;
+      const oName=o=>{const it=(o.items||[])[0];if(!it)return "Заказ № "+esc(String(o.number).replace(/^TB-/,""));const p=findItem(it.id),n=[it.brand||(p&&p.brand),it.title||(p&&p.name)].filter(Boolean).join(" · ")||"Заказ";return esc(n)+(o.items.length>1?` <i>+${o.items.length-1}</i>`:"")};
+      const FL=P.filter(p=>favs.has(p.id)).concat(RESALE.filter(r=>favs.has(r.id)));
+      return `${act?accLiveHTML(act,ords.indexOf(act)):accEmptyHTML(ords.length>0)}
+      <div id="accOrders">${ords.length||reqs.length?`<div class="acl"><span>Мои заказы</span>${ords.length?`<em class="num">${ords.length}</em>`:""}</div>
+      ${ords.length?`<div class="acx">${ords.map((o,i)=>{const it=(o.items||[])[0],p=it&&findItem(it.id);return `<button class="li press" data-oi="${i}">${th(p,it&&it.photo)}<div><b>${oName(o)}</b><small class="num">${[o.total&&eur(o.total),fmtD(o.createdAt)].filter(Boolean).join(" · ")}</small></div><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}).join("")}</div>`
+        :""}`:""}
+      ${reqs.length?`<div class="acx" style="margin-top:8px">${reqs.map(l=>`<div class="li"><div><b>${esc(LEAD_KIND[l.kind]||"Запрос")} ${esc(l.number)}</b><small>${fmtD(l.createdAt)}</small></div><em class="ost">${LEAD_ST[l.status]||l.status}</em></div>`).join("")}</div>`:""}</div>
+      <div class="acl"><span>Избранное</span>${FL.length?`<button data-act="favs">Все · <span class="num">${FL.length}</span></button>`:""}</div>
+      ${FL.length?`<div class="acx">${FL.slice(0,4).map(p=>{const r=p.id[0]==="r";return `<button class="li press" data-act="product" data-id="${p.id}">${th(p)}<div><b>${esc(p.brand)}</b><small>${esc(p.name)}</small></div><span class="pr num">${eur(r?p.price:priceFor(p,prefs.dest||"ua"))}</span></button>`}).join("")}</div>`
+        :`<p class="ace">Нажмите на сердце на товаре — он появится здесь.</p>`}
+      <div class="acl"><span>Мой профиль</span></div><div class="acm">
+      ${row('data-go="sizes"','<path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/>',"Мои размеры",[prefs.shoe&&"обувь "+esc(prefs.shoe),prefs.cloth&&"одежда "+esc(prefs.cloth)].filter(Boolean).join(" · ")||"обувь и одежда — сохраним для заказов")}
       ${row('data-go="deliv"',OST.np[2],"Доставка",esc([dv.city,(dv.npType==="courier"?dv.address&&"курьер":dv.npPoint&&(dv.npType==="locker"?"почтомат ":"отделение ")+dv.npPoint)].filter(Boolean).join(" · "))||"город и отделение Новой почты")}
       ${row('data-go="brands"','<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',"Мои бренды",fb.length?fb.slice(0,3).map(bk=>esc(bname(bk))).join(", ")+(fb.length>3?" и ещё "+(fb.length-3):""):"следите за новинками любимых брендов")}
       </div>
-      <a class="mgrc press" href="${esc(mgr.url)}" target="_blank" rel="noopener"><span class="mav">TB</span><span class="mtx"><b>Ваш персональный менеджер</b><small>Найдёт вещь по фото, подберёт размер, ответит на вопросы</small></span><span class="mgo">›</span></a>`})()}
-    <div class="sec" id="accOrders"><div class="sech"><h2>Мои заказы</h2></div><div class="pad ordl2">${ords.length?ords.map(orderRowHTML).join(""):`<div class="empty"><h3>Заказов пока нет</h3><p>Оформленные заказы появятся здесь — с маршрутом посылки от бутика до вашей двери.</p></div>`}</div>
-     ${reqs.length?`<div class="sech" style="margin-top:18px"><h2>Мои заявки</h2></div>${reqs.map(l=>`<div class="ordl"><span>${esc(LEAD_KIND[l.kind]||"Запрос")} ${esc(l.number)}<small>${fmtD(l.createdAt)}</small></span><em>${LEAD_ST[l.status]||l.status}</em></div>`).join("")}`:""}</div>
+      <a class="mgrc press" href="${esc(mgr.url)}" target="_blank" rel="noopener"><span class="mav">TB</span><span class="mtx"><b>Связаться с менеджером</b><small>Вопросы о заказе, наличии и доставке</small></span><span class="mgo">›</span></a>`})()}
     <div class="sec" id="accDeliv"><div class="sech"><h2>Доставка</h2></div><div class="pad">${deliveryFormHTML(myDelivery(),"ua")}<button class="btn block" data-dsave style="margin-top:12px">Сохранить</button></div></div>
     <div class="sec" id="accSizes"><div class="sech"><h2>Мои размеры</h2></div>
      <div class="prefs">
@@ -3408,7 +3456,7 @@ function openAccount(){
     {const lg=box.querySelector("[data-login]");if(lg)lg.onclick=()=>authGate(true);const lo=box.querySelector("[data-logout]");if(lo)lo.onclick=logout}
     wireDeliveryForm(box);box.querySelector("[data-priv]").onclick=e=>{e.preventDefault();openPrivacy()};
     box.querySelector("[data-dsave]").onclick=async e=>{const v=readDeliveryForm(box),b=e.currentTarget;b.disabled=true;await saveDelivery(v).catch(()=>{});b.disabled=false;toast("Данные доставки сохранены")};
-    box.querySelectorAll("[data-oi]").forEach(b=>b.onclick=()=>openOrder(ords[+b.dataset.oi]));box.querySelectorAll(".acc-live").forEach(w=>accLiveDraw(w,ords[+w.querySelector("[data-oi]").dataset.oi]));
+    box.querySelectorAll("[data-oi]").forEach(b=>b.onclick=()=>openOrder(ords[+b.dataset.oi]));box.querySelectorAll(".acc-live").forEach(w=>w.dataset.empty?accLiveDraw(w,ACC_EMPTY_O,true):accLiveDraw(w,ords[+w.querySelector("[data-oi]").dataset.oi]));
     const save=()=>{prefs={shoe:box.querySelector("#pShoe").value,cloth:box.querySelector("#pCloth").value,dest:box.querySelector("#pDest").value};store.set("tb_prefs",prefs);toast("Сохранено")};
     ["#pShoe","#pCloth","#pDest"].forEach(id=>box.querySelector(id).onchange=save);
     box.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{const t=box.querySelector({orders:"#accOrders",sizes:"#accSizes",deliv:"#accDeliv"}[b.dataset.go]||"#accBrands");s.querySelector(".scroll").scrollTo({top:t.offsetTop-60,behavior:"smooth"})});

@@ -6,6 +6,8 @@
  *  /id    — номер этого чата (для TELEGRAM_MANAGER_CHAT)
  */
 import { createHash, timingSafeEqual } from "node:crypto";
+import { getStore } from "../lib/store.js";
+import { confirmLoginCode } from "../lib/tgauth.js";
 
 export const botToken = () => process.env.TELEGRAM_BOT_TOKEN || "";
 export const hookSecret = (t = botToken()) => createHash("sha256").update("tbhook|" + t).digest("hex").slice(0, 40);
@@ -71,10 +73,20 @@ export default async function handler(req, res) {
   if (got.length !== want.length || !timingSafeEqual(got, want)) { res.statusCode = 401; return res.end(); }
   let u = req.body; if (typeof u === "string") { try { u = JSON.parse(u); } catch { u = {}; } }
   const m = u?.message, cq = u?.callback_query;
-  if (m?.chat?.id && typeof m.text === "string" && m.text.startsWith("/")) {
+  const lg = m?.chat?.id && typeof m.text === "string" && m.text.match(/^\/start\s+login_([a-f0-9]{24})$/);
+  if (lg) {
+    // вход на сайт: просим подтвердить кнопкой (а не сразу по ссылке) — так чужую ссылку случайно не подтвердить
+    try { await tg("sendMessage", { chat_id: m.chat.id, text: "Вход на сайт Trend Büro\n\nНажмите кнопку, чтобы войти в свой кабинет на сайте. Если вы не входили — просто проигнорируйте сообщение.", reply_markup: { inline_keyboard: [[{ text: "Войти на сайт", callback_data: "lg:" + lg[1] }]] } }); } catch {}
+  } else if (m?.chat?.id && typeof m.text === "string" && m.text.startsWith("/")) {
     try { await send(m.chat.id, replyFor(m.text, publicUrl(req), m.chat.id)); } catch {}
   } else if (cq?.id) {
-    try { await tg("answerCallbackQuery", { callback_query_id: cq.id }); } catch {}
+    if (!/^lg:/.test(cq.data || "")) { try { await tg("answerCallbackQuery", { callback_query_id: cq.id }); } catch {} }
+    if (/^lg:[a-f0-9]{24}$/.test(cq.data || "")) {
+      let ok = null; try { ok = await confirmLoginCode(getStore(), cq.data.slice(3), cq.from); } catch {}
+      try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: ok ? "Готово — вы вошли на сайте" : "Ссылка устарела. Нажмите «Войти» на сайте ещё раз." }); } catch {}
+      if (ok && cq.message?.chat?.id) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: "✓ Вы вошли на сайте Trend Büro. Вернитесь на вкладку сайта — кабинет уже открыт." }); } catch {} }
+      return done();
+    }
     if (cq.data === "how" && cq.message?.chat?.id) { try { await send(cq.message.chat.id, replyFor("/how", publicUrl(req), cq.message.chat.id)); } catch {} }
   }
   return done();
