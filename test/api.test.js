@@ -448,3 +448,40 @@ test("уведомления админу: подключить свой Telegra
     assert.equal((await call(handler, { query: { a: "notifyGet" }, headers: { cookie: ck } })).body.chats.length, 0);
   } finally { await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H }); globalThis.fetch = f0; delete process.env.TELEGRAM_BOT_TOKEN; resetAccessMemo(); }
 });
+
+test("админ-бот: уведомления идут через отдельный бот; без его вебхука — кнопка «Открыть заявки в админке»", async () => {
+  const { signSess } = await import("../lib/tgauth.js");
+  const me = (await import("../api/me.js")).default, adminbot = (await import("../api/adminbot.js")).default, { hookSecret } = await import("../api/bot.js");
+  const { resetAccessMemo, NOTIFY_ID } = await import("../lib/access.js");
+  const T = "9:tok", A = "7:admintok"; process.env.TELEGRAM_BOT_TOKEN = T; process.env.TELEGRAM_ADMIN_BOT_TOKEN = A; process.env.PUBLIC_URL = "https://tb.test";
+  const sent = [], f0 = globalThis.fetch; let hookUrl = "";
+  globalThis.fetch = async (u, o) => { const b = JSON.parse(o.body), m = String(u).split("/").pop(), tok = String(u).match(/bot([^/]+)\//)[1]; sent.push({ m, b, tok });
+    if (m === "setWebhook") hookUrl = b.url;
+    return { ok: true, status: 200, json: async () => ({ ok: true, result: m === "getWebhookInfo" ? { url: hookUrl } : { username: tok === A ? "tb_admin0021_bot" : "tb_bot" } }) }; };
+  const ck = await adminCookie(), H = { cookie: ck, "x-tb": "1" };
+  try {
+    await store.put({ _id: NOTIFY_ID, _type: "settings", chats: [{ id: 900, name: "Д" }] });
+    await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: true }, headers: H }); resetAccessMemo();
+    await call(me, { method: "POST", body: { sess: signSess({ id: 91, name: "Ян" }, T), a: "register", name: "Ян" } });
+    const toAdm = sent.filter(x => x.b.chat_id === "900");
+    assert.equal(toAdm.length, 1); assert.equal(toAdm[0].tok, A, "через админ-бот");
+    assert.match(toAdm[0].b.reply_markup.inline_keyboard[0][0].web_app.url, /admin\.html#customers/);
+    assert.ok(sent.some(x => x.b.chat_id === 91 && x.tok === T), "клиенту — от бота магазина");
+    // подключить кнопки: вебхук админ-бота
+    const st = await call(handler, { method: "POST", query: { a: "adminBotSetup" }, body: {}, headers: H });
+    assert.equal(st.status, 200); assert.equal(hookUrl, "https://tb.test/api/adminbot");
+    await call(me, { method: "POST", body: { sess: signSess({ id: 92, name: "Ника" }, T), a: "register", name: "Ника" } });
+    const m2 = sent.filter(x => x.b.chat_id === "900").pop();
+    assert.equal(m2.b.reply_markup.inline_keyboard[0][0].callback_data, "ac:ok:92");
+    const run = body => new Promise(res => { const r = { statusCode: 0, setHeader() {}, end() { res(r); } }; adminbot({ method: "POST", headers: { "x-telegram-bot-api-secret-token": hookSecret(A) }, body }, r); });
+    await run({ callback_query: { id: "q", data: "ac:ok:92", from: { id: 900 }, message: { chat: { id: 900 }, message_id: 1, text: "Заявка" } } });
+    assert.equal((await call(me, { method: "POST", body: { sess: signSess({ id: 92, name: "Ника" }, T) } })).body.access, "ok");
+    assert.ok(sent.some(x => x.m === "editMessageText" && x.tok === A));
+    const bad = await new Promise(res => { const r = { statusCode: 0, setHeader() {}, end() { res(r); } }; adminbot({ method: "POST", headers: { "x-telegram-bot-api-secret-token": hookSecret(T) }, body: {} }, r); });
+    assert.equal(bad.statusCode, 401, "чужой секрет не принимается");
+    // занятый другим сервисом бот без «всё равно» не трогаем
+    hookUrl = "https://other.example/hook";
+    assert.equal((await call(handler, { method: "POST", query: { a: "adminBotSetup" }, body: {}, headers: H })).status, 409);
+    assert.equal(hookUrl, "https://other.example/hook");
+  } finally { await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H }); globalThis.fetch = f0; delete process.env.TELEGRAM_BOT_TOKEN; delete process.env.TELEGRAM_ADMIN_BOT_TOKEN; delete process.env.PUBLIC_URL; resetAccessMemo(); }
+});

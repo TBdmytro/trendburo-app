@@ -19,11 +19,11 @@ import { toStorefront, genderOf } from "../lib/catalog.js";
 import { saveManualProduct, updateWebProduct, markWebGone } from "../lib/manual.js";
 import { LEAD_STATUS, notifyClient } from "./lead.js";
 import { makeManualOrder, clientStats, customerId } from "../lib/customers.js";
-import { accessSettings, accessOf, setClosed, setAccess, adminLinkCode, adminUnlink, NOTIFY_ID } from "../lib/access.js";
+import { accessSettings, accessOf, setClosed, setAccess, adminLinkCode, adminUnlink, NOTIFY_ID, adminBotToken } from "../lib/access.js";
 import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier, listCollections, saveCollections } from "../lib/suppliers.js";
 import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
 import { readScreen, screensEnabled, ScreenError } from "../lib/screens.js";
-import { setupBot, botToken, publicUrl, tg } from "./bot.js";
+import { setupBot, botToken, publicUrl, tg, hookSecret } from "./bot.js";
 import { listItems, saveItem, deleteItems, reorder, setActive, getSite, saveSite, seedRails, FEED_BLOCKS, TEXTS, KINDS, bannerStats, THEME_PRESETS, CAT_COLORS } from "../lib/cms.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
@@ -722,15 +722,32 @@ export default async function handler(req, res) {
       }
       case "notifyGet": {
         const d = await store.get(NOTIFY_ID);
-        return send(res, 200, { chats: (d?.chats || []).map(c => ({ id: String(c.id), name: c.name, username: c.username, at: c.at })), env: !!process.env.TELEGRAM_MANAGER_CHAT, token: !!process.env.TELEGRAM_BOT_TOKEN });
+        const ab = { token: !!adminBotToken(), hook: !!d?.adminHook };
+        if (ab.token) { try { const T = { token: adminBotToken() }; ab.username = (await tg("getMe", {}, T)).username; const h = await tg("getWebhookInfo", {}, T); ab.hook = !!h.url && h.url.endsWith("/api/adminbot"); ab.busy = !!h.url && !ab.hook ? new URL(h.url).host : ""; } catch (e) { ab.error = String(e.message).slice(0, 120); } }
+        return send(res, 200, { chats: (d?.chats || []).map(c => ({ id: String(c.id), name: c.name, username: c.username, at: c.at })), env: !!process.env.TELEGRAM_MANAGER_CHAT, token: !!process.env.TELEGRAM_BOT_TOKEN, adminBot: ab });
       }
       case "notifyLink": {
         // одноразовая ссылка в бота: открыть её может только тот, кто вошёл в админку
         if (!process.env.TELEGRAM_BOT_TOKEN) return send(res, 400, { error: "Бот не подключён" });
-        const code = await adminLinkCode(store, me.name);
-        let bot = ""; try { bot = (await tg("getMe")).username; } catch {}
+        const code = await adminLinkCode(store, me.name), nd = await store.get(NOTIFY_ID);
+        // ссылка ведёт в админ-бот, если он подключён с кнопками; иначе — в бот магазина (уведомления всё равно пойдут через админ-бот)
+        const useAdmin = adminBotToken() && nd?.adminHook;
+        let bot = ""; try { bot = (await tg("getMe", {}, useAdmin ? { token: adminBotToken() } : undefined)).username; } catch {}
         if (!bot) return send(res, 502, { error: "Telegram не ответил, попробуйте ещё раз" });
         return send(res, 200, { url: `https://t.me/${bot}?start=admin_${code}` });
+      }
+      case "adminBotSetup": {
+        // вебхук админ-бота → /api/adminbot (кнопки «Открыть доступ» прямо в чате). Если бот уже привязан к другому сервису — не трогаем без явного «всё равно».
+        const tok = adminBotToken(); if (!tok) return send(res, 400, { error: "Добавьте в Vercel TELEGRAM_ADMIN_BOT_TOKEN и сделайте Redeploy" });
+        const T = { token: tok };
+        try {
+          const h = await tg("getWebhookInfo", {}, T);
+          if (h.url && !h.url.endsWith("/api/adminbot") && !body.force) return send(res, 409, { error: "Этот бот уже подключён к другому сервису: " + new URL(h.url).host, busy: new URL(h.url).host });
+          await tg("setWebhook", { url: publicUrl(req) + "/api/adminbot", secret_token: hookSecret(tok), allowed_updates: ["message", "callback_query"], drop_pending_updates: true }, T);
+          const d = (await store.get(NOTIFY_ID)) || { _id: NOTIFY_ID, _type: "settings", chats: [] };
+          d.adminHook = true; await store.put(d);
+          return send(res, 200, { ok: true, username: (await tg("getMe", {}, T)).username });
+        } catch (e) { return send(res, 400, { error: e.message }); }
       }
       case "notifyUnlink": {
         await adminUnlink(store, String(body.id || "")); return send(res, 200, { ok: true });
