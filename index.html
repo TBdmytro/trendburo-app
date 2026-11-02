@@ -119,6 +119,19 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 /* ===== Каталог v3: новости · Для неё/него · бренды плитками · категории · ещё ===== */
 #homeBody>:not(#cv3){display:none!important}
 #cv3{padding-bottom:8px}
+/* коллекции брендов */
+.collw .sech{align-items:center}.cseg{display:flex;background:var(--bg2,#f2f3f4);border-radius:999px;padding:3px}.cseg button{border:0;background:none;font:600 12px Onest,sans-serif;color:#8a8d93;padding:7px 11px;border-radius:999px}.cseg button[aria-pressed=true]{background:#26282c;color:#fff}
+.collrail{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 16px 4px;margin:0 -16px;scrollbar-width:none}.collrail::-webkit-scrollbar{display:none}
+.collc{flex:none;width:78%;max-width:300px;aspect-ratio:2/3;border:0;border-radius:26px;position:relative;overflow:hidden;background:#2a2b2e center top/cover no-repeat;scroll-snap-align:start;text-align:left;color:#fff;padding:0}
+.collc .sh,.collm .sh,.collhd .sh,.sv2 .cin .sh{position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,18,20,0) 45%,rgba(18,18,20,.75))}
+.collc .bars{position:absolute;left:12px;right:12px;top:12px;display:flex;gap:3px}.collc .bars i{flex:1;height:2.5px;border-radius:2px;background:rgba(255,255,255,.4)}.collc .bars i.on{background:#fff}
+.collc .tx{position:absolute;left:16px;right:16px;bottom:16px;display:flex;flex-direction:column}.collc .k,.collm .k,.collhd .k,.sv2 .cin .k{font:600 9.5px Onest,sans-serif;letter-spacing:.2em;text-transform:uppercase;opacity:.82}
+.collc b{font:400 28px/1.02 Prata,serif;margin-top:6px}.collc .ft{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font:600 12.5px Onest,sans-serif;opacity:.92}.collc .go{width:36px;height:36px;border-radius:50%;background:#fff;color:#26282c;display:grid;place-items:center;font:600 18px Onest,sans-serif}
+.collmr{display:flex;gap:10px;overflow-x:auto;padding:2px 16px 4px;margin:0 -16px;scrollbar-width:none}.collmr::-webkit-scrollbar{display:none}
+.collm{flex:none;width:118px;height:150px;border:0;border-radius:16px;position:relative;overflow:hidden;background:#2a2b2e center top/cover no-repeat;color:#fff;text-align:left;padding:0}.collm .tx{position:absolute;left:9px;right:8px;bottom:8px;display:flex;flex-direction:column}.collm b{font:400 15px/1.05 Prata,serif;margin-top:2px}.collm .dot{position:absolute;right:8px;top:8px;width:8px;height:8px;border-radius:50%;background:#e8452c;box-shadow:0 0 0 2px #fff;z-index:1}
+.collhd{position:relative;border-radius:22px;overflow:hidden;min-height:220px;background:#2a2b2e center 20%/cover no-repeat;color:#fff;display:flex;align-items:flex-end}.collhd .tx{position:relative;padding:16px 18px;display:flex;flex-direction:column}.collhd b{font:400 30px/1.02 Prata,serif;margin-top:6px}.collhd p{font:400 13px/1.4 Onest,sans-serif;opacity:.88;margin:8px 0 0}.collhd .n{font:600 12px Onest,sans-serif;opacity:.8;margin-top:10px}
+.sv2 .cin{position:absolute;inset:0;background:#17181b center top/cover no-repeat;color:#fff}.sv2 .cin .tx{position:absolute;left:20px;right:20px;bottom:calc(40px + var(--sb,0px));display:flex;flex-direction:column}.sv2 .cin h2{font:400 40px/1 Prata,serif;margin:8px 0 0}.sv2 .cin p{font:400 14px/1.45 Onest,sans-serif;opacity:.88;margin:10px 0 0}
+.sv2 .cin .cta{position:relative;z-index:30;align-self:flex-start;margin-top:16px;border:0;background:#fff;color:#26282c;border-radius:999px;padding:12px 18px;font:600 14px Onest,sans-serif}
 .cvnews{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 18px;scrollbar-width:none;padding:2px 18px 0;overscroll-behavior-x:contain}.cvnews::-webkit-scrollbar{display:none}
 .cvn{flex:0 0 calc(100% - 46px);align-items:flex-start;scroll-snap-align:start;height:156px;border-radius:24px;border:0;padding:16px;position:relative;text-align:left;display:flex;flex-direction:column;justify-content:space-between;font:inherit;color:var(--fg);background:var(--soft);overflow:hidden}
 .cvn.d{background:var(--ink-grad);color:#fff}.cvn>span:first-child{width:100%}
@@ -1489,6 +1502,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
       <div class="sec watch" id="watchSec" hidden><div class="sech"><h2>Мониторинг</h2><button class="more" data-act="watch-lock">Скрыть</button></div><div class="wtiles" id="watchTiles"></div></div>
       <div class="announce" id="announce" hidden></div>
       <div class="stories" id="stories"></div>
+      <div class="sec collw" id="collRail" hidden></div>
       <div class="bnr" id="bnr" hidden></div>
       <div class="ship" hidden><div><small id="shipTitle">Отправки в Украину</small><b id="shipDate"></b></div><span class="pulse" aria-hidden="true"></span></div>
       <button class="o-entry press" data-act="tab" data-tab="optix" aria-label="Открыть OPTIX" hidden>
@@ -1895,6 +1909,7 @@ function renderFeed(){
   const L=NEWS[0]||null,lp=L&&P.find(p=>p.id===L.pid);$("#leadNews").closest(".sec").hidden=!(L&&lp);if(L&&lp)
   $("#leadNews").innerHTML=`<button class="lead-news press" data-act="news" data-id="${L.id}" style="--c:${lp.c}"><div class="art">${lightShape(lp.shape,lp.c)}</div><div class="tx"><span class="cap">${esc(BRANDS.find(b=>b[0]===L.bk)[1])} · ${L.tag}</span><h3>${esc(L.title)}</h3><p>${esc(L.text)}</p></div></button>`;
   $("#newsList").innerHTML=NEWS.slice(1).map(n=>{const p=P.find(x=>x.id===n.pid);return `<button class="newsrow press" data-act="news" data-id="${n.id}" style="--c:${p.c}"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div><span class="cap">${esc(BRANDS.find(b=>b[0]===n.bk)[1])} · ${n.when}</span><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div></button>`}).join("");}
+  try{renderFeedColl()}catch(e){}
   $("#newRail").innerHTML=P.filter(p=>p.isNew).slice(0,10).map(pcHTML).join("");
   $("#bagRail").innerHTML=P.filter(p=>p.cat==="bags"&&p.price<=3000).slice(0,12).map(pcHTML).join("");
   $("#menRail").innerHTML=P.filter(p=>p.g==="m").slice(0,12).map(pcHTML).join("");
@@ -2780,6 +2795,7 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
      <span class="cap">${BRAND_META[bk]||""}</span><h1>${esc(bn)}</h1>
      <div class="meta num"><span>${all.length} ${plural(all.length,["товар","товара","товаров"])}</span><span>от ${eur(Math.min(...all.map(p=>p.price)))}</span>${all.some(p=>p.isNew)?`<span>${all.filter(p=>p.isNew).length} новинки</span>`:""}${ICONS.some(ic=>ic.bk===bk)?`<span>${ICONS.filter(ic=>ic.bk===bk).length} моделей под заказ</span>`:""}</div>
      <div class="acts"><button class="btn sm follow" data-follow aria-pressed="${follows.has(bk)}">${follows.has(bk)?"Вы следите":"Следить"}</button><button class="btn sm soft" data-req>Найти модель</button></div></div>
+   ${(()=>{const L=COLL.filter(c=>c.ids.some(id=>all.some(p=>p.id===id)));return L.length?`<div class="sec"><div class="sech"><h2>Коллекции</h2><span class="muted" style="font-size:13px">${L.length}</span></div><div class="collmr">${L.map(c=>collCardHTML(c,false)).join("")}</div></div>`:""})()}
    ${ICONS.some(ic=>ic.bk===bk)?`<div class="sec"><div class="sech"><h2>Культовые модели</h2><span class="muted" style="font-size:13px">под заказ</span></div><div class="hrail">${ICONS.filter(ic=>ic.bk===bk).map(icHTML).join("")}</div></div>`:""}
    ${(()=>{const bs=all.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best).slice(0,16),nw2=all.filter(p=>p.isNew).sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,16);
      // отдельные блоки: бестселлеры бренда (в его порядке) и новинки — как разделы на сайте самого бренда
@@ -2842,6 +2858,21 @@ function openStory(bk){
 
 /* ===== Истории из каталога: рубрики собираются сами, каждый день новый набор, просмотренное уходит в конец ===== */
 let AUTO=[];
+/* Коллекции брендов (Dior Cruise 2027…): из админки «Коллекции». Кружок в историях, большие карточки в ленте, строка на странице бренда */
+let COLL=[];
+const collG=c=>!c.g||c.g==="u"||c.g===CV.g||(CV.g==="w"&&c.g==="k"&&false);
+const collSeen=id=>{try{return (JSON.parse(localStorage.getItem("tb_cseen")||"[]")).includes(id)}catch(e){return false}};
+const collMark=id=>{try{const a=JSON.parse(localStorage.getItem("tb_cseen")||"[]");if(!a.includes(id)){a.push(id);localStorage.setItem("tb_cseen",JSON.stringify(a.slice(-200)))}}catch(e){}};
+const collFrom=c=>{const L=P.filter(p=>c._ids?c._ids.has(p.id):(c._ids=new Set(c.ids)).has(p.id));return L.length?Math.min(...L.map(p=>p.price)):0};
+function openColl(id){const c=COLL.find(x=>x.id===id);if(!c)return;collMark(id);clearFilters();F.ids=new Set(c.ids);tab("catalog");showItems(c.brand+" · "+c.title);
+  const bx=$("#catItemsBn");if(bx){bx.hidden=false;bx.innerHTML=`<div class="collhd"${c.cover?` style="background-image:url('${esc(szU(c.cover,1000))}')"`:""}><div class="sh"></div><div class="tx"><span class="k">Коллекция · ${esc(c.brand)}</span><b>${esc(c.title)}</b>${c.desc?`<p>${esc(c.desc)}</p>`:""}<span class="n num">${c.n} ${plural(c.n,["вещь","вещи","вещей"])}</span></div></div>`}
+  try{renderFeedColl()}catch(e){}}
+const collCardHTML=(c,big)=>big?`<button class="collc press" data-coll="${esc(c.id)}"${c.cover?` style="background-image:url('${esc(szU(c.cover,900))}')"`:""}><span class="sh"></span><span class="bars"><i class="on"></i><i></i><i></i><i></i></span><span class="tx"><span class="k">${esc(c.brand)} · ${collSeen(c.id)?"коллекция":"новая коллекция"}</span><b>${esc(c.title)}</b><span class="ft"><span class="num">${c.n} ${plural(c.n,["вещь","вещи","вещей"])}${collFrom(c)?" · от "+eur(collFrom(c)):""}</span><span class="go" aria-hidden="true">›</span></span></span></button>`
+  :`<button class="collm press" data-coll="${esc(c.id)}"${c.cover?` style="background-image:url('${esc(szU(c.cover,500))}')"`:""}>${collSeen(c.id)?"":'<i class="dot"></i>'}<span class="sh"></span><span class="tx"><span class="k">${esc(c.brand)}</span><b>${esc(c.title)}</b></span></button>`;
+function renderFeedColl(){const box=$("#collRail");if(!box)return;const L=COLL.filter(collG);box.hidden=!L.length;if(!L.length){box.innerHTML="";return}
+  box.innerHTML=`<div class="sech"><h2>Новые коллекции</h2><div class="cseg" role="group" aria-label="Для кого"><button data-cg="w" aria-pressed="${CV.g==="w"}">Для неё</button><button data-cg="m" aria-pressed="${CV.g==="m"}">Для него</button></div></div><div class="collrail">${L.map(c=>collCardHTML(c,true)).join("")}</div>`}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-coll]");if(b&&!b.closest(".sv2")){e.preventDefault();openColl(b.dataset.coll);return}
+  const g=e.target.closest("[data-cg]");if(g){CV.g=g.dataset.cg;store.set("tb_g",CV.g);try{renderFeedColl();AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}}});
 const SVSEEN=(()=>{const o=store.get("tb_svseen",{}),cut=Date.now()-14*864e5;Object.keys(o).forEach(k=>{if(o[k]<cut)delete o[k]});return o})();
 const svDay0=()=>{const d=new Date();d.setHours(0,0,0,0);return +d};
 // видел раньше (за прошлые 7 дней, но не сегодня) — уходит в конец; сегодняшний набор весь день один и тот же
@@ -2857,10 +2888,11 @@ const svFresh=(list,salt,n=10)=>{const a=svShuffle(list,salt),o=[],late=[];for(c
 const svImg=(p,j=0)=>p.imgs&&p.imgs[j]?p.imgs[j]:null;
 let PV=0,AUTOC=null;
 function buildAuto(){const key=PV+"|"+daySeed()+"|"+(prefs.dest||"ua");if(AUTOC&&AUTOC.key===key){autoSeen(AUTOC.R);return AUTOC.R}const R=buildAuto0();AUTOC={key,R};return R}
-const autoSeen=R=>R.forEach(r=>{r.seen=r.build().every(s=>s.t==="in"||(s.p?svToday(s.p.id):s.t==="du"?svToday(s.a.id)&&svToday(s.b.id):true))});
+const autoSeen=R=>R.forEach(r=>{r.seen=r.coll?collSeen(r.coll.id):r.build().every(s=>s.t==="in"||(s.p?svToday(s.p.id):s.t==="du"?svToday(s.a.id)&&svToday(s.b.id):true))});
 function buildAuto0(){
   const W=P.filter(p=>svImg(p)),d=prefs.dest||"ua",pr=p=>priceFor(p,d);if(W.length<2)return[];
   const R=[];let salt=0;
+  COLL.filter(collG).forEach(c=>{const ids=new Set(c.ids),pool=W.filter(p=>ids.has(p.id));if(!pool.length)return;salt++;const s0=salt;R.push({k:"col:"+c.id,name:c.brand,coll:c,pool,build:()=>[{t:"cin"}].concat(svFresh(pool,s0).map(p=>({t:"p",p})))})});
   const add=(o,pool)=>{if(pool.length>=(o.min||1)){salt++;const s=salt;R.push({...o,pool,build:o.build||(()=>{const l=svFresh(pool,s);return (o.intro&&pool.length>=4?[{t:"in",ps:svShuffle(pool,s+1).slice(0,4)}]:[]).concat(l.map(p=>({t:"p",p})))})})}};
   add({k:"new",name:"Новинки",tag:"NEW",intro:{k:"Только что",h:"Новинки",d:"Новое в каталоге"}},W.filter(p=>p.isNew));
   add({k:"sale",name:"Скидки",tag:"−%"},W.filter(p=>p.sale));
@@ -2874,7 +2906,7 @@ function buildAuto0(){
   if(TH.length){const t=TH[daySeed()%TH.length];add({k:"day:"+t[0],name:t[0],intro:{k:"Подборка дня",h:t[0],d:"Каждый день новая тема"}},t[1])}
   const cnt={};W.forEach(p=>cnt[p.bk]=(cnt[p.bk]||0)+1);
   Object.keys(cnt).filter(k=>cnt[k]>=2).sort((a,b)=>cnt[b]-cnt[a]).slice(0,8).forEach(k=>{const pool=W.filter(p=>p.bk===k);add({k:"b:"+k,name:pool[0].brand,brand:k},pool)});
-  R.forEach(r=>{const c=svFresh(r.pool,1,1)[0]||r.pool[0];r.cover=svImg(c).thumb});autoSeen(R);
+  R.forEach(r=>{const c=svFresh(r.pool,1,1)[0]||r.pool[0];r.cover=r.coll&&r.coll.cover?szU(r.coll.cover,300):svImg(c).thumb});autoSeen(R);
   return R}
 const SVIC={new:'<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1-5.1-1.9 5.1-1.9z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
   sale:'<path d="M3.5 12.6V4.5a1 1 0 0 1 1-1h8.1l8 8a1.4 1.4 0 0 1 0 2l-6.6 6.6a1.4 1.4 0 0 1-2 0z"/><circle class="f" cx="8.2" cy="8.2" r="1.5"/>',
@@ -2894,6 +2926,7 @@ function openAuto(ri){
   // заранее: загрузка следующего слайда и разбор фото его товаров (чтобы кадр и раскладка были готовы к показу)
   const pre=s=>{if(!s)return;[s.p,s.a,s.b].filter(Boolean).forEach(p=>shpProduct(p,3));const u=srcOf(s);if(u){const m=new Image();m.crossOrigin="anonymous";m.src=u;if(s.t==="du"){const m2=new Image();m2.crossOrigin="anonymous";m2.src=svImg(s.b,bestIdx(s.b)).src}}};
   const slideH=(R,s)=>{
+    if(s.t==="cin"){const c=R.coll;collMark(c.id);return `<div class="cin"${c.cover?` style="background-image:url('${esc(szU(c.cover,1000))}')"`:""}><div class="sh"></div><div class="tx"><span class="k">Новая коллекция · ${esc(c.brand)}</span><h2>${esc(c.title)}</h2>${c.desc?`<p>${esc(c.desc)}</p>`:""}<button class="cta" data-collgo="${esc(c.id)}">Смотреть ${c.n} ${plural(c.n,["вещь","вещи","вещей"])} ›</button></div></div>`}
     if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
     if(s.t==="du")return `<div class="du ${duLay(s.a,s.b)}">${[s.a,s.b].map((p,j)=>duCardH(p,j)).join("")}<span class="vs">VS</span></div><div class="duh">смахните неинтересное · тап по карточке — открыть</div>`;
     const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
@@ -2952,6 +2985,7 @@ function openAuto(ri){
     const cur=[...cb.querySelectorAll(".sl")].pop()||cb;
     const f=cur.querySelector("[data-f]");if(f)f.onclick=()=>{toggleFav(s.p.id);const on=favs.has(s.p.id);f.textContent=on?"♥":"♡";f.classList.toggle("on",on);hap("light")};
     const g=cur.querySelector("[data-go]");if(g)g.onclick=()=>{const id=s.p.id;close(true);openProduct(id)};
+    const cg=cur.querySelector("[data-collgo]");if(cg)cg.onclick=e=>{e.stopPropagation();const id=cg.dataset.collgo;close(true);openColl(id)};
     cur.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const cs=s.p.colors.filter(c=>c.idx>=0||c.image),c=cs[+b.dataset.c],im=cur.querySelector(".st img");
       im.removeAttribute("style");im.classList.remove("fit");im.src=c.idx>=0&&svImg(s.p,c.idx)?svImg(s.p,c.idx).src:c.image;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");
       cur.querySelectorAll("[data-c]").forEach(x=>x.classList.toggle("on",x===b));el=Math.min(el,DUR*.3);hap()});
@@ -3602,7 +3636,8 @@ function applyLayout(feed){if(!Array.isArray(feed))return;
   const end=$("#feedNote");if(!end)return;
   feed.forEach(b=>{const e=el[b.id];if(!e)return;end.parentNode.insertBefore(e,end);b.on?e.removeAttribute("data-off"):e.setAttribute("data-off","");if(b.title)FEED_TITLE[b.id]=b.title});
   if(FEED_TITLE.news)$("#newsTitle").textContent=FEED_TITLE.news;if(FEED_TITLE.ship)$("#shipTitle").textContent=FEED_TITLE.ship;
-  const le=$(".live-empty");if(le&&el.ship)el.ship.after(le)}
+  const le=$(".live-empty");if(le&&el.ship)el.ship.after(le);
+  {const cr=$("#collRail"),stb=$("#stories");if(cr&&stb)stb.after(cr)}}
 function applyTexts(s){const T=s.texts||{};TX=T;$$("[data-t]").forEach(e=>{const k=e.dataset.t;if(!e.dataset.t0)e.dataset.t0=e.textContent;e.textContent=T[k]||e.dataset.t0});
   ["concierge","travel","resale"].forEach(k=>{if(!SVC[k])return;if(T["svc."+k+".cap"])SVC[k].cap=T["svc."+k+".cap"];if(T["svc."+k+".title"])SVC[k].title=T["svc."+k+".title"];if(T["svc."+k+".long"])SVC[k].text=T["svc."+k+".long"]});
   const hid=s.hiddenServices||[];$$("[data-svc]").forEach(e=>hid.includes(e.dataset.svc)?e.setAttribute("data-off",""):e.removeAttribute("data-off"))}
@@ -3759,7 +3794,7 @@ async function catLocal(){try{if(!window.caches)return null;const c=await caches
 async function catSave(txt){try{if(!window.caches)return;const c=await caches.open(CATSTO);await c.put(CATK,new Response(txt,{headers:{"content-type":"application/json"}}))}catch(e){}}
 async function catNet(){const r=await fetch(CATK);const t=await r.text();const j=JSON.parse(t);const ok=r.ok&&Array.isArray(j.products);if(ok&&j.products.length){const sv=()=>catSave(t);window.requestIdleCallback?requestIdleCallback(sv,{timeout:4000}):setTimeout(sv,1500)}return {j,ok}}
 const catSig=l=>(l||[]).length+":"+(l||[]).reduce((a,x)=>(a+((x.price&&x.price.ua)||0)+x.id.length*7+(x.stock?1:0))%1e9,0);
-function catApply(j,fresh){if(j.content)CMS={banners:[],stories:[],news:[],rails:[],site:null,...j.content};applySite(CMS.site);applyLive(j.products||[],fresh)}
+function catApply(j,fresh){COLL=Array.isArray(j.collections)?j.collections:[];if(j.content)CMS={banners:[],stories:[],news:[],rails:[],site:null,...j.content};applySite(CMS.site);applyLive(j.products||[],fresh)}
 function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();renderCatHome();if(LIVE)renderBanners()}catch(e){}}
 (async()=>{
   loadWatch();

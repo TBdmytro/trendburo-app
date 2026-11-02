@@ -792,6 +792,7 @@ const IC = {
   more: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
   img: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 9"/>'
 };
+IC.star = IC.star || '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/>';
 const svg = k => `<svg class="i" viewBox="0 0 24 24">${IC[k]}</svg>`;
 const STATUS = { queued: ["В очереди", "run"], running: ["Загружается", "dark run"], waiting: ["Пауза, повтор", "warn run"], done: ["Готово", "ok"], failed: ["Ошибка", "err"], blocked: ["Сайт блокирует", "err"], cancelled: ["Отменено", ""] };
 const MODE = { link: "Один товар", links: "По ссылкам", category: "Разделы сайта", full: "Весь каталог", file: "Файл" };
@@ -851,7 +852,7 @@ function go(v) {
   $("#main").innerHTML = `<div class="empty"><span class="spin"></span></div>`; $("#main").onclick = $("#main").oninput = $("#main").onchange = null; $(".actbar")?.remove();
   document.querySelectorAll(".drawer").forEach(x => x.remove()); tgBack.stack = [];
   window.scrollTo(0, 0); navSync();
-  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, customers: vCustomers, screens: vScreens, import: vImport, sites: vSites, finance: vFinance, more: vMore, bot: vBot, stock: vStock, loyalty: vLoyalty }[k] || vHome2;
+  const fn = { home: vHome2, add: vAdd, watch: vWatch, load: vLoad, jobs: vJobs, job: vJob, products: vProducts2, prices: vPrices, sources: vSources, show: vShow, leads: vOrders, customers: vCustomers, screens: vScreens, import: vImport, sites: vSites, finance: vFinance, more: vMore, bot: vBot, stock: vStock, loyalty: vLoyalty, collections: vCollections }[k] || vHome2;
   fn(v.split(":")[1]).catch(e => { $("#main").innerHTML = `<div class="note-box err">${svg("warn")}<div>${esc(e.message)}</div></div>`; });
 }
 async function getSources(force) { if (!sources || force) sources = (await api("sources")).sources; return sources; }
@@ -2288,7 +2289,7 @@ window.addEventListener("message", async e => {
     try { await api("snapSave", { method: "POST", silent: true, body: { host: e.data.host || "", section: e.data.section || "", part: e.data.part || "", idx: e.data.idx || 0, list: e.data.list || null, pages: e.data.pages || [], ver: e.data.ver || "" } }); } catch {} return;
   }
   if (e.data.type === "tb-section") { // прогон раздела: чего нет на сайте бренда — «продано»
-    try { const r = await api("sectionSync", { method: "POST", silent: true, body: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), host: e.data.host || "", section: e.data.section, codes: e.data.codes || [], url: e.data.url, title: e.data.title, stats: e.data.stats || null, sample: e.data.sample || null, complete: !!e.data.complete } }); MTP.gone = (MTP.gone || 0) + (r.gone || 0); if (r.skipped) MTP.sectionSkipped = true; } catch {}
+    try { const r = await api("sectionSync", { method: "POST", silent: true, body: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), host: e.data.host || "", section: e.data.section, codes: e.data.codes || [], url: e.data.url, title: e.data.title, stats: e.data.stats || null, sample: e.data.sample || null, complete: !!e.data.complete, h1: String(e.data.h1 || "").slice(0, 160), desc: String(e.data.desc || "").slice(0, 600) } }); MTP.gone = (MTP.gone || 0) + (r.gone || 0); if (r.skipped) MTP.sectionSkipped = true; } catch {}
     mtDraw(); try { e.source.postMessage({ type: "tb-section-done", gone: MTP.gone || 0, skipped: !!MTP.sectionSkipped }, e.origin); } catch {} return;
   }
   if (e.data.type !== "tb-import" && e.data.type !== "tb-update") return;
@@ -2545,7 +2546,7 @@ Object.assign(IC, {
   out: '<path d="M14 4h5v16h-5"/><path d="M10 16l4-4-4-4M14 12H4"/>'
 });
 const NAV_MAIN = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"]];
-const NAV_MORE = [["customers", "Клиенты", "users", "статистика, заказы через менеджера, лояльность"], ["loyalty", "Лояльность", "users", "программа для клиентов · скоро"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["sites", "Сайты брендов", "link", "разделы для проверки наличия кнопкой"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["stock", "В наличии", "van", "уже выкуплено: Украина и Европа · блок в приложении"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
+const NAV_MORE = [["customers", "Клиенты", "users", "статистика, заказы через менеджера, лояльность"], ["loyalty", "Лояльность", "users", "программа для клиентов · скоро"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["collections", "Коллекции", "star", "Cruise 2027, Winter 26… — витрина и сроки"], ["sites", "Сайты брендов", "link", "разделы для проверки наличия кнопкой"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["stock", "В наличии", "van", "уже выкуплено: Украина и Европа · блок в приложении"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
 const chevSvg = '<svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
 const backSvg = '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>';
 const isMainView = v => { const [k, s] = v.split(":"); return ["home", "products", "leads", "more"].includes(k) || (k === "show" && (!s || s === "feed")); };
@@ -3144,6 +3145,42 @@ function manualOrderSheet(c, done) {
   };
 }
 /* Лояльность: правила появятся позже — пока раздел-заготовка */
+/* ---------- Коллекции брендов: появляются сами, когда кнопкой прогоняете страницу коллекции на сайте бренда ---------- */
+async function vCollections() {
+  const { list } = await api("collList");
+  const G = { w: "для неё", m: "для него", u: "для всех", k: "детям" }, today = new Date().toISOString().slice(0, 10);
+  $("#main").innerHTML = head("Коллекции", "Появляются сами, когда кнопкой «В Trend Büro» прогоняете страницу коллекции на сайте бренда (например, «Cruise 2027» у Dior). Товары коллекции — с этой страницы, в том числе уже загруженные раньше. На витрине: кружок в историях, карточка в ленте и строка на странице бренда.") +
+    (list.length ? list.map(c => { const live = c.on && (!c.until || c.until >= today);
+      return `<div class="card pad" style="margin-bottom:12px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap" data-cid="${esc(c._id)}">
+        <div style="width:84px;height:105px;border-radius:14px;background:#f2f3f4 center top/cover no-repeat;flex:none${c.cover ? `;background-image:url('${esc(thumb(c.cover))}')` : ""}"></div>
+        <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px">
+          <div class="hint">${esc(c.brand || "—")} · ${G[c.g] || ""} · ${c.live} из ${c.n} вещей на витрине${c.pinned ? " · <b>закреплена первой</b>" : ""}</div>
+          <input data-f="title" value="${esc(c.title || "")}" placeholder="Название" style="font-weight:600">
+          <textarea data-f="desc" rows="2" placeholder="Описание (одно предложение)">${esc(c.desc || "")}</textarea>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <label class="hint" style="display:flex;gap:6px;align-items:center">Показывать до <input type="date" data-f="until" value="${esc(c.until || "")}"></label>
+            <select data-f="g">${Object.entries(G).map(([k, v]) => `<option value="${k}" ${c.g === k ? "selected" : ""}>${v}</option>`).join("")}</select>
+          </div>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <button class="btn sm" data-csave>Сохранить</button>
+            <button class="btn ghost sm" data-con="${c.on ? 0 : 1}">${c.on ? "Скрыть с витрины" : "Показать на витрине"}</button>
+            <button class="btn ghost sm" data-cpin="${c.pinned ? 0 : 1}">${c.pinned ? "Открепить" : "Закрепить первой"}</button>
+            <button class="btn ghost sm" data-go="products:sec=${encodeURIComponent(c.section)}">Товары</button>
+            ${c.url ? `<a class="btn ghost sm" href="${esc(c.url)}" target="_blank" rel="noopener">Страница бренда</a>` : ""}
+            <button class="btn ghost sm" data-cdel aria-label="Удалить коллекцию">×</button>
+          </div>
+          <div class="hint">${live ? "<span style='color:#2e7d4f'>● на витрине</span>" : c.on ? "срок показа прошёл" : "скрыта"}</div>
+        </div></div>`; }).join("")
+    : `<div class="card empty"><b>Пока нет коллекций</b>Откройте на сайте бренда страницу коллекции (например, «Cruise 2027 Kollektion» у Dior) и нажмите кнопку «В Trend Büro» — коллекция появится здесь.</div>`);
+  $("#main").onclick = async e => {
+    const box = e.target.closest("[data-cid]"); const gl = e.target.closest("[data-go]"); if (gl) return go(gl.dataset.go);
+    if (!box) return; const id = box.dataset.cid, val = f => box.querySelector(`[data-f="${f}"]`).value;
+    if (e.target.closest("[data-csave]")) { await api("collSave", { method: "POST", body: { id, title: val("title"), desc: val("desc"), until: val("until"), g: val("g") } }); toast("Сохранено"); return vCollections(); }
+    const on = e.target.closest("[data-con]"); if (on) { await api("collSave", { method: "POST", body: { id, on: on.dataset.con === "1" } }); return vCollections(); }
+    const pin = e.target.closest("[data-cpin]"); if (pin) { await api("collSave", { method: "POST", body: { id, pinned: pin.dataset.cpin === "1" } }); return vCollections(); }
+    if (e.target.closest("[data-cdel]")) { if (!(await confirmBox("Удалить коллекцию?", "Товары останутся в каталоге — исчезнет только подборка. При следующем прогоне страницы коллекции кнопкой она появится снова."))) return; await api("collDel", { method: "POST", body: { id } }); return vCollections(); }
+  };
+}
 async function vLoyalty() {
   $("#main").innerHTML = `<div class="vh"><h1>Лояльность</h1><span class="hint">Скоро</span></div>
     <p class="vsub">Раздел готов к запуску: когда решите, как будет работать программа, здесь появятся уровни, бонусы и привилегии, а у клиентов — карта клуба в кабинете.</p>

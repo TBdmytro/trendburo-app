@@ -16,13 +16,15 @@ async function catalogBody(compact) {
     const store = getStore();
     // без потолка в 5000: товаров на витрине стало больше — новые бренды (Saint Laurent) не попадали в каталог
     const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 30000,
-      fields: "_id, brand, title, sourceTitle, category, subcategory, subFor, modelSku, colors, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos" });
+      fields: "_id, brand, title, sourceTitle, category, subcategory, subFor, modelSku, colors, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos, webSections" });
     const now = Date.now();
     const products = list.map(p => toStorefront(p, now, { compact })).filter(Boolean);
     // популярность у покупателей (просмотры, избранное, корзина) — витрина ставит такие товары выше
     try { const pop = (await store.get("stats.pop"))?.scores || {}; for (const x of products) { const v = pop[popKey(x.id)]; if (v > 0) x.pop = v; } } catch {}
     let content = null; try { content = await publicContent(store, new Date(now)); } catch { content = null; }
-    return JSON.stringify({ products, content, generatedAt: new Date(now).toISOString(), demo: !!store.demo });
+    // коллекции брендов (включённые в админке): товары — по разделу сайта бренда, где их брала кнопка
+    let collections = []; try { const { activeCollections } = await import("../lib/collections.js"); const shown = new Set(products.map(x => x.id)); collections = activeCollections(await store.list("collection", {}, { limit: 500 }), list, { now: new Date(now) }).map(c => ({ ...c, ids: c.ids.filter(i => shown.has(i)) })).filter(c => c.ids.length).map(c => ({ ...c, n: c.ids.length })); } catch { collections = []; }
+    return JSON.stringify({ products, content, collections, generatedAt: new Date(now).toISOString(), demo: !!store.demo });
   })();
   MEMO[k] = { ...(m || {}), wait };
   try { const body = await wait; MEMO[k] = { body, at: Date.now() }; return body; }

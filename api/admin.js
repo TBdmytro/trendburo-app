@@ -301,7 +301,7 @@ export default async function handler(req, res) {
         // все товары по текущему фильтру — для «Показать все найденные»
         const all = await allProducts(store);
         const Q = req.query, q = String(Q.q || "").toLowerCase();
-        const ids = all.filter(p => (!Q.sec || (p.sections || []).includes(Q.sec)) && (!Q.avail || (p.offers || []).some(o => o.onlineOrder)) && (!Q.noavail || !(p.offers || []).some(o => o.onlineOrder)) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (Q.status ? p.status === Q.status : p.status !== "incoming")
+        const ids = all.filter(p => (!Q.sec || (p.sections || []).includes(Q.sec) || (p.webSections || []).includes(Q.sec)) && (!Q.avail || (p.offers || []).some(o => o.onlineOrder)) && (!Q.noavail || !(p.offers || []).some(o => o.onlineOrder)) && (!q || [p.brand, p.title, p.sourceTitle, p.modelSku, p.overrides?.title].join(" ").toLowerCase().includes(q)) && (Q.status ? p.status === Q.status : p.status !== "incoming")
           && (!Q.source || (p.offers || []).some(o => o.sourceId === Q.source)) && (!Q.brand || p.brand === Q.brand) && (!Q.cat || (p.overrides?.category || p.category) === Q.cat)).map(p => p._id);
         return send(res, 200, { ids });
       }
@@ -368,7 +368,7 @@ export default async function handler(req, res) {
         // вкладка раздела магазина (Бестселлеры, Женское…) — в том же порядке, что на сайте бренда
         const pos = p => (p.secPos || []).find(x => x.s === Q.sec)?.p ?? 1e9;
         const gen = p => genderOf(p);
-        const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat) && (!Q.g || gen(p) === Q.g) && (!Q.sec || (p.sections || []).includes(Q.sec)));
+        const list = base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat) && (!Q.g || gen(p) === Q.g) && (!Q.sec || (p.sections || []).includes(Q.sec) || (p.webSections || []).includes(Q.sec)));
         if (Q.sec) list.sort((a, b) => pos(a) - pos(b));
         const srcDoc = Q.source ? await store.get("source." + Q.source) : null;
         const secCounts = {}; base.forEach(p => (p.sections || []).forEach(h => secCounts[h] = (secCounts[h] || 0) + 1));
@@ -472,7 +472,12 @@ export default async function handler(req, res) {
         const px = "product.manual." + String(body.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-", section = String(body.section || "").slice(0, 200);
         const codes = new Set((Array.isArray(body.codes) ? body.codes : []).map(c => String(c).toLowerCase().replace(/[^a-z0-9]/g, "")));
         if (px.length < 18 || !section) return send(res, 400, { error: "Нет раздела" });
-        const mine = (await store.list("product", {}, { limit: 60000, fields: "_id, webSections" })).filter(p => p._id.startsWith(px) && (p.webSections || []).includes(section));
+        const allPx = (await store.list("product", {}, { limit: 60000, fields: "_id, webSections" })).filter(p => p._id.startsWith(px));
+        // товары, которые есть на этой странице, но пришли из другого раздела (или недавно проверены и пропущены), — тоже отмечаем этим разделом:
+        // так коллекция («Cruise 2027») собирает и уже загруженные вещи, без дублей
+        { const add = allPx.filter(p => codes.has(p._id.slice(px.length)) && !(p.webSections || []).includes(section)).map(p => ({ id: p._id, set: { webSections: [...new Set([...(p.webSections || []), section])].slice(-12) } }));
+          for (let i = 0; i < add.length; i += 200) await store.patchEach(add.slice(i, i + 200)); add.forEach(a => { const p = allPx.find(x => x._id === a.id); if (p) p.webSections = a.set.webSections; }); }
+        const mine = allPx.filter(p => (p.webSections || []).includes(section));
         const gone = mine.filter(p => !codes.has(p._id.slice(px.length))).map(p => p._id);
         if (mine.length && codes.size < mine.length * 0.8) { await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: 0, partial: true, complete: !!body.complete }); return send(res, 200, { gone: 0, skipped: true, inSection: mine.length, found: codes.size }); }
         const goneN = gone.length && !(mine.length && codes.size < mine.length * 0.8) ? await markWebGone(store, gone.slice(0, 500), { by: me.name, pricingCfg }) : 0;
@@ -481,6 +486,11 @@ export default async function handler(req, res) {
         if (st) { const all = await allProducts(store), ids = new Set(mine.map(p => p._id)), cats = { total: 0 }; for (const p of all) if (ids.has(p._id)) { const c = p.overrides?.category || p.category || "other"; cats[c] = (cats[c] || 0) + 1; cats.total++; } st.cats = cats; }
         if (body.sample && typeof body.sample === "object") { const host = String(body.host || "").replace(/[^a-z0-9.-]/gi, "").slice(0, 80); if (host) { const sd = (await store.get("settings.webSamples")) || { _id: "settings.webSamples", _type: "settings", list: {} }; sd.list = sd.list || {}; sd.list[host.replace(/\./g, "_")] = { host, at: new Date().toISOString(), sample: JSON.stringify(body.sample).length < 24000 ? body.sample : { title: String(body.sample.title || "").slice(0, 200), url: String(body.sample.url || "").slice(0, 300), tooBig: true, moreCap: body.sample.moreCap } }; delete sd._rev; delete sd._createdAt; delete sd._updatedAt; try { await store.put(sd); } catch {} } }
         await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: goneN, health: st, complete: !!body.complete });
+        // страница коллекции бренда (Cruise 2027, Winter 26…) — создаём/обновляем коллекцию; её товары — товары этого раздела
+        try { const { upsertCollection, isCollection } = await import("../lib/collections.js");
+          if (isCollection(body.title, body.url || section)) { const any = mine.length ? (await store.getMany([mine[0]._id]))[0] : null;
+            const { translateRu } = await import("../lib/translate.js");
+            await upsertCollection(store, { section, url: body.url, title: String(body.h1 || body.title || "").slice(0, 200), desc: String(body.desc || "").slice(0, 600), brand: any?.brand || "", found: codes.size, translate: t => translateRu(t) }); } } catch (e) { console.log("COLL fail " + String(e.message).slice(0, 120)); }
         return send(res, 200, { gone: goneN, inSection: mine.length });
       }
       case "forgetDeleted": {
@@ -549,6 +559,32 @@ export default async function handler(req, res) {
         if (done) PCACHE = null;
         if (err) console.log("TRPENDING stop " + JSON.stringify({ done, err }));
         return send(res, 200, { done, left: L.length - done, limited: /429/.test(err || ""), err });
+      }
+      case "collList": {
+        // коллекции брендов: список с числом вещей (всего и на витрине)
+        const [colls, L] = await Promise.all([store.list("collection", {}, { limit: 500 }), store.list("product", {}, { limit: 60000, fields: "_id, status, webSections, images[0...1]{url}" })]);
+        const list = colls.map(c => { const mine = L.filter(p => (p.webSections || []).includes(c.section)); return { ...c, n: mine.length, live: mine.filter(p => p.status === "published").length, newN: 0, cover: c.cover || mine.map(p => p.images?.[0]?.url).find(Boolean) || null }; })
+          .sort((a, b) => (b.pinned - a.pinned) || String(b.createdAt).localeCompare(String(a.createdAt)));
+        return send(res, 200, { list });
+      }
+      case "collSave": {
+        const id = String(body.id || ""); if (!/^collection\.[A-Za-z0-9_-]{1,180}$/.test(id)) return send(res, 400, { error: "Нет коллекции" });
+        const c = await store.get(id); if (!c) return send(res, 404, { error: "Коллекция не найдена" });
+        const set = {}, s = (v, n) => String(v || "").replace(/\s+/g, " ").trim().slice(0, n);
+        if ("on" in body) set.on = !!body.on;
+        if ("pinned" in body) { set.pinned = !!body.pinned; if (set.pinned) { const others = (await store.list("collection", { pinned: true }, { limit: 50, fields: "_id" })).map(x => x._id).filter(x => x !== id); if (others.length) await store.patchMany(others, { pinned: false }); } }
+        if ("title" in body) { set.title = s(body.title, 60) || c.title; set.edited = true; }
+        if ("desc" in body) { set.desc = s(body.desc, 200); set.edited = true; }
+        if ("brand" in body) set.brand = s(body.brand, 60) || c.brand;
+        if ("g" in body && ["w", "m", "u", "k"].includes(body.g)) set.g = body.g;
+        if ("until" in body) set.until = /^\d{4}-\d{2}-\d{2}$/.test(String(body.until)) ? String(body.until) : null;
+        if ("cover" in body) set.cover = /^https:\/\//.test(String(body.cover || "")) ? String(body.cover).slice(0, 600) : null;
+        await store.patchMany([id], set);
+        return send(res, 200, { ok: true });
+      }
+      case "collDel": {
+        const id = String(body.id || ""); if (!/^collection\.[A-Za-z0-9_-]{1,180}$/.test(id)) return send(res, 400, { error: "Нет коллекции" });
+        await store.del(id); return send(res, 200, { ok: true });
       }
       case "arrivalsSet": {
         // новинки бренда (появились в уже пройденном разделе): сразу на сайт или сначала в «Новые с сайтов»
