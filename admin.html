@@ -2379,13 +2379,17 @@ async function vImport() {
 async function mtUpd(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
   if (!sku) return false;
+  if (Array.isArray(it.images)) it = { ...it, images: await liveImgs(it.images.map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || ""))) };
   try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, unavailable: !!it.unavailable, ask: String(it.ask || it.blocked || ""), isNew: !!it.isNew, section: it.section || "", tileImg: /^https:\/\//.test(String(it.tileImg || "")) ? String(it.tileImg).slice(0, 600) : "", images: (it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || "")).slice(0, 14), category: mtCat(it), gender: ["w", "m"].includes(it.gender) ? it.gender : "", szDbg: String(it.szDbg || "").slice(0, 900) } } });
     MTP.upd = (MTP.upd || 0) + 1; if (r.price) MTP.priceCh = (MTP.priceCh || 0) + 1; if (r.changes) MTP.changed = (MTP.changed || 0) + 1; return true; }
   catch (err) { MTP.last.unshift("✕ " + (it.title || sku) + ": " + err.message); return false; }
 }
+// фото по ссылке сайта бренда: открывается ли оно вообще (у Dior бывают ссылки на несуществующие версии кадра — на витрине пустая картинка)
+const imgOk = u => /^https:\/\/cdn\.sanity\.io\//.test(u) ? Promise.resolve(true) : new Promise(ok => { const im = new Image(); const t = setTimeout(() => ok(true), 12000); im.onload = () => { clearTimeout(t); ok(im.naturalWidth > 10); }; im.onerror = () => { clearTimeout(t); ok(false); }; im.src = u; });
+const liveImgs = async urls => { const ok = await Promise.all(urls.map(imgOk)); const keep = urls.filter((u, i) => ok[i]); return keep.length ? keep : urls; };
 async function mtOne(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
-  const urls = (it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || ""));
+  const urls = await liveImgs((it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || "")));
   const datas = (it.images || []).map(x => typeof x === "string" ? (x.startsWith("data:image/") ? x : null) : x && x.d).filter(Boolean);
   const eur = it.currency === "EUR" && Number(it.price) > 0 ? Number(it.price) : null;
   const base = { brand: String(it.brand || ""), title: String(it.title || ""), category: mtCat(it), gender: ["w", "m", "u"].includes(it.gender) ? it.gender : "u", boutique: eur, sizes: (it.sizes || []).map(String).slice(0, 40), sizeStock: (Array.isArray(it.sizeStock) ? it.sizeStock : []).slice(0, 40).map(x => ({ s: String(x && x.s || "").slice(0, 20), ok: x && x.ok === false ? false : x && x.ok === true ? true : null, ...(x && x.pre ? { pre: true } : {}) })).filter(x => x.s), preorder: !!it.preorder, ask: String(it.ask || it.blocked || ""), color: String(it.color || ""), sku: String(it.sku || ""), url: String(it.url || ""), description: String(it.description || "").slice(0, 2000), markupPct: MT_MARKUP, isNew: !!it.isNew, revive: !!it.revive, section: String(it.section || "").slice(0, 200), szDbg: String(it.szDbg || "").slice(0, 900), tileImg: /^https:\/\//.test(String(it.tileImg || "")) ? String(it.tileImg).slice(0, 600) : "" };
@@ -2743,12 +2747,24 @@ async function vTexts() {
 /* ---------- Товары ---------- */
 // «Товары» начинаются с брендов: плитки с категориями и витриной; бренд → его товары с кнопками категорий
 const BOARD_CATS = ["bags", "shoes", "clothing", "accessories", "jewelry", "eyewear"];
+// фото по ссылке сайта бренда, которые больше не открываются: проверяем в этом браузере (по 6 сразу) и убираем из товара; каждый товар — один раз
+async function brokenScan() {
+  try { let seen = {}; try { seen = JSON.parse(localStorage.getItem("tbImgChk") || "{}"); } catch {}
+    const { list = [] } = await api("hotlinked", { silent: true }); const todo = list.filter(p => seen[p.id] !== p.sig);
+    for (let i = 0; i < todo.length; i += 6) await Promise.all(todo.slice(i, i + 6).map(async p => {
+      const ok = await Promise.all(p.urls.map(imgOk)), bad = p.urls.filter((u, k) => !ok[k]);
+      if (bad.length && bad.length < p.urls.length + (p.sanity ? 1 : 0)) await api("imgDrop", { method: "POST", silent: true, body: { id: p.id, urls: bad } }).catch(() => {});
+      seen[p.id] = p.sig; }));
+    try { localStorage.setItem("tbImgChk", JSON.stringify(seen)); } catch {}
+  } catch {}
+}
 async function vBrandBoard() {
   const { brands, total, incoming } = await api("brandBoard");
   // бренды и подразделы выравниваются в фоне, не чаще раза в 30 минут — «Товары» не ждут этого
   try { if (Date.now() - (+localStorage.getItem("tbFixAt") || 0) > 30 * 60e3) { localStorage.setItem("tbFixAt", String(Date.now()));
     api("fixBrands", { method: "POST", silent: true }).catch(() => {});
-    (async () => { for (let i = 0; i < 15; i++) { const r = await api("imgDedupe", { method: "POST", silent: true }).catch(() => ({ done: true })); if (r.done) break; } })(); // повторы фото — в фоне
+    (async () => { for (let i = 0; i < 15; i++) { const r = await api("imgDedupe", { method: "POST", silent: true }).catch(() => ({ done: true })); if (r.done) break; } })(); // фото во всю рамку — в фоне
+    brokenScan(); // фото по ссылке сайта бренда, которые не открываются, — убрать (в фоне)
   } } catch {}
   let q = "", letter = "";
   const ini = n => n.replace(/&/g, " ").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();

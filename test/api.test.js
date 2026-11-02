@@ -266,3 +266,17 @@ test("копии страниц бренда для автопроверки к�
   const g = await new Promise(res => diag({ method: "GET", url: "/api/diag?probe=snap&id=" + s._id + "&i=0", headers: {} }, { statusCode: 200, setHeader() {}, end(b) { res(b); } }));
   assert.equal(gzipSync && (await import("node:zlib")).gunzipSync(Buffer.from(g, "base64")).toString(), "<html>p</html>");
 });
+
+test("фото по ссылке сайта бренда, которые не открываются: список для проверки и удаление (последнее фото остаётся)", async () => {
+  const login = await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } });
+  const cookie = login.headers["set-cookie"].split(";")[0], H = { cookie, "x-tb": "1" };
+  const A = "https://assets.christiandior.com/is/image/diorprod/";
+  await store.put({ _id: "product.manual.dior-kco576", _type: "product", brand: "Dior", title: "Bow", category: "shoes", status: "published", images: [{ url: A + "K_SBG_E02-8?x" }, { url: A + "K_SBG_E05?x" }], overrides: { cover: A + "K_SBG_E02-8?x" }, offers: [] });
+  const h = await call(handler, { query: { a: "hotlinked" }, headers: { cookie } });
+  assert.ok(h.body.list.find(p => p.id === "product.manual.dior-kco576").urls.length === 2);
+  let r = await call(handler, { method: "POST", query: { a: "imgDrop" }, body: { id: "product.manual.dior-kco576", urls: [A + "K_SBG_E02-8?x"] }, headers: H });
+  assert.equal(r.body.dropped, 1);
+  const p = await store.get("product.manual.dior-kco576"); assert.deepEqual(p.images.map(i => i.url), [A + "K_SBG_E05?x"]); assert.equal(p.overrides.cover, null);
+  r = await call(handler, { method: "POST", query: { a: "imgDrop" }, body: { id: "product.manual.dior-kco576", urls: [A + "K_SBG_E05?x"] }, headers: H });
+  assert.equal(r.body.dropped, 0); // последнее фото не убираем
+});

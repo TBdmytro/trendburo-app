@@ -490,6 +490,24 @@ export default async function handler(req, res) {
         await store.put({ _id: sid, _type: "snap", host, section, ver: String(body.ver || "").slice(0, 10), at: new Date().toISOString(), list, pages, meta: { n: pages.length, lg: list?.got || null, pg: pages.map(x => ({ url: x.url, got: x.got })) } });
         return send(res, 200, { ok: true, pages: pages.length });
       }
+      case "hotlinked": {
+        // товары с фото по ссылке сайта бренда (не скопированы к нам) — админка проверит, открываются ли они
+        const L = await store.list("product", {}, { limit: 60000, fields: "_id, images[]{url}" });
+        const list = L.filter(p => p._id.startsWith("product.manual.")).map(p => { const all = (p.images || []).map(i => i.url), urls = all.filter(u => /^https:\/\//.test(u) && !/^https:\/\/cdn\.sanity\.io\//.test(u)); return { id: p._id, urls, sanity: all.length - urls.length, sig: String(all.length) + ":" + urls.join("|").length }; }).filter(p => p.urls.length).slice(0, 5000);
+        return send(res, 200, { list });
+      }
+      case "imgDrop": {
+        // убрать из товара фото, которые не открываются (проверила админка); последнее фото не убираем
+        const id = String(body.id || ""), bad = new Set((Array.isArray(body.urls) ? body.urls : []).map(String));
+        if (!/^product\.manual\.[a-z0-9]+-[a-z0-9]+$/.test(id) || !bad.size) return send(res, 400, { error: "Нет товара" });
+        const p = await store.get(id); if (!p) return send(res, 404, { error: "Товар не найден" });
+        const keep = (p.images || []).filter(i => !bad.has(i.url)); if (!keep.length || keep.length === (p.images || []).length) return send(res, 200, { dropped: 0 });
+        const o = p.overrides || {}, set = { images: keep };
+        if (o.cover && bad.has(o.cover)) set.overrides = { ...o, cover: null };
+        if ((o.imageOrder || []).some(u => bad.has(u))) set.overrides = { ...(set.overrides || o), imageOrder: o.imageOrder.filter(u => !bad.has(u)) };
+        await store.patchMany([id], set); PCACHE = null;
+        return send(res, 200, { dropped: (p.images || []).length - keep.length });
+      }
       case "arrivalsSet": {
         // новинки бренда (появились в уже пройденном разделе): сразу на сайт или сначала в «Новые с сайтов»
         const mode = body.mode === "incoming" ? "incoming" : "publish";
