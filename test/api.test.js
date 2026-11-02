@@ -139,8 +139,8 @@ test("кабинет: профиль, доставка, заказ с маршр
   assert.equal(o.note, undefined); // заметки менеджера клиенту не видны
   const cl = (await call(handler, { query: { a: "customers" }, headers: H })).body.customers.find(c => c.tg.id === 555);
   assert.equal(cl.profile.npPoint, "26814"); assert.equal(cl.orders, 1);
-  const other = (await call(me, { method: "POST", body: { initData: "dev:556:Чужой" } })).body.orders;
-  assert.equal(other.length, 0);
+  const other = await call(me, { method: "POST", body: { initData: "dev:556:Чужой" } });
+  assert.equal(other.status, 404); assert.equal(other.body.code, "no_account"); // без регистрации аккаунт сам не создаётся и чужие заказы не видны
   delete process.env.DEV_AUTH;
 });
 
@@ -384,6 +384,14 @@ test("закрытый сайт: заявка после входа, досту�
     assert.equal((await cat(auth(45))).status, 200);
     await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H });
     assert.equal((await cat()).status, 200);
+    // удалить аккаунт: снова только через регистрацию → снова заявка
+    await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: true }, headers: H }); resetAccessMemo();
+    assert.equal((await call(handler, { method: "POST", query: { a: "customerDelete" }, body: { customer: "customer.45" }, headers: H })).status, 200);
+    const gone = await call(me, { method: "POST", body: { sess: signSess({ id: 45, name: "X" }, T) } });
+    assert.equal(gone.status, 404); assert.equal(gone.body.code, "no_account");
+    assert.equal((await cat(auth(45))).status, 403);
+    assert.equal((await call(me, { method: "POST", body: { sess: signSess({ id: 45, name: "X" }, T), a: "register", name: "X" } })).body.access, "pending");
+    await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H }); resetAccessMemo();
     // блок действует и на открытом сайте
     assert.equal((await cat(auth(22))).status, 403);
     assert.equal((await call(me, { method: "POST", body: { sess: signSess({ id: 22, name: "N" }, T) } })).body.access, "blocked");

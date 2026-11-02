@@ -3229,7 +3229,7 @@ const avatarHTML=(u,cls="")=>u&&u.photo?`<img class="${cls}" src="${esc(u.photo)
 const I_TG='<svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><path d="M9 13l8-6"/></svg>';
 /* Вход: Telegram решает, кто вы. Есть учётная запись — «Войти», нет — «Регистрация» с именем. Один Telegram = одна учётная запись. */
 function authGate(force){if(!LIVE)return;const b=authBody();
-  if(b&&store.get("tb_signed",0)&&!force){loadMe().then(r=>{if(r&&r.access&&r.access!=="ok")authGate(true);else if(r&&CLOSED)catReload()});return}
+  if(b&&store.get("tb_signed",0)&&!force){loadMe().then(r=>{if(!r&&ME_ERR&&ME_ERR.code==="no_account"){store.set("tb_signed",0);ME=null;renderTopIcons();return authGate(true)}if(r&&r.access&&r.access!=="ok")authGate(true);else if(r&&CLOSED)catReload()});return}
   document.querySelectorAll(".gate").forEach(x=>x.remove());
   const g=document.createElement("div");g.className="gate";g.setAttribute("role","dialog");g.setAttribute("aria-label","Вход");
   g.innerHTML=`<div class="gt-top"><span class="gt-logo">TB</span><h1>Trend Büro</h1><p>Байер-сервис из бутиков Европы</p></div><div class="gt-card" id="gtc"></div>`;

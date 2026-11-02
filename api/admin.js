@@ -712,6 +712,14 @@ export default async function handler(req, res) {
         let n = 0; for (const id of ids) if (await setAccess(store, id, body.access, { by: me.name })) n++;
         return send(res, 200, { n });
       }
+      case "customerDelete": {
+        // удалить аккаунт: человек выйдет и при следующем входе заново пройдёт регистрацию (и заявку, если вход по заявкам). Заказы остаются.
+        const id = String(body.customer || "");
+        const c = await store.get(id);
+        if (!c || c._type !== "customer") return send(res, 404, { error: "Клиент не найден" });
+        await store.del(id);
+        return send(res, 200, { ok: true });
+      }
       case "accessSet": {
         const id = String(body.customer || "").replace(/^customer\./, "");
         if (!/^\d{1,15}$/.test(id)) return send(res, 400, { error: "Нет клиента" });

@@ -3151,11 +3151,15 @@ function customerSheet(c, dlv, reload, closed) {
     <div class="oitem"><div class="tx"><b>Доставка</b><span>${esc([p.name, p.phone].filter(Boolean).join(", ")) || "не заполнено"}<br>${esc(dlv(p))}${p.comment ? "<br>" + esc(p.comment) : ""}</span></div></div>
     <label class="f">Заметка о клиенте (видите только вы)<textarea id="cuNote" style="min-height:60px" placeholder="размеры, любимые бренды, пожелания">${esc(c.note || "")}</textarea></label>
     <button type="button" class="btn lg" data-addord>+ Добавить заказ вручную</button>
+    <button type="button" class="btn ghost" data-cudel style="color:#b23a48">Удалить аккаунт — заново через регистрацию</button>
     <div class="hint" style="margin-top:-4px">Если клиент заказал через менеджера — в том числе вещь, которой нет на сайте. Заказ появится у клиента в «Мои заказы» с маршрутом и в «Финансах».</div>
     ${c.leads.map(l => `<div class="oitem"><div class="tx"><b>${esc(LEAD_KIND[l.kind] || "Заявка")} ${esc(l.number)}${l.source === "manager" ? ` <span class="hint">· через менеджера</span>` : ""}</b><span>${dt(l.createdAt)} · ${esc(ORD_ST[l.status] || l.status)}${l.items?.[0] ? " · " + esc([l.items[0].brand, l.items[0].title].filter(Boolean).join(" ")) : ""}</span></div>${l.total ? `<b class="num">${eur(l.total)}</b>` : ""}</div>`).join("")}</div>`,
     `<button class="btn ghost lg" data-cusave>Сохранить заметку</button>`);
   d.querySelector(".sh-f").onclick = async () => { try { await api("customerNote", { method: "POST", body: { customer: c.id, note: d.querySelector("#cuNote").value } }); c.note = d.querySelector("#cuNote").value; toast("Сохранено"); } catch (err) { toast(err.message); } };
   d.querySelector("[data-addord]").onclick = () => manualOrderSheet(c, () => { d.close(); reload(); });
+  d.querySelector("[data-cudel]").onclick = async () => {
+    if (!(await confirmBox("Удалить аккаунт?", "Человек выйдет из кабинета. При следующем входе он заново пройдёт регистрацию" + (closed ? " и подаст заявку — вы решите, пускать ли его." : ".") + " Заказы останутся в истории. Чтобы не пускать совсем — лучше «Заблокировать».", "Удалить"))) return;
+    try { await api("customerDelete", { method: "POST", body: { customer: c.id } }); toast("Аккаунт удалён"); d.close(); reload(); } catch (err) { toast(err.message); } };
   d.querySelectorAll("[data-acc]").forEach(b => b.onclick = async () => {
     if (b.dataset.acc === "blocked" && !(await confirmBox("Заблокировать?", "Человек не сможет войти и не увидит каталог в своём кабинете. Разблокировать можно в любой момент.", "Заблокировать"))) return;
     b.disabled = true;

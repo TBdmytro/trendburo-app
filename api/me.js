@@ -38,6 +38,8 @@ export default async function handler(req, res) {
       return send(res, 200, { exists: !!c, user: pub, profile: c?.profile || null, closed: acc.closed, access: accessOf(c, acc) });
     }
     let c;
+    // аккаунт удалён (или его ещё нет) — только через регистрацию, сам он не создаётся
+    if (!body.a && !(await store.get(customerId(user.id)))) return send(res, 404, { error: "Аккаунт не найден — зарегистрируйтесь заново", code: "no_account" });
     if (body.a === "register") {
       c = await touchCustomer(store, user);
       const name = String(body.name || "").replace(/\s+/g, " ").trim().slice(0, 80);
