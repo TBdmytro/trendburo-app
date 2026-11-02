@@ -3124,6 +3124,7 @@ async function vCustomers(q) {
     <div class="card pad" style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px">
       <label class="toggle"><input type="checkbox" id="cClosed" ${closed ? "checked" : ""}><b>Вход по заявкам</b></label>
       <div class="hint">${closed ? "Сайт закрыт: человек регистрируется через Telegram и оставляет заявку — вы принимаете или отклоняете. Пока заявка ждёт, каталог ему не виден. Можно принимать здесь или кнопкой в боте (в чате менеджера); принятому придёт сообщение." : "Сейчас каталог видят все. Включите — и новые люди после регистрации через Telegram будут ждать вашего решения. Все, кто уже есть в базе, получат доступ автоматически. Заблокировать человека можно и сейчас — в его карточке."}</div>
+      <div id="cTgN" style="margin-top:6px"></div>
       ${closed && window.Notification && Notification.permission === "default" ? `<button type="button" class="btn soft sm" id="cNotif" style="align-self:flex-start">Уведомлять о новых заявках в браузере</button>` : ""}
     </div>
     ${pend.length ? `<div class="sec" style="margin-bottom:14px"><h2>Заявки на вход <small>${pend.length}</small></h2>
@@ -3141,6 +3142,7 @@ async function vCustomers(q) {
   $("#cClosed").onchange = async e => { const on = e.target.checked;
     if (on && !(await confirmBox("Закрыть сайт?", "Каталог будут видеть только клиенты с открытым доступом. Все, кто уже есть в базе, получат доступ сразу.", "Закрыть сайт"))) { e.target.checked = false; return; }
     try { const r = await api("accessMode", { method: "POST", body: { closed: on } }); toast(on ? "Сайт закрыт" + (r.approved ? ` · доступ открыт ${r.approved} клиентам` : "") : "Сайт открыт для всех"); vCustomers($("#cFind")?.value); } catch (err) { toast(err.message); e.target.checked = !on; } };
+  tgNotifyBox($("#cTgN"));
   if ($("#cNotif")) $("#cNotif").onclick = async () => { try { const p = await Notification.requestPermission(); toast(p === "granted" ? "Готово — о новых заявках придёт уведомление, пока админка открыта" : "Уведомления не разрешены"); $("#cNotif").remove(); } catch {} };
   const setMany = async (ids, access) => { try { const r = await api("accessSetMany", { method: "POST", body: { customers: ids, access } }); toast(access === "ok" ? `Принято: ${r.n} — им придёт сообщение` : `Отклонено: ${r.n}`); pollAccess(); vCustomers($("#cFind")?.value); } catch (err) { toast(err.message); } };
   if ($("#cReq")) {
@@ -3325,6 +3327,31 @@ function bannerPreview(root) {
   upd();
 }
 
+/* ---------- Уведомления админу в Telegram: подключить свой чат одной ссылкой ---------- */
+async function tgNotifyBox(box) {
+  if (!box) return;
+  let r; try { r = await api("notifyGet", { silent: true }); } catch (e) { box.innerHTML = `<div class="hint">${esc(e.message)}</div>`; return; }
+  const n = r.chats.length + (r.env ? 1 : 0);
+  box.innerHTML = `<div class="row2" style="cursor:default"><span class="ic" style="${n ? "background:var(--ok-bg);color:var(--ok)" : ""}">${n ? "✓" : svg("users")}</span><span class="tx"><b>Уведомления в Telegram</b><span>${n ? "Заявки на вход (с кнопками «Открыть доступ» / «Отклонить») и новые заказы приходят в Telegram" : "Подключите свой Telegram — туда будут приходить заявки на вход с кнопками и новые заказы"}</span></span></div>
+    ${r.chats.map(c => `<div class="row" style="justify-content:space-between;align-items:center;padding:6px 4px"><span>${esc(c.name)}${c.username ? ` <span class="hint">@${esc(c.username)}</span>` : ""} <span class="hint">· с ${dt(c.at)}</span></span><button type="button" class="btn ghost sm" data-unl="${esc(c.id)}">Отключить</button></div>`).join("")}
+    ${r.env ? `<div class="hint" style="padding:4px">+ чат из настройки Vercel (TELEGRAM_MANAGER_CHAT)</div>` : ""}
+    ${r.token ? `<button type="button" class="btn ${n ? "soft" : ""} sm" data-lnk style="margin-top:6px">${n ? "Подключить ещё один Telegram" : "Подключить мой Telegram"}</button><div class="hint" style="margin-top:6px">Откроется бот — нажмите «Запустить». Ссылка одноразовая и работает 15 минут.</div>` : `<div class="hint">Сначала подключите бота (Ещё → Telegram-бот).</div>`}`;
+  box.onclick = async e => {
+    const u = e.target.closest("[data-unl]"); if (u) { if (!(await confirmBox("Отключить уведомления?", "Этот Telegram перестанет получать заявки и заказы.", "Отключить"))) return; await api("notifyUnlink", { method: "POST", body: { id: u.dataset.unl } }).catch(err => toast(err.message)); return tgNotifyBox(box); }
+    const l = e.target.closest("[data-lnk]"); if (!l) return;
+    const TGW = window.Telegram?.WebApp, inTg = !!(TGW && TGW.initData), w = inTg ? null : window.open("about:blank", "_blank");
+    l.disabled = true;
+    try { const { url } = await api("notifyLink", { method: "POST", body: {} });
+      if (inTg) TGW.openTelegramLink(url); else if (w) w.location.href = url; else location.href = url;
+      l.textContent = "Ждём подтверждения в Telegram…";
+      const before = r.chats.length, t0 = Date.now();
+      const wait = async () => { if (!box.isConnected || Date.now() - t0 > 15 * 60e3) return; const x = await api("notifyGet", { silent: true }).catch(() => null);
+        if (x && x.chats.length > before) { toast("Готово — уведомления будут приходить в Telegram"); return tgNotifyBox(box); } setTimeout(wait, 3000); };
+      setTimeout(wait, 3000);
+    } catch (err) { if (w) w.close(); toast(err.message); l.disabled = false; }
+  };
+}
+
 /* ---------- Telegram-бот ---------- */
 async function vBot() {
   const s = await api("botStatus");
@@ -3333,8 +3360,8 @@ async function vBot() {
     <div style="display:flex;flex-direction:column;gap:8px">
       ${step(s.token, "Токен бота", s.token ? (s.username ? `бот @${esc(s.username)} найден` : esc(s.error || "проверяем…")) : "добавьте в Vercel переменную TELEGRAM_BOT_TOKEN (из @BotFather) и сделайте Redeploy")}
       ${step(s.ready, "Кнопка «Витрина» и ответы бота", s.ready ? "настроено" : "нажмите «Настроить бота» ниже")}
-      ${step(s.manager, "Заявки вам в Telegram", s.manager ? "включено" : "напишите боту /id, скопируйте номер и добавьте в Vercel как TELEGRAM_MANAGER_CHAT")}
     </div>
+    <div class="card pad" id="botNotify" style="margin-top:8px"></div>
     <div class="row" style="margin-top:16px">
       <button class="btn lg" id="botSetup" ${s.token && s.username ? "" : "disabled"}>${s.ready ? "Настроить заново" : "Настроить бота"}</button>
       ${s.username ? `<a class="btn ghost lg" href="https://t.me/${esc(s.username)}" target="_blank" rel="noopener">Открыть бота</a>` : ""}
@@ -3342,6 +3369,7 @@ async function vBot() {
     <div class="h2">Что делает бот</div>
     <div class="kvs"><div><span>Кнопка меню в чате</span><b>Витрина</b></div><div><span>/start</span><span>приветствие и кнопка «Открыть витрину»</span></div><div><span>/admin</span><span>кнопка админки (вход по паролю)</span></div><div><span>/id</span><span>номер чата для заявок</span></div></div>
     ${s.username ? `<p class="hint" style="margin-top:14px">Ссылка для Instagram и канала: <b>t.me/${esc(s.username)}</b></p>` : ""}`;
+  tgNotifyBox($("#botNotify"));
   $("#main").onclick = async e => {
     if (!e.target.closest("#botSetup")) return;
     const b = e.target.closest("#botSetup"); b.disabled = true; b.innerHTML = '<span class="spin"></span> Настраиваю…';

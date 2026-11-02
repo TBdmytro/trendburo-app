@@ -8,6 +8,7 @@ import { addBannerStats } from "../lib/cms.js";
 import { createHash } from "node:crypto";
 import { userFrom } from "../lib/tgauth.js";
 import { nextOrderNo, verifyItems, cleanProfile, touchCustomer } from "../lib/customers.js";
+import { toAdmins } from "../lib/access.js";
 
 export const LEAD_KINDS = { order: "Заказ", availability: "Уточнить наличие", concierge: "Консьерж", travel: "Поездка", resale: "Ресейл", request: "Запрос под заказ", optix: "OPTIX" };
 export const LEAD_STATUS = ["new", "work", "paid", "bought", "shipping", "np", "delivered", "cancelled"];
@@ -52,14 +53,10 @@ export function cleanLead(b) {
 }
 
 async function notify(lead) {
-  const token = process.env.TELEGRAM_BOT_TOKEN, chat = process.env.TELEGRAM_MANAGER_CHAT;
-  if (!token || !chat) return false;
+  // всем админам, подключившим Telegram в админке (и в чат из TELEGRAM_MANAGER_CHAT, если задан)
   const who = lead.tg ? (lead.tg.username ? "@" + lead.tg.username : lead.tg.name || "клиент") : "клиент";
   const text = `🛍 ${LEAD_KINDS[lead.kind]} ${lead.number} от ${who}\n\n${lead.message}`.slice(0, 3900);
-  try {
-    const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat, text, disable_web_page_preview: true }) });
-    return r.ok;
-  } catch { return false; }
+  try { return (await toAdmins(getStore(), { text, disable_web_page_preview: true })) > 0; } catch { return false; }
 }
 
 export default async function handler(req, res) {

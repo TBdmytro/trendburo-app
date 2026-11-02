@@ -8,7 +8,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { getStore } from "../lib/store.js";
 import { confirmLoginCode } from "../lib/tgauth.js";
-import { setAccess } from "../lib/access.js";
+import { setAccess, adminChats, adminLinkConfirm } from "../lib/access.js";
 
 export const botToken = () => process.env.TELEGRAM_BOT_TOKEN || "";
 export const hookSecret = (t = botToken()) => createHash("sha256").update("tbhook|" + t).digest("hex").slice(0, 40);
@@ -75,6 +75,12 @@ export default async function handler(req, res) {
   let u = req.body; if (typeof u === "string") { try { u = JSON.parse(u); } catch { u = {}; } }
   const m = u?.message, cq = u?.callback_query;
   const lg = m?.chat?.id && typeof m.text === "string" && m.text.match(/^\/start\s+login_([a-f0-9]{24})$/);
+  const al = m?.chat?.id && typeof m.text === "string" && m.text.match(/^\/start\s+admin_([a-f0-9]{20})$/);
+  if (al) {
+    let ok = null; try { ok = await adminLinkConfirm(getStore(), al[1], m.chat, m.from); } catch {}
+    try { await tg("sendMessage", { chat_id: m.chat.id, text: ok ? "✓ Готово. Сюда будут приходить уведомления Trend Büro: заявки на вход (с кнопками «Открыть доступ» / «Отклонить») и новые заказы." : "Ссылка устарела. Нажмите «Подключить мой Telegram» в админке ещё раз." }); } catch {}
+    return done();
+  }
   if (lg) {
     // вход на сайт: просим подтвердить кнопкой (а не сразу по ссылке) — так чужую ссылку случайно не подтвердить
     try { await tg("sendMessage", { chat_id: m.chat.id, text: "Вход на сайт Trend Büro\n\nНажмите кнопку, чтобы войти в свой кабинет на сайте. Если вы не входили — просто проигнорируйте сообщение.", reply_markup: { inline_keyboard: [[{ text: "Войти на сайт", callback_data: "lg:" + lg[1] }]] } }); } catch {}
@@ -85,7 +91,7 @@ export default async function handler(req, res) {
     const ac = String(cq.data || "").match(/^ac:(ok|no):(\d{1,15})$/);
     if (ac) {
       // открыть доступ можно только из чата менеджера
-      const own = process.env.TELEGRAM_MANAGER_CHAT && String(cq.message?.chat?.id) === String(process.env.TELEGRAM_MANAGER_CHAT);
+      let own = false; try { own = (await adminChats(getStore())).includes(String(cq.message?.chat?.id)); } catch {}
       let c = null; if (own) { try { c = await setAccess(getStore(), ac[2], ac[1] === "ok" ? "ok" : "rejected", { by: cq.from?.username ? "@" + cq.from.username : cq.from?.first_name || "бот" }); } catch {} }
       try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: !own ? "Только из чата менеджера" : c ? (ac[1] === "ok" ? "Доступ открыт" : "Заявка отклонена") : "Клиент не найден" }); } catch {}
       if (own && c && cq.message?.chat?.id) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: (cq.message.text || "Заявка") + "\n\n" + (ac[1] === "ok" ? "✓ Доступ открыт" : "✕ Отклонено") }); } catch {} }

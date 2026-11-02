@@ -420,3 +420,31 @@ test("заявка на вход: клиенту «заявка принята»
     assert.equal((await call(handler, { query: { a: "accessPending" }, headers: { cookie: ck } })).body.n, n0);
   } finally { await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H }); globalThis.fetch = f0; delete process.env.TELEGRAM_BOT_TOKEN; resetAccessMemo(); }
 });
+
+test("уведомления админу: подключить свой Telegram из админки одной ссылкой; заявки и кнопки работают из этого чата", async () => {
+  const { signSess } = await import("../lib/tgauth.js");
+  const me = (await import("../api/me.js")).default, bot = (await import("../api/bot.js")).default, { hookSecret } = await import("../api/bot.js");
+  const { resetAccessMemo } = await import("../lib/access.js");
+  const T = "9:tok"; process.env.TELEGRAM_BOT_TOKEN = T; delete process.env.TELEGRAM_MANAGER_CHAT;
+  const sent = [], f0 = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { sent.push({ m: String(u).split("/").pop(), b: JSON.parse(o.body) }); return { ok: true, status: 200, json: async () => ({ ok: true, result: { username: "tb_bot" } }) }; };
+  const ck = await adminCookie(), H = { cookie: ck, "x-tb": "1" };
+  const run = body => new Promise(res => { const r = { statusCode: 0, setHeader() {}, end() { res(r); } }; bot({ method: "POST", headers: { "x-telegram-bot-api-secret-token": hookSecret(T), host: "x.test" }, body }, r); });
+  try {
+    const link = await call(handler, { method: "POST", query: { a: "notifyLink" }, body: {}, headers: H });
+    const code = link.body.url.match(/start=admin_([a-f0-9]{20})$/)[1];
+    await run({ message: { chat: { id: 900 }, from: { id: 900, first_name: "Дмитрий", username: "dmytro" }, text: "/start admin_" + code } });
+    assert.ok(sent.some(x => x.b.chat_id === 900 && /Готово/.test(x.b.text)));
+    await run({ message: { chat: { id: 901 }, from: { id: 901 }, text: "/start admin_" + code } });
+    assert.ok(sent.some(x => x.b.chat_id === 901 && /устарела/.test(x.b.text)), "ссылка одноразовая");
+    const g = await call(handler, { query: { a: "notifyGet" }, headers: { cookie: ck } });
+    assert.deepEqual(g.body.chats.map(c => c.id), ["900"]);
+    await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: true }, headers: H }); resetAccessMemo();
+    await call(me, { method: "POST", body: { sess: signSess({ id: 88, name: "Лена" }, T), a: "register", name: "Лена" } });
+    assert.ok(sent.some(x => x.b.chat_id === "900" && /Заявка на вход/.test(x.b.text) && x.b.reply_markup));
+    await run({ callback_query: { id: "q", data: "ac:ok:88", from: { id: 900 }, message: { chat: { id: 900 }, message_id: 1, text: "Заявка" } } });
+    assert.equal((await call(me, { method: "POST", body: { sess: signSess({ id: 88, name: "Лена" }, T) } })).body.access, "ok");
+    await call(handler, { method: "POST", query: { a: "notifyUnlink" }, body: { id: "900" }, headers: H });
+    assert.equal((await call(handler, { query: { a: "notifyGet" }, headers: { cookie: ck } })).body.chats.length, 0);
+  } finally { await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H }); globalThis.fetch = f0; delete process.env.TELEGRAM_BOT_TOKEN; resetAccessMemo(); }
+});

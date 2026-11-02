@@ -19,7 +19,7 @@ import { toStorefront, genderOf } from "../lib/catalog.js";
 import { saveManualProduct, updateWebProduct, markWebGone } from "../lib/manual.js";
 import { LEAD_STATUS, notifyClient } from "./lead.js";
 import { makeManualOrder, clientStats, customerId } from "../lib/customers.js";
-import { accessSettings, accessOf, setClosed, setAccess } from "../lib/access.js";
+import { accessSettings, accessOf, setClosed, setAccess, adminLinkCode, adminUnlink, NOTIFY_ID } from "../lib/access.js";
 import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier, listCollections, saveCollections } from "../lib/suppliers.js";
 import { getFx, refreshFx, saveManualFx } from "../lib/fx.js";
 import { readScreen, screensEnabled, ScreenError } from "../lib/screens.js";
@@ -719,6 +719,21 @@ export default async function handler(req, res) {
         const cs = await store.list("customer", {}, { limit: 5000, fields: "_id, tg, profile, access, registeredAt, createdAt" });
         const p = cs.filter(c => accessOf(c, acc) === "pending").sort((a, b) => String(b.registeredAt || b.createdAt).localeCompare(String(a.registeredAt || a.createdAt)));
         return send(res, 200, { closed: true, n: p.length, latest: p.slice(0, 5).map(c => ({ id: c._id, name: c.profile?.name || c.tg?.name || "Клиент", username: c.tg?.username || "", at: c.registeredAt || c.createdAt })) });
+      }
+      case "notifyGet": {
+        const d = await store.get(NOTIFY_ID);
+        return send(res, 200, { chats: (d?.chats || []).map(c => ({ id: String(c.id), name: c.name, username: c.username, at: c.at })), env: !!process.env.TELEGRAM_MANAGER_CHAT, token: !!process.env.TELEGRAM_BOT_TOKEN });
+      }
+      case "notifyLink": {
+        // одноразовая ссылка в бота: открыть её может только тот, кто вошёл в админку
+        if (!process.env.TELEGRAM_BOT_TOKEN) return send(res, 400, { error: "Бот не подключён" });
+        const code = await adminLinkCode(store, me.name);
+        let bot = ""; try { bot = (await tg("getMe")).username; } catch {}
+        if (!bot) return send(res, 502, { error: "Telegram не ответил, попробуйте ещё раз" });
+        return send(res, 200, { url: `https://t.me/${bot}?start=admin_${code}` });
+      }
+      case "notifyUnlink": {
+        await adminUnlink(store, String(body.id || "")); return send(res, 200, { ok: true });
       }
       case "customerDelete": {
         // удалить аккаунт: человек выйдет и при следующем входе заново пройдёт регистрацию (и заявку, если вход по заявкам). Заказы остаются.
