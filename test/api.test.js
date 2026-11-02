@@ -372,7 +372,21 @@ test("закрытый сайт: заявка после входа, досту�
     assert.equal((await cat(auth(22))).status, 403);
     const list = await call(handler, { query: { a: "customers" }, headers: { cookie: ck } });
     assert.equal(list.body.closed, true); assert.equal(list.body.customers.find(c => c.id === "customer.22").access, "blocked");
+    // отклонить заявку из бота; заявка с Instagram доходит до менеджера
+    resetAccessMemo();
+    await call(me, { method: "POST", body: { sess: signSess({ id: 33, name: "Ира" }, T), a: "register", name: "Ира", insta: "https://instagram.com/ira.k", note: "от Анны" } });
+    assert.ok(sent.some(x => x.b.chat_id === "-100" && /@ira\.k/.test(x.b.text) && /от Анны/.test(x.b.text)));
+    await run({ callback_query: { id: "q3", data: "ac:no:33", from: { id: 5 }, message: { chat: { id: -100 }, message_id: 2, text: "Заявка" } } });
+    assert.equal((await call(me, { method: "POST", body: { sess: signSess({ id: 33, name: "Ира" }, T) } })).body.access, "rejected");
+    // пачкой
+    await store.put({ _id: "customer.44", _type: "customer", tg: { id: 44 } }); await store.put({ _id: "customer.45", _type: "customer", tg: { id: 45 } });
+    assert.equal((await call(handler, { method: "POST", query: { a: "accessSetMany" }, body: { customers: ["customer.44", "customer.45", "x"], access: "ok" }, headers: H })).body.n, 2);
+    assert.equal((await cat(auth(45))).status, 200);
     await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H });
     assert.equal((await cat()).status, 200);
+    // блок действует и на открытом сайте
+    assert.equal((await cat(auth(22))).status, 403);
+    assert.equal((await call(me, { method: "POST", body: { sess: signSess({ id: 22, name: "N" }, T) } })).body.access, "blocked");
+    assert.equal((await cat(auth(45))).status, 200);
   } finally { globalThis.fetch = f0; delete process.env.TELEGRAM_BOT_TOKEN; delete process.env.TELEGRAM_MANAGER_CHAT; resetAccessMemo(); }
 });

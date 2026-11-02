@@ -989,7 +989,7 @@ textarea{min-height:88px;resize:vertical}
 .gt-load i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--fg);animation:gtspin .8s linear infinite}
 @keyframes gtspin{to{transform:rotate(360deg)}}
 .gt-msg b{display:block;font-size:17px;margin-bottom:4px}.gt-msg p{color:var(--g2);font-size:14px;line-height:1.45}
-.gt-f{display:flex;flex-direction:column;gap:6px}.gt-f span{font-size:12.5px;color:var(--g2);font-weight:500}
+.gt-f{display:flex;flex-direction:column;gap:6px}.gt-f+.gt-f{margin-top:10px}.gt-f span small{font-size:inherit;opacity:.75}.gt-f span{font-size:12.5px;color:var(--g2);font-weight:500}
 .gt-f input{width:100%;background:var(--soft);border:1px solid transparent;border-radius:12px;padding:13px 14px;font-size:16px;outline:none;box-sizing:border-box}
 .gt-widget{display:flex;justify-content:center;min-height:44px}
 .btn[data-login] svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;vertical-align:-3px;margin-right:4px}
@@ -3229,7 +3229,7 @@ const avatarHTML=(u,cls="")=>u&&u.photo?`<img class="${cls}" src="${esc(u.photo)
 const I_TG='<svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><path d="M9 13l8-6"/></svg>';
 /* Вход: Telegram решает, кто вы. Есть учётная запись — «Войти», нет — «Регистрация» с именем. Один Telegram = одна учётная запись. */
 function authGate(force){if(!LIVE)return;const b=authBody();
-  if(b&&store.get("tb_signed",0)&&!force){loadMe().then(r=>{if(r&&r.closed&&r.access!=="ok")authGate(true);else if(r&&CLOSED)catReload()});return}
+  if(b&&store.get("tb_signed",0)&&!force){loadMe().then(r=>{if(r&&r.access&&r.access!=="ok")authGate(true);else if(r&&CLOSED)catReload()});return}
   document.querySelectorAll(".gate").forEach(x=>x.remove());
   const g=document.createElement("div");g.className="gate";g.setAttribute("role","dialog");g.setAttribute("aria-label","Вход");
   g.innerHTML=`<div class="gt-top"><span class="gt-logo">TB</span><h1>Trend Büro</h1><p>Байер-сервис из бутиков Европы</p></div><div class="gt-card" id="gtc"></div>`;
@@ -3238,7 +3238,7 @@ function authGate(force){if(!LIVE)return;const b=authBody();
   const skip=CLOSED?"":`<button type="button" class="gt-skip" data-skip>Смотреть без входа</button>`;
   const note=`<p class="gt-note">Без пароля: Telegram подтверждает, что это вы. Один аккаунт Telegram — одна учётная запись, по номеру аккаунта, а не по нику. <a href="#" data-pv>Ваши данные</a></p>`;
   const wire=()=>{const k=card.querySelector("[data-skip]");if(k)k.onclick=close;const p=card.querySelector("[data-pv]");if(p)p.onclick=e=>{e.preventDefault();close();openPrivacy()}};
-  const done=r=>{store.set("tb_signed",1);if(r.closed&&r.access!=="ok")return state.wait(r);if(CLOSED)catReload();close();toast("Вы вошли как "+((r.profile&&r.profile.name)||r.user.name));hap("medium")};
+  const done=r=>{store.set("tb_signed",1);if(r.access&&r.access!=="ok")return state.wait(r);if(CLOSED)catReload();close();toast("Вы вошли как "+((r.profile&&r.profile.name)||r.user.name));hap("medium")};
   const tgu=()=>{const u=TGW&&TGW.initDataUnsafe&&TGW.initDataUnsafe.user,l=store.get("tb_login",null);const x=u||l||{};return{name:[x.first_name,x.last_name].filter(Boolean).join(" ")||x.username||"",username:x.username||"",photo:x.photo_url||""}};
   const state={
     load(t){card.innerHTML=`<span class="gt-k">Вход через Telegram</span><div class="gt-load"><i></i>${esc(t||"Проверяем аккаунт…")}</div>`},
@@ -3248,21 +3248,23 @@ function authGate(force){if(!LIVE)return;const b=authBody();
       <div class="gt-u">${avatarHTML({photo:u.photo,name:n},"gt-av")}<div><b>С возвращением, ${esc(String(n).split(" ")[0])}</b><small>${u.username?"@"+esc(u.username)+" · ":""}аккаунт найден</small></div><svg class="gt-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
       <button class="btn block gt-go" data-go>${I_TG}Войти</button>${note}`;wire();
       card.querySelector("[data-go]").onclick=async e=>{const bt=e.currentTarget;bt.disabled=true;bt.classList.add("busy");const r=await loadMe();if(r)done(r);else{bt.disabled=false;bt.classList.remove("busy");state.err(ME_ERR||{})}}},
-    reg(j){const u=j.user||tgu();card.innerHTML=`<span class="gt-k">Регистрация через Telegram</span>
+    reg(j){const u=j.user||tgu(),cl=j.closed||CLOSED;card.innerHTML=`<span class="gt-k">${cl?"Заявка на вход":"Регистрация через Telegram"}</span>
       <div class="gt-u">${avatarHTML({photo:u.photo,name:u.name},"gt-av")}<div><b>${esc(u.name||"Новый клиент")}</b><small>${u.username?"@"+esc(u.username):"аккаунт Telegram"} · новая учётная запись</small></div></div>
-      <label class="gt-f"><span>Как к вам обращаться</span><input type="text" id="gtName" autocomplete="name" enterkeyhint="done" value="${esc(u.name||"")}" placeholder="Имя и фамилия" maxlength="80"></label>
-      <button class="btn block gt-go" data-go>${I_TG}Зарегистрироваться</button>${note}`;wire();
+      <label class="gt-f"><span>Как к вам обращаться</span><input type="text" id="gtName" autocomplete="name" enterkeyhint="${cl?"next":"done"}" value="${esc(u.name||"")}" placeholder="Имя и фамилия" maxlength="80"></label>
+      ${cl?`<label class="gt-f"><span>Instagram <small>· по желанию</small></span><input type="text" id="gtInsta" autocapitalize="off" autocomplete="off" enterkeyhint="next" placeholder="@ваш_ник" maxlength="60"></label>
+      <label class="gt-f"><span>Пара слов о себе <small>· по желанию</small></span><input type="text" id="gtNote" enterkeyhint="done" placeholder="Например: от Анны, покупаю у вас в Instagram" maxlength="200"></label>`:""}
+      <button class="btn block gt-go" data-go>${I_TG}${cl?"Отправить заявку":"Зарегистрироваться"}</button>${note}`;wire();
       card.querySelector("[data-go]").onclick=async e=>{const nm=card.querySelector("#gtName").value.trim();if(nm.length<2){card.querySelector("#gtName").focus();toast("Напишите, как к вам обращаться");return}
-        const bt=e.currentTarget;bt.disabled=true;bt.classList.add("busy");const r=await loadMe({a:"register",name:nm});if(r)done(r);else{bt.disabled=false;bt.classList.remove("busy");state.err(ME_ERR||{})}}},
+        const bt=e.currentTarget;bt.disabled=true;bt.classList.add("busy");const v=id=>{const x=card.querySelector(id);return x?x.value.trim():""};const r=await loadMe({a:"register",name:nm,insta:v("#gtInsta"),note:v("#gtNote")});if(r)done(r);else{bt.disabled=false;bt.classList.remove("busy");state.err(ME_ERR||{})}}},
     // закрытый сайт: вошёл, но доступ ещё не открыт
-    wait(r){const n=(r.profile&&r.profile.name)||r.user.name,u=r.user,bl=r.access==="blocked",mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]);
+    wait(r){const n=(r.profile&&r.profile.name)||r.user.name,u=r.user,bl=r.access==="blocked"||r.access==="rejected",rj=r.access==="rejected",mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]);
       card.innerHTML=`<span class="gt-k">Доступ по приглашению</span>
-      <div class="gt-u">${avatarHTML({photo:u.photo,name:n},"gt-av")}<div><b>${esc(n)}</b><small>${u.username?"@"+esc(u.username)+" · ":""}${bl?"доступ закрыт":"заявка отправлена"}</small></div></div>
-      <div class="gt-msg"><p>${bl?"Доступ к сайту закрыт. Если это ошибка — напишите менеджеру.":"Trend Büro — закрытый сервис. Мы посмотрим заявку и откроем доступ — сообщение придёт в Telegram, а сайт откроется сам."}</p></div>
+      <div class="gt-u">${avatarHTML({photo:u.photo,name:n},"gt-av")}<div><b>${esc(n)}</b><small>${u.username?"@"+esc(u.username)+" · ":""}${rj?"заявка не одобрена":bl?"доступ закрыт":"заявка отправлена"}</small></div></div>
+      <div class="gt-msg">${bl?"":"<b>Заявка принята в работу</b>"}<p>${rj?"Сейчас мы не можем открыть доступ. Если хотите что-то уточнить — напишите менеджеру.":bl?"Доступ к сайту закрыт. Если это ошибка — напишите менеджеру.":"Trend Büro работает по приглашению. Мы посмотрим заявку и откроем доступ — сообщение придёт в Telegram, а сайт откроется сам."}</p></div>
       ${bl?"":`<div class="gt-load"><i></i>Ждём открытия доступа…</div>`}
       ${mgr?`<a class="btn block gt-go soft" href="${esc(mgr.url)}" target="_blank" rel="noopener">Написать менеджеру</a>`:""}<button type="button" class="gt-skip" data-out>Выйти</button>`;
       card.querySelector("[data-out]").onclick=()=>{alive=false;g.remove();logout()};
-      let alive=!bl;const tick=async()=>{if(!alive||!g.isConnected)return;if(!document.hidden){const x=await loadMe();if(x&&x.access==="ok"){alive=false;return done(x)}if(x&&x.access==="blocked"){alive=false;return state.wait(x)}}setTimeout(tick,15000)};setTimeout(tick,15000)},
+      let alive=!bl;const tick=async()=>{if(!alive||!g.isConnected)return;if(!document.hidden){const x=await loadMe();if(x&&x.access==="ok"){alive=false;return done(x)}if(x&&(x.access==="blocked"||x.access==="rejected")){alive=false;return state.wait(x)}}setTimeout(tick,15000)};setTimeout(tick,15000)},
     async web(){state.load("Загружаем…");let info={};try{info=await (await fetch("/api/me",{cache:"no-store"})).json()}catch(e){}
       if(!info.ready)return state.err({code:"no_token"});
       card.innerHTML=`<span class="gt-k">Вход и регистрация</span><div class="gt-msg"><b>Войдите через Telegram</b><p>${CLOSED?"Trend Büro работает по приглашению. Войдите через Telegram — мы откроем доступ после проверки.":"Без пароля и кодов из СМС. Впервые у нас — аккаунт создастся сам, уже были — откроется ваш кабинет."}</p></div>
@@ -3291,7 +3293,7 @@ function authGate(force){if(!LIVE)return;const b=authBody();
   if(vv)vv.addEventListener("resize",()=>{if(g.classList.contains("kb"))kb()});
   g.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("input")){e.preventDefault();e.target.blur();const b=card.querySelector("[data-go]");if(b)b.click()}});
   async function start(auto){if(!authBody())return state.web();state.load();const j=await meCall({a:"check"});if(j.error)return state.err(j);
-    if(j.exists&&(auto||(j.closed&&j.access!=="ok"))){const r=await loadMe();return r?done(r):state.err(ME_ERR||{})}j.exists?state.login(j):state.reg(j)}
+    if(j.exists&&(auto||(j.access&&j.access!=="ok"))){const r=await loadMe();return r?done(r):state.err(ME_ERR||{})}j.exists?state.login(j):state.reg(j)}
   start()}
 function logout(){store.set("tb_signed",0);store.set("tb_login",null);ME=null;renderTopIcons();popAll();toast("Вы вышли из профиля");setTimeout(()=>authGate(true),400)}
 

@@ -86,7 +86,7 @@ export default async function handler(req, res) {
     if (ac) {
       // открыть доступ можно только из чата менеджера
       const own = process.env.TELEGRAM_MANAGER_CHAT && String(cq.message?.chat?.id) === String(process.env.TELEGRAM_MANAGER_CHAT);
-      let c = null; if (own) { try { c = await setAccess(getStore(), ac[2], ac[1] === "ok" ? "ok" : "blocked", { by: cq.from?.username ? "@" + cq.from.username : cq.from?.first_name || "бот" }); } catch {} }
+      let c = null; if (own) { try { c = await setAccess(getStore(), ac[2], ac[1] === "ok" ? "ok" : "rejected", { by: cq.from?.username ? "@" + cq.from.username : cq.from?.first_name || "бот" }); } catch {} }
       try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: !own ? "Только из чата менеджера" : c ? (ac[1] === "ok" ? "Доступ открыт" : "Заявка отклонена") : "Клиент не найден" }); } catch {}
       if (own && c && cq.message?.chat?.id) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: (cq.message.text || "Заявка") + "\n\n" + (ac[1] === "ok" ? "✓ Доступ открыт" : "✕ Отклонено") }); } catch {} }
       return done();

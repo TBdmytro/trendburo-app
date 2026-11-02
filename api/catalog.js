@@ -49,7 +49,8 @@ export default async function handler(req, res) {
   let closed = false;
   try {
     const store = getStore(), acc = await accessSettings(store);
-    if (acc.closed) {
+    // закрытый сайт — всегда; открытый — только запросы со входом (чтобы заблокированный не видел каталог в своём кабинете)
+    if (acc.closed || req.headers["x-tb-auth"]) {
       closed = true;
       let b = null; try { b = JSON.parse(decodeURIComponent(String(req.headers["x-tb-auth"] || ""))); } catch {}
       const u = b ? userFrom(b) : null, c = u ? await store.get(customerId(u.id)) : null;

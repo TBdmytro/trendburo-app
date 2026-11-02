@@ -41,12 +41,16 @@ export default async function handler(req, res) {
     if (body.a === "register") {
       c = await touchCustomer(store, user);
       const name = String(body.name || "").replace(/\s+/g, " ").trim().slice(0, 80);
-      if (name) { c.profile = cleanProfile({ ...(c.profile || {}), name }); c.registeredAt = c.registeredAt || new Date().toISOString(); c = await store.put(c); }
+      if (name) { c.profile = cleanProfile({ ...(c.profile || {}), name }); c.registeredAt = c.registeredAt || new Date().toISOString(); }
+      // заявка на вход: Instagram и пара слов о себе — чтобы было по чему принять решение
+      const insta = String(body.insta || "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/[^\w.@]/g, "").replace(/^@?/, "@").slice(0, 40), note = String(body.note || "").replace(/\s+/g, " ").trim().slice(0, 200);
+      if (insta.length > 1 || note) c.apply = { insta: insta.length > 1 ? insta : "", note, at: new Date().toISOString() };
+      c = await store.put(c);
     } else if (body.a === "save") c = await saveProfile(store, user, body.profile || {});
     else c = await touchCustomer(store, user);
     const acc = await accessSettings(store), access = accessOf(c, acc);
     if (access === "pending") await notifyRequest(store, c).catch(() => {});
-    if (access !== "ok") return send(res, 200, { user: pub, profile: c.profile, orders: [], since: c.registeredAt || c.createdAt || null, closed: true, access });
+    if (access !== "ok") return send(res, 200, { user: pub, profile: c.profile, orders: [], since: c.registeredAt || c.createdAt || null, closed: acc.closed, access });
     const orders = await ordersFor(store, user.id, body.client);
     return send(res, 200, { closed: acc.closed, access, user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null });
   } catch (e) {
