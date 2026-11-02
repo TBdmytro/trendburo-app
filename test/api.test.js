@@ -293,3 +293,17 @@ test("фото Dior с битой версией в адресе (…_E02-8) з�
   const l = await call(handler, { query: { a: "products", status: "incoming", q: "bow 2" }, headers: { cookie } });
   assert.equal(l.body.products.find(x => x._id === "product.manual.dior-kco577").cover, A + "K_SBG_E05?x");
 });
+
+test("прогон: на странице бренда фото больше, чем у товара, — фото дополняются, ваша обложка остаётся", async () => {
+  const login = await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } });
+  const cookie = login.headers["set-cookie"].split(";")[0], H = { cookie, "x-tb": "1" };
+  const A = "https://assets.christiandior.com/is/image/diorprod/";
+  const { saveManualProduct } = await import("../lib/manual.js");
+  await saveManualProduct(store, { id: "product.manual.dior-kco578", brand: "Dior", title: "Bow 3", category: "shoes", boutique: 1000, images: [A + "KCO578_SBG_E05?x"], status: "published" });
+  await store.patchMany(["product.manual.dior-kco578"], { imgVer: 5, overrides: { cover: A + "KCO578_SBG_E05?x" } });
+  const real = globalThis.fetch; globalThis.fetch = async () => new Response("no", { status: 403 });
+  try { const r = await call(handler, { method: "POST", query: { a: "webUpdate" }, body: { id: "product.manual.dior-kco578", item: { boutique: 1000, images: [A + "KCO578_SBG_E02?x", A + "KCO578_SBG_E05?x"] } }, headers: H }); assert.equal(r.status, 200, JSON.stringify(r.body)); }
+  finally { globalThis.fetch = real; }
+  const p = await store.get("product.manual.dior-kco578");
+  assert.equal(p.images.length, 2); assert.equal(p.overrides.cover, A + "KCO578_SBG_E05?x");
+});
