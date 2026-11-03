@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v57] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v58] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -422,14 +422,20 @@ async function tbCollect() {
         if (it && it.title && (it.blocked || (it.sizeStock.length && it.sizeStock.every(function (x) { return x.ok === false; })))) { it.ask = it.blocked || "wait"; askN++; }
         if (!(it && it.title) && badL.length < 12) badL.push([todo[i][0].split("/").pop(), "no product " + r.status + " " + (h.match(/<title>([^<]{0,40})/i) || [, ""])[1]]);
         if (it && it.title) { it.section = section; if (!(await ready)) throw new Error("admin"); w.postMessage({ type: isUpd ? "tb-update" : "tb-import", items: [it] }, ADM); sentN++; if (isUpd) upd++; else ok++; } else bad++; }
-      catch (e) { if (e && e.message === "admin") throw e; bad++; if (badL.length < 12) badL.push([todo[i][0].split("/").pop(), String(e && e.message || e).slice(0, 40)]); }
+      catch (e) { if (e && e.message === "admin") throw e; var em = String(e && e.message || e);
+        // сайт попросил притормозить (429/403/5xx) или сеть моргнула — товар не теряем: повторим в конце, медленнее
+        if (!todo[i][2] && /^(429|403|5\d\d)$|fetch|network|timeout|abort/i.test(em)) { todo[i][2] = 1; retryQ.push(i); return; }
+        bad++; if (badL.length < 12) badL.push([todo[i][0].split("/").pop(), em.slice(0, 40)]); }
     };
+    var retryQ = [];
     var nextI = 0, adminErr = null;
     // сайт начал отвечать «доступ запрещён» (403/429) — останавливаемся и не долбим его; уже взятое сохранено, следующий запуск продолжит с того же места
     var worker = async function () { while (nextI < todo.length && !adminErr && !siteStop) { var k = nextI++; try { await one1(k); } catch (e) { adminErr = e; } await sleep(PAUSE); } };
     var slow = /(^|\.)dior\.com$/.test(location.hostname); if (slow) PAUSE = 1800; // Dior ограничивает частые запросы — читаем по одной странице спокойно
     await Promise.all(slow ? [worker()] : [worker(), worker()]);
     if (adminErr) throw adminErr;
+    // повтор пропущенных из-за «слишком часто»: по одному, с паузой 3 с
+    if (retryQ.length) { await sleep(5000); blk = 0; siteStop = false; for (var ri = 0; ri < retryQ.length && !siteStop; ri++) { note("Trend Büro: повторяю пропущенные " + (ri + 1) + " из " + retryQ.length + ". Не закрывайте вкладку", true); try { await one1(retryQ[ri]); } catch (e) { adminErr = e; break; } await sleep(3000); } if (adminErr) throw adminErr; }
     // товары раздела, которых не видно на странице: прежде чем считать «продано», открываем страницу каждого — вдруг просто не подгрузился
     var alive = [];
     var secKnown = await new Promise(function (res) { var f = function (e) { if (e.origin === ADM && e.data && e.data.type === "tb-secknown") { removeEventListener("message", f); res(e.data.list || []); } }; addEventListener("message", f); try { w.postMessage({ type: "tb-secknown", host: host, section: section }, ADM); } catch (e) { res([]); } setTimeout(res, 20000, []); });
