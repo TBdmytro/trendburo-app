@@ -429,7 +429,7 @@ test("скриншоты: ответ Gemini чистится, цена в USD п
 test("витрина: раскладка Ленты, тексты и стандартные подборки", async () => {
   const { cleanSite, seedRails, listItems, getSite } = await import("../lib/cms.js");
   const s = cleanSite({ feed: [{ id: "rails" }, { id: "optix", on: false }, { id: "hack" }, { id: "rails" }], texts: { "how.title": " Как это работает ", evil: "<script>" }, hiddenServices: ["travel", "x"] });
-  assert.equal(s.feed[0].id, "rails"); assert.equal(s.feed.length, 9); assert.equal(s.optix.on, false);
+  const ids = s.feed.map(b => b.id); assert.ok(ids.indexOf("rails") < ids.indexOf("optix")); assert.equal(s.feed.length, 12); assert.deepEqual(s.feed.slice(2, 6).map(b => b.id), ["banners", "newweek", "newsec", "rows"]); assert.equal(s.optix.on, false);
   assert.deepEqual(s.texts, { "how.title": "Как это работает" }); assert.deepEqual(s.hiddenServices, ["travel"]);
   const store = new MemoryStore();
   assert.equal(await seedRails(store), true); assert.equal((await listItems(store, "rail")).length, 3);

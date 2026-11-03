@@ -201,7 +201,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .hcv-bars i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.35)}
 .hcv-bars i.on,.hcv-bars i.done{background:#fff}
 .hcv-all{display:flex;align-items:center;gap:4px;margin:10px 18px 0;border:0;background:none;padding:0;font-size:14px;color:var(--muted)}
-#homeA>div:not(:empty){margin-top:22px}
+.hblk:not(:empty){margin-top:22px}
 .hchips{display:flex;gap:6px;overflow-x:auto;padding:0 18px 12px;scrollbar-width:none}
 .hchips::-webkit-scrollbar{display:none}
 .hchip{flex:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font:500 13px Onest,sans-serif;color:#26282c;white-space:nowrap}
@@ -1564,7 +1564,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
       <div class="stories" id="stories"></div>
       <div class="sec collw" id="collRail" hidden></div>
       <div class="bnr" id="bnr" hidden></div>
-      <div id="homeA"><div id="hCover"></div><div id="hNew"></div><div id="hSec"></div><div id="hCats"></div></div>
+      <div id="homeA" hidden></div><div class="hblk" id="hCover"></div><div class="hblk" id="hNew"></div><div class="hblk" id="hSec"></div><div class="hblk" id="hCats"></div>
       <div class="ship" hidden><div><small id="shipTitle">Отправки в Украину</small><b id="shipDate"></b></div><span class="pulse" aria-hidden="true"></span></div>
       <button class="o-entry press" data-act="tab" data-tab="optix" aria-label="Открыть OPTIX" hidden>
         <span class="o-entry-art" id="oEntryArt"></span>
@@ -3810,12 +3810,12 @@ const WD_EACH=["каждое воскресенье","каждый понеде�
 let FEED_TITLE={};
 /* Порядок и видимость блоков «Ленты» — из конструктора в админке */
 function applyLayout(feed){if(!Array.isArray(feed))return;
-  const el={announce:$("#announce"),stories:$("#stories"),banners:$("#bnr"),ship:$("#t-feed .ship"),optix:$("#t-feed .o-entry"),stock:$("#stockBanFeed")&&$("#stockBanFeed").closest(".sec"),news:$("#leadNews")&&$("#leadNews").closest(".sec"),follow:$("#followRail"),rails:$("#railsWrap")};
+  const el={announce:$("#announce"),stories:$("#stories"),banners:LIVE?$("#hCover"):$("#bnr"),newweek:$("#hNew"),newsec:$("#hSec"),rows:$("#hCats"),ship:$("#t-feed .ship"),optix:$("#t-feed .o-entry"),stock:$("#stockBanFeed")&&$("#stockBanFeed").closest(".sec"),news:$("#leadNews")&&$("#leadNews").closest(".sec"),follow:$("#followRail"),rails:$("#railsWrap")};
   const end=$("#feedNote");if(!end)return;
   feed.forEach(b=>{const e=el[b.id];if(!e)return;end.parentNode.insertBefore(e,end);b.on?e.removeAttribute("data-off"):e.setAttribute("data-off","");if(b.title)FEED_TITLE[b.id]=b.title});
   if(FEED_TITLE.news)$("#newsTitle").textContent=FEED_TITLE.news;if(FEED_TITLE.ship)$("#shipTitle").textContent=FEED_TITLE.ship;
   const le=$(".live-empty");if(le&&el.ship)el.ship.after(le);
-  {const cr=$("#collRail"),stb=$("#stories");if(cr&&stb)stb.after(cr);const ha=$("#homeA");if(ha&&stb)(cr||stb).after(ha)}}
+  {const cr=$("#collRail"),stb=$("#stories");if(cr&&stb)stb.after(cr)}}
 function applyTexts(s){const T=s.texts||{};TX=T;$$("[data-t]").forEach(e=>{const k=e.dataset.t;if(!e.dataset.t0)e.dataset.t0=e.textContent;e.textContent=T[k]||e.dataset.t0});
   ["concierge","travel","resale"].forEach(k=>{if(!SVC[k])return;if(T["svc."+k+".cap"])SVC[k].cap=T["svc."+k+".cap"];if(T["svc."+k+".title"])SVC[k].title=T["svc."+k+".title"];if(T["svc."+k+".long"])SVC[k].text=T["svc."+k+".long"]});
   const hid=s.hiddenServices||[];$$("[data-svc]").forEach(e=>hid.includes(e.dataset.svc)?e.setAttribute("data-off",""):e.removeAttribute("data-off"))}
