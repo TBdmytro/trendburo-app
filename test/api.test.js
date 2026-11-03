@@ -516,3 +516,20 @@ test("раздел бренда: удалённые вами и не прочи�
   assert.equal(u.body.restored, 2);
   assert.deepEqual((await store.get("settings.deleted")).ids, ["product.manual.shop-zzz999", "product.manual.ysl-ccc"], "другие удалённые не тронуты");
 });
+
+test("повторный прогон раздела не превращает куртку в «Другое»: категория кнопки «other» не затирает одежду", async () => {
+  const cookie = (await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } })).headers["set-cookie"].split(";")[0];
+  const H = { cookie, "x-tb": "1" };
+  const jpg = Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAA//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AN//Z", "base64");
+  const real = globalThis.fetch; globalThis.fetch = async () => new Response(jpg, { status: 200, headers: { "content-type": "image/jpeg" } });
+  try {
+    const id = "product.manual.shop-cat1", item = { brand: "Brunello Cucinelli", title: "Daunenjacke mit Kapuze aus Shearling", category: "other", gender: "m", boutique: 5000, images: ["https://media.brunellocucinelli.com/x_F.jpg"], section: "shop.brunellocucinelli.com/de-de/herren/bekleidung/mantel-jacken/" };
+    await call(handler, { method: "POST", query: { a: "webImport" }, body: { id, item }, headers: H });
+    assert.equal((await store.get(id)).category, "clothing");
+    const r = await call(handler, { method: "POST", query: { a: "webUpdate" }, body: { id, item: { ...item, images: [] } }, headers: H }); assert.equal(r.status, 200, JSON.stringify(r.body));
+    assert.equal((await store.get(id)).category, "clothing");
+    await store.patchMany([id], { category: "other" }); // уже испорченный прошлым прогоном — чинится
+    await call(handler, { method: "POST", query: { a: "webUpdate" }, body: { id, item: { ...item, images: [] } }, headers: H });
+    assert.equal((await store.get(id)).category, "clothing");
+  } finally { globalThis.fetch = real; }
+});

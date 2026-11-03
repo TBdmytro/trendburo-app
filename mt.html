@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v60] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v61] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -199,6 +199,19 @@ async function tbCollect() {
       var full = el.textContent || "", dis = el.disabled || el.getAttribute("aria-disabled") === "true" || /disabled|unavail|sold/i.test(String(el.className || ""));
       out.push(PRE.test(full) ? { s: lab, ok: null, pre: true } : { s: lab, ok: OUT.test(full) || dis ? false : true }); });
     return out; } catch (e) { return []; } };
+  // размеры подряд после заголовка «Größe/Size» (Brunello: «44», «Produkt anfragen», «46», «48»…): статус идёт отдельным пунктом после размера
+  var seqSizes = function (d) { try {
+    var toks = [].slice.call(d.querySelectorAll("button, [role='button'], [role='option'], [role='radio'], li, label, span")).filter(function (b) { return !b.querySelector("button, li, label"); }).map(function (b) { return (b.textContent || "").replace(/\s+/g, " ").trim(); }).filter(function (t) { return t && t.length < 40; });
+    var i0 = -1; for (var i = 0; i < toks.length; i++) if (/^(gr[öo](ss|ß)e|size|taille|taglia|talla|maat)$/i.test(toks[i])) { i0 = i; break; } if (i0 < 0) return [];
+    var out = [], seen = {}, cur = null, miss = 0;
+    for (var j = i0 + 1; j < toks.length && miss < 2; j++) { var tk = toks[j], lab = okLabel(tk);
+      if (lab) { miss = 0; if (seen[lab] !== undefined) { cur = out[seen[lab]]; continue; } cur = PRE.test(tk) ? { s: lab, ok: null, pre: true } : { s: lab, ok: OUT.test(tk) ? false : true }; seen[lab] = out.length; out.push(cur); continue; }
+      if (cur && PRE.test(tk)) { cur.ok = null; cur.pre = true; continue; }
+      if (cur && OUT.test(tk)) { cur.ok = false; delete cur.pre; continue; }
+      if (cur && /(nur noch|verfügbar|only|last|letzte|wenige|low stock|derniers?|ultimi)/i.test(tk)) continue;
+      miss++; }
+    return out.length >= 2 || (out.length === 1 && /^(one ?size|os|tu|u|uni)$/i.test(out[0].s)) ? out : [];
+  } catch (e) { return []; } };
   var rLock = Promise.resolve();
   // фото галереи с открытой страницы (сайты, где в адресе фото нет артикула — On и др.): крупные картинки товара, без шапки, подвала и «вам может понравиться»
   var galleryOf = function (doc, url) { var me = codeOf(url), out = [], seen = {}, base0 = new URL(url).pathname.split("/").slice(0, -1).join("/"), sameModel = function (h) { try { var pp = new URL(h, url).pathname; return base0.length > 10 && pp.indexOf(base0) === 0; } catch (e) { return false; } };
@@ -227,7 +240,7 @@ async function tbCollect() {
       for (var t = 0; t < 24; t++) {
         await sleep(t < 2 ? 400 : 250);
         var d = f.contentDocument; if (!d || !d.body) continue;
-        if (out.btn) { var ps = panelSizes(d, out.btn); if (ps.length) { out.sst = ps; break; } }
+        if (out.btn) { var ps = panelSizes(d, out.btn); if (!ps.length && t >= 3) ps = seqSizes(d); if (ps.length) { out.sst = ps; break; } }
         // размеры прячутся за кнопкой «Select your size» — нажимаем её один раз (как покупатель), чтобы список появился
         if (!clicked && t >= 1) { var sb = [].slice.call(d.querySelectorAll("button, [role='button'], a")).filter(function (b) { var tx = (b.textContent || "").replace(/\s+/g, " ").trim(); return tx.length < 40 && /(select|choose|choisir|w[äa]hlen|seleziona|kies|elige|selecciona)?\s*(your\s*|uw\s*|tu\s*)?(size|taille|gr[öo](ss|ß)e|taglia|maat|talla)/i.test(tx) && !/guide|chart|tabelle/i.test(tx); })[0]; if (sb) { clicked = true; try { sb.click(); out.btn = sb; info.push("click:" + (sb.textContent || "").replace(/\s+/g, " ").trim().slice(0, 30)); } catch (e) {} } else if (t >= 8) { clicked = true; info.push("nobtn"); } }
         var sst = sizeInfo(d, "", p || {}), key = JSON.stringify(sst);
@@ -462,8 +475,8 @@ async function tbCollect() {
     try { var gz = async function (t) { var b = await new Response(new Blob([t]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer(), u = new Uint8Array(b), out = ""; for (var q = 0; q < u.length; q += 32768) out += String.fromCharCode.apply(null, u.subarray(q, q + 32768)); return btoa(out); };
       var lean = function (t) { return String(t).replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<svg[\s\S]*?<\/svg>/gi, "<svg></svg>").replace(/data:[a-z]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+\/=]{200,}/g, "data:,"); }; // без стилей и картинок-иконок — только разметка и данные
       // по частям: раздел отдельно, каждый товар отдельно (большие страницы не влезают в один запрос)
-      w.postMessage({ type: "tb-snap", host: host, section: section, part: "list", list: { url: location.href.split("#")[0], gz: await gz(lean(listHtml)), got: { links: links.length, siteTotal: siteTotal(), newBadges: Object.keys(nb).length, blocked: Object.keys(tb).length, newSec: isNewSec } }, ver: "v57" }, ADM);
-      for (var sp = 0; sp < snapP.length; sp++) w.postMessage({ type: "tb-snap", host: host, section: section, part: "page", idx: sp, pages: [{ url: snapP[sp].url, gz: await gz(lean(snapP[sp].html)), got: snapP[sp].got }], ver: "v57" }, ADM); } catch (e) {}
+      w.postMessage({ type: "tb-snap", host: host, section: section, part: "list", list: { url: location.href.split("#")[0], gz: await gz(lean(listHtml)), got: { links: links.length, siteTotal: siteTotal(), newBadges: Object.keys(nb).length, blocked: Object.keys(tb).length, newSec: isNewSec } }, ver: "v61" }, ADM);
+      for (var sp = 0; sp < snapP.length; sp++) w.postMessage({ type: "tb-snap", host: host, section: section, part: "page", idx: sp, pages: [{ url: snapP[sp].url, gz: await gz(lean(snapP[sp].html)), got: snapP[sp].got }], ver: "v61" }, ADM); } catch (e) {}
     summary(ok); await waitSaved(sentN);
     if (siteStop) { note("Остановился: " + siteName + " временно ограничил доступ (ответ 403). Взято новых " + ok + " · проверено " + upd + ". Запустите кнопку снова через 15–30 минут — продолжит с того места, где остановился"); return; }
     note("Готово: новых " + ok + " · проверено добавленных " + upd + (saved.fail ? " · не сохранилось " + saved.fail + " (причины в админке)" : "") + (bad ? " · не прочитано " + bad : "") + (freshN ? " · недавно проверенных пропущено: " + freshN : "") + (rejN ? " · удалённых вами не берём: " + rejN : "") + (askN ? " · из них «уточнить наличие» (предзаказ, лист ожидания, нет размеров): " + askN : "") + (newTotal > MAX ? " · ещё новых: " + (newTotal - MAX) + " — нажмите кнопку ещё раз" : "") + ". Что продано и что пропало — в админке");
