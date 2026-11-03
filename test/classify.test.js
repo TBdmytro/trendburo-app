@@ -43,3 +43,9 @@ test("обувь с «вязаными» словами — обувь: Knitted 
   assert.equal(detectCategory("Gestrickte Läufer"), "shoes");
   assert.equal(headCategory("Strickjacke"), "clothing");
 });
+
+test("Dior: Trenchcoat — одежда (не аксессуар из-за «Gürtel»), Knit Pump / Knit Ballerina — обувь, Twinset — одежда", () => {
+  assert.equal(detectCategory("Trenchcoat mit Gürtel"), "clothing"); assert.equal(detectSubcategory("clothing", "Trenchcoat mit Gürtel"), "coats");
+  assert.equal(detectCategory("Dior Knit Pump"), "shoes"); assert.equal(detectCategory("Dior Knit Ballerina"), "shoes");
+  assert.equal(headCategory("Twinset"), "clothing"); assert.equal(detectSubcategory("clothing", "Twinset"), "knit");
+});
