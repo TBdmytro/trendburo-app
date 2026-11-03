@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v58] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v59] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -386,7 +386,7 @@ async function tbCollect() {
     // прогон раздела: новые — добавить (до 100), уже добавленные — обновить цену и размеры (до 400), чего нет на сайте — админка отметит «продано»
     var section = host + location.pathname, allCodes = links.map(codeOf).filter(Boolean);
     // удалённые вами в админке («rejected») не берём вовсе
-    var rejN = links.filter(function (u) { return st[codeOf(u)] === "rejected"; }).length;
+    var rejC = links.map(codeOf).filter(function (c) { return st[c] === "rejected"; }), rejN = rejC.length, badC = [];
     var known = links.filter(function (u) { var c = st[codeOf(u)]; return !!c && c !== "rejected"; }), fresh = links.filter(function (u) { return !st[codeOf(u)]; });
     had = known.length; var newTotal = fresh.length;
     // отчёт о сайте: сколько прочитано, с ценой, фото, размерами — чтобы новый бренд (LV, Gucci…) сразу было видно, всё ли кнопка понимает
@@ -395,7 +395,7 @@ async function tbCollect() {
     // уже проверенные за последние 12 часов не открываем заново — повторный прогон быстрый
     var freshN = known.filter(function (u) { return !!fr[codeOf(u)]; }).length; known = known.filter(function (u) { return !fr[codeOf(u)]; });
     var todo = fresh.slice(0, MAX).map(function (u) { return [u, false]; }).concat(known.slice(0, 400).map(function (u) { return [u, true]; }));
-    var summary = function (added) { try { w.postMessage({ type: "tb-summary", found: had + newTotal, had: had, added: added, left: Math.max(0, newTotal - Math.min(newTotal, MAX)) }, ADM); } catch (e) {} };
+    var summary = function (added) { try { w.postMessage({ type: "tb-summary", found: had + newTotal, had: had, added: added, rej: rejN, left: Math.max(0, newTotal - Math.min(newTotal, MAX)) }, ADM); } catch (e) {} };
     var blk = 0, siteStop = false, badL = [], ok = 0, upd = 0, bad = 0, sentN = 0, extra = location.pathname.toLowerCase().split(/[/_-]+/);
     var qd = {}, extraN = 0; links.forEach(function (u) { var c = codeOf(u); if (c) qd[c] = 1; }); Object.keys(st).forEach(function (c) { qd[c] = 1; });
     // по два товара одновременно (как если бы покупатель открыл две вкладки) — вдвое быстрее и без нагрузки на сайт
@@ -421,11 +421,11 @@ async function tbCollect() {
         if (it && it.title && snapP.length < 3) snapP.push({ url: todo[i][0], html: h, got: { title: it.title, price: it.price, currency: it.currency, sku: it.sku, sizes: it.sizes.slice(0, 40), sizeStock: (it.sizeStock || []).slice(0, 40), images: it.images.length, isNew: !!it.isNew, blocked: it.blocked || "", gender: it.gender || "", cat: (it.crumbs || []).slice(-3).join("/") } });
         if (it && it.title && (it.blocked || (it.sizeStock.length && it.sizeStock.every(function (x) { return x.ok === false; })))) { it.ask = it.blocked || "wait"; askN++; }
         if (!(it && it.title) && badL.length < 12) badL.push([todo[i][0].split("/").pop(), "no product " + r.status + " " + (h.match(/<title>([^<]{0,40})/i) || [, ""])[1]]);
-        if (it && it.title) { it.section = section; if (!(await ready)) throw new Error("admin"); w.postMessage({ type: isUpd ? "tb-update" : "tb-import", items: [it] }, ADM); sentN++; if (isUpd) upd++; else ok++; } else bad++; }
+        if (it && it.title) { it.section = section; if (!(await ready)) throw new Error("admin"); w.postMessage({ type: isUpd ? "tb-update" : "tb-import", items: [it] }, ADM); sentN++; if (isUpd) upd++; else ok++; } else { bad++; if (tcode) badC.push(tcode); } }
       catch (e) { if (e && e.message === "admin") throw e; var em = String(e && e.message || e);
         // сайт попросил притормозить (429/403/5xx) или сеть моргнула — товар не теряем: повторим в конце, медленнее
         if (!todo[i][2] && /^(429|403|5\d\d)$|fetch|network|timeout|abort/i.test(em)) { todo[i][2] = 1; retryQ.push(i); return; }
-        bad++; if (badL.length < 12) badL.push([todo[i][0].split("/").pop(), em.slice(0, 40)]); }
+        bad++; if (tcode) badC.push(tcode); if (badL.length < 12) badL.push([todo[i][0].split("/").pop(), em.slice(0, 40)]); }
     };
     var retryQ = [];
     var nextI = 0, adminErr = null;
@@ -455,7 +455,7 @@ async function tbCollect() {
       await sleep(PAUSE);
     }
     sample = sample || {}; moreCap.bad = badL; moreCap.siteTotal = siteTotal(); moreCap.links = links.length; moreCap.newQ = newTotal; moreCap.knownQ = had; sample.moreCap = moreCap;
-    try { w.postMessage({ type: "tb-section", host: host, section: section, codes: allCodes.concat(alive), url: location.href.split("#")[0], title: document.title, h1: ((document.querySelector("h1") || {}).innerText || "").replace(/\s+/g, " ").trim().slice(0, 160), desc: ((document.querySelector('meta[name="description"]') || {}).content || "").slice(0, 600), stats: H, sample: sample, complete: !siteStop && newTotal <= MAX && ok >= newTotal }, ADM); } catch (e) {}
+    try { w.postMessage({ type: "tb-section", host: host, section: section, codes: allCodes.concat(alive), url: location.href.split("#")[0], title: document.title, h1: ((document.querySelector("h1") || {}).innerText || "").replace(/\s+/g, " ").trim().slice(0, 160), desc: ((document.querySelector('meta[name="description"]') || {}).content || "").slice(0, 600), stats: H, sample: sample, complete: !siteStop && newTotal <= MAX && ok >= newTotal, rejected: rejC.slice(0, 400), failed: badC.slice(0, 400) }, ADM); } catch (e) {}
     // копии страниц (раздел + до 3 товаров) — для автопроверки новых версий кнопки; сжатые, только содержимое страницы
     try { var gz = async function (t) { var b = await new Response(new Blob([t]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer(), u = new Uint8Array(b), out = ""; for (var q = 0; q < u.length; q += 32768) out += String.fromCharCode.apply(null, u.subarray(q, q + 32768)); return btoa(out); };
       var lean = function (t) { return String(t).replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<svg[\s\S]*?<\/svg>/gi, "<svg></svg>").replace(/data:[a-z]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+\/=]{200,}/g, "data:,"); }; // без стилей и картинок-иконок — только разметка и данные

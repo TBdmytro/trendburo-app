@@ -503,3 +503,16 @@ test("копии страниц по умолчанию не сохраняют�
   assert.equal(await store.get("snap.old"), null); assert.ok(await store.get("weblogin." + "b".repeat(24)));
   assert.equal((await store.get("product.manual.shop-262mzugnia357cbj62")).images.length, 2); assert.ok(c.body.tidied >= 1);
 });
+
+test("раздел бренда: удалённые вами и не прочитанные видны в «Сайтах брендов», «Вернуть» снимает удаление только у этого раздела", async () => {
+  const ck = await adminCookie(), H = { cookie: ck, "x-tb": "1" };
+  await store.put({ _id: "settings.deleted", _type: "settings", ids: ["product.manual.shop-aaa111", "product.manual.shop-bbb222", "product.manual.shop-zzz999", "product.manual.ysl-ccc"] });
+  const r = await call(handler, { method: "POST", query: { a: "sectionSync" }, body: { prefix: "shop", section: "shop.x.com/sneakers/", codes: ["AAA111", "BBB222", "CCC333"], rejected: ["AAA111", "BBB222"], failed: ["DDD444"], url: "https://shop.x.com/sneakers/", title: "Sneakers" }, headers: H });
+  assert.equal(r.status, 200);
+  const w = await call(handler, { query: { a: "webSections" }, headers: { cookie: ck } });
+  const s = w.body.sections.find(x => x.section === "shop.x.com/sneakers/");
+  assert.deepEqual(s.rej, ["aaa111", "bbb222"]); assert.deepEqual(s.failed, ["ddd444"]);
+  const u = await call(handler, { method: "POST", query: { a: "undeleteSection" }, body: { section: "shop.x.com/sneakers/" }, headers: H });
+  assert.equal(u.body.restored, 2);
+  assert.deepEqual((await store.get("settings.deleted")).ids, ["product.manual.shop-zzz999", "product.manual.ysl-ccc"], "другие удалённые не тронуты");
+});

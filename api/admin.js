@@ -487,7 +487,8 @@ export default async function handler(req, res) {
         const st = body.stats && typeof body.stats === "object" ? Object.fromEntries(["links", "tried", "read", "price", "newN", "img", "needSz", "sz"].map(k => [k, Math.max(0, Math.min(5000, Number(body.stats[k]) || 0))])) : null;
         if (st) { const all = await allProducts(store), ids = new Set(mine.map(p => p._id)), cats = { total: 0 }; for (const p of all) if (ids.has(p._id)) { const c = p.overrides?.category || p.category || "other"; cats[c] = (cats[c] || 0) + 1; cats.total++; } st.cats = cats; }
         if (body.sample && typeof body.sample === "object") { const host = String(body.host || "").replace(/[^a-z0-9.-]/gi, "").slice(0, 80); if (host) { const sd = (await store.get("settings.webSamples")) || { _id: "settings.webSamples", _type: "settings", list: {} }; sd.list = sd.list || {}; sd.list[host.replace(/\./g, "_")] = { host, at: new Date().toISOString(), sample: JSON.stringify(body.sample).length < 24000 ? body.sample : { title: String(body.sample.title || "").slice(0, 200), url: String(body.sample.url || "").slice(0, 300), tooBig: true, moreCap: body.sample.moreCap } }; delete sd._rev; delete sd._createdAt; delete sd._updatedAt; try { await store.put(sd); } catch {} } }
-        await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: goneN, health: st, complete: !!body.complete });
+        const clean = a => (Array.isArray(a) ? a : []).map(c => String(c).toLowerCase().replace(/[^a-z0-9]/g, "")).filter(Boolean).slice(0, 400);
+        await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: goneN, health: st, complete: !!body.complete, px, rej: clean(body.rejected), failed: clean(body.failed) });
         // страница коллекции бренда (Cruise 2027, Winter 26…) — создаём/обновляем коллекцию; её товары — товары этого раздела
         try { const { upsertCollection, isCollection } = await import("../lib/collections.js");
           if (isCollection(body.title, body.url || section)) { const any = mine.length ? (await store.getMany([mine[0]._id]))[0] : null;
@@ -507,6 +508,16 @@ export default async function handler(req, res) {
         // сколько удалённых вами товаров по каждому сайту (кнопка их больше не берёт — можно разрешить снова)
         const del = {}; for (const id of await deletedSet(store)) { const m = id.match(/^product\.manual\.([a-z0-9]+)-/); if (m) del[m[1]] = (del[m[1]] || 0) + 1; }
         return send(res, 200, { sections: Object.values(d?.list || {}).sort((a, b) => String(a.lastRun).localeCompare(String(b.lastRun))), deleted: del, arrivals: (await store.get("settings.newArrivals"))?.mode || "publish" });
+      }
+      case "undeleteSection": {
+        // вернуть удалённые вами товары одного раздела: кнопка снова их возьмёт (скрытыми, на проверку)
+        const d = await store.get("settings.webSections"), x = d?.list?.[secKey(String(body.section || ""))];
+        if (!x || !x.px || !(x.rej || []).length) return send(res, 200, { restored: 0 });
+        const want = new Set(x.rej.map(c => x.px + c)), dd = await store.get("settings.deleted");
+        const keep = (dd?.ids || []).filter(i => !want.has(i)), n = (dd?.ids || []).length - keep.length;
+        if (n) await store.put({ _id: "settings.deleted", _type: "settings", ids: keep, at: new Date().toISOString() });
+        x.rej = []; const { _rev, _createdAt, _updatedAt, ...save } = d; await store.put(save);
+        return send(res, 200, { restored: n });
       }
       case "dbCleanup": {
         // уборка базы: копии страниц (по несколько МБ), просроченные одноразовые коды входа
@@ -909,7 +920,9 @@ async function rememberSection(store, x) {
   const url = /^https:\/\//.test(String(x.url || "")) ? String(x.url).slice(0, 500) : (prev.url || null);
   d.list[k] = { section: x.section, url, title: String(x.title || prev.title || "").replace(/\s*[|–-]\s*[^|–-]*$/, "").slice(0, 120), lastRun: new Date().toISOString(), found: x.found, inSection: x.inSection, gone: x.gone, partial: !!x.partial, health: x.health || prev.health || null,
     // раздел хоть раз пройден целиком — дальше всё, что в нём появляется, это новинки бренда (новая коллекция)
-    complete: !!(x.complete || prev.complete), completeAt: prev.completeAt || (x.complete ? new Date().toISOString() : null) };
+    complete: !!(x.complete || prev.complete), completeAt: prev.completeAt || (x.complete ? new Date().toISOString() : null),
+    // чего из раздела нет у нас и почему: удалены вами (кнопка их не берёт) / страница не прочиталась — видно в «Сайтах брендов», ничего не пропадает молча
+    px: x.px || prev.px || null, rej: Array.isArray(x.rej) ? x.rej : (prev.rej || []), failed: Array.isArray(x.failed) ? x.failed : (prev.failed || []) };
   for (const kk of Object.keys(d.list)) if (!/^[a-zA-Z0-9_-]+$/.test(kk)) delete d.list[kk]; // старые неправильные ключи
   const { _rev, _createdAt, _updatedAt, ...save } = d; await store.put(save);
 }
