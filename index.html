@@ -178,6 +178,37 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .cvlt{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin:16px 22px 8px}
 .cvrem{display:flex;align-items:center;justify-content:space-between;width:100%;margin:12px 0 0;padding:0 22px;font-size:13.5px;color:var(--g2);border:0;background:none;font-family:var(--f)}.cvrem .tg{width:44px;height:26px;border-radius:13px;background:#d4d5d9;position:relative;transition:background .2s}.cvrem .tg:after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}.cvrem[aria-pressed="true"] .tg{background:var(--fg)}.cvrem[aria-pressed="true"] .tg:after{transform:translateX(18px)}
 .cvempty{margin:16px 22px;color:var(--muted);font-size:14px}
+
+/* главная, вариант A */
+#shipPill{display:none!important}
+.hgen{display:flex;margin:2px 18px 14px;border:1px solid #26282c;border-radius:999px;padding:3px;background:#fff}
+.hgen button{flex:1;border:0;background:none;border-radius:999px;padding:10px 0;font:600 14px Onest,sans-serif;color:#26282c;transition:background .2s,color .2s}
+.hgen button[aria-pressed=true]{background:#26282c;color:#fff}
+.hcv{position:relative;margin:4px 18px 0}
+.hcv-tr{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;border-radius:26px}
+.hcv-tr::-webkit-scrollbar{display:none}
+.hcv-s{flex:0 0 100%;scroll-snap-align:start;position:relative;aspect-ratio:4/5;border:0;padding:0;background:#2a2b2e;color:#fff;text-align:left;overflow:hidden}
+.hcv-s img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
+.hcv-s .sh{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,.6))}
+.hcv-s.light{color:#26282c}.hcv-s.light .sh{background:linear-gradient(180deg,rgba(255,255,255,0) 50%,rgba(255,255,255,.7))}
+.hcv-s .tx{position:absolute;left:20px;right:20px;bottom:20px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.hcv-s .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.8}
+.hcv-s b{font:400 30px/1.08 Prata,Georgia,serif}
+.hcv-s .s{font-size:13px;opacity:.8}
+.hcv-s .go{margin-top:6px;background:#fff;color:#26282c;border-radius:999px;padding:9px 15px;font-size:13px;font-weight:600}
+.hcv-s.light .go{background:#26282c;color:#fff}
+.hcv-bars{position:absolute;top:14px;left:20px;right:20px;display:flex;gap:4px;pointer-events:none}
+.hcv-bars i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.35)}
+.hcv-bars i.on,.hcv-bars i.done{background:#fff}
+.hcv-all{display:flex;align-items:center;gap:4px;margin:10px 18px 0;border:0;background:none;padding:0;font-size:14px;color:var(--muted)}
+#homeA>div:not(:empty){margin-top:22px}
+.hchips{display:flex;gap:6px;overflow-x:auto;padding:0 18px 12px;scrollbar-width:none}
+.hchips::-webkit-scrollbar{display:none}
+.hchip{flex:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font:500 13px Onest,sans-serif;color:#26282c;white-space:nowrap}
+.hchip[aria-pressed=true]{background:#26282c;border-color:#26282c;color:#fff}
+.hcolls{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 18px}
+.o-entry .o-entry-art{display:none}
+.o-entry .o-entry-tx{padding:22px 18px 20px}
 </style>
 <title>Trend Büro</title>
 <link rel="preload" href="/api/catalog?v=2" as="fetch" crossorigin>
@@ -1527,15 +1558,17 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
         <div class="feedhead"><div class="sub" id="dateLine" hidden></div><span class="shippill" id="shipPill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17" r="1.6"/><circle cx="17" cy="17" r="1.6"/></svg><span id="shipPillT">Отправка в сб</span> · <b>бесплатно</b></span></div>
         <div class="topicons"></div>
       </div>
+      <div class="hgen" id="hGen" role="group" aria-label="Для кого"><button data-hg="w">Для неё</button><button data-hg="m">Для него</button></div>
       <div class="sec watch" id="watchSec" hidden><div class="sech"><h2>Мониторинг</h2><button class="more" data-act="watch-lock">Скрыть</button></div><div class="wtiles" id="watchTiles"></div></div>
       <div class="announce" id="announce" hidden></div>
       <div class="stories" id="stories"></div>
       <div class="sec collw" id="collRail" hidden></div>
       <div class="bnr" id="bnr" hidden></div>
+      <div id="homeA"><div id="hCover"></div><div id="hNew"></div><div id="hSec"></div><div id="hCats"></div></div>
       <div class="ship" hidden><div><small id="shipTitle">Отправки в Украину</small><b id="shipDate"></b></div><span class="pulse" aria-hidden="true"></span></div>
       <button class="o-entry press" data-act="tab" data-tab="optix" aria-label="Открыть OPTIX" hidden>
         <span class="o-entry-art" id="oEntryArt"></span>
-        <span class="o-entry-tx"><span class="cap">Наш продукт</span><span class="wordmark">OPTIX</span><span class="o-entry-sub">Солнцезащитные очки под заказ</span>
+        <span class="o-entry-tx"><span class="cap">Наш продукт</span><span class="wordmark">OPTIX</span><span class="o-entry-sub">Солнцезащитные очки со скидками</span>
         <span class="o-entry-br">Gucci · Saint Laurent · Cartier · Miu Miu · Prada</span></span>
         <span class="o-entry-go">Открыть<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
       </button>
@@ -1576,7 +1609,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
             <div class="nrings" id="nRings"></div>
             <div class="nsto"><div class="nfr" id="nFr"><div class="nbars" id="nBars"></div><div class="nfh"><span id="nB"></span><span id="nN"></span></div><div id="nIms"></div><div class="ncap" id="nCap"></div><div class="nend" id="nEnd"></div></div><div class="nside" id="nSide"></div></div>
             <button class="nall press" id="nAll"></button></div>
-          <div class="cbn2"><button class="press cbo" data-act="optixapp"><span class="cap">Очки</span><b>OPTIX</b><small>Солнцезащитные очки под заказ</small><i class="chev"></i></button><button class="press cbg" data-act="gifts"><span class="cbg-im" id="giftIm"></span><span class="cap">Идеи</span><b>Подарки любимым</b><small>Для неё и для него</small><i class="chev"></i></button></div>
+          <div class="cbn2"><button class="press cbo" data-act="optixapp"><span class="cap">Очки</span><b>OPTIX</b><small>Солнцезащитные очки со скидками</small><i class="chev"></i></button><button class="press cbg" data-act="gifts"><span class="cbg-im" id="giftIm"></span><span class="cap">Идеи</span><b>Подарки любимым</b><small>Для неё и для него</small><i class="chev"></i></button></div>
           <div class="pad" hidden style="margin-top:12px"><div class="seg" role="group" aria-label="Для кого" id="hg"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button></div></div>
           <div class="sec nwhide" style="padding-top:16px"><button class="stockban press" data-act="stock-all" id="stockBan"></button></div>
           <div class="sec cbwrap nwhide" id="catBn" hidden></div>
@@ -1938,6 +1971,7 @@ function renderFeed(){
   $("#leadNews").innerHTML=`<button class="lead-news press" data-act="news" data-id="${L.id}" style="--c:${lp.c}"><div class="art">${lightShape(lp.shape,lp.c)}</div><div class="tx"><span class="cap">${esc(BRANDS.find(b=>b[0]===L.bk)[1])} · ${L.tag}</span><h3>${esc(L.title)}</h3><p>${esc(L.text)}</p></div></button>`;
   $("#newsList").innerHTML=NEWS.slice(1).map(n=>{const p=P.find(x=>x.id===n.pid);return `<button class="newsrow press" data-act="news" data-id="${n.id}" style="--c:${p.c}"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div><span class="cap">${esc(BRANDS.find(b=>b[0]===n.bk)[1])} · ${n.when}</span><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div></button>`}).join("");}
   try{renderFeedColl()}catch(e){}
+  try{renderHome()}catch(e){console.log(e)}
   $("#newRail").innerHTML=P.filter(p=>p.isNew).slice(0,10).map(pcHTML).join("");
   $("#bagRail").innerHTML=P.filter(p=>p.cat==="bags"&&p.price<=3000).slice(0,12).map(pcHTML).join("");
   $("#menRail").innerHTML=P.filter(p=>p.g==="m").slice(0,12).map(pcHTML).join("");
@@ -2897,10 +2931,60 @@ function openColl(id){const c=COLL.find(x=>x.id===id);if(!c)return;collMark(id);
   try{renderFeedColl()}catch(e){}}
 const collCardHTML=(c,big)=>big?`<button class="collc press" data-coll="${esc(c.id)}"${c.cover?` style="background-image:url('${esc(szU(c.cover,900))}')"`:""}><span class="sh"></span><span class="bars"><i class="on"></i><i></i><i></i><i></i></span><span class="tx"><span class="k">${esc(c.brand)} · ${collSeen(c.id)?"коллекция":"новая коллекция"}</span><b>${esc(c.title)}</b><span class="ft"><span class="num">${c.n} ${plural(c.n,["вещь","вещи","вещей"])}${collFrom(c)?" · от "+eur(collFrom(c)):""}</span><span class="go" aria-hidden="true">›</span></span></span></button>`
   :`<button class="collm press" data-coll="${esc(c.id)}"${c.cover?` style="background-image:url('${esc(szU(c.cover,500))}')"`:""}>${collSeen(c.id)?"":'<i class="dot"></i>'}<span class="sh"></span><span class="tx"><span class="k">${esc(c.brand)}</span><b>${esc(c.title)}</b></span></button>`;
-function renderFeedColl(){const box=$("#collRail");if(!box)return;const L=COLL.filter(collG);box.hidden=!L.length;if(!L.length){box.innerHTML="";return}
+function renderFeedColl(){const box=$("#collRail");if(!box)return;if(LIVE){box.hidden=true;box.innerHTML="";return}const L=COLL.filter(collG);box.hidden=!L.length;if(!L.length){box.innerHTML="";return}
   box.innerHTML=`<div class="sech"><h2>Новые коллекции</h2><div class="cseg" role="group" aria-label="Для кого"><button data-cg="w" aria-pressed="${CV.g==="w"}">Для неё</button><button data-cg="m" aria-pressed="${CV.g==="m"}">Для него</button></div></div><div class="collrail">${L.map(c=>collCardHTML(c,true)).join("")}</div>`}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-coll]");if(b&&!b.closest(".sv2")){e.preventDefault();openColl(b.dataset.coll);return}
   const g=e.target.closest("[data-cg]");if(g){CV.g=g.dataset.cg;store.set("tb_g",CV.g);try{renderFeedColl();AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}}});
+/* ===== Главная «Лента», вариант A: обложка недели, новинки, новое по разделам, ряды по видам вещей ===== */
+const HDAY=864e5;
+const hHash=s=>{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return (h>>>0)/4294967296};
+const hG=p=>p.g===CV.g||p.g==="u";
+// вес вещи в ряду: свежесть + любимые бренды клиента + интерес других клиентов + наличие; в течение дня порядок один и тот же
+function hRank(list){const day=new Date().toISOString().slice(0,10),fb=new Set(P.filter(p=>favs.has(p.id)).map(p=>p.bk)),mx=Math.max(1,...list.map(p=>p.pop||0));
+  const sc=p=>{let s=0;if(p.na)s+=Math.max(0,40-2*(Date.now()-p.na)/HDAY);if(fb.has(p.bk))s+=15;s+=20*(p.pop||0)/mx;
+    const a=p.availability;if(p.st)s+=5;else if(a==="preorder")s-=15;else if(a==="ask"||a==="unknown"||a==="out")s-=30;return s+3*hHash(p.id+day)};
+  return list.map(p=>[sc(p),p]).sort((a,b)=>b[0]-a[0]).map(x=>x[1])}
+// разнообразие: не больше 2 вещей одного бренда подряд в первых местах; товар показывается на главной один раз
+function hPick(list,n,used){const out=[],per={},rest=[];
+  for(const p of list){if(used.has(p.id))continue;if((per[p.bk]||0)>=2){rest.push(p);continue}per[p.bk]=(per[p.bk]||0)+1;out.push(p);if(out.length>=n)break}
+  for(const p of rest){if(out.length>=n)break;out.push(p)}
+  out.forEach(p=>used.add(p.id));return out}
+const H_SECS=[["bags","","Сумки"],["shoes","sneak","Кроссовки"],["shoes","!sneak","Обувь"],["clothing","","Одежда"],["jewelry","","Украшения"],["accessories","","Аксессуары"]];
+const H_ROWS=[["shoes","sneak","Кроссовки"],["clothing","outer","Верхняя одежда"]];
+const hIn=(p,c,s)=>p.cat===c&&(!s||(s[0]==="!"?subTypeOf(p)!==s.slice(1):subTypeOf(p)===s));
+let HSEC=store.get("tb_hsec",0),HCT=null;
+const hRail=(t,l,more)=>`<div class="sec"><div class="sech"><h2>${t}</h2>${more||""}</div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`;
+function hCover(){const box=$("#hCover");if(!box)return;clearInterval(HCT);
+  const bn=(CMS&&CMS.banners?CMS.banners:[]).filter(b=>(b.places&&b.places.length?b.places:["feed"]).includes("feed")&&(!b.aud||b.aud==="all"||b.aud===CV.g));
+  const co=COLL.filter(collG);
+  const S=bn.map(b=>({k:"b",id:b.id,img:b.image,kick:b.subtitle||"",t:b.title||"",go:b.button||(hasAct(b.action)?"Смотреть":""),light:b.theme==="light"}))
+    .concat(co.map(c=>({k:"c",id:c.id,img:c.cover,kick:c.brand+" · "+(collSeen(c.id)?"коллекция":"новая коллекция"),t:c.title,sub:c.n+" "+plural(c.n,["вещь","вещи","вещей"])+(collFrom(c)?" · от "+eur(collFrom(c)):""),go:"Смотреть коллекцию"}))).slice(0,5);
+  if(!S.length){box.innerHTML="";return}
+  box.innerHTML=`<div class="hcv"><div class="hcv-tr">${S.map((x,i)=>`<button class="hcv-s press ${x.light?"light":""}" ${x.k==="b"?`data-act="cbanner" data-bid="${esc(x.id)}" data-bn="${esc(x.id)}"`:`data-coll="${esc(x.id)}"`}>${x.img?`<img src="${esc(szU(x.img,1000))}" alt="" ${i?'loading="lazy"':""} decoding="async">`:""}<span class="sh"></span><span class="tx">${x.kick?`<span class="k">${esc(x.kick)}</span>`:""}${x.t?`<b>${esc(x.t)}</b>`:""}${x.sub?`<span class="s num">${esc(x.sub)}</span>`:""}${x.go?`<span class="go">${esc(x.go)}</span>`:""}</span></button>`).join("")}</div>${S.length>1?`<div class="hcv-bars">${S.map((_,i)=>`<i class="${i?"":"on"}"><b></b></i>`).join("")}</div>`:""}</div>${co.length>1?`<button class="hcv-all press" data-act="hcolls">Все коллекции<i class="chev"></i></button>`:""}`;
+  if(S.length<2)return;
+  const tr=box.querySelector(".hcv-tr"),bars=[...box.querySelectorAll(".hcv-bars i")];let hold=0;
+  const cur=()=>Math.round(tr.scrollLeft/tr.clientWidth),mark=()=>{const k=cur();bars.forEach((d,j)=>{d.classList.toggle("on",j===k);d.classList.toggle("done",j<k)})};
+  tr.addEventListener("scroll",mark,{passive:true});tr.addEventListener("touchstart",()=>{hold=Date.now()},{passive:true});
+  HCT=setInterval(()=>{if(document.hidden||Date.now()-hold<8000||!tr.isConnected||!tr.offsetParent)return;const k=cur();tr.scrollTo({left:(k+1>=S.length?0:k+1)*tr.clientWidth,behavior:"smooth"})},5000)}
+function renderHome(){if(!LIVE||!$("#homeA"))return;
+  $$("#hGen [data-hg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.hg===CV.g));
+  hCover();
+  const used=new Set(),G=P.filter(hG),NW=G.filter(p=>p.isNew);
+  // новинки недели: вещи, вышедшие у нас за 7 дней; мало — за 30 дней («Новинки месяца»); ещё меньше — блока нет
+  {let l=NW.filter(p=>p.na&&Date.now()-p.na<7*HDAY),t="Новинки недели";if(l.length<4){l=NW.filter(p=>p.na&&Date.now()-p.na<30*HDAY);t="Новинки месяца"}
+   const pk=l.length>=4?hPick(hRank(l),12,used):[];$("#hNew").innerHTML=pk.length?hRail(t,pk,`<button class="more" data-act="catalog-new">Все</button>`).replace('class="sec"','class="sec band"'):""}
+  // новое по разделам: кнопка меняет ряд на месте; раздел без 4 новинок не показываем
+  {const secs=H_SECS.map(s=>[s,NW.filter(p=>hIn(p,s[0],s[1])&&!used.has(p.id))]).filter(x=>x[1].length>=4);const box=$("#hSec");
+   if(!secs.length)box.innerHTML="";else{if(HSEC>=secs.length)HSEC=0;const [s,l]=secs[HSEC],u2=new Set(used),pk=hPick(hRank(l),12,u2);
+    box.innerHTML=`<div class="sec"><div class="sech"><h2>Новое в разделах</h2><button class="more" data-act="hall" data-k="new" data-c="${s[0]}" data-s="${s[1]}">Все</button></div><div class="hchips">${secs.map((x,i)=>`<button class="hchip" data-hsec="${i}" aria-pressed="${i===HSEC}">${x[0][2]}</button>`).join("")}</div><div class="hrail">${pk.map(pcHTML).join("")}</div></div>`;
+    pk.forEach(p=>used.add(p.id))}}
+  // ряды по видам вещей: всё в наличии и под заказ, не только новинки
+  $("#hCats").innerHTML=H_ROWS.map(([c,sb,t])=>{const l=G.filter(p=>hIn(p,c,sb));if(l.length<4)return"";const pk=hPick(hRank(l),12,used);return pk.length>=4?hRail(t,pk,`<button class="more" data-act="hall" data-k="row" data-c="${c}" data-s="${sb}">Все</button>`):""}).join("")}
+function homeAll(k,c,sb){clearFilters();F.g=CV.g;if(k==="new")F.onlyNew=true;if(c){F.cats.add(c);if(sb&&sb[0]!=="!")F.subs[c]=new Set([sb])}
+  const t=(H_SECS.concat(H_ROWS).find(x=>x[0]===c&&x[1]===sb)||[,,"Новинки"])[2];tab("catalog");showItems(k==="new"?"Новое · "+t:t)}
+function openColls(){const L=COLL.filter(collG);push("Коллекции",`<div class="hcolls">${L.map(c=>collCardHTML(c,false)).join("")}</div><div style="height:30px"></div>`)}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-hg]");if(g){if(CV.g===g.dataset.hg)return;CV.g=g.dataset.hg;store.set("tb_g",CV.g);hap&&hap("light");try{AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML();renderHome()}catch(x){}return}
+  const h=e.target.closest("[data-hsec]");if(h){HSEC=+h.dataset.hsec;store.set("tb_hsec",HSEC);const y=$("#hSec .hrail");renderHome();hap&&hap("light")}});
 const SVSEEN=(()=>{const o=store.get("tb_svseen",{}),cut=Date.now()-14*864e5;Object.keys(o).forEach(k=>{if(o[k]<cut)delete o[k]});return o})();
 const svDay0=()=>{const d=new Date();d.setHours(0,0,0,0);return +d};
 // видел раньше (за прошлые 7 дней, но не сегодня) — уходит в конец; сегодняшний набор весь день один и тот же
@@ -3183,7 +3267,7 @@ function openResale(sell){let mode=sell?"sell":"buy",rf="all";
 /* ===== Избранное, корзина, кабинет ===== */
 let cart=store.get("tb_cart",[]), orders=store.get("tb_orders",[]), prefs=store.get("tb_prefs",{shoe:"",cloth:"",dest:"ua"});
 const I_HEART='<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',I_BAG='<path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',I_USER='<circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c1.4-3.6 4-5.2 7-5.2s5.6 1.6 7 5.2"/>';
-function renderTopIcons(){$$(".topicons").forEach(el=>el.innerHTML=`<button class="round" data-act="favs" aria-label="Избранное"><svg viewBox="0 0 24 24">${I_HEART}</svg><span class="dotn num" data-cnt="fav"></span></button><button class="round" data-act="cart" aria-label="Корзина"><svg viewBox="0 0 24 24">${I_BAG}</svg><span class="dotn num" data-cnt="cart"></span></button>${ME&&ME.user?`<button class="round me" data-act="account" aria-label="Профиль">${avatarHTML(ME.user)}</button>`:`<button class="round" data-act="account" aria-label="Профиль"><svg viewBox="0 0 24 24">${I_USER}</svg></button>`}`);updateCounts()}
+function renderTopIcons(){$$(".topicons").forEach(el=>el.innerHTML=`<button class="round" data-act="hsearch" aria-label="Поиск"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg></button><button class="round" data-act="favs" aria-label="Избранное"><svg viewBox="0 0 24 24">${I_HEART}</svg><span class="dotn num" data-cnt="fav"></span></button><button class="round" data-act="cart" aria-label="Корзина"><svg viewBox="0 0 24 24">${I_BAG}</svg><span class="dotn num" data-cnt="cart"></span></button>${ME&&ME.user?`<button class="round me" data-act="account" aria-label="Профиль">${avatarHTML(ME.user)}</button>`:`<button class="round" data-act="account" aria-label="Профиль"><svg viewBox="0 0 24 24">${I_USER}</svg></button>`}`);updateCounts()}
 function updateCounts(){$$("[data-cnt=fav]").forEach(d=>{d.textContent=favs.size;d.dataset.n=favs.size});$$("[data-cnt=cart]").forEach(d=>{d.textContent=cart.length;d.dataset.n=cart.length})}
 function bumpCart(){$$("[data-act=cart]").forEach(b=>{b.classList.remove("bump");void b.offsetWidth;b.classList.add("bump")})}
 const cartBtnHTML=()=>`<button class="round" data-act="cart" aria-label="Корзина"><svg viewBox="0 0 24 24">${I_BAG}</svg><span class="dotn num" data-cnt="cart" data-n="${cart.length}">${cart.length}</span></button>`;
@@ -3710,6 +3794,9 @@ $("#app").addEventListener("click",e=>{
   else if(a==="csub"){const c=t.dataset.c,k=t.dataset.k,S=F.subs[c]=F.subs[c]||new Set();S.has(k)?S.delete(k):S.add(k);hap("light");renderCatalog()}
   else if(a==="unaf"){AF[+t.dataset.i][1]();renderCatalog()}
   else if(a==="catalog-new"){clearFilters();F.onlyNew=true;tab("catalog");showItems("Новинки")}
+  else if(a==="hsearch"){tab("catalog");try{showCatHome()}catch(x){}setTimeout(()=>{const q=$("#uq");if(q){q.focus();q.scrollIntoView({block:"center"})}},60)}
+  else if(a==="hall"){homeAll(t.dataset.k,t.dataset.c||"",t.dataset.s||"")}
+  else if(a==="hcolls")openColls();
   else if(a==="catalog-preset"){clearFilters();let ti="Для него";if(t.dataset.p==="bags3000"){F.cats=new Set(["bags"]);F.budgets.bags=3000;ti="Сумки до 3 000 €"}if(t.dataset.p==="men")F.g="m";tab("catalog");showItems(ti)}
 });
 $("#app").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.dataset.fav){e.preventDefault();toggleFav(e.target.dataset.fav)}if(e.key==="Escape"){if(sv)sv.querySelector("[data-x]").click();else if(sheetEl)closeSheet();else if(stack.length)pop()}});
@@ -3728,7 +3815,7 @@ function applyLayout(feed){if(!Array.isArray(feed))return;
   feed.forEach(b=>{const e=el[b.id];if(!e)return;end.parentNode.insertBefore(e,end);b.on?e.removeAttribute("data-off"):e.setAttribute("data-off","");if(b.title)FEED_TITLE[b.id]=b.title});
   if(FEED_TITLE.news)$("#newsTitle").textContent=FEED_TITLE.news;if(FEED_TITLE.ship)$("#shipTitle").textContent=FEED_TITLE.ship;
   const le=$(".live-empty");if(le&&el.ship)el.ship.after(le);
-  {const cr=$("#collRail"),stb=$("#stories");if(cr&&stb)stb.after(cr)}}
+  {const cr=$("#collRail"),stb=$("#stories");if(cr&&stb)stb.after(cr);const ha=$("#homeA");if(ha&&stb)(cr||stb).after(ha)}}
 function applyTexts(s){const T=s.texts||{};TX=T;$$("[data-t]").forEach(e=>{const k=e.dataset.t;if(!e.dataset.t0)e.dataset.t0=e.textContent;e.textContent=T[k]||e.dataset.t0});
   ["concierge","travel","resale"].forEach(k=>{if(!SVC[k])return;if(T["svc."+k+".cap"])SVC[k].cap=T["svc."+k+".cap"];if(T["svc."+k+".title"])SVC[k].title=T["svc."+k+".title"];if(T["svc."+k+".long"])SVC[k].text=T["svc."+k+".long"]});
   const hid=s.hiddenServices||[];$$("[data-svc]").forEach(e=>hid.includes(e.dataset.svc)?e.setAttribute("data-off",""):e.removeAttribute("data-off"))}
@@ -3738,7 +3825,7 @@ function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);applyTheme(
   if(s.optix&&s.optix.url)OPTIX_LINK=s.optix.url;
   $$("[data-wd],[data-wd2]").forEach(e=>e.textContent=SHIPF());
   const an=$("#announce");if(an){an.hidden=!(s.announce&&s.announce.on&&s.announce.text);an.textContent=s.announce?s.announce.text:""}
-  const oe=$(".o-entry");if(oe)oe.hidden=true;if(s.optix)OPTIX_ON=s.optix.on!==false;
+  if(s.optix)OPTIX_ON=s.optix.on!==false;const oe=$(".o-entry");if(oe)oe.hidden=!OPTIX_ON;
 }
 const brandKey=name=>{const n=String(name||"").trim().toLowerCase();const b=BRANDS.find(x=>x[1].toLowerCase()===n);return b?b[0]:null};
 function runAction(a){if(!a||!a.type||a.type==="none")return;const v=a.value||"";
@@ -3766,7 +3853,7 @@ function bnObserve(){if(!bnIO||!LIVE)return;document.querySelectorAll("[data-bn]
 function bnFlush(){if(!Object.keys(BNS.v).length&&!Object.keys(BNS.c).length)return;const body=JSON.stringify({v:BNS.v,c:BNS.c});BNS.v={};BNS.c={};try{if(!(navigator.sendBeacon&&navigator.sendBeacon("/api/lead?a=bnstat",body)))fetch("/api/lead?a=bnstat",{method:"POST",body,keepalive:true}).catch(()=>{})}catch(e){}}
 setInterval(bnFlush,15000);document.addEventListener("visibilitychange",()=>{if(document.hidden)bnFlush()});
 {let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;bnObserve()})}).observe(document.body,{childList:true,subtree:true})}
-function renderBanners(){const box=$("#bnr");if(!box)return;const L=bnFor("feed");clearInterval(renderBanners.t);box.hidden=!L.length;if(!L.length){box.innerHTML="";return}
+function renderBanners(){const box=$("#bnr");if(!box)return;if(LIVE){box.hidden=true;box.innerHTML="";clearInterval(renderBanners.t);try{renderHome()}catch(e){}return}const L=bnFor("feed");clearInterval(renderBanners.t);box.hidden=!L.length;if(!L.length){box.innerHTML="";return}
   box.innerHTML=`<div class="bnr-track">${L.map((b,i)=>`<button class="bn press ${b.theme==="light"?"light":""} ${b.image?"":"noimg"}" data-act="cbanner" data-bid="${esc(b.id)}" data-bn="${esc(b.id)}" aria-label="${esc(b.title||"Баннер")}">${b.image?`<img src="${esc(b.image)}" alt="" ${i?'loading="lazy"':""} decoding="async">`:""}<span class="ov"></span><span class="tx">${b.title?`<b class="h">${esc(b.title)}</b>`:""}${b.subtitle?`<span class="s">${esc(b.subtitle)}</span>`:""}${b.button&&hasAct(b.action)?`<span class="go">${esc(b.button)}</span>`:""}</span></button>`).join("")}</div>${L.length>1?`<div class="bn-dots">${L.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`;
   if(L.length<2)return;
   const tr=box.querySelector(".bnr-track"),dots=[...box.querySelectorAll(".bn-dots i")],step=()=>tr.clientWidth-26;let hold=0;
@@ -3848,7 +3935,7 @@ function applyLive(list,fresh){PV++;
     const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn?x.oldPrice:x.price;
     P.push({id:x.id,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
       shape:(()=>{const u=x.im?x.im[0]&&szU(XU(x.im[0]),400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),get imgs(){return this._im||(this._im=imgsOf(x))},colors:(x.colors||[]).map(c=>c.image&&c.image[0]==="~"?{...c,image:XU(c.image)}:c),sizes:x.sizes||[],
-      orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0,fam:x.fam||null,col:x.col||""})});FAMS=null;
+      orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0,na:x.na?Date.parse(x.na):0,fam:x.fam||null,col:x.col||""})});FAMS=null;
   NEWS.length=0;RESALE.length=0;ICONS.length=0;
   BRANDS=[...new Map(P.map(p=>[p.bk,p.brand])).entries()];
   STORY_BRANDS.length=0;STORY_BRANDS.push(...BRANDS.map(b=>b[0]).slice(0,12));
