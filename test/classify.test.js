@@ -37,3 +37,9 @@ test("обслуживание: юбки и брюки Dior из «Украше�
   assert.equal((await g("product.manual.dior-a3")).category, "jewelry");
   assert.equal((await g("product.manual.dior-a4")).category, "jewelry");
 });
+
+test("обувь с «вязаными» словами — обувь: Knitted Runners, Gestrickte Läufer", () => {
+  assert.equal(detectCategory("Knitted Runners"), "shoes");
+  assert.equal(detectCategory("Gestrickte Läufer"), "shoes");
+  assert.equal(headCategory("Strickjacke"), "clothing");
+});

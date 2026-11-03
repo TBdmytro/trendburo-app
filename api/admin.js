@@ -666,7 +666,9 @@ export default async function handler(req, res) {
         { const { detectCategory, headCategory } = await import("../lib/normalize.js");
           if (!it.category || it.category === "other") { const c = detectCategory(it.title, String(it.section || "").replace(/[-_/]+/g, " "), (it.crumbs || []).join(" "), it.description); if (c && c !== "other") itEn = { ...itEn, category: c }; }
           // главное слово названия важнее описания: «Ausgestellter Rock» с «Anhänger» в описании — юбка, а не украшение
-          const hc = headCategory(it.title) || headCategory(itEn.title); if (hc && itEn.category !== hc) itEn = { ...itEn, category: hc, subcategory: null }; }
+          const hc = headCategory(it.title) || headCategory(itEn.title); if (hc && itEn.category !== hc) itEn = { ...itEn, category: hc, subcategory: null };
+          // и наоборот: «Knitted Runners» — обувь, хотя «knit» похоже на трикотаж
+          else if (!hc && itEn.category === "clothing") { const tc = detectCategory(itEn.title) || detectCategory(it.title); if (tc === "shoes" || tc === "bags") itEn = { ...itEn, category: tc, subcategory: null }; } }
         // новинка бренда: раздел уже был пройден целиком, а этого товара в нём не было — значит, вышел новым.
         // Такие товары сразу на витрине с отметкой «Новинка» (или в «Новых с сайтов», если так выбрано в админке). Первый прогон раздела — всё в «Новые с сайтов» на ваш отбор
         const novelty = await isNovelty(store, it.section);
