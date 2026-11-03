@@ -511,14 +511,26 @@ export default async function handler(req, res) {
       case "dbCleanup": {
         // уборка базы: копии страниц (по несколько МБ), просроченные одноразовые коды входа
         const now = Date.now(), del = [];
-        for (const t of ["snap", "weblogin", "adminlink"]) for (const d of await store.list(t, {}, { limit: 5000, fields: "_id, exp" })) if (t === "snap" || !(d.exp > now)) del.push(d._id);
+        for (const t of ["snap", "weblogin", "adminlink"]) for (const d of await store.list(t, {}, { limit: 5000, fields: "_id, exp, at" })) if (t === "snap" ? !(now - Date.parse(d.at) < 7 * 864e5) : !(d.exp > now)) del.push(d._id);
         for (let i = 0; i < del.length; i += 500) await store.delMany(del.slice(i, i + 500));
+        // фото товаров с сайтов брендов: один кадр в двух размерах и баннеры («запись в бутик») — убираем
+        let tidied = 0;
+        try { const { imgKey, isJunkImg } = await import("../lib/imgorder.js");
+          const L = (await store.list("product", {}, { limit: 60000, fields: "_id, images" })).filter(p => p._id.startsWith("product.manual.") && (p.images || []).length);
+          const ch = [];
+          for (const p of L) { const seen = new Set(); const keep = p.images.filter(i => { const u = i.sourceUrl || i.url; if (isJunkImg(u) || isJunkImg(i.url)) return false; const k = imgKey(u); if (seen.has(k)) return false; seen.add(k); return true; });
+            if (keep.length && keep.length < p.images.length) ch.push({ id: p._id, set: { images: keep } }); }
+          for (let i = 0; i < ch.length; i += 200) await store.patchEach(ch.slice(i, i + 200));
+          tidied = ch.length; if (tidied) PCACHE = null;
+        } catch (e) { console.log("TIDY fail " + String(e.message).slice(0, 120)); }
         let stats = null; try { stats = store.stats ? await store.stats() : null; } catch {}
-        return send(res, 200, { deleted: del.length, stats });
+        return send(res, 200, { deleted: del.length, tidied, stats });
       }
       case "snapSave": {
         // копии страниц больше не храним: каждая — несколько МБ в базе, а автопроверку кнопки делаем без них
-        if (!process.env.TB_SNAPS) return send(res, 200, { ok: true, skipped: true });
+        // храним не больше одной копии на сайт и неделю (для разбора, если кнопка что-то взяла не так); остальное не пишем
+        if (!process.env.TB_SNAPS) { const h0 = String(body.host || "").replace(/[^a-z0-9.-]/gi, "").slice(0, 80); const ex = (await store.list("snap", { host: h0 }, { limit: 5, fields: "_id, section, at" })).filter(x => Date.now() - Date.parse(x.at) < 7 * 864e5);
+          if (ex.length && !ex.some(x => x.section === String(body.section || "").slice(0, 200))) return send(res, 200, { ok: true, skipped: true }); }
         // копии страниц сайта бренда (раздел + до 3 товаров, сжатые) и что кнопка из них прочитала — для автопроверки новых версий кнопки
         const host = String(body.host || "").replace(/[^a-z0-9.-]/gi, "").slice(0, 80), section = String(body.section || "").slice(0, 200);
         if (!host || !section) return send(res, 400, { error: "Нет раздела" });
