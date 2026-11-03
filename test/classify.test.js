@@ -26,7 +26,11 @@ test("обслуживание: юбки и брюки Dior из «Украше�
   await store.put({ _id: "product.manual.dior-a2", _type: "product", brand: "Dior", title: "Dioriviera Bluse", category: "other" });
   await store.put({ _id: "product.manual.dior-a3", _type: "product", brand: "Dior", title: "Ausgestellter Rock", category: "jewelry", overrides: { category: "jewelry" } });
   await store.put({ _id: "product.manual.dior-a4", _type: "product", brand: "Dior", title: "Halskette", category: "jewelry" });
+  await store.put({ _id: "product.manual.dior-a5", _type: "product", brand: "Dior", title: "Dior Oblique Kapuzenjacke mit Reißverschluss", category: "bags", description: "Zwei Taschen" });
+  await store.put({ _id: "product.manual.dior-a6", _type: "product", brand: "Dior", title: "Medium Dior Initials Hobo Tasche", category: "bags" });
   await fixBrands(store);
+  assert.equal((await store.get("product.manual.dior-a5")).category, "clothing"); assert.equal((await store.get("product.manual.dior-a5")).subcategory, "jackets");
+  assert.equal((await store.get("product.manual.dior-a6")).category, "bags");
   const g = async id => store.get(id);
   assert.equal((await g("product.manual.dior-a1")).category, "clothing"); assert.equal((await g("product.manual.dior-a1")).subcategory, "skirts");
   assert.equal((await g("product.manual.dior-a2")).category, "clothing"); assert.equal((await g("product.manual.dior-a2")).subcategory, "shirts");
