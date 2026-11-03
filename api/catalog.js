@@ -9,8 +9,11 @@ import { accessSettings, accessOf } from "../lib/access.js";
 
 /* Каталог собирается не чаще раза в 20 с на экземпляр сервера; одновременные запросы ждут одну сборку (база не получает толпу одинаковых запросов) */
 const MEMO = [null, null];
-const TTL = 20000;
-export function _resetCatalogMemo() { MEMO[0] = MEMO[1] = null; }
+const TTL = 3 * 60e3; // 3 минуты: правки видны чуть позже, зато база не собирает каталог по каждому заходу
+export function _resetCatalogMemo() { MEMO[0] = MEMO[1] = null; CUST.clear(); }
+// доступ клиента — из памяти на 2 минуты (без запроса к базе при каждом открытии приложения)
+const CUST = new Map();
+async function custCached(store, id) { const m = CUST.get(id); if (m && Date.now() - m.at < 120e3) return m.c; const c = await store.get(customerId(id)); if (CUST.size > 5000) CUST.clear(); if (c?.access === "ok") CUST.set(id, { c, at: Date.now() }); return c; } // помним только «пускаем» — одобренный только что попадает сразу
 async function catalogBody(compact) {
   const k = compact ? 1 : 0, m = MEMO[k];
   if (m && m.body && Date.now() - m.at < TTL) return m.body;
@@ -53,7 +56,7 @@ export default async function handler(req, res) {
     if (acc.closed || req.headers["x-tb-auth"]) {
       closed = true;
       let b = null; try { b = JSON.parse(decodeURIComponent(String(req.headers["x-tb-auth"] || ""))); } catch {}
-      const u = b ? userFrom(b) : null, c = u ? await store.get(customerId(u.id)) : null;
+      const u = b ? userFrom(b) : null, c = u ? await custCached(store, u.id) : null;
       if (accessOf(c, acc) !== "ok") { res.statusCode = 403; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Доступ по приглашению", code: "closed", access: c ? accessOf(c, acc) : "none" })); }
     }
   } catch (e) { console.error("catalog access:", e.message); res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Недоступно" })); }
@@ -62,7 +65,7 @@ export default async function handler(req, res) {
     const body = await catalogBody(compact);
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     // кэш на CDN: свежий 30 с; дальше (до суток) отдаётся сразу из кэша, а обновление идёт в фоне — первый покупатель после простоя не ждёт сборку каталога
-    res.setHeader("Cache-Control", closed ? "private, no-store" : "public, s-maxage=30, stale-while-revalidate=86400");
+    res.setHeader("Cache-Control", closed ? "private, no-store" : "public, s-maxage=120, stale-while-revalidate=86400");
     if (closed) res.setHeader("Vary", "x-tb-auth");
     res.statusCode = 200;
     res.end(body);

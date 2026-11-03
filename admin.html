@@ -835,14 +835,19 @@ async function start() {
     im.dataset.tbBad = "1"; try { const alt = await imgFix(u); const r = await api("imgDrop", { method: "POST", silent: true, body: alt ? { id, urls: [], swap: { [u]: alt } } : { id, urls: [u] } }); if (r.cover) im.src = thumb(r.cover); } catch {} }, true); }
   // названия, оставшиеся на немецком (перевод упёрся в дневной лимит), — дописываем в фоне, пока админка открыта
   if (!BRIDGE && !start.tr) { start.tr = true; const trLoop = async () => { for (let i = 0; i < 20; i++) { const r = await api("trPending", { method: "POST", silent: true }).catch(() => null); if (!r || !r.left || r.limited || r.err) break; } }; setTimeout(trLoop, 6000); setInterval(trLoop, 20 * 60e3); }
-  if (!BRIDGE) try { if (Date.now() - (+localStorage.getItem("tbBrokenAt") || 0) > 15 * 60e3) { localStorage.setItem("tbBrokenAt", String(Date.now())); setTimeout(brokenScan, 4000); } } catch {}
+  // проверка фото по ссылкам — раз в 6 часов (каждые 15 минут гоняла по базе все товары)
+  if (!BRIDGE) try { if (Date.now() - (+localStorage.getItem("tbBrokenAt") || 0) > 6 * 3600e3) { localStorage.setItem("tbBrokenAt", String(Date.now())); setTimeout(brokenScan, 4000); } } catch {}
   if (location.hash === "#screens:mt" || location.hash === "#import") { mtPing(); if (location.search && !BRIDGE) history.replaceState(null, "", location.pathname + location.hash); }
   window.hideSplash && hideSplash();
   if (BRIDGE) return; // мост: только приём товаров, остальное не нужно
   pump(); pollLeads();
 }
 // новые заявки: счётчик в меню обновляется раз в минуту
-async function pollLeads() { try { const { fresh } = await api("leads", { query: { status: "new" }, silent: true }); updateLeadBadge(fresh); } catch {} pollAccess(); clearTimeout(pollLeads.t); pollLeads.t = setTimeout(pollLeads, 60000); }
+// раз в 5 минут и только пока вкладка админки на экране: база (Neon) засыпает, когда к ней не ходят, — так она меньше работает и меньше стоит
+async function pollLeads() { clearTimeout(pollLeads.t);
+  if (!document.hidden) { try { const { fresh } = await api("leads", { query: { status: "new" }, silent: true }); updateLeadBadge(fresh); } catch {} pollAccess(); pollLeads.at = Date.now(); }
+  pollLeads.t = setTimeout(pollLeads, 5 * 60e3); }
+document.addEventListener("visibilitychange", () => { if (!document.hidden && pollLeads.at && Date.now() - pollLeads.at > 5 * 60e3) pollLeads(); });
 // заявки на вход: счётчик у «Клиентов», плашка на «Обзоре» и уведомление, когда пришла новая
 let ACC_P = { n: 0, latest: [] };
 async function pollAccess() {
@@ -2792,7 +2797,7 @@ async function brokenScan() {
 async function vBrandBoard() {
   const { brands, total, incoming } = await api("brandBoard");
   // бренды и подразделы выравниваются в фоне, не чаще раза в 30 минут — «Товары» не ждут этого
-  try { if (Date.now() - (+localStorage.getItem("tbFixAt") || 0) > 30 * 60e3) { localStorage.setItem("tbFixAt", String(Date.now()));
+  try { if (Date.now() - (+localStorage.getItem("tbFixAt") || 0) > 6 * 3600e3) { localStorage.setItem("tbFixAt", String(Date.now()));
     api("fixBrands", { method: "POST", silent: true }).catch(() => {});
     (async () => { for (let i = 0; i < 15; i++) { const r = await api("imgDedupe", { method: "POST", silent: true }).catch(() => ({ done: true })); if (r.done) break; } })(); // фото во всю рамку — в фоне
   } } catch {}

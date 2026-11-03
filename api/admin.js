@@ -76,7 +76,8 @@ async function blockEmptied(store, removed) {
   return { blockedBrands: goneB, pausedSources: goneS };
 }
 async function allProducts(store) {
-  if (PCACHE && Date.now() - PCACHE.at < 30000) return PCACHE.data;
+  // 5 минут: список всех товаров — самый тяжёлый запрос к базе; после любой правки PCACHE сбрасывается
+  if (PCACHE && Date.now() - PCACHE.at < 5 * 60e3) return PCACHE.data;
   const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
   PCACHE = { at: Date.now(), data }; return data;
 }
@@ -507,7 +508,17 @@ export default async function handler(req, res) {
         const del = {}; for (const id of await deletedSet(store)) { const m = id.match(/^product\.manual\.([a-z0-9]+)-/); if (m) del[m[1]] = (del[m[1]] || 0) + 1; }
         return send(res, 200, { sections: Object.values(d?.list || {}).sort((a, b) => String(a.lastRun).localeCompare(String(b.lastRun))), deleted: del, arrivals: (await store.get("settings.newArrivals"))?.mode || "publish" });
       }
+      case "dbCleanup": {
+        // уборка базы: копии страниц (по несколько МБ), просроченные одноразовые коды входа
+        const now = Date.now(), del = [];
+        for (const t of ["snap", "weblogin", "adminlink"]) for (const d of await store.list(t, {}, { limit: 5000, fields: "_id, exp" })) if (t === "snap" || !(d.exp > now)) del.push(d._id);
+        for (let i = 0; i < del.length; i += 500) await store.delMany(del.slice(i, i + 500));
+        let stats = null; try { stats = store.stats ? await store.stats() : null; } catch {}
+        return send(res, 200, { deleted: del.length, stats });
+      }
       case "snapSave": {
+        // копии страниц больше не храним: каждая — несколько МБ в базе, а автопроверку кнопки делаем без них
+        if (!process.env.TB_SNAPS) return send(res, 200, { ok: true, skipped: true });
         // копии страниц сайта бренда (раздел + до 3 товаров, сжатые) и что кнопка из них прочитала — для автопроверки новых версий кнопки
         const host = String(body.host || "").replace(/[^a-z0-9.-]/gi, "").slice(0, 80), section = String(body.section || "").slice(0, 200);
         if (!host || !section) return send(res, 400, { error: "Нет раздела" });

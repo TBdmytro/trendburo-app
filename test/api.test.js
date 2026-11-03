@@ -254,6 +254,7 @@ test("новая коллекция: раздел пройден целиком 
 });
 
 test("копии страниц бренда для автопроверки кнопки: сохраняются по разделу, читаются через diag", async () => {
+  process.env.TB_SNAPS = "1"; // по умолчанию копии не храним (место в базе); включается переменной
   const login = await call(handler, { method: "POST", query: { a: "login" }, body: { password: "test-password-123" } });
   const cookie = login.headers["set-cookie"].split(";")[0], H = { cookie, "x-tb": "1" };
   const { gzipSync } = await import("node:zlib"); const gz = s => gzipSync(Buffer.from(s)).toString("base64");
@@ -484,4 +485,17 @@ test("админ-бот: уведомления идут через отдель
     assert.equal((await call(handler, { method: "POST", query: { a: "adminBotSetup" }, body: {}, headers: H })).status, 409);
     assert.equal(hookUrl, "https://other.example/hook");
   } finally { await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H }); globalThis.fetch = f0; delete process.env.TELEGRAM_BOT_TOKEN; delete process.env.TELEGRAM_ADMIN_BOT_TOKEN; delete process.env.PUBLIC_URL; resetAccessMemo(); }
+});
+
+test("копии страниц по умолчанию не сохраняются; уборка базы удаляет копии и просроченные коды", async () => {
+  delete process.env.TB_SNAPS;
+  const ck = await adminCookie(), H = { cookie: ck, "x-tb": "1" };
+  const r = await call(handler, { method: "POST", query: { a: "snapSave" }, body: { host: "x.com", section: "x.com/a", list: { url: "u", gz: "AAAA" } }, headers: H });
+  assert.equal(r.body.skipped, true);
+  await store.put({ _id: "snap.old", _type: "snap", list: { gz: "AAAA" } });
+  await store.put({ _id: "weblogin." + "a".repeat(24), _type: "weblogin", exp: Date.now() - 1000 });
+  await store.put({ _id: "weblogin." + "b".repeat(24), _type: "weblogin", exp: Date.now() + 60000 });
+  const c = await call(handler, { method: "POST", query: { a: "dbCleanup" }, body: {}, headers: H });
+  assert.ok(c.body.deleted >= 2);
+  assert.equal(await store.get("snap.old"), null); assert.ok(await store.get("weblogin." + "b".repeat(24)));
 });
