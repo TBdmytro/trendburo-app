@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v59] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v60] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -97,7 +97,7 @@ async function tbCollect() {
   };
   // размеры и наличие: 1) данные schema.org по размерам; 2) кнопки размеров на странице (проданные — «sold out», серые, недоступные);
   // 3) список размеров в коде страницы (наличие неизвестно); 4) просто список размеров из данных товара
-  var PRE = /(pre-?order|pr[ée]-?commande|vorbestell|preordin|prenota|preventa|pre-?venta)/i;
+  var PRE = /(pre-?order|pr[ée]-?commande|vorbestell|preordin|prenota|preventa|pre-?venta|produkt anfragen|auf anfrage|request (this )?product|on request|su richiesta|sur demande)/i;
   // предзаказ на всю вещь: в данных товара, рядом с артикулом в коде страницы или на кнопке покупки
   var pagePre = function (doc, html, p, code) {
     if ([].concat(p.offers || []).some(function (o) { return /PreOrder|PreSale|BackOrder/i.test(String(o.availability || "")) || [].concat(o.offers || []).some(function (x) { return /PreOrder|PreSale/i.test(String(x.availability || "")); }); })) return true;
@@ -119,7 +119,9 @@ async function tbCollect() {
   var OUT = /(sold ?out|notify ?me|join the wait ?list|wait ?list|warteliste|liste d.attente|ausverkauft|esaurit|agotad|épuisé|epuise|not available|unavailable|out of stock|nicht verfügbar)/i;
   var SZL = "(?:x{0,3}s|m|x{0,4}l|[2-6]xl)";
   var SZRE = new RegExp("^(?:" + SZL + "(?:\\s?[\\/-]\\s?" + SZL + ")?|one ?size|os|tu|u|uni|(?:(?:it|eu|fr|uk|us|de|ysl|f)\\s?)?\\d{1,3}(?:[.,]5)?(?:\\s?(?:it|eu|fr|uk|us))?|\\d{2}\\/\\d{2}|w\\d{2}(?:\\s?l\\d{2})?)(?:\\s?[\\/-]\\s?\\S+)?$", "i");
-  var okLabel = function (t) { t = String(t == null ? "" : t).replace(/\s+/g, " ").trim().replace(/\s*[-–—]\s*(join the wait ?list|wait ?list|sold ?out|notify ?me|out of stock|coming soon|pre-?order|low stock|only \d+ left)\b.*$/i, "").replace(/^([^/]{1,14}?)\s\/\s[A-Z]{2,4}\s?\d.*$/i, "$1").replace(/^ysl\s+/i, "").replace(/^(it|eu|fr|f|uk|us|de)\s?(\d)/i, "$2").replace(/(\d)\s?(?:½|1\/2)(?!\d)/g, "$1.5").replace(/(\d),5\b/g, "$1.5"); /* половинки: 40½, 40 1/2, 40,5 → 40.5 */ return t && t.length <= 20 && SZRE.test(t) ? t.split(" / ")[0].trim() : null; };
+  var okLabel = function (t) { t = String(t == null ? "" : t).replace(/\s+/g, " ").trim()
+      /* размер и статус в одной строке без разделителя (Brunello: «46Nur noch ein Artikel verfügbar», «52Produkt anfragen») — оставляем размер */
+      .replace(/^(\d{2,3}(?:[.,]5)?|XXXS|XXS|XS|S|M|L|XL|XXL|XXXL|\d{1,2}\/\d{1,2})\s*(nur noch|noch \d|only|last|letzte|wenige|produkt anfragen|auf anfrage|request|benachrichtig|notify|in der boutique|verfügbar|available|anfrage|low stock|derniers?|ultimi|ultimo)\b.*$/i, "$1").replace(/\s*[-–—]\s*(join the wait ?list|wait ?list|sold ?out|notify ?me|out of stock|coming soon|pre-?order|low stock|only \d+ left)\b.*$/i, "").replace(/^([^/]{1,14}?)\s\/\s[A-Z]{2,4}\s?\d.*$/i, "$1").replace(/^ysl\s+/i, "").replace(/^(it|eu|fr|f|uk|us|de)\s?(\d)/i, "$2").replace(/(\d)\s?(?:½|1\/2)(?!\d)/g, "$1.5").replace(/(\d),5\b/g, "$1.5"); /* половинки: 40½, 40 1/2, 40,5 → 40.5 */ return t && t.length <= 20 && SZRE.test(t) ? t.split(" / ")[0].trim() : null; };
   // массив JSON целиком, со вложенными скобками (у сайтов на Salesforce внутри размеров бывают свои списки)
   var arrAt = function (h, i) { var d = 0, q = false, e = false; for (var j = i; j < h.length && j < i + 80000; j++) { var c = h[j]; if (q) { if (e) e = false; else if (c === "\\") e = true; else if (c === '"') q = false; continue; } if (c === '"') q = true; else if (c === "[" || c === "{") d++; else if (c === "]" || c === "}") { d--; if (!d) return h.slice(i, j + 1); } } return null; };
   var jsonSizes = function (html) {
