@@ -2983,7 +2983,7 @@ function renderHome(){if(!LIVE||!$("#homeA"))return;
 function homeAll(k,c,sb){clearFilters();F.g=CV.g;if(k==="new")F.onlyNew=true;if(c){F.cats.add(c);if(sb&&sb[0]!=="!")F.subs[c]=new Set([sb])}
   const t=(H_SECS.concat(H_ROWS).find(x=>x[0]===c&&x[1]===sb)||[,,"Новинки"])[2];tab("catalog");showItems(k==="new"?"Новое · "+t:t)}
 function openColls(){const L=COLL.filter(collG);push("Коллекции",`<div class="hcolls">${L.map(c=>collCardHTML(c,false)).join("")}</div><div style="height:30px"></div>`)}
-document.addEventListener("click",e=>{const g=e.target.closest("[data-hg]");if(g){if(CV.g===g.dataset.hg)return;CV.g=g.dataset.hg;store.set("tb_g",CV.g);hap&&hap("light");try{AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML();renderHome()}catch(x){}return}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-hg]");if(g){if(CV.g===g.dataset.hg)return;CV.g=g.dataset.hg;store.set("tb_g",CV.g);hap&&hap("light");try{AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML();renderHome();renderRails()}catch(x){}return}
   const h=e.target.closest("[data-hsec]");if(h){HSEC=+h.dataset.hsec;store.set("tb_hsec",HSEC);const y=$("#hSec .hrail");renderHome();hap&&hap("light")}});
 const SVSEEN=(()=>{const o=store.get("tb_svseen",{}),cut=Date.now()-14*864e5;Object.keys(o).forEach(k=>{if(o[k]<cut)delete o[k]});return o})();
 const svDay0=()=>{const d=new Date();d.setHours(0,0,0,0);return +d};
@@ -3897,8 +3897,13 @@ function railItems(r){let l=P.slice();
   else if(r.rule==="category")l=l.filter(p=>p.cat===r.value);
   else if(r.rule==="brand")l=l.filter(p=>p.brand.toLowerCase()===String(r.value).toLowerCase());
   else if(r.rule==="stock")l=l.filter(p=>p.st);
-  if(r.gender)l=l.filter(p=>p.g===r.gender||p.g==="u");
-  if(r.maxPrice)l=l.filter(p=>p.price<=r.maxPrice);
+  // спорт (Alo, On, Skims…) — только в своих подборках: в общие ряды по правилу не попадает
+  if(r.rule!=="brand"&&r.rule!=="manual")l=l.filter(p=>!cvSport(p.bk));
+  // пол: из подборки, иначе — как выбрано вверху ленты
+  {const g=r.gender||(LIVE?CV.g:"");if(g)l=l.filter(p=>p.g===g||p.g==="u")}
+  // «до 3 000 €» — вещи рядом с этой ценой (от 60% суммы, мало — от 40%), самые близкие к сумме первыми; не кардхолдеры за 150 €
+  if(r.maxPrice){const mx=r.maxPrice,inB=k=>l.filter(p=>p.price<=mx&&p.price>=(r.minPrice||Math.round(mx*k)));let c=inB(.6);if(c.length<4)c=inB(.4);
+    l=c.sort((a,b)=>b.price-a.price);const out=[],per={},rest=[];for(const p of l){if((per[p.bk]||0)>=2&&out.length<10){rest.push(p);continue}per[p.bk]=(per[p.bk]||0)+1;out.push(p)}l=out.concat(rest)}
   return l}
 function renderRails(){const box=$("#cmsRails");if(!box)return;const on=LIVE&&CMS.rails.length>0;
   if(LIVE)["#newRail","#bagRail","#menRail"].forEach(id=>$(id).closest(".sec").hidden=true);
@@ -3906,7 +3911,9 @@ function renderRails(){const box=$("#cmsRails");if(!box)return;const on=LIVE&&CM
   box.innerHTML=on?CMS.rails.map((r,i)=>{const all=railItems(r),l=all.slice(0,r.limit||12);return l.length?`<div class="sec ${r.band?"band":""}"><div class="sech"><h2>${esc(r.title)}</h2>${all.length>3?`<button class="more" data-act="crail" data-i="${i}">Все</button>`:""}</div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`+mid():""}).join("")+mids.slice(mi).map(b=>`<div class="sec cbwrap">${cbHTML(b)}</div>`).join(""):""}
 function openRail(i){const r=CMS.rails[i];if(!r)return;clearFilters();
   if(r.rule==="new")F.onlyNew=true;else if(r.rule==="category")F.cats.add(r.value);else if(r.rule==="brand"){const bk=brandKey(r.value);if(bk)F.brands.add(bk)}else if(r.rule==="stock")F.stock="any";else if(r.rule==="manual")F.ids=new Set(r.ids);
-  if(r.gender)F.g=r.gender;if(r.maxPrice)Object.keys(F.budgets).forEach(c=>F.budgets[c]=Math.min(F.budgets[c],r.maxPrice));
+  if(r.gender)F.g=r.gender;else if(LIVE)F.g=CV.g;if(r.maxPrice)Object.keys(F.budgets).forEach(c=>F.budgets[c]=Math.min(F.budgets[c],r.maxPrice));
+  // «Все» показывает ровно то, что в ряду (без спорта и вещей далеко от суммы), дорогие первыми
+  if(r.rule!=="manual"){F.ids=new Set(railItems(r).map(p=>p.id));if(r.maxPrice)F.sort="desc"}
   tab("catalog");showItems(r.title)}
 
 /* заявки: уходят менеджеру в админку (и в Telegram, если настроено) */
