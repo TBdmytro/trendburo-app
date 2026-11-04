@@ -57,3 +57,8 @@ test("Louis Vuitton: фото без дублей и пустых заглуше
   assert.deepEqual(out.map(u => u.split("--")[1]), ["M29799_PM2_Front%20view.png?wid=2400&hei=2400", "M29799_PM1_Side%20view.png?wid=2400&hei=2400", "M29799_PM1_Back%20view.png?wid=2400&hei=2400", "M29799_PM1_Worn%20view.png?wid=2400&hei=2400"]);
   assert.ok(lvOwn(b + "_PM2_Front%20view.png", "M29799")); assert.ok(!lvOwn("https://en.louisvuitton.com/images/is/image/MEN_BC_X.jpg", "M29799"));
 });
+
+test("убранное в админке фото (×) не идёт на витрину", async () => {
+  const { cleanOverride } = await import("../lib/publish.js");
+  assert.deepEqual(cleanOverride("imgOff", ["https://a/1.png", "javascript:x", "https://a/1.png"]), ["https://a/1.png"]);
+});

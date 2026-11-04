@@ -1442,7 +1442,8 @@ function supplierCard(s) {
 async function editor(id, reload) {
   const { product: p, storefront } = await api("product", { query: { id } });
   const o = p.overrides || {};
-  let order = [...new Set(o.imageOrder && o.imageOrder.length ? o.imageOrder : (p.images || []).map(i => i.sourceUrl || i.url))];
+  const offAdd = new Set(), offSet = new Set(o.imgOff || []);
+  let order = [...new Set(o.imageOrder && o.imageOrder.length ? o.imageOrder : (p.images || []).map(i => i.sourceUrl || i.url))].filter(u => !offSet.has(u));
   let cover = o.cover || order[0];
   const order0 = JSON.stringify(order), cover0 = cover;
   const d = document.createElement("div"); d.className = "drawer"; document.body.append(d);
@@ -1475,7 +1476,7 @@ async function editor(id, reload) {
       <label class="f" style="flex:1;min-width:120px">Город<input type="text" id="eStCity" value="${esc((o.stock || p.stock)?.city || "")}" placeholder="Киев"></label><label class="f" style="flex:1;min-width:100px">Размер<input type="text" id="eStSize" value="${esc((o.stock || p.stock)?.size || "")}"></label></div>
       ${sizes.length || colors.length ? `<div class="hint">${colors.length ? "Цвета: " + esc(colors.join(", ")) : ""}${colors.length && sizes.length ? " · " : ""}${sizes.length ? "Размеры: " + esc(sizes.join(", ")) : ""}</div>` : ""}
       <div><div class="f" style="margin-bottom:8px">Фото — порядок и обложка <span class="hint" style="font-weight:400">${(p.images || []).length}${(p.images || []).length < 3 ? ", меньше трёх" : ""}</span></div>
-      <div class="imgs">${order.map((u, i) => { const im = imgBy.get(u) || { url: u }; return `<figure class="${u === cover ? "cover" : ""}"><img src="${esc(im.url)}" alt="" loading="lazy"><div class="ctl"><button data-up="${i}" aria-label="Левее">←</button><button data-cov="${i}">${u === cover ? "обложка" : "обложкой"}</button><button data-dn="${i}" aria-label="Правее">→</button></div></figure>`; }).join("")}</div></div>
+      <div class="imgs">${order.map((u, i) => { const im = imgBy.get(u) || { url: u }; return `<figure class="${u === cover ? "cover" : ""}"><img src="${esc(im.url)}" alt="" loading="lazy"><div class="ctl"><button data-up="${i}" aria-label="Левее">←</button><button data-cov="${i}">${u === cover ? "обложка" : "обложкой"}</button><button data-dn="${i}" aria-label="Правее">→</button><button data-off="${i}" aria-label="Убрать фото" title="Убрать фото с витрины">×</button></div></figure>`; }).join("")}</div></div>
       <div class="row"><button class="btn" data-save>Сохранить</button>${p.manual ? `<button class="btn ghost" data-editcard>Изменить фото, цену, размеры</button>` : ""}
         ${p.status === "published" ? `<button class="btn ghost" data-st="draft">Снять с витрины</button>` : `<button class="btn ghost" data-st="published">Опубликовать</button>`}<span class="sp"></span><button class="btn danger" data-delp>Удалить товар</button></div>
     </div>
@@ -1499,6 +1500,8 @@ async function editor(id, reload) {
     if (b.dataset.up) return sw(+b.dataset.up, +b.dataset.up - 1);
     if (b.dataset.dn) return sw(+b.dataset.dn, +b.dataset.dn + 1);
     if (b.dataset.cov) { cover = order[+b.dataset.cov]; return draw(); }
+    // убрать фото (тёмный фон, лишний кадр): на витрине его не будет, в админке — тоже; товар остаётся
+    if (b.dataset.off) { if (order.length <= 1) return toast("Последнее фото убрать нельзя"); const u = order[+b.dataset.off]; order = order.filter(x => x !== u); offAdd.add(u); if (cover === u) cover = order[0]; return draw(); }
     if ("editcard" in b.dataset) { close(); return go("add:" + id); }
     if ("delp" in b.dataset) {
       if (!(await confirmBox("Удалить товар?", `«${o.title || p.title}» исчезнет из админки и с витрины. Это нельзя отменить.`))) return;
@@ -1514,6 +1517,7 @@ async function editor(id, reload) {
         dims: $("#eDims").value.trim() || null, material: $("#eMat").value.trim() || null, stock: $("#eSt").value ? { loc: $("#eSt").value, city: $("#eStCity").value.trim(), size: $("#eStSize").value.trim() } : (p.stock ? { loc: "" } : null) };
       if (cover !== cover0) changes.cover = cover;
       if (JSON.stringify(order) !== order0) changes.imageOrder = order;
+      if (offAdd.size) changes.imgOff = [...new Set([...(o.imgOff || []), ...offAdd])];
       try { await api("productSave", { method: "POST", body: { id, changes } }); toast("Сохранено"); close(); reload(); } catch (err) { toast(err.message); }
     }
   };
