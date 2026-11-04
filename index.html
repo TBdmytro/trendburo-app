@@ -2370,7 +2370,8 @@ const THSI=new Map();function thumbSI(u){const k=siKey(u),m=SIMEM.get(k);if(m)re
 // правило рамки: снимок заполняет рамку без белых полей. Если фон снимка прочитать нельзя (сайт бренда не даёт), а пропорции близки к рамке —
 // заполняем рамку целиком (по краям срезается до 12% с каждой стороны, человек и вещь остаются целиком по высоте). Вещь LV на прозрачном фоне — целиком на белом.
 function fullScale(im,w,h,W,H){const u=im.currentSrc||im.src||"",r=(w/h)/(W/H),canRead=/cdn\.sanity\.io|cdn\.shopify\.com/.test(u),lvItem=/louisvuitton\.com/.test(u)&&!/worn|look/i.test(decodeURIComponent(u));
-  return !canRead&&!lvItem&&r>.76&&r<1.32?Math.max(W/w,H/h):Math.min(W/w,H/h)}
+  const lvWorn=/louisvuitton\.com/.test(u)&&!lvItem; // LV на модели: человек по центру квадрата — заполняем рамку всегда
+  return (lvWorn&&r<1.9)||(!canRead&&!lvItem&&r>.76&&r<1.32)?Math.max(W/w,H/h):Math.min(W/w,H/h)}
 // карточка товара: снимок целиком, по центру рамки, со скруглёнными углами — место считаем по пропорциям (своим или лёгкой копии из каталога)
 function placeFull(im,box,w,h){const c0=getComputedStyle(box),p0=parseFloat(c0.paddingTop)||0,W0=box.clientWidth,H0=box.clientHeight-p0-(parseFloat(c0.paddingBottom)||0);
   if(W0>10&&H0>10&&w&&h){const k=fullScale(im,w,h,W0,H0),dw=w*k,dh=h*k;Object.assign(im.style,{position:"absolute",left:(W0-dw)/2+"px",top:(p0+(H0-dh)/2)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"fill"});im.classList.add("geo")}}
