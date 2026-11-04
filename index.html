@@ -181,9 +181,13 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 
 /* главная, вариант A */
 #shipPill{display:none!important}
-.hgen{display:flex;margin:2px 18px 14px;border:1px solid #26282c;border-radius:999px;padding:3px;background:#fff}
-.hgen button{flex:1;border:0;background:none;border-radius:999px;padding:10px 0;font:600 14px Onest,sans-serif;color:#26282c;transition:background .2s,color .2s}
-.hgen button[aria-pressed=true]{background:#26282c;color:#fff}
+.hgen{position:relative;display:grid;grid-template-columns:1fr 1fr;margin:2px 18px 14px;border-radius:999px;padding:3px;background:#f2f3f4;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.hgen::before{content:"";position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:#26282c;box-shadow:0 3px 10px rgba(20,22,25,.22);transition:transform .42s cubic-bezier(.32,.72,0,1)}
+.hgen[data-g="m"]::before{transform:translateX(100%)}
+.hgen.drag::before{transition:transform .2s cubic-bezier(.32,.72,0,1)}
+.hgen button{position:relative;z-index:1;border:0;background:none;border-radius:999px;padding:11px 0;font:600 14px Onest,sans-serif;color:#26282c;transition:color .3s ease;-webkit-tap-highlight-color:transparent}
+.hgen button[aria-pressed=true]{color:#fff}
+@media (prefers-reduced-motion:reduce){.hgen::before{transition:none}}
 .hcv{position:relative;margin:4px 18px 0}
 .hcv-tr{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;border-radius:26px}
 .hcv-tr::-webkit-scrollbar{display:none}
@@ -216,6 +220,9 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 /* карточка товара: углы фото сразу скруглены (iPhone дорисовывал скругление после загрузки) */
 .pv-hero.ph .pv-gal .sl{clip-path:inset(0 round 20px);-webkit-mask-image:-webkit-radial-gradient(white,black);isolation:isolate}
 .pv-hero.ph .pv-gal img{border-radius:20px}
+
+.pv-hero.ph .pv-gal .sl[data-full] img:not(.geo){opacity:0!important}
+.pv-hero.ph .pv-gal .sl[data-full] img.geo{opacity:1;transition:opacity .18s ease}
 </style>
 <title>Trend Büro</title>
 <link rel="preload" href="/api/catalog?v=2" as="fetch" crossorigin>
@@ -2346,6 +2353,9 @@ const THSI=new Map();function thumbSI(u){const k=siKey(u),m=SIMEM.get(k);if(m)re
   const pr=new Promise(res=>{const m=new Image();m.crossOrigin="anonymous";m.decoding="async";m.onload=()=>{shotInfoAsync(m).then(si=>{if(si)SIMEM.set(k,si);res(si||null)}).catch(()=>res(null))};m.onerror=()=>res(null);m.src=u});THSI.set(k,pr);return pr}
 /* Кадр в рамке: товар целиком и как можно крупнее; если снимок закрывает рамку — без полей, иначе края заливаются фоном снимка */
 function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!box)return;
+  // карточка товара: размер и место снимка — сразу при загрузке (разбор цветов догонит позже); до этого снимок не виден — без острых углов
+  if(box.dataset.full&&!im.classList.contains("geo")){const c0=getComputedStyle(box),p0=parseFloat(c0.paddingTop)||0,W0=box.clientWidth,H0=box.clientHeight-p0-(parseFloat(c0.paddingBottom)||0);
+    if(W0>10&&H0>10){const k=Math.min(W0/w,H0/h),dw=w*k,dh=h*k;Object.assign(im.style,{position:"absolute",left:(W0-dw)/2+"px",top:(p0+(H0-dh)/2)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"fill"});im.classList.add("geo")}}
   if(im._si===undefined){const m0=SIMEM.get(siKey(im.currentSrc||im.src));if(m0)im._si=m0}
   // разбор цветов краёв — по лёгкой копии снимка (400 px, уже в кэше от каталога), а не по большому фото: на iPhone раскодирование большого тормозило открытие
   if(im._si===undefined&&src&&src.thumb&&!im._thP){im._thP=thumbSI(src.thumb).then(si=>{im._si=si||undefined;fitShot(im,box,src)});return}
@@ -2978,7 +2988,7 @@ function hCover(){const box=$("#hCover");if(!box)return;clearInterval(HCT);
   HCT=setInterval(()=>{if(document.hidden||Date.now()-hold<8000||!tr.isConnected||!tr.offsetParent)return;const k=cur();tr.scrollTo({left:(k+1>=S.length?0:k+1)*tr.clientWidth,behavior:"smooth"})},5000)}
 const HMEM=new Map();
 function renderHome(){if(!LIVE||!$("#homeA"))return;
-  $$("#hGen [data-hg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.hg===CV.g));
+  hGenUI(CV.g);
   hCover();
   // уже собранная лента для этого пола — сразу из памяти (переключение «Для неё / Для него» без задержки)
   const mk=[CV.g,PV,HSEC,favs.size,new Date().toISOString().slice(0,10)].join("|"),mem=HMEM.get(mk);
@@ -2998,10 +3008,16 @@ function renderHome(){if(!LIVE||!$("#homeA"))return;
 function homeAll(k,c,sb){clearFilters();F.g=CV.g;if(k==="new")F.onlyNew=true;if(c){F.cats.add(c);if(sb&&sb[0]!=="!")F.subs[c]=new Set([sb])}
   const t=(H_SECS.concat(H_ROWS).find(x=>x[0]===c&&x[1]===sb)||[,,"Новинки"])[2];tab("catalog");showItems(k==="new"?"Новое · "+t:t)}
 function openColls(){const L=COLL.filter(collG);push("Коллекции",`<div class="hcolls">${L.map(c=>collCardHTML(c,false)).join("")}</div><div style="height:30px"></div>`)}
-document.addEventListener("click",e=>{const g=e.target.closest("[data-hg]");if(g){if(CV.g===g.dataset.hg)return;CV.g=g.dataset.hg;store.set("tb_g",CV.g);hap&&hap("light");
-    // кнопка переключается сразу, ленту перестраиваем следующим кадром, сторис — после неё
-    $$("#hGen [data-hg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.hg===CV.g));
-    requestAnimationFrame(()=>setTimeout(()=>{try{renderHome();renderRails()}catch(x){}setTimeout(()=>{try{AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}},120)},0));return}
+// переключатель как в iOS: ползунок едет плавно (анимация идёт мимо основного потока), его можно тянуть пальцем
+function hGenUI(g){const el=$("#hGen");if(!el)return;el.dataset.g=g;el.querySelectorAll("[data-hg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.hg===g))}
+function hSetG(g){if(CV.g===g){hGenUI(g);return}CV.g=g;store.set("tb_g",g);hap&&hap("light");hGenUI(g);
+  requestAnimationFrame(()=>setTimeout(()=>{try{renderHome();renderRails()}catch(x){}setTimeout(()=>{try{AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}},160)},0))}
+{let hd=null;document.addEventListener("pointerdown",e=>{const el=e.target.closest("#hGen");if(!el)return;hd={el,x:e.clientX,g:CV.g,moved:false}},{passive:true});
+ document.addEventListener("pointermove",e=>{if(!hd)return;if(Math.abs(e.clientX-hd.x)>6){hd.moved=true;hd.el.classList.add("drag")}if(!hd.moved)return;const r=hd.el.getBoundingClientRect(),g=e.clientX>r.left+r.width/2?"m":"w";if(hd.el.dataset.g!==g){hGenUI(g);hap&&hap()}},{passive:true});
+ const up=e=>{if(!hd)return;const d=hd;hd=null;d.el.classList.remove("drag");if(d.moved){d.skip=Date.now();hSetG(d.el.dataset.g);HGSKIP=Date.now()}};
+ document.addEventListener("pointerup",up,{passive:true});document.addEventListener("pointercancel",e=>{if(hd){hGenUI(CV.g);hd.el.classList.remove("drag");hd=null}},{passive:true})}
+let HGSKIP=0;
+document.addEventListener("click",e=>{const g=e.target.closest("[data-hg]");if(g){if(Date.now()-HGSKIP<400)return;hSetG(g.dataset.hg);return}
   const h=e.target.closest("[data-hsec]");if(h){HSEC=+h.dataset.hsec;store.set("tb_hsec",HSEC);const y=$("#hSec .hrail");renderHome();hap&&hap("light")}});
 const SVSEEN=(()=>{const o=store.get("tb_svseen",{}),cut=Date.now()-14*864e5;Object.keys(o).forEach(k=>{if(o[k]<cut)delete o[k]});return o})();
 const svDay0=()=>{const d=new Date();d.setHours(0,0,0,0);return +d};
