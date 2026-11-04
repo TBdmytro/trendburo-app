@@ -223,8 +223,9 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .o-entry .o-entry-tx{padding:22px 18px 20px}
 
 /* фото заполняет рамку целиком, без белых полей (баннеры «Новинки бренда», плитка «Новинки») */
-.cvn .pic{background:#f2f3f4 center 18%/cover no-repeat!important;overflow:hidden}
-.cvnv .st span{border:0!important;background:#f2f3f4 center 18%/cover no-repeat!important;overflow:hidden}
+/* только размер и место фото — сам адрес фото задаётся в разметке и не должен перебиваться */
+.cvn .pic{background-color:#f2f3f4!important;background-size:cover!important;background-position:center 18%!important;background-repeat:no-repeat!important;overflow:hidden}
+.cvnv .st span{border:0!important;background-color:#f2f3f4!important;background-size:cover!important;background-position:center 18%!important;background-repeat:no-repeat!important;overflow:hidden}
 /* карточка товара: углы фото сразу скруглены (iPhone дорисовывал скругление после загрузки) */
 .pv-hero.ph .pv-gal .sl{clip-path:inset(0 round 20px);-webkit-mask-image:-webkit-radial-gradient(white,black);isolation:isolate}
 .pv-hero.ph .pv-gal img{border-radius:20px}
