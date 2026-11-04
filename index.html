@@ -215,7 +215,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .hcv-bars i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.35)}
 .hcv-bars i.on,.hcv-bars i.done{background:#fff}
 .hcv-all{display:flex;align-items:center;gap:4px;margin:10px 18px 0;border:0;background:none;padding:0;font-size:14px;color:var(--muted)}
-.hblk:not(:empty){margin-top:22px}
+.hblk>.hk:not(:empty){margin-top:22px}
 .hchips{display:flex;gap:6px;overflow-x:auto;padding:0 18px 12px;scrollbar-width:none}
 .hchips::-webkit-scrollbar{display:none}
 .hchip{flex:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font:500 13px Onest,sans-serif;color:#26282c;white-space:nowrap}
@@ -234,6 +234,8 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 
 .pv-hero.ph .pv-gal .sl[data-full] img:not(.geo){opacity:0!important}
 .pv-hero.ph .pv-gal .sl[data-full] img.geo{opacity:1;transition:opacity .18s ease}
+
+.dlv-face.dlv-front{position:relative}
 </style>
 <title>Trend Büro</title>
 <link rel="preload" href="/api/catalog?v=2" as="fetch" crossorigin>
@@ -2006,7 +2008,7 @@ function renderFeed(){
 }
 
 /* ===== Фильтры ===== */
-const catMax=c=>{const l=P.filter(p=>p.cat===c);return l.length?Math.ceil(Math.max(...l.map(p=>p.price))/100)*100:0};
+var CMXV=0;const CMX={pv:-1,m:{}};const catMax=c=>{if(CMX.pv!==CMXV){CMX.pv=CMXV;CMX.m={};for(const p of P)if(!(p.price<=(CMX.m[p.cat]||0)))CMX.m[p.cat]=p.price;for(const k in CMX.m)CMX.m[k]=Math.ceil(CMX.m[k]/100)*100}return CMX.m[c]||0};
 const F={subs:{},g:"all",q:"",cats:new Set(),brands:new Set(),budgets:{},cities:new Set(),onlyNew:false,onlyFav:false,sort:"pop",stock:""};
 const resetBudgets=()=>Object.keys(CATS).forEach(c=>F.budgets[c]=catMax(c)); resetBudgets();
 function baseSet(skip){const q=F.q.trim().toLowerCase();
@@ -2053,7 +2055,7 @@ function popOrder(list){const best=list.filter(p=>p.best!=null).sort((a,b)=>a.be
   return [...best,...hot,...out]}
 function sorted(list){const s=F.sort;if(s==="pop")return popOrder(list);return list.sort((a,b)=>s==="asc"?a.price-b.price:s==="desc"?b.price-a.price:(!!b.st-!!a.st)||(b.isNew-a.isNew)||(a.price-b.price))}
 let gridList=[],gridShown=0,gridIO=null;const GRID_STEP=24;
-function gridMore(){const g=$("#grid");if(!g)return;const from=gridShown,to=Math.min(gridList.length,gridShown+GRID_STEP);if(from>=to)return;
+function gridMore(step){const g=$("#grid");if(!g)return;const from=gridShown,to=Math.min(gridList.length,gridShown+(step||GRID_STEP));if(from>=to)return;
   g.querySelector(".grid-more")?.remove();
   g.insertAdjacentHTML("beforeend",gridList.slice(from,to).map((p,i)=>pcHTML(p,from?0:i).replace('class="pc press"',from?'class="pc press nofx"':'class="pc press"')).join("")+(to<gridList.length?'<div class="grid-more"></div>':""));
   gridShown=to;const s=g.querySelector(".grid-more");if(s){gridIO=gridIO||new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))gridMore()},{root:g.closest(".scroll"),rootMargin:"900px 0px"});gridIO.observe(s)}}
@@ -2064,7 +2066,7 @@ function renderGrid(){const list=sorted(baseSet()),n=list.length;
   const filtered=!!(F.q||F.cats.size||F.brands.size||F.cities.size||F.onlyNew||F.onlyFav||F.stock||F.ids||Object.keys(F.budgets).some(k=>F.budgets[k]<catMax(k)));
   $("#count").textContent=filtered?n+" "+plural(n,["товар","товара","товаров"]):"";colsApply();
   gridIO&&gridIO.disconnect();gridList=list;gridShown=0;
-  if(n){$("#grid").innerHTML="";gridMore();return}
+  if(n){$("#grid").innerHTML="";gridMore(12);return}
   $("#grid").innerHTML=n?"":`<div class="empty" style="grid-column:1/-1"><h3>Ничего не нашли</h3><p>Поднимите бюджет или уберите бренд. Вещь не из витрины найдём по запросу.</p><button class="btn sm" data-act="svc" data-s="concierge" style="margin-top:8px">Найти под заказ</button></div>`}
 
 function filtersSheet(){
@@ -2267,7 +2269,8 @@ function dlvHTML(k){const Z=DLZ(),z=Z[k];return `<section class="dlv" aria-label
   <div class="dlv-more dlv-fbw"><div><button class="dlv-fb" type="button" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4.5h-4.5"/></svg><span>Как работает доставка</span></button></div></div></section>`}
 function dlvMount(root,k,onChange){
   const $q=s=>root.querySelector(s),inn=$q(".dlv-in"),fb=$q(".dlv-fb"),veh=$q(".tk-veh"),dash=$q(".tk-dash"),code=$q(".tk-code"),sh=$q(".tk-sh");let back=false;
-  const fit=()=>{inn.style.height=$q(back?".dlv-back":".dlv-front").offsetHeight+"px"};fit();
+  // высота: лицевая сторона в потоке (без замера при открытии — карточка выезжает без пауз), оборот — по замеру при перевороте
+  const fit=()=>{inn.style.height=back?$q(".dlv-back").offsetHeight+"px":""};
   if(window.ResizeObserver){const ro=new ResizeObserver(fit);ro.observe($q(".dlv-front"));ro.observe($q(".dlv-back"))}
   const restart=(el,c)=>{el.classList.remove(c);void el.offsetWidth;el.classList.add(c)};
   const setCode=t=>code.innerHTML=[...t].map(c=>"<span>"+c+"</span>").join("");
@@ -2415,10 +2418,9 @@ function edgeColor(im){try{const w=24,h=24,c=document.createElement("canvas");c.
   let r=0,g=0,b=0;px.forEach(k=>{r+=d[k];g+=d[k+1];b+=d[k+2]});const n=px.length;return `rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`}catch(e){return ""}}
 // шаг листания фото: ширина слайда + промежуток (по краям выглядывают соседние фото)
 const gStep=g=>{const a=g.children[0],b=g.children[1];return b&&b.offsetLeft>a.offsetLeft?b.offsetLeft-a.offsetLeft:g.clientWidth};
-function similarTo(p){const t=TIER_OF(p.brand),pool=P.filter(x=>x.id!==p.id&&x.cat===p.cat);
-  const sc=x=>Math.abs(TIER_OF(x.brand)-t)*0.6+Math.abs(Math.log((x.price||1)/(p.price||1)))+(x.bk===p.bk?0.15:0);
-  let l=pool.filter(x=>Math.abs(TIER_OF(x.brand)-t)<=1&&x.price>=p.price*.6&&x.price<=p.price*1.4);
-  if(l.length<4)l=pool;return l.sort((a,b)=>sc(a)-sc(b)).slice(0,10)}
+function similarTo(p){const TM=new Map(),T=b=>{let v=TM.get(b);if(v===undefined){v=TIER_OF(b);TM.set(b,v)}return v},t=T(p.brand),pool=[];for(const x of P)if(x.cat===p.cat&&x.id!==p.id)pool.push(x);
+  let l=pool.filter(x=>Math.abs(T(x.brand)-t)<=1&&x.price>=p.price*.6&&x.price<=p.price*1.4);
+  if(l.length<4)l=pool;return l.map(x=>[Math.abs(T(x.brand)-t)*0.6+Math.abs(Math.log((x.price||1)/(p.price||1)))+(x.bk===p.bk?0.15:0),x]).sort((a,b)=>a[0]-b[0]).slice(0,10).map(v=>v[1])}
 // «Другие цвета»: та же модель в других цветах (по ключу семьи из каталога)
 let FAMS=null;function famSibs(p){if(!p||!p.fam)return [];if(!FAMS){FAMS=new Map();P.forEach(x=>{if(x.fam){if(!FAMS.has(x.fam))FAMS.set(x.fam,[]);FAMS.get(x.fam).push(x)}})}const seen=new Set(),L=[p,...(FAMS.get(p.fam)||[]).filter(x=>x!==p)].filter(x=>{const im=x.imgs&&x.imgs[0];const k=im?(im.thumb||im.src):x.id;if(seen.has(k))return false;seen.add(k);return true}); // один цвет — один раз
   return L.length>1?L.slice(0,16):[]}
@@ -2435,7 +2437,7 @@ function openProduct(id){popTrack("v",id);
 if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size===size);return z.some(x=>ASK.includes(x.status))&&!z.some(x=>x.status==="online"||x.status==="boutique")}return ASK.includes(p.availability)};
   if(st&&st.size)size=st.size;
   if(sizes){const pz=p.cat==="shoes"?prefs.shoe:prefs.cloth;if(pz&&sizes.includes(pz)&&!szOut.has(pz))size=pz}
-  const like=p?similarTo(p):RESALE.filter(x=>x.id!==it.id);
+  let like=null;const likeOf=()=>like||(like=p?similarTo(p):RESALE.filter(x=>x.id!==it.id));
   const showDl=!r&&!(st&&st.loc==="ua");
   const btnLabel=()=>r?"Купить":isPre()?"Уточнить наличие":"В корзину · "+eur(priceFor(it,d));
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
@@ -2444,13 +2446,13 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
    ${showDl?`<div id="pvd"></div>`:""}
    <div id="pvx" style="display:flex;flex-direction:column;gap:18px"></div>
    ${r?"":`<button class="pv-how press" type="button" data-how><span class="ic"><svg viewBox="0 0 24 24">${IC.shield}</svg></span><span><b>Как мы работаем</b><small>Поиск, выкуп, проверка, отправка</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`}
-   ${like.length?`<div class="ondark" id="pvlike"></div>`:""}
+   <div class="ondark" id="pvlike"></div>
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
     foot:`<div class="foot dark glass"><button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
   // остальные фото карточки грузим, когда она уже выехала: иначе iPhone раскодирует все снимки разом и анимация замирает
   setTimeout(()=>{if(!s.isConnected)return;s.querySelectorAll("#pvg img[data-src]").forEach(im=>{im.setAttribute("style",im.dataset.style||"");im.src=im.dataset.src;im.removeAttribute("data-src")})},620);
   // «Похожие» дорисовываем после того, как карточка выехала — открытие без пауз
-  if(like.length)setTimeout(()=>{const b=s.querySelector("#pvlike");if(b&&s.isConnected)b.innerHTML=`<div class="sech"><h2>${r?"Ещё в ресейле":"Похожие"}</h2></div><div class="hrail">${like.map(pcHTML).join("")}</div>`},560);
+  setTimeout(()=>{const b=s.querySelector("#pvlike");if(!b||!s.isConnected)return;const L=likeOf();if(!L.length){b.remove();return}b.innerHTML=`<div class="sech"><h2>${r?"Ещё в ресейле":"Похожие"}</h2></div><div class="hrail">${L.map(pcHTML).join("")}</div>`},560);
   s.classList.add("pvs");if(hasPh)s.classList.add("pvph");
   if(hasPh){const t0=s.querySelector(".navbar .t");if(t0)t0.innerHTML='<i class="nbl" aria-hidden="true">TB</i>'}
   {const g=s.querySelector("#pvg");if(g){const dots=[...s.querySelectorAll(".pv-dots i")];let dk=0,stp0=0;g.addEventListener("scroll",()=>{stp0=stp0||gStep(g);const k=Math.round(g.scrollLeft/stp0);if(k!==dk){dk=k;dots.forEach((d,i)=>d.classList.toggle("on",i===k))}},{passive:true});addEventListener("resize",()=>{stp0=0},{passive:true});
@@ -2509,7 +2511,8 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
       const k=last.offsetTop+last.offsetHeight,W=hero.clientWidth,f=ft?ft.offsetHeight:90;
       const h=Math.round(Math.max(W*.78,Math.min(W*1.6,innerHeight-off-k-f-10)));
       if(Math.abs((parseFloat(hero.style.getPropertyValue("--frh"))||0)-h)>1){hero.style.setProperty("--frh",h+"px");s._fitAll&&s._fitAll()}};
-    size();requestAnimationFrame(size);setTimeout(size,400);(document.fonts&&document.fonts.ready||Promise.resolve()).then(size);
+    // первый замер — в следующем кадре (страница уже разложена браузером), а не сразу: иначе открытие карточки ждёт лишний пересчёт
+    requestAnimationFrame(size);setTimeout(size,400);(document.fonts&&document.fonts.ready||Promise.resolve()).then(size);
     const onR=()=>{if(!s.isConnected)return removeEventListener("resize",onR);size()};addEventListener("resize",onR)}}
   // высота фото задаётся пропорциями снимка (см. --phh в стилях .pv-hero.ph) — фото на всю ширину, без полос и без обрезки
   ob.onclick=()=>{
@@ -3003,43 +3006,50 @@ function hCover(){const box=$("#hCover");if(!box)return;clearInterval(HCT);
   const cur=()=>Math.round(tr.scrollLeft/tr.clientWidth),mark=()=>{const k=cur();bars.forEach((d,j)=>{d.classList.toggle("on",j===k);d.classList.toggle("done",j<k)})};
   tr.addEventListener("scroll",mark,{passive:true});tr.addEventListener("touchstart",()=>{hold=Date.now()},{passive:true});
   HCT=setInterval(()=>{if(document.hidden||Date.now()-hold<8000||!tr.isConnected||!tr.offsetParent)return;const k=cur();tr.scrollTo({left:(k+1>=S.length?0:k+1)*tr.clientWidth,behavior:"smooth"})},5000)}
-const HMEM=new Map();
-function renderHome(){if(!LIVE||!$("#homeA"))return;
-  hGenUI(CV.g);
-  hCover();
-  // уже собранная лента для этого пола — сразу из памяти (переключение «Для неё / Для него» без задержки)
-  const mk=[CV.g,PV,HSEC,favs.size,new Date().toISOString().slice(0,10)].join("|"),mem=HMEM.get(mk);
-  if(mem){["#hNew","#hSec","#hCats"].forEach((id,i)=>{const e=$(id);if(e.innerHTML!==mem[i])e.innerHTML=mem[i]});return}
-  const used=new Set(),G=P.filter(hG),NW=G.filter(p=>p.isNew);
+// лента для каждого пола собирается один раз и хранится готовой: переключение — показать/спрятать, без пересборки и без пересчёта всей страницы
+function hPut(id,key,html,show){const box=$(id);if(!box)return;let el=null;for(const c of box.children)if(c.dataset.hk===key){el=c;break}
+  if(!el){el=document.createElement("div");el.dataset.hk=key;el.className="hk";el.innerHTML=html;el.hidden=!show;box.appendChild(el);while(box.children.length>6){const o=[...box.children].find(c=>c.hidden);if(!o)break;o.remove()}}
+  if(show)for(const c of box.children){const h=c!==el;if(c.hidden!==h)c.hidden=h}}
+const hKey=()=>[CV.g,PV,HSEC,new Date().toISOString().slice(0,10)].join("|");
+function hBuild(){const used=new Set(),G=P.filter(hG),NW=G.filter(p=>p.isNew),o={};
   // новинки недели: вещи, вышедшие у нас за 7 дней; мало — за 30 дней («Новинки месяца»); ещё меньше — блока нет
   {let l=NW.filter(p=>p.na&&Date.now()-p.na<7*HDAY),t="Новинки недели";if(l.length<4){l=NW.filter(p=>p.na&&Date.now()-p.na<30*HDAY);t="Новинки месяца"}
-   const pk=l.length>=4?hPick(hRank(l),12,used):[];$("#hNew").innerHTML=pk.length?hRail(t,pk,`<button class="more" data-act="catalog-new">Все</button>`).replace('class="sec"','class="sec band"'):""}
+   const pk=l.length>=4?hPick(hRank(l),12,used):[];o.n=pk.length?hRail(t,pk,`<button class="more" data-act="catalog-new">Все</button>`).replace('class="sec"','class="sec band"'):""}
   // новое по разделам: кнопка меняет ряд на месте; раздел без 4 новинок не показываем
-  {const secs=H_SECS.map(s=>[s,NW.filter(p=>hIn(p,s[0],s[1])&&!used.has(p.id))]).filter(x=>x[1].length>=4);const box=$("#hSec");
-   if(!secs.length)box.innerHTML="";else{if(HSEC>=secs.length)HSEC=0;const [s,l]=secs[HSEC],u2=new Set(used),pk=hPick(hRank(l),12,u2);
-    box.innerHTML=`<div class="sec"><div class="sech"><h2>Новое в разделах</h2><button class="more" data-act="hall" data-k="new" data-c="${s[0]}" data-s="${s[1]}">Все</button></div><div class="hchips">${secs.map((x,i)=>`<button class="hchip" data-hsec="${i}" aria-pressed="${i===HSEC}">${x[0][2]}</button>`).join("")}</div><div class="hrail">${pk.map(pcHTML).join("")}</div></div>`;
+  {const secs=H_SECS.map(s=>[s,NW.filter(p=>hIn(p,s[0],s[1])&&!used.has(p.id))]).filter(x=>x[1].length>=4);o.s="";
+   if(secs.length){const hs=HSEC<secs.length?HSEC:0;const [s,l]=secs[hs],pk=hPick(hRank(l),12,new Set(used));
+    o.s=`<div class="sec"><div class="sech"><h2>Новое в разделах</h2><button class="more" data-act="hall" data-k="new" data-c="${s[0]}" data-s="${s[1]}">Все</button></div><div class="hchips">${secs.map((x,i)=>`<button class="hchip" data-hsec="${i}" aria-pressed="${i===hs}">${x[0][2]}</button>`).join("")}</div><div class="hrail">${pk.map(pcHTML).join("")}</div></div>`;
     pk.forEach(p=>used.add(p.id))}}
   // ряды по видам вещей: всё в наличии и под заказ, не только новинки
-  $("#hCats").innerHTML=H_ROWS.map(([c,sb,t])=>{const l=G.filter(p=>hIn(p,c,sb));if(l.length<4)return"";const pk=hPick(hRank(l),12,used);return pk.length>=4?hRail(t,pk,`<button class="more" data-act="hall" data-k="row" data-c="${c}" data-s="${sb}">Все</button>`):""}).join("");
-  if(HMEM.size>8)HMEM.clear();HMEM.set(mk,[$("#hNew").innerHTML,$("#hSec").innerHTML,$("#hCats").innerHTML])}
+  o.c=H_ROWS.map(([c,sb,t])=>{const l=G.filter(p=>hIn(p,c,sb));if(l.length<4)return"";const pk=hPick(hRank(l),12,used);return pk.length>=4?hRail(t,pk,`<button class="more" data-act="hall" data-k="row" data-c="${c}" data-s="${sb}">Все</button>`):""}).join("");
+  return o}
+function renderHome(show=true){if(!LIVE||!$("#homeA"))return;
+  if(show){hGenUI(CV.g);hCover()}
+  const k=hKey(),has=id=>{const b=$(id);return b&&[...b.children].some(c=>c.dataset.hk===k)};
+  if(has("#hNew")&&has("#hSec")&&has("#hCats")){if(show)["#hNew","#hSec","#hCats"].forEach(id=>hPut(id,k,"",true));return}
+  const o=hBuild();hPut("#hNew",k,o.n,show);hPut("#hSec",k,o.s,show);hPut("#hCats",k,o.c,show)}
+// после старта, когда телефон свободен, заранее собираем ленту для второго пола — переключение без задержки
+function hWarm(){if(!LIVE)return;const idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:3000}):setTimeout(f,900);
+  const as=f=>()=>{const g0=CV.g;try{CV.g=g0==="w"?"m":"w";f()}catch(e){}CV.g=g0};
+  idle(as(()=>renderHome(false)));idle(as(()=>renderRails(false)));idle(as(()=>buildAuto()))}
 function homeAll(k,c,sb){clearFilters();F.g=CV.g;if(k==="new")F.onlyNew=true;if(c){F.cats.add(c);if(sb&&sb[0]!=="!")F.subs[c]=new Set([sb])}
   const t=(H_SECS.concat(H_ROWS).find(x=>x[0]===c&&x[1]===sb)||[,,"Новинки"])[2];tab("catalog");showItems(k==="new"?"Новое · "+t:t)}
 function openColls(){const L=COLL.filter(collG);push("Коллекции",`<div class="hcolls">${L.map(c=>collCardHTML(c,false)).join("")}</div><div style="height:30px"></div>`)}
 // переключатель как в iOS: ползунок едет плавно (анимация идёт мимо основного потока), его можно тянуть пальцем
 // капля: ползунок сначала тянется краем в сторону нажатия, затем подтягивает второй край
-function segGo(el,g){if(!el||el.dataset.g===g)return;el.classList.remove("go-m","go-w");void el.offsetWidth;el.classList.add("go-"+g);el.dataset.g=g}
+function segGo(el,g){if(!el||el.dataset.g===g)return;if(!el.dataset.g){el.dataset.g=g;return}el.classList.remove("go-m","go-w");void el.offsetWidth;el.classList.add("go-"+g);el.dataset.g=g}
 function hGenUI(g){const el=$("#hGen");if(!el)return;segGo(el,g);el.querySelectorAll("[data-hg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.hg===g))}
 // смена пола: ползунок едет, блоки ниже мягко гаснут; перестраиваем ленту только когда ползунок доехал (иначе на iPhone он подтормаживает), затем блоки проявляются
 function hSetG(g){if(CV.g===g){hGenUI(g);return}CV.g=g;store.set("tb_g",g);hap&&hap("light");hGenUI(g);
   const B=["#stories","#hCover","#hNew","#hSec","#hCats","#cmsRails"].map(id=>$(id)).filter(Boolean);B.forEach(e=>e.classList.add("hfade-out"));clearTimeout(hSetG.t);
-  hSetG.t=setTimeout(()=>{try{renderHome();renderRails();AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}requestAnimationFrame(()=>B.forEach(e=>e.classList.remove("hfade-out")))},520)}
+  hSetG.t=setTimeout(()=>{try{renderHome();renderRails();$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}requestAnimationFrame(()=>B.forEach(e=>e.classList.remove("hfade-out")));hWarm()},300)}
 {let hd=null;document.addEventListener("pointerdown",e=>{const el=e.target.closest("#hGen");if(!el)return;hd={el,x:e.clientX,g:CV.g,moved:false}},{passive:true});
  document.addEventListener("pointermove",e=>{if(!hd)return;if(Math.abs(e.clientX-hd.x)>6){hd.moved=true;hd.el.classList.add("drag")}if(!hd.moved)return;const r=hd.el.getBoundingClientRect(),g=e.clientX>r.left+r.width/2?"m":"w";if(hd.el.dataset.g!==g){hGenUI(g);hap&&hap()}},{passive:true});
  const up=e=>{if(!hd)return;const d=hd;hd=null;d.el.classList.remove("drag");if(d.moved){d.skip=Date.now();hSetG(d.el.dataset.g);HGSKIP=Date.now()}};
  document.addEventListener("pointerup",up,{passive:true});document.addEventListener("pointercancel",e=>{if(hd){hGenUI(CV.g);hd.el.classList.remove("drag");hd=null}},{passive:true})}
 let HGSKIP=0;
 document.addEventListener("click",e=>{const g=e.target.closest("[data-hg]");if(g){if(Date.now()-HGSKIP<400)return;hSetG(g.dataset.hg);return}
-  const h=e.target.closest("[data-hsec]");if(h){HSEC=+h.dataset.hsec;store.set("tb_hsec",HSEC);const y=$("#hSec .hrail");renderHome();hap&&hap("light")}});
+  const h=e.target.closest("[data-hsec]");if(h){HSEC=+h.dataset.hsec;store.set("tb_hsec",HSEC);renderHome();hap&&hap("light")}});
 const SVSEEN=(()=>{const o=store.get("tb_svseen",{}),cut=Date.now()-14*864e5;Object.keys(o).forEach(k=>{if(o[k]<cut)delete o[k]});return o})();
 const svDay0=()=>{const d=new Date();d.setHours(0,0,0,0);return +d};
 // видел раньше (за прошлые 7 дней, но не сегодня) — уходит в конец; сегодняшний набор весь день один и тот же
@@ -3054,7 +3064,8 @@ function svShuffle(a,salt){const key=daySeed()+":"+salt;let m=SVMEMO.get(a);if(!
 const svFresh=(list,salt,n=10)=>{const a=svShuffle(list,salt),o=[],late=[];for(const p of a){if(svSeen(p.id)){if(late.length<n)late.push(p)}else{o.push(p);if(o.length>=n)break}}return o.concat(late).slice(0,n)};
 const svImg=(p,j=0)=>p.imgs&&p.imgs[j]?p.imgs[j]:null;
 let PV=0,AUTOC=null;
-function buildAuto(){const key=PV+"|"+daySeed()+"|"+(prefs.dest||"ua");if(AUTOC&&AUTOC.key===key){autoSeen(AUTOC.R);return AUTOC.R}const R=buildAuto0();AUTOC={key,R};return R}
+const AUTOM=new Map();
+function buildAuto(){const key=PV+"|"+daySeed()+"|"+(prefs.dest||"ua")+"|"+CV.g;if(AUTOC&&AUTOC.key===key){autoSeen(AUTOC.R);return AUTOC.R}const m=AUTOM.get(key);if(m){AUTOC={key,R:m};autoSeen(m);return m}const R=buildAuto0();if(AUTOM.size>6)AUTOM.clear();AUTOM.set(key,R);AUTOC={key,R};return R}
 const autoSeen=R=>R.forEach(r=>{r.seen=r.coll?collSeen(r.coll.id):r.build().every(s=>s.t==="in"||(s.p?svToday(s.p.id):s.t==="du"?svToday(s.a.id)&&svToday(s.b.id):true))});
 function buildAuto0(){
   const W=P.filter(p=>svImg(p)),d=prefs.dest||"ua",pr=p=>priceFor(p,d);if(W.length<2)return[];
@@ -3765,7 +3776,7 @@ let stylistRemote=false;
 
 /* ===== Навигация ===== */
 const TABS=["feed","catalog","optix","services","stylist"];
-function tab(t){if(!TABS.includes(t))t="feed";if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
+function tab(t){if(!TABS.includes(t))t="feed";if(window.CATLAZY&&t!=="feed")window.CATLAZY();if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
   $$(".tab").forEach(s=>s.classList.toggle("on",s.id==="t-"+t));
   const hl=t;
   $$("#tabbar button").forEach(b=>b.dataset.tab===hl?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
@@ -3960,10 +3971,11 @@ function railItems(r){let l=P.slice();
   if(r.maxPrice){const mx=r.maxPrice,inB=k=>l.filter(p=>p.price<=mx&&p.price>=(r.minPrice||Math.round(mx*k)));let c=inB(.6);if(c.length<4)c=inB(.4);
     l=c.sort((a,b)=>b.price-a.price);const out=[],per={},rest=[];for(const p of l){if((per[p.bk]||0)>=2&&out.length<10){rest.push(p);continue}per[p.bk]=(per[p.bk]||0)+1;out.push(p)}l=out.concat(rest)}
   return l}
-function renderRails(){const box=$("#cmsRails");if(!box)return;const on=LIVE&&CMS.rails.length>0;
+function renderRails(show=true){const box=$("#cmsRails");if(!box)return;const on=LIVE&&CMS.rails.length>0;
   if(LIVE)["#newRail","#bagRail","#menRail"].forEach(id=>$(id).closest(".sec").hidden=true);
   const mids=bnFor("feed_mid");let mi=0;const mid=()=>mi<mids.length?`<div class="sec cbwrap">${cbHTML(mids[mi++])}</div>`:"";
-  box.innerHTML=on?CMS.rails.map((r,i)=>{const all=railItems(r),l=all.slice(0,r.limit||12);return l.length?`<div class="sec ${r.band?"band":""}"><div class="sech"><h2>${esc(r.title)}</h2>${all.length>3?`<button class="more" data-act="crail" data-i="${i}">Все</button>`:""}</div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`+mid():""}).join("")+mids.slice(mi).map(b=>`<div class="sec cbwrap">${cbHTML(b)}</div>`).join(""):""}
+  const rk=CV.g+"|"+PV+"|"+CMS.rails.length;if(LIVE){for(const c of box.children)if(c.dataset.hk===rk){if(show)hPut("#cmsRails",rk,"",true);return}}
+  const html=on?CMS.rails.map((r,i)=>{const all=railItems(r),l=all.slice(0,r.limit||12);return l.length?`<div class="sec ${r.band?"band":""}"><div class="sech"><h2>${esc(r.title)}</h2>${all.length>3?`<button class="more" data-act="crail" data-i="${i}">Все</button>`:""}</div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`+mid():""}).join("")+mids.slice(mi).map(b=>`<div class="sec cbwrap">${cbHTML(b)}</div>`).join(""):"";if(LIVE)hPut("#cmsRails",rk,html,show);else box.innerHTML=html}
 function openRail(i){const r=CMS.rails[i];if(!r)return;clearFilters();
   if(r.rule==="new")F.onlyNew=true;else if(r.rule==="category")F.cats.add(r.value);else if(r.rule==="brand"){const bk=brandKey(r.value);if(bk)F.brands.add(bk)}else if(r.rule==="stock")F.stock="any";else if(r.rule==="manual")F.ids=new Set(r.ids);
   if(r.gender)F.g=r.gender;else if(LIVE)F.g=CV.g;if(r.maxPrice)Object.keys(F.budgets).forEach(c=>F.budgets[c]=Math.min(F.budgets[c],r.maxPrice));
@@ -3988,7 +4000,7 @@ const LIVE=!/[?&]demo=1/.test(location.search);
 const szU=(u,w)=>!u?u:/cdn\.sanity\.io\/images\//.test(u)?`${u}${u.includes("?")?"&":"?"}w=${w}&fit=max&auto=format&q=82`:/cdn\.shopify\.com\/|\/cdn\/shop\//.test(u)?(w>=1600?u.replace(/[?&]width=\d+/,""):`${u.replace(/[?&]width=\d+/,"")}${u.includes("?")&&!/\?width=\d+$/.test(u)?"&":"?"}width=${w}`):u;
 const XU=u=>typeof u==="string"&&u[0]==="~"?"https://cdn.shopify.com/s/files/"+u.slice(1):u;
 const imgsOf=x=>x.im?x.im.map(u=>{u=XU(u);return {src:szU(u,1000),thumb:szU(u,400),big:szU(u,1600)}}):(x.images||[]);
-function applyLive(list,fresh){PV++;
+function applyLive(list,fresh){PV++;CMXV++;
   const shapeByCat={bags:"bag",shoes:"loafer",clothing:"coat",eyewear:"glasses",accessories:"wallet",jewelry:"bracelet",watches:"watch",fragrance:"wallet",other:"bag"};
   P.length=0;
   // одна и та же вещь дважды (цвета одной модели с одинаковым фото, повторная загрузка): одна карточка на одно фото бренда; оставляем ту, чей артикул в адресе фото
@@ -4015,11 +4027,15 @@ function applyLive(list,fresh){PV++;
 }
 function init(){
   renderTopIcons();
-  renderFeed();renderFeedFollow();renderCatalog();renderCatHome();renderOptix();
+  renderFeed();renderFeedFollow();
+  // каталог и OPTIX не видны на первом экране — рисуем сразу после него, когда телефон свободен (или мгновенно, если открыли раньше)
+  if(LIVE&&!/^#(catalog|optix)/.test(location.hash)){window.CATLAZY=()=>{if(!window.CATLAZY)return;window.CATLAZY=null;renderCatalog();renderCatHome();renderOptix()};
+    const go=()=>window.CATLAZY&&window.CATLAZY();window.requestIdleCallback?requestIdleCallback(go,{timeout:1500}):setTimeout(go,500)}
+  else{renderCatalog();renderCatHome();renderOptix()}
   $("#oEntryArt").innerHTML=glassesSVG("cat","#e9e4da","#4f6a82");
   if(LIVE){const oe=$(".o-entry");oe.removeAttribute("data-act");oe.addEventListener("click",e=>openOptixApp(e))}
   else document.body.insertAdjacentHTML("beforeend",'<div class="demo-badge">ДЕМО-ДАННЫЕ</div>');
-  if(LIVE){$("#feedNote").hidden=true;applySite(CMS.site);renderBanners()}
+  if(LIVE){$("#feedNote").hidden=true;applySite(CMS.site);renderBanners();hWarm()}
   if(LIVE&&!P.length)$("#t-feed .ship").insertAdjacentHTML("afterend",'<div class="live-empty">Каталог наполняется — новые поступления появятся здесь. Ищете конкретную вещь? Напишите менеджеру, найдём.</div>');
   {const h=(location.hash||"").slice(1);if(h==="optix"&&!LIVE){tab("feed");playIntro("optix","optix")}else if(h==="account"){tab("feed");setTimeout(()=>{try{openAccount()}catch(e){}},50)}else tab(h==="optix"?"feed":h)}
 }
