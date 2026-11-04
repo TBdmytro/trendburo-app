@@ -2437,6 +2437,12 @@ let FAMS=null;function famSibs(p){if(!p||!p.fam)return [];if(!FAMS){FAMS=new Map
   return L.length>1?L.slice(0,16):[]}
 // большое фото карточки начинаем грузить уже при касании плитки — к открытию карточки оно готово (а не после выезда)
 const PREF=new Set();document.addEventListener("pointerdown",e=>{const t=e.target.closest&&e.target.closest('[data-act="product"][data-id]');if(!t)return;const p=P.find(x=>x.id===t.dataset.id),im=p&&p.imgs&&p.imgs[0];if(!im||PREF.has(im.src))return;PREF.add(im.src);const m=new Image();if(/^https:\/\/cdn\.sanity\.io\//.test(im.src))m.crossOrigin="anonymous";m.decoding="async";m.src=im.src},{passive:true,capture:true});
+// новая версия сайта — без закрытия приложения: Telegram держит страницу открытой часами. Когда приложение снова на экране
+// и прошло больше 2 минут — сверяем версию; новая — тихо перезагружаем, только если клиент не внутри карточки, корзины или окна
+(function(){let tag=null,last=Date.now();const get=()=>fetch("/",{method:"HEAD",cache:"no-store"}).then(r=>r.headers.get("etag")||r.headers.get("last-modified")).catch(()=>null);
+  setTimeout(()=>get().then(t=>{tag=t}),4000);
+  document.addEventListener("visibilitychange",()=>{if(document.hidden||!tag||Date.now()-last<120000)return;last=Date.now();
+    get().then(t=>{if(t&&t!==tag){const busy=(typeof stack!=="undefined"&&stack.length)||document.querySelector(".sheet.open,.gate,[role=dialog]");if(busy)return;location.reload()}})})})();
 function openProduct(id){popTrack("v",id);
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;
   let d=prefs.dest||"ua",size="",ci=0;
