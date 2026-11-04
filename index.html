@@ -3031,7 +3031,9 @@ function renderHome(show=true){if(!LIVE||!$("#homeA"))return;
 // после старта, когда телефон свободен, заранее собираем ленту для второго пола — переключение без задержки
 function hWarm(){if(!LIVE)return;const idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:3000}):setTimeout(f,900);
   const as=f=>()=>{const g0=CV.g;try{CV.g=g0==="w"?"m":"w";f()}catch(e){}CV.g=g0};
-  idle(as(()=>renderHome(false)));idle(as(()=>renderRails(false)));idle(as(()=>buildAuto()))}
+  idle(as(()=>renderHome(false)));idle(as(()=>renderRails(false)));idle(as(()=>buildAuto()));
+  // фото первых карточек второго пола — заранее (так же, как их грузит лента: с «разрешением» или без), чтобы после переключения не было пустых рамок
+  idle(()=>{["#hNew","#hSec","#hCats"].forEach(id=>{const h=[...($(id)||{children:[]}).children].find(c=>c.hidden);if(!h)return;[...h.querySelectorAll("img")].slice(0,6).forEach(im=>{const u=im.getAttribute("src");if(!u)return;const m=new Image();if(im.hasAttribute("crossorigin"))m.crossOrigin=im.getAttribute("crossorigin")||"anonymous";m.decoding="async";m.src=u})})})}
 function homeAll(k,c,sb){clearFilters();F.g=CV.g;if(k==="new")F.onlyNew=true;if(c){F.cats.add(c);if(sb&&sb[0]!=="!")F.subs[c]=new Set([sb])}
   const t=(H_SECS.concat(H_ROWS).find(x=>x[0]===c&&x[1]===sb)||[,,"Новинки"])[2];tab("catalog");showItems(k==="new"?"Новое · "+t:t)}
 function openColls(){const L=COLL.filter(collG);push("Коллекции",`<div class="hcolls">${L.map(c=>collCardHTML(c,false)).join("")}</div><div style="height:30px"></div>`)}
