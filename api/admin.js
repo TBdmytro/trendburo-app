@@ -350,12 +350,12 @@ export default async function handler(req, res) {
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
           await store.put({ _id: "settings.fixDiorImg2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXDIOR " + ch.length); } } catch (e) { FIXDIOR = false; console.log("FIXDIOR fail " + String(e.message).slice(0, 120)); } }
         // один раз: фото Louis Vuitton — убрать дубли и пустые заглушки, лицевой кадр первым, баннеры раздела не обложка (ваш порядок/обложку из админки не трогаем)
-        if (!FIXLV) { FIXLV = true; try { if (!(await store.get("settings.fixLvImg1"))) { const { orderImages } = await import("../lib/imgorder.js");
+        if (!FIXLV) { FIXLV = true; try { if (!(await store.get("settings.fixLvImg2"))) { const { orderImages } = await import("../lib/imgorder.js");
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides, coverFrom, coverTile" })).filter(p => p._id.startsWith("product.manual.de-") && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
           const ch = []; for (const p of L) { const im = p.images || [], src = im.map(i => i.sourceUrl || i.url); if (!src.some(u => /louisvuitton\.com/.test(u))) continue; const ord = orderImages(src, { max: 12, sku: p._id.replace(/^product\.manual\.de-/, "") });
             if (ord.length && ord.join("|") !== im.map(i => i.url).join("|")) ch.push({ id: p._id, set: { images: ord.map(u => ({ url: u, sourceUrl: u, rights: "copied" })), coverFrom: null, coverTile: null } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
-          await store.put({ _id: "settings.fixLvImg1", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXLV " + ch.length); } } catch (e) { FIXLV = false; console.log("FIXLV fail " + String(e.message).slice(0, 120)); } }
+          await store.put({ _id: "settings.fixLvImg2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXLV " + ch.length); } } catch (e) { FIXLV = false; console.log("FIXLV fail " + String(e.message).slice(0, 120)); } }
         // один раз: товары с сайтов брендов, оставшиеся «Другое» из-за немецких слов (Gürtel, Accessoires, Schmuck…) — в свою категорию
         if (!FIXOTHER) { FIXOTHER = true; try { if (!(await store.get("settings.fixOther"))) { const { detectCategory, detectSubcategory } = await import("../lib/normalize.js");
           const L = (await store.list("product", { category: "other" }, { limit: 20000, fields: "_id, title, sourceTitle, description, webSections, orig, overrides" })).filter(p => p._id.startsWith("product.manual.") && !p.overrides?.category);

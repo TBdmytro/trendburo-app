@@ -232,6 +232,8 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 /* iPhone (Safari/Telegram) не обрезает углами рамки фото, пока карточка выезжает (у фото свой слой видеокарты) — маска и собственный слой рамки заставляют скруглять сразу */
 .pv-hero.ph .pv-gal .sl{clip-path:inset(0 round 20px);isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);mask-image:radial-gradient(white,black);transform:translateZ(0)}
 .pv-hero.ph .pv-gal .sl img{-webkit-backface-visibility:hidden;backface-visibility:hidden}
+/* высокое (или широкое) фото, которое не заполняет рамку: сама рамка сужается до фото — скругление по краям фото (clip-path скругляет и на iPhone), вокруг — фон страницы */
+.pv-hero.ph .pv-gal .sl[data-full] img{clip-path:inset(0 round 20px);border-radius:20px}
 .pv-hero.ph .pv-gal .sl[data-full] img{background-color:#fff!important}
 .pv-hero.ph .pv-gal img{border-radius:20px}
 
@@ -2371,7 +2373,7 @@ const THSI=new Map();function thumbSI(u){const k=siKey(u),m=SIMEM.get(k);if(m)re
 /* Кадр в рамке: товар целиком и как можно крупнее; если снимок закрывает рамку — без полей, иначе края заливаются фоном снимка */
 // правило рамки: снимок заполняет рамку без белых полей. Если фон снимка прочитать нельзя (сайт бренда не даёт), а пропорции близки к рамке —
 // заполняем рамку целиком (по краям срезается до 12% с каждой стороны, человек и вещь остаются целиком по высоте). Вещь LV на прозрачном фоне — целиком на белом.
-function fullScale(im,w,h,W,H){const u=im.currentSrc||im.src||"",r=(w/h)/(W/H),canRead=/cdn\.sanity\.io|cdn\.shopify\.com/.test(u),lvItem=/louisvuitton\.com/.test(u)&&!/worn|look/i.test(decodeURIComponent(u));
+function fullScale(im,w,h,W,H){const u=im.currentSrc||im.src||"",r=(w/h)/(W/H),canRead=/cdn\.sanity\.io|cdn\.shopify\.com/.test(u),lvItem=/louisvuitton\.com/.test(u)&&/_(front|side|back|interior2?|top|bottom|open) view/i.test(decodeURIComponent(u)); // только снимки самой вещи на прозрачном фоне; на модели, «в масштабе», атмосфера — заполняют рамку
   const lvWorn=/louisvuitton\.com/.test(u)&&!lvItem; // LV на модели: человек по центру квадрата — заполняем рамку всегда
   return (lvWorn&&r<1.9)||(!canRead&&!lvItem&&r>.76&&r<1.32)?Math.max(W/w,H/h):Math.min(W/w,H/h)}
 // карточка товара: снимок целиком, по центру рамки, со скруглёнными углами — место считаем по пропорциям (своим или лёгкой копии из каталога)
