@@ -231,7 +231,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 /* карточка товара: углы фото сразу скруглены (iPhone дорисовывал скругление после загрузки) */
 /* iPhone (Safari/Telegram) не обрезает углами рамки фото, пока карточка выезжает (у фото свой слой видеокарты) — маска и собственный слой рамки заставляют скруглять сразу */
 .pv-hero.ph .pv-gal .sl{clip-path:inset(0 round 20px);isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);mask-image:radial-gradient(white,black);transform:translateZ(0)}
-.pv-hero.ph .pv-gal .sl img{-webkit-backface-visibility:hidden;backface-visibility:hidden}
+
 /* высокое (или широкое) фото, которое не заполняет рамку: сама рамка сужается до фото — скругление по краям фото (clip-path скругляет и на iPhone), вокруг — фон страницы */
 .pv-hero.ph .pv-gal .sl[data-full] img{clip-path:inset(0 round 20px);border-radius:20px}
 .pv-hero.ph .pv-gal .sl[data-full] img{background-color:#fff!important}
@@ -2378,7 +2378,7 @@ function fullScale(im,w,h,W,H){const u=im.currentSrc||im.src||"",r=(w/h)/(W/H),c
   return (lvWorn&&r<1.9)||(!canRead&&!lvItem&&r>.76&&r<1.32)?Math.max(W/w,H/h):Math.min(W/w,H/h)}
 // карточка товара: снимок целиком, по центру рамки, со скруглёнными углами — место считаем по пропорциям (своим или лёгкой копии из каталога)
 function placeFull(im,box,w,h){const c0=getComputedStyle(box),p0=parseFloat(c0.paddingTop)||0,W0=box.clientWidth,H0=box.clientHeight-p0-(parseFloat(c0.paddingBottom)||0);
-  if(W0>10&&H0>10&&w&&h){const k=fullScale(im,w,h,W0,H0),dw=w*k,dh=h*k;Object.assign(im.style,{position:"absolute",left:(W0-dw)/2+"px",top:(p0+(H0-dh)/2)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"fill"});im.classList.add("geo")}}
+  if(W0>10&&H0>10&&w&&h){const k=fullScale(im,w,h,W0,H0),fill=k>Math.min(W0/w,H0/h)+1e-6,dw=fill?W0:w*k,dh=fill?H0:h*k;Object.assign(im.style,{position:"absolute",left:(W0-dw)/2+"px",top:(p0+(H0-dh)/2)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:fill?"cover":"fill",objectPosition:"50% 50%"});im.classList.add("geo")}}
 function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!box)return;
   // карточка товара: размер и место снимка — сразу при загрузке (разбор цветов догонит позже); до этого снимок не виден — без острых углов
   if(box.dataset.full&&!im.classList.contains("geo"))placeFull(im,box,w,h);
@@ -2398,6 +2398,7 @@ function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!
   if(live)sc=Math.min(W/w,H/h);
   // data-full (карточка товара): снимок всегда целиком, без приближения, по центру рамки
   const full=!!box.dataset.full;if(full)sc=fullScale(im,w,h,W,H);
+  if(full&&sc>Math.min(W/w,H/h)+1e-6){Object.assign(im.style,{position:"absolute",left:"0px",top:pt+"px",width:W+"px",height:H+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"cover",objectPosition:"50% 50%"});box.style.setProperty("--slbg","#fff");return}
   // len — вся рамка, vis — где товар должен быть виден (над точками листания); сначала без полей, затем товар целиком
   // v0..v1 — где товар должен быть виден (ниже кнопок Telegram, выше точек листания); товар по центру этой области,
   // снимок закрывает рамку без полей, если может; товар целиком важнее всего
