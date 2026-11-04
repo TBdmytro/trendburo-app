@@ -6,6 +6,7 @@ import { popKey } from "./pop.js";
 import { userFrom } from "../lib/tgauth.js";
 import { customerId } from "../lib/customers.js";
 import { accessSettings, accessOf } from "../lib/access.js";
+import { readSession } from "../lib/auth.js";
 
 /* Каталог собирается не чаще раза в 20 с на экземпляр сервера; одновременные запросы ждут одну сборку (база не получает толпу одинаковых запросов) */
 const MEMO = [null, null];
@@ -57,7 +58,9 @@ export default async function handler(req, res) {
       closed = true;
       let b = null; try { b = JSON.parse(decodeURIComponent(String(req.headers["x-tb-auth"] || ""))); } catch {}
       const u = b ? userFrom(b) : null, c = u ? await custCached(store, u.id) : null;
-      if (accessOf(c, acc) !== "ok") { res.statusCode = 403; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Доступ по приглашению", code: "closed", access: c ? accessOf(c, acc) : "none" })); }
+      // администратор (вход в админку в этом же браузере) видит витрину как клиент — для проверки
+      let adm = null; try { adm = readSession(req); } catch {}
+      if (!adm && accessOf(c, acc) !== "ok") { res.statusCode = 403; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Доступ по приглашению", code: "closed", access: c ? accessOf(c, acc) : "none" })); }
     }
   } catch (e) { console.error("catalog access:", e.message); res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Недоступно" })); }
   const compact = /[?&]v=2\b/.test(String(req.url || ""));
