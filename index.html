@@ -209,6 +209,13 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .hcolls{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 18px}
 .o-entry .o-entry-art{display:none}
 .o-entry .o-entry-tx{padding:22px 18px 20px}
+
+/* фото заполняет рамку целиком, без белых полей (баннеры «Новинки бренда», плитка «Новинки») */
+.cvn .pic{background:#f2f3f4 center 18%/cover no-repeat!important;overflow:hidden}
+.cvnv .st span{border:0!important;background:#f2f3f4 center 18%/cover no-repeat!important;overflow:hidden}
+/* карточка товара: углы фото сразу скруглены (iPhone дорисовывал скругление после загрузки) */
+.pv-hero.ph .pv-gal .sl{clip-path:inset(0 round 20px);-webkit-mask-image:-webkit-radial-gradient(white,black);isolation:isolate}
+.pv-hero.ph .pv-gal img{border-radius:20px}
 </style>
 <title>Trend Büro</title>
 <link rel="preload" href="/api/catalog?v=2" as="fetch" crossorigin>
@@ -2409,7 +2416,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   const showDl=!r&&!(st&&st.loc==="ua");
   const btnLabel=()=>r?"Купить":isPre()?"Уточнить наличие":"В корзину · "+eur(priceFor(it,d));
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
-  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.availability==="preorder"?"<span>Предзаказ</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img ${i?"data-":""}style="background:url(&quot;${esc(im.thumb||im.src)}&quot;) center/contain no-repeat" ${i?"data-":""}src="${esc(im.src)}" crossorigin="anonymous" data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?"":'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
+  const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.availability==="preorder"?"<span>Предзаказ</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img ${i?"data-":""}style="background:url(&quot;${esc(im.thumb||im.src)}&quot;) center/contain no-repeat" ${i?"data-":""}src="${esc(im.src)}"${/^https:\/\/cdn\.sanity\.io\//.test(im.src)?' crossorigin="anonymous"':""} data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?"":'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:14px"></div>
    ${showDl?`<div id="pvd"></div>`:""}
    <div id="pvx" style="display:flex;flex-direction:column;gap:18px"></div>
@@ -2435,7 +2442,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     g.querySelectorAll(".sl").forEach(sl=>{sl.dataset.live=anchor;sl.dataset.full="1";sl.dataset.res="0";if(document.documentElement.classList.contains("intg")&&stp)sl.dataset.rt=Math.round(stp+4)});
     const fitAll=()=>ims.forEach(im=>{if(im.complete&&im.naturalWidth)fitShot(im,im.parentNode,p.imgs[+im.dataset.zi])});
     s._fitAll=fitAll;
-    ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.addEventListener("load",go,{once:true});im.src=im.src}else im.classList.add("fit")}))});
+    ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.addEventListener("load",go,{once:true});im.src=im.src}else if(!/[?&]tbr=1/.test(im.src)){im.addEventListener("load",go,{once:true});im.src=im.src+(im.src.includes("?")?"&":"?")+"tbr=1"}else im.classList.add("fit")}))});
     g.addEventListener("click",e=>{const im=e.target.closest("img[data-zi]");if(im)zoomView(p.imgs.slice(0,8),+im.dataset.zi,it.brand+" "+it.name)})}}
   const oldP=()=>p&&p.sale&&p.oldPrices?(p.oldPrices[d]??p.oldPrices.ua):0;
   const draw=()=>{const cw=cws[ci];
@@ -2938,7 +2945,9 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-coll]");if
 /* ===== Главная «Лента», вариант A: обложка недели, новинки, новое по разделам, ряды по видам вещей ===== */
 const HDAY=864e5;
 const hHash=s=>{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return (h>>>0)/4294967296};
-const hG=p=>p.g===CV.g||p.g==="u";
+// спорт (Alo, On…) — отдельный мир: в общих блоках главной его нет
+const HSP={pv:-1,m:{}};const hSport=bk=>{if(HSP.pv!==PV){HSP.pv=PV;HSP.m={}}return HSP.m[bk]??(HSP.m[bk]=cvSport(bk))};
+const hG=p=>(p.g===CV.g||p.g==="u")&&!hSport(p.bk);
 // вес вещи в ряду: свежесть + любимые бренды клиента + интерес других клиентов + наличие; в течение дня порядок один и тот же
 function hRank(list){const day=new Date().toISOString().slice(0,10),fb=new Set(P.filter(p=>favs.has(p.id)).map(p=>p.bk)),mx=Math.max(1,...list.map(p=>p.pop||0));
   const sc=p=>{let s=0;if(p.na)s+=Math.max(0,40-2*(Date.now()-p.na)/HDAY);if(fb.has(p.bk))s+=15;s+=20*(p.pop||0)/mx;
@@ -2959,16 +2968,21 @@ function hCover(){const box=$("#hCover");if(!box)return;clearInterval(HCT);
   const co=COLL.filter(collG);
   const S=bn.map(b=>({k:"b",id:b.id,img:b.image,kick:b.subtitle||"",t:b.title||"",go:b.button||(hasAct(b.action)?"Смотреть":""),light:b.theme==="light"}))
     .concat(co.map(c=>({k:"c",id:c.id,img:c.cover,kick:c.brand+" · "+(collSeen(c.id)?"коллекция":"новая коллекция"),t:c.title,sub:c.n+" "+plural(c.n,["вещь","вещи","вещей"])+(collFrom(c)?" · от "+eur(collFrom(c)):""),go:"Смотреть коллекцию"}))).slice(0,5);
-  if(!S.length){box.innerHTML="";return}
+  if(!S.length){box.innerHTML="";box.dataset.k="";return}
+  const key=S.map(x=>x.k+x.id).join(",");if(box.dataset.k===key&&box.firstChild)return;box.dataset.k=key;
   box.innerHTML=`<div class="hcv"><div class="hcv-tr">${S.map((x,i)=>`<button class="hcv-s press ${x.light?"light":""}" ${x.k==="b"?`data-act="cbanner" data-bid="${esc(x.id)}" data-bn="${esc(x.id)}"`:`data-coll="${esc(x.id)}"`}>${x.img?`<img src="${esc(szU(x.img,1000))}" alt="" ${i?'loading="lazy"':""} decoding="async">`:""}<span class="sh"></span><span class="tx">${x.kick?`<span class="k">${esc(x.kick)}</span>`:""}${x.t?`<b>${esc(x.t)}</b>`:""}${x.sub?`<span class="s num">${esc(x.sub)}</span>`:""}${x.go?`<span class="go">${esc(x.go)}</span>`:""}</span></button>`).join("")}</div>${S.length>1?`<div class="hcv-bars">${S.map((_,i)=>`<i class="${i?"":"on"}"><b></b></i>`).join("")}</div>`:""}</div>${co.length>1?`<button class="hcv-all press" data-act="hcolls">Все коллекции<i class="chev"></i></button>`:""}`;
   if(S.length<2)return;
   const tr=box.querySelector(".hcv-tr"),bars=[...box.querySelectorAll(".hcv-bars i")];let hold=0;
   const cur=()=>Math.round(tr.scrollLeft/tr.clientWidth),mark=()=>{const k=cur();bars.forEach((d,j)=>{d.classList.toggle("on",j===k);d.classList.toggle("done",j<k)})};
   tr.addEventListener("scroll",mark,{passive:true});tr.addEventListener("touchstart",()=>{hold=Date.now()},{passive:true});
   HCT=setInterval(()=>{if(document.hidden||Date.now()-hold<8000||!tr.isConnected||!tr.offsetParent)return;const k=cur();tr.scrollTo({left:(k+1>=S.length?0:k+1)*tr.clientWidth,behavior:"smooth"})},5000)}
+const HMEM=new Map();
 function renderHome(){if(!LIVE||!$("#homeA"))return;
   $$("#hGen [data-hg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.hg===CV.g));
   hCover();
+  // уже собранная лента для этого пола — сразу из памяти (переключение «Для неё / Для него» без задержки)
+  const mk=[CV.g,PV,HSEC,favs.size,new Date().toISOString().slice(0,10)].join("|"),mem=HMEM.get(mk);
+  if(mem){["#hNew","#hSec","#hCats"].forEach((id,i)=>{const e=$(id);if(e.innerHTML!==mem[i])e.innerHTML=mem[i]});return}
   const used=new Set(),G=P.filter(hG),NW=G.filter(p=>p.isNew);
   // новинки недели: вещи, вышедшие у нас за 7 дней; мало — за 30 дней («Новинки месяца»); ещё меньше — блока нет
   {let l=NW.filter(p=>p.na&&Date.now()-p.na<7*HDAY),t="Новинки недели";if(l.length<4){l=NW.filter(p=>p.na&&Date.now()-p.na<30*HDAY);t="Новинки месяца"}
@@ -2979,11 +2993,15 @@ function renderHome(){if(!LIVE||!$("#homeA"))return;
     box.innerHTML=`<div class="sec"><div class="sech"><h2>Новое в разделах</h2><button class="more" data-act="hall" data-k="new" data-c="${s[0]}" data-s="${s[1]}">Все</button></div><div class="hchips">${secs.map((x,i)=>`<button class="hchip" data-hsec="${i}" aria-pressed="${i===HSEC}">${x[0][2]}</button>`).join("")}</div><div class="hrail">${pk.map(pcHTML).join("")}</div></div>`;
     pk.forEach(p=>used.add(p.id))}}
   // ряды по видам вещей: всё в наличии и под заказ, не только новинки
-  $("#hCats").innerHTML=H_ROWS.map(([c,sb,t])=>{const l=G.filter(p=>hIn(p,c,sb));if(l.length<4)return"";const pk=hPick(hRank(l),12,used);return pk.length>=4?hRail(t,pk,`<button class="more" data-act="hall" data-k="row" data-c="${c}" data-s="${sb}">Все</button>`):""}).join("")}
+  $("#hCats").innerHTML=H_ROWS.map(([c,sb,t])=>{const l=G.filter(p=>hIn(p,c,sb));if(l.length<4)return"";const pk=hPick(hRank(l),12,used);return pk.length>=4?hRail(t,pk,`<button class="more" data-act="hall" data-k="row" data-c="${c}" data-s="${sb}">Все</button>`):""}).join("");
+  if(HMEM.size>8)HMEM.clear();HMEM.set(mk,[$("#hNew").innerHTML,$("#hSec").innerHTML,$("#hCats").innerHTML])}
 function homeAll(k,c,sb){clearFilters();F.g=CV.g;if(k==="new")F.onlyNew=true;if(c){F.cats.add(c);if(sb&&sb[0]!=="!")F.subs[c]=new Set([sb])}
   const t=(H_SECS.concat(H_ROWS).find(x=>x[0]===c&&x[1]===sb)||[,,"Новинки"])[2];tab("catalog");showItems(k==="new"?"Новое · "+t:t)}
 function openColls(){const L=COLL.filter(collG);push("Коллекции",`<div class="hcolls">${L.map(c=>collCardHTML(c,false)).join("")}</div><div style="height:30px"></div>`)}
-document.addEventListener("click",e=>{const g=e.target.closest("[data-hg]");if(g){if(CV.g===g.dataset.hg)return;CV.g=g.dataset.hg;store.set("tb_g",CV.g);hap&&hap("light");try{AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML();renderHome();renderRails()}catch(x){}return}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-hg]");if(g){if(CV.g===g.dataset.hg)return;CV.g=g.dataset.hg;store.set("tb_g",CV.g);hap&&hap("light");
+    // кнопка переключается сразу, ленту перестраиваем следующим кадром, сторис — после неё
+    $$("#hGen [data-hg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.hg===CV.g));
+    requestAnimationFrame(()=>setTimeout(()=>{try{renderHome();renderRails()}catch(x){}setTimeout(()=>{try{AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}},120)},0));return}
   const h=e.target.closest("[data-hsec]");if(h){HSEC=+h.dataset.hsec;store.set("tb_hsec",HSEC);const y=$("#hSec .hrail");renderHome();hap&&hap("light")}});
 const SVSEEN=(()=>{const o=store.get("tb_svseen",{}),cut=Date.now()-14*864e5;Object.keys(o).forEach(k=>{if(o[k]<cut)delete o[k]});return o})();
 const svDay0=()=>{const d=new Date();d.setHours(0,0,0,0);return +d};
@@ -3936,6 +3954,10 @@ const imgsOf=x=>x.im?x.im.map(u=>{u=XU(u);return {src:szU(u,1000),thumb:szU(u,40
 function applyLive(list,fresh){PV++;
   const shapeByCat={bags:"bag",shoes:"loafer",clothing:"coat",eyewear:"glasses",accessories:"wallet",jewelry:"bracelet",watches:"watch",fragrance:"wallet",other:"bag"};
   P.length=0;
+  // одна и та же вещь дважды (цвета одной модели с одинаковым фото, повторная загрузка): одна карточка на одно фото бренда; оставляем ту, чей артикул в адресе фото
+  const DUP={};{const f0=x=>String((x.im&&x.im[0])||(x.images&&x.images[0]&&(x.images[0].src||x.images[0].thumb))||"").split("?")[0],code=x=>String(x.id).replace(/^product\.manual\.[a-z0-9]+-/,"").toUpperCase(),g=new Map();
+    list.forEach(x=>{const u=f0(x);if(!u)return;const k=x.bk+"|"+u,own=code(x).length>=6&&u.toUpperCase().includes(code(x)),c=g.get(k);if(!c||(own&&!c.own))g.set(k,{x,own})});
+    list=list.filter(x=>{const u=f0(x);if(!u)return true;const w=g.get(x.bk+"|"+u).x;if(w===x)return true;DUP[x.id]=w.id;return false})}
   const endOf=d=>Date.parse(String(d).length===10?d+"T23:59:59":d);
   list.forEach(x=>{if(!CATS[x.cat])CATS[x.cat]="Другое";
     // скидка закончилась, а каталог ещё из кэша — показываем обычную цену
@@ -3949,6 +3971,8 @@ function applyLive(list,fresh){PV++;
   resetBudgets();
   // товары, снятые с витрины или удалённые в админке, убираем из корзины и избранного
   if(fresh){const ids=new Set(P.map(p=>p.id));
+    // избранное и корзина на скрытом дубле — переносим на оставшуюся карточку
+    if(Object.keys(DUP).length){let fc=false;[...favs].forEach(id=>{if(DUP[id]){favs.delete(id);favs.add(DUP[id]);fc=true}});if(fc)store.set("tb_favs",[...favs]);let cc=false;cart.forEach(c=>{if(DUP[c.id]){c.id=DUP[c.id];cc=true}});if(cc)store.set("tb_cart",cart)}
     const c2=cart.filter(c=>ids.has(c.id));if(c2.length!==cart.length){cart=c2;store.set("tb_cart",cart)}
     const gone=[...favs].filter(id=>!ids.has(id)&&!/^o/.test(id));if(gone.length){gone.forEach(id=>favs.delete(id));store.set("tb_favs",[...favs])}}
 }
@@ -4005,7 +4029,7 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
 </script>
 <script>
 /* фото, которое не открылось «с разрешением» (crossorigin): показываем как обычное — лучше без подбора фона, чем пустая карточка */
-document.addEventListener("error",function(e){var im=e.target;if(!im||im.tagName!=="IMG"||!im.hasAttribute("crossorigin"))return;im.removeAttribute("crossorigin");var u=im.getAttribute("src");if(u){im.src="";im.src=u}},true);
+document.addEventListener("error",function(e){var im=e.target;if(!im||im.tagName!=="IMG"||!im.hasAttribute("crossorigin"))return;im.removeAttribute("crossorigin");var u=im.getAttribute("src");if(u&&!/[?&]tbr=1/.test(u)){im.src=u+(u.indexOf("?")>=0?"&":"?")+"tbr=1"}},true);
 </script>
 <script>
 /* Telegram Mini App: полноэкранный режим, ссылки внутри Telegram */
