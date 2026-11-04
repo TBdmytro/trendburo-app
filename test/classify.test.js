@@ -49,3 +49,11 @@ test("Dior: Trenchcoat — одежда (не аксессуар из-за «Gü
   assert.equal(detectCategory("Dior Knit Pump"), "shoes"); assert.equal(detectCategory("Dior Knit Ballerina"), "shoes");
   assert.equal(headCategory("Twinset"), "clothing"); assert.equal(detectSubcategory("clothing", "Twinset"), "knit");
 });
+
+test("Louis Vuitton: фото без дублей и пустых заглушек, лицевой кадр первым, баннер раздела не берём", async () => {
+  const { orderImages, lvOwn } = await import("../lib/imgorder.js");
+  const b = "https://de.louisvuitton.com/images/is/image/lv/1/PP_VP_L/louis-vuitton-fastline-rucksack--M29799";
+  const out = orderImages(["https://en.louisvuitton.com/images/is/image/MEN_BC_LG_FORMAL_AUG26_DII.jpg?wid=4096", b + "_PM2_Front view.jpg", b + "_PM2_Front%20view.png?wid=490&hei=490", b + "_PM1_Worn%20view.png?wid=490", b + "_PM1_Side%20view.png?wid=490", b + "_PM1_Back%20view.png", b + "_PM2_Front", b + "_PM1_Side"], { sku: "m29799" });
+  assert.deepEqual(out.map(u => u.split("--")[1]), ["M29799_PM2_Front%20view.png?wid=2400&hei=2400", "M29799_PM1_Side%20view.png?wid=2400&hei=2400", "M29799_PM1_Back%20view.png?wid=2400&hei=2400", "M29799_PM1_Worn%20view.png?wid=2400&hei=2400"]);
+  assert.ok(lvOwn(b + "_PM2_Front%20view.png", "M29799")); assert.ok(!lvOwn("https://en.louisvuitton.com/images/is/image/MEN_BC_X.jpg", "M29799"));
+});

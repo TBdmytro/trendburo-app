@@ -59,7 +59,7 @@ async function copyWebImages(store, list, id = "") {
   return { images: ok.length ? ok : images, copied, srcOf };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer";
-let FIXPRE = false, FIXOTHER = false, FIXDIOR = false;
+let FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
 /** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
@@ -349,6 +349,13 @@ export default async function handler(req, res) {
             if (next.length && next.map(i => i.url).join("|") !== im.map(i => i.url).join("|")) ch.push({ id: p._id, set: { images: next, coverFrom: null } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
           await store.put({ _id: "settings.fixDiorImg2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXDIOR " + ch.length); } } catch (e) { FIXDIOR = false; console.log("FIXDIOR fail " + String(e.message).slice(0, 120)); } }
+        // один раз: фото Louis Vuitton — убрать дубли и пустые заглушки, лицевой кадр первым, баннеры раздела не обложка (ваш порядок/обложку из админки не трогаем)
+        if (!FIXLV) { FIXLV = true; try { if (!(await store.get("settings.fixLvImg1"))) { const { orderImages } = await import("../lib/imgorder.js");
+          const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides, coverFrom, coverTile" })).filter(p => p._id.startsWith("product.manual.de-") && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
+          const ch = []; for (const p of L) { const im = p.images || [], src = im.map(i => i.sourceUrl || i.url); if (!src.some(u => /louisvuitton\.com/.test(u))) continue; const ord = orderImages(src, { max: 12, sku: p._id.replace(/^product\.manual\.de-/, "") });
+            if (ord.length && ord.join("|") !== im.map(i => i.url).join("|")) ch.push({ id: p._id, set: { images: ord.map(u => ({ url: u, sourceUrl: u, rights: "copied" })), coverFrom: null, coverTile: null } }); }
+          for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
+          await store.put({ _id: "settings.fixLvImg1", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXLV " + ch.length); } } catch (e) { FIXLV = false; console.log("FIXLV fail " + String(e.message).slice(0, 120)); } }
         // один раз: товары с сайтов брендов, оставшиеся «Другое» из-за немецких слов (Gürtel, Accessoires, Schmuck…) — в свою категорию
         if (!FIXOTHER) { FIXOTHER = true; try { if (!(await store.get("settings.fixOther"))) { const { detectCategory, detectSubcategory } = await import("../lib/normalize.js");
           const L = (await store.list("product", { category: "other" }, { limit: 20000, fields: "_id, title, sourceTitle, description, webSections, orig, overrides" })).filter(p => p._id.startsWith("product.manual.") && !p.overrides?.category);
