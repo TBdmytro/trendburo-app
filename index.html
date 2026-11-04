@@ -182,14 +182,16 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 /* главная, вариант A */
 #shipPill{display:none!important}
 .hgen{position:relative;display:grid;grid-template-columns:1fr 1fr;margin:2px 18px 14px;border-radius:999px;padding:3px;background:#f2f3f4;touch-action:pan-y;-webkit-user-select:none;user-select:none}
-.hgen::before{content:"";position:absolute;top:3px;bottom:3px;left:3px;right:50%;border-radius:999px;background:#26282c;box-shadow:0 3px 10px rgba(20,22,25,.22);transition:left .42s cubic-bezier(.32,.72,0,1),right .42s cubic-bezier(.32,.72,0,1)}
-.hgen[data-g="m"]::before{left:50%;right:3px}
-.hgen.go-m::before,.cvseg.go-m:before{transition:right .3s cubic-bezier(.32,.72,0,1),left .46s cubic-bezier(.32,.72,0,1) .08s}
-.hgen.go-w::before,.cvseg.go-w:before{transition:left .3s cubic-bezier(.32,.72,0,1),right .46s cubic-bezier(.32,.72,0,1) .08s}
-.hgen button{transition:color .4s ease!important}
-.cvseg:before{width:auto!important;right:50%;transform:none!important}
-.cvseg[data-g="m"]:before{left:50%;right:4px}
-.cvseg button{transition:color .4s ease!important}
+/* капля на видеокарте (transform), а не на пересчёте страницы: ползунок не дёргается, даже когда лента в это время перестраивается */
+.hgen::before{content:"";position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:#26282c;box-shadow:0 3px 10px rgba(20,22,25,.22);will-change:transform;transform:translateX(0)}
+.hgen[data-g="m"]::before,.cvseg[data-g="m"]:before{transform:translateX(100%)}
+.cvseg:before{transition:none!important;will-change:transform}
+.hgen.go-m::before,.cvseg.go-m:before{transform-origin:left center;animation:tbDropM .52s both}
+.hgen.go-w::before,.cvseg.go-w:before{transform-origin:right center;animation:tbDropW .52s both}
+@keyframes tbDropM{0%{transform:translateX(0) scaleX(1);animation-timing-function:cubic-bezier(.3,.6,.4,1)}38%{transform:translateX(0) scaleX(1.5);animation-timing-function:cubic-bezier(.32,.72,0,1)}100%{transform:translateX(100%) scaleX(1)}}
+@keyframes tbDropW{0%{transform:translateX(100%) scaleX(1);animation-timing-function:cubic-bezier(.3,.6,.4,1)}38%{transform:translateX(100%) scaleX(1.5);animation-timing-function:cubic-bezier(.32,.72,0,1)}100%{transform:translateX(0) scaleX(1)}}
+.hgen button,.cvseg button{transition:color .4s ease .08s!important}
+@media (prefers-reduced-motion:reduce){.hgen::before,.cvseg:before{animation:none!important}}
 /* мягкая смена содержимого при переключении пола */
 #stories,#hCover,#hNew,#hSec,#hCats,#cmsRails,#cvBody{transition:opacity .28s ease,transform .28s ease}
 .hfade-out{opacity:0!important;transform:translateY(6px);transition:opacity .18s ease,transform .18s ease!important}
@@ -2705,7 +2707,7 @@ function cvRender(anim){const root=$("#cv3");if(!root)return;
 function cvInit(){const root=$("#cv3");if(!root||root._w)return;root._w=1;
   cvWire(root,CV.sel,{onSel:()=>cvBarUpd(root,CV.sel)});
   root.addEventListener("click",e=>{
-    const sb=e.target.closest("#cvSeg button");if(sb){const g=sb.dataset.g;if(g===CV.g)return;CV.g=g;store.set("tb_g",g);CV.sel.clear();cvHaptic();segGo($("#cvSeg"),g);$$("#cvSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===g));const bd=$("#cvBody");if(bd)bd.classList.add("hfade-out");setTimeout(()=>{const sc=$("#t-catalog .scroll"),y=sc?sc.scrollTop:0;cvRender(true);if(sc)sc.scrollTop=y},200);return}
+    const sb=e.target.closest("#cvSeg button");if(sb){const g=sb.dataset.g;if(g===CV.g)return;CV.g=g;store.set("tb_g",g);CV.sel.clear();cvHaptic();segGo($("#cvSeg"),g);$$("#cvSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===g));const bd=$("#cvBody");if(bd)bd.classList.add("hfade-out");setTimeout(()=>{const sc=$("#t-catalog .scroll"),y=sc?sc.scrollTop:0;cvRender(true);if(sc)sc.scrollTop=y},520);return}
     const n=e.target.closest("[data-cvnew]");if(n){cvGo({brands:[n.dataset.cvnew],isNew:true,title:cvName(n.dataset.cvnew)+" · новинки"});return}
     const c=e.target.closest("[data-cvcat]");if(c){cvCat(c.dataset.cvcat);return}
     const a=e.target.closest("[data-cvallb]");if(a){cvAllBrands(a.dataset.cvallb==="s"?"s":"h");return}
@@ -3027,10 +3029,10 @@ function openColls(){const L=COLL.filter(collG);push("Коллекции",`<div 
 // капля: ползунок сначала тянется краем в сторону нажатия, затем подтягивает второй край
 function segGo(el,g){if(!el||el.dataset.g===g)return;el.classList.remove("go-m","go-w");void el.offsetWidth;el.classList.add("go-"+g);el.dataset.g=g}
 function hGenUI(g){const el=$("#hGen");if(!el)return;segGo(el,g);el.querySelectorAll("[data-hg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.hg===g))}
-// смена пола: ползунок едет, блоки ниже мягко гаснут, меняются и проявляются — без мигания
+// смена пола: ползунок едет, блоки ниже мягко гаснут; перестраиваем ленту только когда ползунок доехал (иначе на iPhone он подтормаживает), затем блоки проявляются
 function hSetG(g){if(CV.g===g){hGenUI(g);return}CV.g=g;store.set("tb_g",g);hap&&hap("light");hGenUI(g);
   const B=["#stories","#hCover","#hNew","#hSec","#hCats","#cmsRails"].map(id=>$(id)).filter(Boolean);B.forEach(e=>e.classList.add("hfade-out"));clearTimeout(hSetG.t);
-  hSetG.t=setTimeout(()=>{try{renderHome();renderRails();AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}requestAnimationFrame(()=>B.forEach(e=>e.classList.remove("hfade-out")))},200)}
+  hSetG.t=setTimeout(()=>{try{renderHome();renderRails();AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}requestAnimationFrame(()=>B.forEach(e=>e.classList.remove("hfade-out")))},520)}
 {let hd=null;document.addEventListener("pointerdown",e=>{const el=e.target.closest("#hGen");if(!el)return;hd={el,x:e.clientX,g:CV.g,moved:false}},{passive:true});
  document.addEventListener("pointermove",e=>{if(!hd)return;if(Math.abs(e.clientX-hd.x)>6){hd.moved=true;hd.el.classList.add("drag")}if(!hd.moved)return;const r=hd.el.getBoundingClientRect(),g=e.clientX>r.left+r.width/2?"m":"w";if(hd.el.dataset.g!==g){hGenUI(g);hap&&hap()}},{passive:true});
  const up=e=>{if(!hd)return;const d=hd;hd=null;d.el.classList.remove("drag");if(d.moved){d.skip=Date.now();hSetG(d.el.dataset.g);HGSKIP=Date.now()}};
