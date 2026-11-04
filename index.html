@@ -229,7 +229,8 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .cvn .pic{background-color:#f2f3f4!important;background-size:cover!important;background-position:center 18%!important;background-repeat:no-repeat!important;overflow:hidden}
 .cvnv .st span{border:0!important;background-color:#f2f3f4!important;background-size:cover!important;background-position:center 18%!important;background-repeat:no-repeat!important;overflow:hidden}
 /* карточка товара: углы фото сразу скруглены (iPhone дорисовывал скругление после загрузки) */
-.pv-hero.ph .pv-gal .sl{clip-path:inset(0 round 20px);-webkit-mask-image:-webkit-radial-gradient(white,black);isolation:isolate}
+.pv-hero.ph .pv-gal .sl{clip-path:inset(0 round 20px);isolation:isolate}
+.pv-hero.ph .pv-gal .sl[data-full] img{background-color:#fff!important}
 .pv-hero.ph .pv-gal img{border-radius:20px}
 
 .pv-hero.ph .pv-gal .sl[data-full] img:not(.geo){opacity:0!important}
@@ -2015,14 +2016,14 @@ function baseSet(skip){const q=F.q.trim().toLowerCase();
   return P.filter(p=>(F.g==="all"||p.g===F.g||(p.g==="u"&&F.g!=="k"))&&(skip==="cats"||!F.cats.size||F.cats.has(p.cat))&&(skip==="cats"||!(F.subs[p.cat]&&F.subs[p.cat].size)||F.subs[p.cat].has(subTypeOf(p)))&&(skip==="brands"||!F.brands.size||F.brands.has(p.bk))&&(!F.cities.size||F.cities.has(p.city))&&p.price<=F.budgets[p.cat]&&(!F.onlyNew||p.isNew)&&(!F.stock||(p.st&&(F.stock==="any"||p.st.loc===F.stock)))&&(!F.onlyFav||favs.has(p.id))&&(!F.ids||F.ids.has(p.id))&&(!q||qMatcher(F.q).test(p)))}
 function activeList(){const a=[];
   F.cats.forEach(c=>a.push([CATS[c],()=>F.cats.delete(c)]));
-  F.brands.forEach(b=>a.push([BRANDS.find(x=>x[0]===b)[1],()=>F.brands.delete(b)]));
+  F.brands.forEach(b=>{if(b===F.lockBrand)return;a.push([(BRANDS.find(x=>x[0]===b)||[b,b])[1],()=>F.brands.delete(b)])});
   Object.keys(CATS).forEach(c=>{if(F.budgets[c]<catMax(c))a.push([CATS[c]+" до "+eur(F.budgets[c]),()=>F.budgets[c]=catMax(c)])});
   F.cities.forEach(c=>a.push([CITIES[c],()=>F.cities.delete(c)]));
   if(F.stock)a.push([{any:"В наличии",ua:"В наличии в Украине",eu:"В наличии в Европе"}[F.stock],()=>F.stock=""]);
   if(F.ids)a.push(["Подборка",()=>F.ids=null]);
   if(F.onlyNew)a.push(["Новинки",()=>F.onlyNew=false]);if(F.onlyFav)a.push(["Избранное",()=>F.onlyFav=false]);return a}
 let AF=[];
-function renderCatalog(){
+function renderCatalog(){if(F.lockBrand&&!F.brands.has(F.lockBrand))F.brands.add(F.lockBrand);
   const fc=baseSet("cats");
   // категории без огромных чисел (было «Одежда 2511»): только те, где что-то есть, самые большие — первыми
   const cn={};fc.forEach(p=>cn[p.cat]=(cn[p.cat]||0)+1);
@@ -2366,9 +2367,13 @@ async function shotInfoAsync(im){if(im._si!==undefined)return im._si;const [w,h]
 const THSI=new Map();function thumbSI(u){const k=siKey(u),m=SIMEM.get(k);if(m)return Promise.resolve(m);if(THSI.has(k))return THSI.get(k);
   const pr=new Promise(res=>{const m=new Image();m.crossOrigin="anonymous";m.decoding="async";m.onload=()=>{shotInfoAsync(m).then(si=>{if(si)SIMEM.set(k,si);res(si||null)}).catch(()=>res(null))};m.onerror=()=>res(null);m.src=u});THSI.set(k,pr);return pr}
 /* Кадр в рамке: товар целиком и как можно крупнее; если снимок закрывает рамку — без полей, иначе края заливаются фоном снимка */
+// правило рамки: снимок заполняет рамку без белых полей. Если фон снимка прочитать нельзя (сайт бренда не даёт), а пропорции близки к рамке —
+// заполняем рамку целиком (по краям срезается до 12% с каждой стороны, человек и вещь остаются целиком по высоте). Вещь LV на прозрачном фоне — целиком на белом.
+function fullScale(im,w,h,W,H){const u=im.currentSrc||im.src||"",r=(w/h)/(W/H),canRead=/cdn\.sanity\.io|cdn\.shopify\.com/.test(u),lvItem=/louisvuitton\.com/.test(u)&&!/worn|look/i.test(decodeURIComponent(u));
+  return !canRead&&!lvItem&&r>.76&&r<1.32?Math.max(W/w,H/h):Math.min(W/w,H/h)}
 // карточка товара: снимок целиком, по центру рамки, со скруглёнными углами — место считаем по пропорциям (своим или лёгкой копии из каталога)
 function placeFull(im,box,w,h){const c0=getComputedStyle(box),p0=parseFloat(c0.paddingTop)||0,W0=box.clientWidth,H0=box.clientHeight-p0-(parseFloat(c0.paddingBottom)||0);
-  if(W0>10&&H0>10&&w&&h){const k=Math.min(W0/w,H0/h),dw=w*k,dh=h*k;Object.assign(im.style,{position:"absolute",left:(W0-dw)/2+"px",top:(p0+(H0-dh)/2)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"fill"});im.classList.add("geo")}}
+  if(W0>10&&H0>10&&w&&h){const k=fullScale(im,w,h,W0,H0),dw=w*k,dh=h*k;Object.assign(im.style,{position:"absolute",left:(W0-dw)/2+"px",top:(p0+(H0-dh)/2)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"fill"});im.classList.add("geo")}}
 function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!box)return;
   // карточка товара: размер и место снимка — сразу при загрузке (разбор цветов догонит позже); до этого снимок не виден — без острых углов
   if(box.dataset.full&&!im.classList.contains("geo"))placeFull(im,box,w,h);
@@ -2387,7 +2392,7 @@ function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!
   const live=box.dataset.live&&si&&!si.flat&&(bx[0]<.02||bx[2]>.98);
   if(live)sc=Math.min(W/w,H/h);
   // data-full (карточка товара): снимок всегда целиком, без приближения, по центру рамки
-  const full=!!box.dataset.full;if(full)sc=Math.min(W/w,H/h);
+  const full=!!box.dataset.full;if(full)sc=fullScale(im,w,h,W,H);
   // len — вся рамка, vis — где товар должен быть виден (над точками листания); сначала без полей, затем товар целиком
   // v0..v1 — где товар должен быть виден (ниже кнопок Telegram, выше точек листания); товар по центру этой области,
   // снимок закрывает рамку без полей, если может; товар целиком важнее всего
@@ -2424,6 +2429,8 @@ function similarTo(p){const TM=new Map(),T=b=>{let v=TM.get(b);if(v===undefined)
 // «Другие цвета»: та же модель в других цветах (по ключу семьи из каталога)
 let FAMS=null;function famSibs(p){if(!p||!p.fam)return [];if(!FAMS){FAMS=new Map();P.forEach(x=>{if(x.fam){if(!FAMS.has(x.fam))FAMS.set(x.fam,[]);FAMS.get(x.fam).push(x)}})}const seen=new Set(),L=[p,...(FAMS.get(p.fam)||[]).filter(x=>x!==p)].filter(x=>{const im=x.imgs&&x.imgs[0];const k=im?(im.thumb||im.src):x.id;if(seen.has(k))return false;seen.add(k);return true}); // один цвет — один раз
   return L.length>1?L.slice(0,16):[]}
+// большое фото карточки начинаем грузить уже при касании плитки — к открытию карточки оно готово (а не после выезда)
+const PREF=new Set();document.addEventListener("pointerdown",e=>{const t=e.target.closest&&e.target.closest('[data-act="product"][data-id]');if(!t)return;const p=P.find(x=>x.id===t.dataset.id),im=p&&p.imgs&&p.imgs[0];if(!im||PREF.has(im.src))return;PREF.add(im.src);const m=new Image();if(/^https:\/\/cdn\.sanity\.io\//.test(im.src))m.crossOrigin="anonymous";m.decoding="async";m.src=im.src},{passive:true,capture:true});
 function openProduct(id){popTrack("v",id);
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;
   let d=prefs.dest||"ua",size="",ci=0;
@@ -2674,7 +2681,7 @@ const cvPicIn=p=>p&&!(p.imgs&&p.imgs[0])?shapeSVG(p.shape,p.c,""):"";
 const cvTile=(bk,sel)=>`<div class="cvt${cvSport(bk)?" sp":""}${sel.has(bk)?" on":""}" data-cvb="${esc(bk)}" role="button" tabindex="0"><b>${esc(cvName(bk))}</b><button type="button" class="ck" data-cvck="${esc(bk)}" aria-label="Отметить ${esc(cvName(bk))}" aria-pressed="${sel.has(bk)}"></button></div>`;
 const cvBarHTML=sel=>`<div class="cvbar" ${sel.size?"":"hidden"}><button class="rs" data-cvrs>Сбросить</button><button class="go" data-cvgo>Показать вещи · ${sel.size} ${plural(sel.size,["бренд","бренда","брендов"])}</button></div>`;
 function cvHaptic(){try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(e){}}
-function cvGo(o){clearFilters();F.g=CV.g;if(o.brands)o.brands.forEach(b=>F.brands.add(b));if(o.cat)F.cats.add(o.cat);if(o.isNew)F.onlyNew=true;tab("catalog");showItems(o.title)}
+function cvGo(o){clearFilters();F.g=CV.g;if(o.brands)o.brands.forEach(b=>F.brands.add(b));if(o.brands&&o.brands.length===1)F.lockBrand=o.brands[0];if(o.cat)F.cats.add(o.cat);if(o.isNew)F.onlyNew=true;tab("catalog");showItems(o.title)}
 function cvTitle(sel,cat){const n=[...sel].map(cvName);return (cat?CATS[cat]+" · ":"")+(n.length<=2?n.join(", "):n.length+" "+plural(n.length,["бренд","бренда","брендов"]))}
 // общая логика плиток: нажал плитку — вещи бренда, нажал кружок — отметил (несколько брендов)
 function cvWire(root,sel,{cat="",onSel}={}){
@@ -2754,7 +2761,7 @@ function btileHTML(bk){const l=bItems(bk).filter(p=>F.g==="all"||p.g===F.g||(p.g
 $("#hg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;F.g=b.dataset.g;renderCatHome();renderCatalog()});
 function showItems(title){$("#t-catalog").classList.add("items");$("#catHome").hidden=true;$("#catItems").hidden=false;{let bx=$("#catItemsBn");if(!bx){bx=document.createElement("div");bx.id="catItemsBn";bx.className="cbwrap";bx.style.margin="4px 0 14px";$("#catItems .itemshead").after(bx)}const c=F.cats.size===1?[...F.cats][0]:"",L=c?bnFor("cat:"+c):[];bx.hidden=!L.length;bx.innerHTML=L.length?`<div class="cbstack">${L.slice(0,2).map(cbHTML).join("")}</div>`:""}$("#itemsTitle").textContent=title;$("#catBarT").textContent=title;renderCatalog();$("#t-catalog .scroll").scrollTop=0}
 function showCatHome(){$("#t-catalog").classList.remove("items");F.g="all";$("#catItems").hidden=true;$("#catHome").hidden=false;$("#catBarT").textContent="Каталог";renderCatHome();$("#t-catalog .scroll").scrollTop=0}
-function clearFilters(){F.ids=null;F.stock="";F.cats.clear();F.subs={};F.brands.clear();F.cities.clear();F.onlyNew=F.onlyFav=false;F.sort="pop";resetBudgets()}
+function clearFilters(){F.lockBrand="";F.ids=null;F.stock="";F.cats.clear();F.subs={};F.brands.clear();F.cities.clear();F.onlyNew=F.onlyFav=false;F.sort="pop";resetBudgets()}
 
 /* Общий поиск */
 function hl(text,q){const n=norm(text),i=n.indexOf(q);if(!q||i<0)return esc(text);return esc(text.slice(0,i))+"<mark>"+esc(text.slice(i,i+q.length))+"</mark>"+esc(text.slice(i+q.length))}
@@ -3999,7 +4006,7 @@ async function syncOrders(){if(!LIVE)return null;try{const r=await fetch("/api/l
 /* ===== Запуск: живой каталог из /api/catalog; демо-данные только с ?demo=1 ===== */
 const LIVE=!/[?&]demo=1/.test(location.search);
 // адрес фото нужной ширины (как lib/images.js sized): CDN сам отдаёт уменьшенную копию
-const szU=(u,w)=>!u?u:/louisvuitton\.com\/images\/.*[?&]wid=\d+/.test(u)?u.replace(/([?&])wid=\d+/,"$1wid="+w).replace(/([?&])hei=\d+/,"$1hei="+w):/cdn\.sanity\.io\/images\//.test(u)?`${u}${u.includes("?")?"&":"?"}w=${w}&fit=max&auto=format&q=82`:/cdn\.shopify\.com\/|\/cdn\/shop\//.test(u)?(w>=1600?u.replace(/[?&]width=\d+/,""):`${u.replace(/[?&]width=\d+/,"")}${u.includes("?")&&!/\?width=\d+$/.test(u)?"&":"?"}width=${w}`):u;
+const szU=(u,w)=>!u?u:/louisvuitton\.com\/images\/.*[?&]wid=\d+/.test(u)?(W=>u.replace(/([?&])wid=\d+/,"$1wid="+W).replace(/([?&])hei=\d+/,"$1hei="+W))(w<=500?490:w<=1300?1300:2400):/cdn\.sanity\.io\/images\//.test(u)?`${u}${u.includes("?")?"&":"?"}w=${w}&fit=max&auto=format&q=82`:/cdn\.shopify\.com\/|\/cdn\/shop\//.test(u)?(w>=1600?u.replace(/[?&]width=\d+/,""):`${u.replace(/[?&]width=\d+/,"")}${u.includes("?")&&!/\?width=\d+$/.test(u)?"&":"?"}width=${w}`):u;
 const XU=u=>typeof u==="string"&&u[0]==="~"?"https://cdn.shopify.com/s/files/"+u.slice(1):u;
 const imgsOf=x=>x.im?x.im.map(u=>{u=XU(u);return {src:szU(u,1000),thumb:szU(u,400),big:szU(u,1600)}}):(x.images||[]);
 function applyLive(list,fresh){PV++;CMXV++;
