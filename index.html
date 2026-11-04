@@ -182,9 +182,17 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 /* главная, вариант A */
 #shipPill{display:none!important}
 .hgen{position:relative;display:grid;grid-template-columns:1fr 1fr;margin:2px 18px 14px;border-radius:999px;padding:3px;background:#f2f3f4;touch-action:pan-y;-webkit-user-select:none;user-select:none}
-.hgen::before{content:"";position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:#26282c;box-shadow:0 3px 10px rgba(20,22,25,.22);transition:transform .42s cubic-bezier(.32,.72,0,1)}
-.hgen[data-g="m"]::before{transform:translateX(100%)}
-.hgen.drag::before{transition:transform .2s cubic-bezier(.32,.72,0,1)}
+.hgen::before{content:"";position:absolute;top:3px;bottom:3px;left:3px;right:50%;border-radius:999px;background:#26282c;box-shadow:0 3px 10px rgba(20,22,25,.22);transition:left .42s cubic-bezier(.32,.72,0,1),right .42s cubic-bezier(.32,.72,0,1)}
+.hgen[data-g="m"]::before{left:50%;right:3px}
+.hgen.go-m::before,.cvseg.go-m:before{transition:right .3s cubic-bezier(.32,.72,0,1),left .46s cubic-bezier(.32,.72,0,1) .08s}
+.hgen.go-w::before,.cvseg.go-w:before{transition:left .3s cubic-bezier(.32,.72,0,1),right .46s cubic-bezier(.32,.72,0,1) .08s}
+.hgen button{transition:color .4s ease!important}
+.cvseg:before{width:auto!important;right:50%;transform:none!important}
+.cvseg[data-g="m"]:before{left:50%;right:4px}
+.cvseg button{transition:color .4s ease!important}
+/* мягкая смена содержимого при переключении пола */
+#stories,#hCover,#hNew,#hSec,#hCats,#cmsRails,#cvBody{transition:opacity .28s ease,transform .28s ease}
+.hfade-out{opacity:0!important;transform:translateY(6px);transition:opacity .18s ease,transform .18s ease!important}
 .hgen button{position:relative;z-index:1;border:0;background:none;border-radius:999px;padding:11px 0;font:600 14px Onest,sans-serif;color:#26282c;transition:color .3s ease;-webkit-tap-highlight-color:transparent}
 .hgen button[aria-pressed=true]{color:#fff}
 @media (prefers-reduced-motion:reduce){.hgen::before{transition:none}}
@@ -2352,10 +2360,12 @@ async function shotInfoAsync(im){if(im._si!==undefined)return im._si;const [w,h]
 const THSI=new Map();function thumbSI(u){const k=siKey(u),m=SIMEM.get(k);if(m)return Promise.resolve(m);if(THSI.has(k))return THSI.get(k);
   const pr=new Promise(res=>{const m=new Image();m.crossOrigin="anonymous";m.decoding="async";m.onload=()=>{shotInfoAsync(m).then(si=>{if(si)SIMEM.set(k,si);res(si||null)}).catch(()=>res(null))};m.onerror=()=>res(null);m.src=u});THSI.set(k,pr);return pr}
 /* Кадр в рамке: товар целиком и как можно крупнее; если снимок закрывает рамку — без полей, иначе края заливаются фоном снимка */
+// карточка товара: снимок целиком, по центру рамки, со скруглёнными углами — место считаем по пропорциям (своим или лёгкой копии из каталога)
+function placeFull(im,box,w,h){const c0=getComputedStyle(box),p0=parseFloat(c0.paddingTop)||0,W0=box.clientWidth,H0=box.clientHeight-p0-(parseFloat(c0.paddingBottom)||0);
+  if(W0>10&&H0>10&&w&&h){const k=Math.min(W0/w,H0/h),dw=w*k,dh=h*k;Object.assign(im.style,{position:"absolute",left:(W0-dw)/2+"px",top:(p0+(H0-dh)/2)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"fill"});im.classList.add("geo")}}
 function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!box)return;
   // карточка товара: размер и место снимка — сразу при загрузке (разбор цветов догонит позже); до этого снимок не виден — без острых углов
-  if(box.dataset.full&&!im.classList.contains("geo")){const c0=getComputedStyle(box),p0=parseFloat(c0.paddingTop)||0,W0=box.clientWidth,H0=box.clientHeight-p0-(parseFloat(c0.paddingBottom)||0);
-    if(W0>10&&H0>10){const k=Math.min(W0/w,H0/h),dw=w*k,dh=h*k;Object.assign(im.style,{position:"absolute",left:(W0-dw)/2+"px",top:(p0+(H0-dh)/2)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:"fill"});im.classList.add("geo")}}
+  if(box.dataset.full&&!im.classList.contains("geo"))placeFull(im,box,w,h);
   if(im._si===undefined){const m0=SIMEM.get(siKey(im.currentSrc||im.src));if(m0)im._si=m0}
   // разбор цветов краёв — по лёгкой копии снимка (400 px, уже в кэше от каталога), а не по большому фото: на iPhone раскодирование большого тормозило открытие
   if(im._si===undefined&&src&&src.thumb&&!im._thP){im._thP=thumbSI(src.thumb).then(si=>{im._si=si||undefined;fitShot(im,box,src)});return}
@@ -2452,6 +2462,8 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     g.querySelectorAll(".sl").forEach(sl=>{sl.dataset.live=anchor;sl.dataset.full="1";sl.dataset.res="0";if(document.documentElement.classList.contains("intg")&&stp)sl.dataset.rt=Math.round(stp+4)});
     const fitAll=()=>ims.forEach(im=>{if(im.complete&&im.naturalWidth)fitShot(im,im.parentNode,p.imgs[+im.dataset.zi])});
     s._fitAll=fitAll;
+    // пока большое фото грузится — лёгкая копия из каталога (она уже в памяти телефона) сразу на своём месте, без белого экрана
+    ims.forEach((im,i)=>{const th=p.imgs[i]&&p.imgs[i].thumb;if(i||!th||im.classList.contains("geo")||(im.complete&&im.naturalWidth))return;const t=new Image();t.onload=()=>{if(!im.classList.contains("geo")&&!(im.complete&&im.naturalWidth))placeFull(im,im.parentNode,t.naturalWidth,t.naturalHeight)};t.src=th});
     ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.addEventListener("load",go,{once:true});im.src=im.src}else if(!/[?&]tbr=1/.test(im.src)){im.addEventListener("load",go,{once:true});im.src=im.src+(im.src.includes("?")?"&":"?")+"tbr=1"}else im.classList.add("fit")}))});
     g.addEventListener("click",e=>{const im=e.target.closest("img[data-zi]");if(im)zoomView(p.imgs.slice(0,8),+im.dataset.zi,it.brand+" "+it.name)})}}
   const oldP=()=>p&&p.sale&&p.oldPrices?(p.oldPrices[d]??p.oldPrices.ua):0;
@@ -2674,6 +2686,7 @@ function cvRender(anim){const root=$("#cv3");if(!root)return;
   const nw=new Map();pool.filter(p=>p.isNew).forEach(p=>{if(!nw.has(p.bk))nw.set(p.bk,[]);nw.get(p.bk).push(p)});
   const news=[...nw.entries()].sort((a,b)=>b[1].length-a[1].length).slice(0,6);
   const fresh=pool.filter(p=>p.isNew&&p.imgs&&p.imgs[0]).slice(0,3);
+  const keepSeg=anim&&$("#cvSeg");
   root.innerHTML=`${news.length?`<div class="cvnews" id="cvNews">${news.map(([bk,L],i)=>`<button class="cvn press${i%2?"":" d"}" data-cvnew="${esc(bk)}"><span><span class="k">НОВИНКИ</span><b>${esc(cvName(bk))}</b><small>Новые поступления</small></span><span class="a">Смотреть ›</span><span class="pic" ${cvPic(L[0])}>${cvPicIn(L[0])}</span></button>`).join("")}</div><div class="cvdots" id="cvDots">${news.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}
   <div class="cvseg" id="cvSeg" data-g="${CV.g}" role="group" aria-label="Для кого"><button data-g="w" aria-pressed="${CV.g==="w"}">Для неё</button><button data-g="m" aria-pressed="${CV.g==="m"}">Для него</button></div>
   <div id="cvBody">
@@ -2684,13 +2697,14 @@ function cvRender(anim){const root=$("#cv3");if(!root)return;
     <button class="cvaz press" data-cvallb="all"${OPTIX_ON?"":' style="grid-column:span 2"'}><b>Бренды</b><small>от A до Z</small><span class="lt">A–Z</span></button>
     ${OPTIX_ON?`<button class="cvox press" data-act="optixapp"><span class="wm">OPTIX</span><small>Очки из бутиков<br>Европы</small><span class="go">Войти ›</span><span class="ln"></span></button>`:""}</div>
   ${cvBarHTML(CV.sel)}</div>`;
+  if(keepSeg){const n=$("#cvSeg");if(n&&n!==keepSeg)n.replaceWith(keepSeg)}
   if(anim){const b=$("#cvBody");b.classList.add("cvfade");setTimeout(()=>b.classList.remove("cvfade"),600)}
   const nr=$("#cvNews");if(nr){const dots=[...root.querySelectorAll("#cvDots i")];nr.addEventListener("scroll",()=>{const c=nr.firstElementChild;if(!c)return;const k=Math.round(nr.scrollLeft/(c.offsetWidth+10));dots.forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true})}
 }
 function cvInit(){const root=$("#cv3");if(!root||root._w)return;root._w=1;
   cvWire(root,CV.sel,{onSel:()=>cvBarUpd(root,CV.sel)});
   root.addEventListener("click",e=>{
-    const sb=e.target.closest("#cvSeg button");if(sb){const g=sb.dataset.g;if(g===CV.g)return;CV.g=g;store.set("tb_g",g);CV.sel.clear();cvHaptic();$("#cvSeg").dataset.g=g;$$("#cvSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===g));setTimeout(()=>{const sc=$("#t-catalog .scroll"),y=sc?sc.scrollTop:0;cvRender(true);if(sc)sc.scrollTop=y},170);return}
+    const sb=e.target.closest("#cvSeg button");if(sb){const g=sb.dataset.g;if(g===CV.g)return;CV.g=g;store.set("tb_g",g);CV.sel.clear();cvHaptic();segGo($("#cvSeg"),g);$$("#cvSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===g));const bd=$("#cvBody");if(bd)bd.classList.add("hfade-out");setTimeout(()=>{const sc=$("#t-catalog .scroll"),y=sc?sc.scrollTop:0;cvRender(true);if(sc)sc.scrollTop=y},200);return}
     const n=e.target.closest("[data-cvnew]");if(n){cvGo({brands:[n.dataset.cvnew],isNew:true,title:cvName(n.dataset.cvnew)+" · новинки"});return}
     const c=e.target.closest("[data-cvcat]");if(c){cvCat(c.dataset.cvcat);return}
     const a=e.target.closest("[data-cvallb]");if(a){cvAllBrands(a.dataset.cvallb==="s"?"s":"h");return}
@@ -3009,9 +3023,13 @@ function homeAll(k,c,sb){clearFilters();F.g=CV.g;if(k==="new")F.onlyNew=true;if(
   const t=(H_SECS.concat(H_ROWS).find(x=>x[0]===c&&x[1]===sb)||[,,"Новинки"])[2];tab("catalog");showItems(k==="new"?"Новое · "+t:t)}
 function openColls(){const L=COLL.filter(collG);push("Коллекции",`<div class="hcolls">${L.map(c=>collCardHTML(c,false)).join("")}</div><div style="height:30px"></div>`)}
 // переключатель как в iOS: ползунок едет плавно (анимация идёт мимо основного потока), его можно тянуть пальцем
-function hGenUI(g){const el=$("#hGen");if(!el)return;el.dataset.g=g;el.querySelectorAll("[data-hg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.hg===g))}
+// капля: ползунок сначала тянется краем в сторону нажатия, затем подтягивает второй край
+function segGo(el,g){if(!el||el.dataset.g===g)return;el.classList.remove("go-m","go-w");void el.offsetWidth;el.classList.add("go-"+g);el.dataset.g=g}
+function hGenUI(g){const el=$("#hGen");if(!el)return;segGo(el,g);el.querySelectorAll("[data-hg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.hg===g))}
+// смена пола: ползунок едет, блоки ниже мягко гаснут, меняются и проявляются — без мигания
 function hSetG(g){if(CV.g===g){hGenUI(g);return}CV.g=g;store.set("tb_g",g);hap&&hap("light");hGenUI(g);
-  requestAnimationFrame(()=>setTimeout(()=>{try{renderHome();renderRails()}catch(x){}setTimeout(()=>{try{AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}},160)},0))}
+  const B=["#stories","#hCover","#hNew","#hSec","#hCats","#cmsRails"].map(id=>$(id)).filter(Boolean);B.forEach(e=>e.classList.add("hfade-out"));clearTimeout(hSetG.t);
+  hSetG.t=setTimeout(()=>{try{renderHome();renderRails();AUTOC=null;$("#stories").innerHTML=cStoriesHTML()+autoRingsHTML()}catch(x){}requestAnimationFrame(()=>B.forEach(e=>e.classList.remove("hfade-out")))},200)}
 {let hd=null;document.addEventListener("pointerdown",e=>{const el=e.target.closest("#hGen");if(!el)return;hd={el,x:e.clientX,g:CV.g,moved:false}},{passive:true});
  document.addEventListener("pointermove",e=>{if(!hd)return;if(Math.abs(e.clientX-hd.x)>6){hd.moved=true;hd.el.classList.add("drag")}if(!hd.moved)return;const r=hd.el.getBoundingClientRect(),g=e.clientX>r.left+r.width/2?"m":"w";if(hd.el.dataset.g!==g){hGenUI(g);hap&&hap()}},{passive:true});
  const up=e=>{if(!hd)return;const d=hd;hd=null;d.el.classList.remove("drag");if(d.moved){d.skip=Date.now();hSetG(d.el.dataset.g);HGSKIP=Date.now()}};
