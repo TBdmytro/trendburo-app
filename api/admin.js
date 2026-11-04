@@ -444,7 +444,10 @@ export default async function handler(req, res) {
         if (Array.isArray(it.images) && it.images.length) { try { const p0 = await store.get(id);
           // фото чужого цвета: на странице есть снимки с артикулом этого товара, а у нас их нет — берём заново (Brunello: цвета одной модели с одинаковым фото)
           const own = id.replace(/^product\.manual\.[a-z0-9]+-/, "").toUpperCase(), hasOwn = a => own.length >= 8 && a.some(u => String(u || "").toUpperCase().includes(own));
-          const wrongColor = !!p0 && hasOwn(it.images) && !hasOwn((p0.images || []).map(i => i.sourceUrl || i.url)) && !hasOwn([p0.coverTile]);
+          // LV: у нас фото другой модели (код в названии фото не совпадает с тем, что сейчас на странице товара) — берём заново
+          const lvc = a => new Set(a.map(u => (String(u || "").match(/--([A-Z0-9]+)_[A-Z]{1,3}\d_/) || [])[1]).filter(Boolean)), lvNew = lvc(it.images), lvOld = p0 ? lvc((p0.images || []).map(i => i.sourceUrl || i.url)) : new Set();
+          const lvWrong = lvNew.size > 0 && lvOld.size > 0 && ![...lvNew].some(c => lvOld.has(c));
+          const wrongColor = !!p0 && (lvWrong || (hasOwn(it.images) && !hasOwn((p0.images || []).map(i => i.sourceUrl || i.url)) && !hasOwn([p0.coverTile])));
           if (p0 && (wrongColor || p0.imgVer !== IMGV(id) || (p0.images || []).length < Math.min(3, it.images.length) || !/^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "") || it.images.length > (p0.images || []).length) && (!p0.overrides?.cover || it.images.includes(p0.overrides.cover)) && !(p0.overrides?.imageOrder || []).length) { const { images, copied, srcOf } = await copyWebImages(store, it.images, id); const dior = /^product\.manual\.dior-/.test(id);
             const hadCopies = /^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "");
             // скопировать к себе не вышло (сайт не отдаёт фото серверу), а на странице фото больше, чем у нас, — показываем все по ссылке сайта
