@@ -62,3 +62,10 @@ test("убранное в админке фото (×) не идёт на вит
   const { cleanOverride } = await import("../lib/publish.js");
   assert.deepEqual(cleanOverride("imgOff", ["https://a/1.png", "javascript:x", "https://a/1.png"]), ["https://a/1.png"]);
 });
+
+test("LV обувь: фото с кодом модели (не артикулом) — берём их, рекламный кадр раздела не обложка", async () => {
+  const { orderImages } = await import("../lib/imgorder.js");
+  const b = "https://de.louisvuitton.com/images/is/image/lv/1/PP_VP_L/louis-vuitton-lv-trainer-sneaker--BM9U5PMI92";
+  const out = orderImages(["https://de.louisvuitton.com/images/is/image/M_PRECO_STILL_BC_7_OCT26_DII.jpg?wid=4096", b + "_PM1_Side%20view.png?wid=490", b + "_PM2_Front%20view.png?wid=490", "https://de.louisvuitton.com/images/is/image/lv/1/PP_VP_L/louis-vuitton-other--BM1111_PM2_Front%20view.png"], { sku: "1al3jv" });
+  assert.deepEqual(out.map(u => u.split("--")[1]), ["BM9U5PMI92_PM2_Front%20view.png?wid=2400&hei=2400", "BM9U5PMI92_PM1_Side%20view.png?wid=2400&hei=2400"]);
+});
