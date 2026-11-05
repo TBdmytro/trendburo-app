@@ -77,3 +77,10 @@ test("предмет в названии: ремень/шляпа/носки и�
     "Bomberjacke aus Leder": "clothing", "T-Shirt mit Hut-Print": "clothing", "Cap Sleeve Top": "clothing", "Knitted Runners": "shoes", "Gürteltasche": "bags", "Lady Dior Medium": null };
   for (const [t, c] of Object.entries(T)) assert.equal(objCategory(t), c, t);
 });
+
+test("обувь: Low-Top/High-Top и Slip-on — не одежда (Gucci)", async () => {
+  const { headCategory, detectCategory, detectSubcategory } = await import("../lib/normalize.js");
+  for (const t of ["Stretch Low-Top-Herrensneaker", "Stretch High-Top-Herrensneaker", "Slip-on-Herrensneaker"]) {
+    assert.notEqual(headCategory(t), "clothing", t); assert.equal(detectCategory(t), "shoes", t); assert.equal(detectSubcategory("shoes", t), "sneakers", t); }
+  assert.equal(headCategory("Crop Top"), "clothing"); assert.equal(detectSubcategory("clothing", "Silk Slip Dress"), "dresses");
+});
