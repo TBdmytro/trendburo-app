@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v72] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v73] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -244,10 +244,11 @@ async function tbCollect() {
       for (var el = im, d = 0; d < 4 && el.parentElement; d++) { el = el.parentElement; var other = 0; [].slice.call(el.querySelectorAll("a[href]")).forEach(function (a) { var c = codeOf(a.href); if (c && c !== me && !sameModel(a.href)) other++; }); if (other) { if (el.querySelectorAll("img").length <= other + 1) return; break; } } // плитка другого товара (одна картинка + ссылка) — не наша галерея
       var u = big(im); if (!u || /(logo|icon|sprite|placeholder|blank|1x1|svg)/i.test(u)) return; var qw = +((u.match(/[?&]w=(\d+)/) || [])[1] || 0); if (qw && qw < 300) return; var k = u.split("?")[0]; if (seen[k]) return; seen[k] = 1; out.push(u); });
     return out; };
+  // сколько страниц открываем одновременно: обычно одну (тяжело для компьютера), на LV — три (страница лёгкая, наличие читается за 1–2 с после загрузки)
+  var rMax = /louisvuitton\.com$/.test(location.hostname) ? 3 : 1, rBusy = 0, rQ = [];
   var rendered = async function (url, p, raw) {
-    // по одной странице за раз (два окна сразу — тяжело для компьютера)
-    var prevL = rLock, rel; rLock = new Promise(function (r) { rel = r; }); await prevL;
-    try { return await rendered0(url, p, raw); } finally { rel(); } };
+    if (rBusy >= rMax) await new Promise(function (r) { rQ.push(r); }); rBusy++;
+    try { return await rendered0(url, p, raw); } finally { rBusy--; var nx = rQ.shift(); if (nx) nx(); } };
   var rendered0 = async function (url, p, raw) {
     var lvS = /louisvuitton\.com$/.test(location.hostname); // LV: наличие есть только в открытой странице — не отключаем чтение после неудач
     if (!lvS && (rSkip || (rOk === 0 && rFail >= 15))) return { sst: [], blocked: "", dbg: "R skip" };
@@ -439,7 +440,7 @@ async function tbCollect() {
     var askN = 0; // предзаказ / лист ожидания / «только в бутике» / размеры распроданы — берём, на сайте у них «Уточнить наличие»
     // уже проверенные за последние 12 часов не открываем заново — повторный прогон быстрый
     var freshN = known.filter(function (u) { return !!fr[codeOf(u)]; }).length; known = known.filter(function (u) { return !fr[codeOf(u)]; });
-    var todo = fresh.slice(0, MAX).map(function (u) { return [u, false]; }).concat(known.slice(0, 400).map(function (u) { return [u, true]; }));
+    var todo = fresh.slice(0, MAX).map(function (u) { return [u, false]; }).concat(known.slice(0, 1000).map(function (u) { return [u, true]; }));
     var summary = function (added) { try { w.postMessage({ type: "tb-summary", found: had + newTotal, had: had, added: added, rej: rejN, left: Math.max(0, newTotal - Math.min(newTotal, MAX)) }, ADM); } catch (e) {} };
     var blk = 0, siteStop = false, badL = [], ok = 0, upd = 0, bad = 0, sentN = 0, extra = location.pathname.toLowerCase().split(/[/_-]+/);
     var qd = {}, extraN = 0; links.forEach(function (u) { var c = codeOf(u); if (c) qd[c] = 1; }); Object.keys(st).forEach(function (c) { qd[c] = 1; });
@@ -479,7 +480,7 @@ async function tbCollect() {
     // сайт начал отвечать «доступ запрещён» (403/429) — останавливаемся и не долбим его; уже взятое сохранено, следующий запуск продолжит с того же места
     var worker = async function () { while (nextI < todo.length && !adminErr && !siteStop) { var k = nextI++; try { await one1(k); } catch (e) { adminErr = e; } await sleep(PAUSE); } };
     var slow = /(^|\.)dior\.com$/.test(location.hostname); if (slow) PAUSE = 1800; // Dior ограничивает частые запросы — читаем по одной странице спокойно
-    await Promise.all(slow ? [worker()] : [worker(), worker()]);
+    await Promise.all(slow ? [worker()] : LVR0 ? [worker(), worker(), worker()] : [worker(), worker()]); // LV: три товара одновременно
     if (adminErr) throw adminErr;
     // повтор пропущенных из-за «слишком часто»: по одному, с паузой 3 с
     if (retryQ.length) { await sleep(5000); blk = 0; siteStop = false; for (var ri = 0; ri < retryQ.length && !siteStop; ri++) { note("Trend Büro: повторяю пропущенные " + (ri + 1) + " из " + retryQ.length + ". Не закрывайте вкладку", true); try { await one1(retryQ[ri]); } catch (e) { adminErr = e; break; } await sleep(3000); } if (adminErr) throw adminErr; }
@@ -511,8 +512,8 @@ async function tbCollect() {
     try { var gz = async function (t) { var b = await new Response(new Blob([t]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer(), u = new Uint8Array(b), out = ""; for (var q = 0; q < u.length; q += 32768) out += String.fromCharCode.apply(null, u.subarray(q, q + 32768)); return btoa(out); };
       var lean = function (t) { return String(t).replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<svg[\s\S]*?<\/svg>/gi, "<svg></svg>").replace(/data:[a-z]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+\/=]{200,}/g, "data:,"); }; // без стилей и картинок-иконок — только разметка и данные
       // по частям: раздел отдельно, каждый товар отдельно (большие страницы не влезают в один запрос)
-      w.postMessage({ type: "tb-snap", host: host, section: section, part: "list", list: { url: location.href.split("#")[0], gz: await gz(lean(listHtml)), got: { links: links.length, siteTotal: siteTotal(), newBadges: Object.keys(nb).length, blocked: Object.keys(tb).length, newSec: isNewSec } }, ver: "v72" }, ADM);
-      for (var sp = 0; sp < snapP.length; sp++) w.postMessage({ type: "tb-snap", host: host, section: section, part: "page", idx: sp, pages: [{ url: snapP[sp].url, gz: await gz(lean(snapP[sp].html)), got: snapP[sp].got }], ver: "v72" }, ADM); } catch (e) {}
+      w.postMessage({ type: "tb-snap", host: host, section: section, part: "list", list: { url: location.href.split("#")[0], gz: await gz(lean(listHtml)), got: { links: links.length, siteTotal: siteTotal(), newBadges: Object.keys(nb).length, blocked: Object.keys(tb).length, newSec: isNewSec } }, ver: "v73" }, ADM);
+      for (var sp = 0; sp < snapP.length; sp++) w.postMessage({ type: "tb-snap", host: host, section: section, part: "page", idx: sp, pages: [{ url: snapP[sp].url, gz: await gz(lean(snapP[sp].html)), got: snapP[sp].got }], ver: "v73" }, ADM); } catch (e) {}
     summary(ok); await waitSaved(sentN);
     if (siteStop) { note("Остановился: " + siteName + " временно ограничил доступ (ответ 403). Взято новых " + ok + " · проверено " + upd + ". Запустите кнопку снова через 15–30 минут — продолжит с того места, где остановился"); return; }
     note("Готово: новых " + ok + " · проверено добавленных " + upd + (saved.fail ? " · не сохранилось " + saved.fail + " (причины в админке)" : "") + (bad ? " · не прочитано " + bad : "") + (freshN ? " · недавно проверенных пропущено: " + freshN : "") + (rejN ? " · удалённых вами не берём: " + rejN : "") + (askN ? " · из них «уточнить наличие» (предзаказ, лист ожидания, нет размеров): " + askN : "") + (newTotal > MAX ? " · ещё новых: " + (newTotal - MAX) + " — нажмите кнопку ещё раз" : "") + (partialL ? " · ⚠️ раздел подгрузился не полностью — держите вкладку на экране и нажмите кнопку ещё раз" : "") + ". Что продано и что пропало — в админке");
