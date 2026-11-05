@@ -356,13 +356,12 @@ export default async function handler(req, res) {
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
           await store.put({ _id: "settings.fixGgImg1", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXGG " + ch.length); } } catch (e) { FIXGG = false; console.log("FIXGG fail " + String(e.message).slice(0, 120)); } }
         // один раз: фото Gucci — квадрат 1200×1200 вместо мелких 490 и баннеров 600x314 / 2400x1200 (белые полосы), без дублей; ваш порядок и обложку сохраняем
-        if (!FIXGUCCI) { FIXGUCCI = true; try { if (!(await store.get("settings.fixGucciImg1"))) { const { gucciNorm } = await import("../lib/imgorder.js");
-          const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, coverTile" })).filter(p => p._id.startsWith("product.manual.gucci-"));
-          const ch = []; for (const p of L) { const seen = new Set(), im = []; for (const i of p.images || []) { const u = gucciNorm(i.url); if (seen.has(u)) continue; seen.add(u); im.push({ ...i, url: u, sourceUrl: gucciNorm(i.sourceUrl || i.url) }); }
-            const ct = p.coverTile ? gucciNorm(p.coverTile) : p.coverTile;
-            if (im.map(i => i.url).join("|") !== (p.images || []).map(i => i.url).join("|") || ct !== p.coverTile) ch.push({ id: p._id, set: { images: im, coverTile: ct || null } }); }
+        if (!FIXGUCCI) { FIXGUCCI = true; try { if (!(await store.get("settings.fixGucciImg2"))) { const { orderImages } = await import("../lib/imgorder.js");
+          // 2: плитка раздела больше не обложка (белый фон и рекламные LandscapeXL), дубли кадра убраны, кадры по порядку (001 — лицевой — первым); ваша обложка/порядок из админки — не трогаем
+          const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides" })).filter(p => p._id.startsWith("product.manual.gucci-") && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
+          const ch = []; for (const p of L) { const ord = orderImages((p.images || []).map(i => i.url), { max: 12 }); if (ord.length) ch.push({ id: p._id, set: { images: ord.map(u => ({ url: u, sourceUrl: u, rights: "copied" })), coverFrom: null, coverTile: null } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
-          await store.put({ _id: "settings.fixGucciImg1", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXGUCCI " + ch.length); } } catch (e) { FIXGUCCI = false; console.log("FIXGUCCI fail " + String(e.message).slice(0, 120)); } }
+          await store.put({ _id: "settings.fixGucciImg2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXGUCCI " + ch.length); } } catch (e) { FIXGUCCI = false; console.log("FIXGUCCI fail " + String(e.message).slice(0, 120)); } }
         // один раз: фото Louis Vuitton — убрать дубли и пустые заглушки, лицевой кадр первым, баннеры раздела не обложка (ваш порядок/обложку из админки не трогаем)
         if (!FIXLV) { FIXLV = true; try { if (!(await store.get("settings.fixLvImg2"))) { const { orderImages } = await import("../lib/imgorder.js");
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides, coverFrom, coverTile" })).filter(p => p._id.startsWith("product.manual.de-") && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
@@ -478,7 +477,7 @@ export default async function handler(req, res) {
         try { const p2 = await store.get(id); if (p2 && !p2.orig && !p2.overrides?.title) { const { englishItem, looksGerman } = await import("../lib/translate.js"); if (looksGerman(p2.title, p2.description)) { const en = await englishItem({ title: p2.title, description: p2.description, colors: (p2.colors || []).map(c => ({ name: c })) }, null); if (en.orig) { await store.patchMany([id], { title: en.title, sourceTitle: en.title, description: en.description || p2.description, orig: en.orig }); PCACHE = null; } } } } catch (e) { console.log("TR upd fail " + String(e.message).slice(0, 100)); }
         // обложка как на плитке раздела бренда (один раз на товар)
         // Dior: на плитке раздела часто фото на модели — обложкой не ставим
-        if (!/^product\.manual\.dior-/.test(id) && /^https:\/\/[^/]+\/[^&=]*(\?|$)/.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
+        if (!/^product\.manual\.(dior|gucci|goldengoose)-/.test(id) && /^https:\/\/[^/]+\/[^&=]*(\?|$)/.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
         return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
       }
       case "fixBrands": {
@@ -717,7 +716,7 @@ export default async function handler(req, res) {
         // Такие товары сразу на витрине с отметкой «Новинка» (или в «Новых с сайтов», если так выбрано в админке). Первый прогон раздела — всё в «Новые с сайтов» на ваш отбор
         const novelty = await isNovelty(store, it.section);
         const arrivals = novelty ? ((await store.get("settings.newArrivals"))?.mode || "publish") : null;
-        const product = await saveManualProduct(store, { ...itEn, ...(/^product\.manual\.dior-/.test(id) ? { tileImg: "" } : {}), id, images, imageSrc: srcOf, imgVer: IMGV(id), availability: "online", status: novelty && arrivals === "publish" ? "published" : "incoming", isNew: !!it.isNew || novelty, boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
+        const product = await saveManualProduct(store, { ...itEn, ...(/^product\.manual\.(dior|gucci|goldengoose)-/.test(id) ? { tileImg: "" } : {}), id, images, imageSrc: srcOf, imgVer: IMGV(id), availability: "online", status: novelty && arrivals === "publish" ? "published" : "incoming", isNew: !!it.isNew || novelty, boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
         if (novelty) PCACHE = null;
         return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null, novelty, status: product.status });
       }
