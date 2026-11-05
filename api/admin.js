@@ -314,7 +314,7 @@ export default async function handler(req, res) {
         if (px.length < 18) return send(res, 400, { error: "Нет сайта" });
         const all = await allProducts(store);
         // fresh — проверены кнопкой за последние 12 часов: при повторном прогоне их не открываем заново (быстрее)
-        const status = {}, fresh = {}, since = Math.max(Date.now() - 24 * 36e5, px === "product.manual.de-" ? Date.parse("2026-11-05T15:08:00Z") : 0); // LV: наличие читается только с кнопки v67 — всё, что проверено раньше, проверяем заново
+        const status = {}, fresh = {}, since = Math.max(Date.now() - 24 * 36e5, px === "product.manual.de-" ? Date.parse("2026-11-05T15:15:00Z") : 0); // LV: наличие читается только с кнопки v67 — всё, что проверено раньше, проверяем заново
         for (const id of await deletedSet(store)) if (id.startsWith(px)) status[id.slice(px.length).toUpperCase()] = "rejected"; // вы удалили — кнопка не вернёт
         for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; const needSz = ["shoes", "clothing"].includes(p.overrides?.category || p.category) && !p.nSz; if (ck && Date.parse(ck) > since && !needSz && p.imgVer === IMGV(p._id) && /^https:\/\/(cdn\.sanity\.io|[a-z]+\.louisvuitton\.com)\//.test(p.images?.[0]?.url || "") && (p.nIm || 0) >= 2) fresh[k] = 1; } // фото не скопировано — открываем снова // без размеров — проверяем снова
         return send(res, 200, { status, fresh });
