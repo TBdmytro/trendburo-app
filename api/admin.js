@@ -505,7 +505,12 @@ export default async function handler(req, res) {
         const px = "product.manual." + String(body.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-", section = String(body.section || "").slice(0, 200);
         const codes = new Set((Array.isArray(body.codes) ? body.codes : []).map(c => String(c).toLowerCase().replace(/[^a-z0-9]/g, "")));
         if (px.length < 18 || !section) return send(res, 400, { error: "Нет раздела" });
-        const allPx = (await store.list("product", {}, { limit: 60000, fields: "_id, webSections" })).filter(p => p._id.startsWith(px));
+        let allPx = (await store.list("product", {}, { limit: 60000, fields: "_id, webSections, status" })).filter(p => p._id.startsWith(px));
+        // полностью распроданные на сайте бренда (все размеры «нет»): скрытые — удаляем совсем (не в «удалённые»: вернётся в продажу — кнопка возьмёт снова), на витрине — «продано»
+        let soldDel = 0; { const so = new Set((Array.isArray(body.soldOut) ? body.soldOut : []).slice(0, 2000).map(c => String(c).toLowerCase().replace(/[^a-z0-9]/g, "")));
+          if (so.size) { const hit = allPx.filter(p => so.has(p._id.slice(px.length))), del = hit.filter(p => p.status !== "published").map(p => p._id), pub = hit.filter(p => p.status === "published").map(p => p._id);
+            if (del.length) { await store.delMany(del); soldDel = del.length; PCACHE = null; } if (pub.length) await markWebGone(store, pub, { by: me.name, pricingCfg });
+            allPx = allPx.filter(p => !del.includes(p._id)); } }
         // товары, которые есть на этой странице, но пришли из другого раздела (или недавно проверены и пропущены), — тоже отмечаем этим разделом:
         // так коллекция («Cruise 2027») собирает и уже загруженные вещи, без дублей
         { const add = allPx.filter(p => codes.has(p._id.slice(px.length)) && !(p.webSections || []).includes(section)).map(p => ({ id: p._id, set: { webSections: [...new Set([...(p.webSections || []), section])].slice(-12) } }));
