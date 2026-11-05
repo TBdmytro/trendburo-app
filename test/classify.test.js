@@ -69,3 +69,11 @@ test("LV обувь: фото с кодом модели (не артикуло�
   const out = orderImages(["https://de.louisvuitton.com/images/is/image/M_PRECO_STILL_BC_7_OCT26_DII.jpg?wid=4096", b + "_PM1_Side%20view.png?wid=490", b + "_PM2_Front%20view.png?wid=490", "https://de.louisvuitton.com/images/is/image/lv/1/PP_VP_L/louis-vuitton-other--BM1111_PM2_Front%20view.png"], { sku: "1al3jv" });
   assert.deepEqual(out.map(u => u.split("--")[1]), ["BM9U5PMI92_PM2_Front%20view.png?wid=2400&hei=2400", "BM9U5PMI92_PM1_Side%20view.png?wid=2400&hei=2400"]);
 });
+
+test("предмет в названии: ремень/шляпа/носки из денима — аксессуары, чемодан — сумка, перчатки — не обувь, портфель — сумка", async () => {
+  const { objCategory } = await import("../lib/normalize.js");
+  const T = { "LV Dimension Denim Wendegürtel 35 mm": "accessories", "Fischerhut aus Denim mit Monogram-Blüten": "accessories", "Monogram Denim Icon Socken": "accessories", "Denim Patchwork Stola": "accessories",
+    "Horizon 55 Koffer": "bags", "Horizon 55 Kofferhülle": "accessories", "Uhrenetui für drei Uhren": "accessories", "LV Blason Handschuhe": "accessories", "Gate Briefcase": "bags",
+    "Bomberjacke aus Leder": "clothing", "T-Shirt mit Hut-Print": "clothing", "Cap Sleeve Top": "clothing", "Knitted Runners": "shoes", "Gürteltasche": "bags", "Lady Dior Medium": null };
+  for (const [t, c] of Object.entries(T)) assert.equal(objCategory(t), c, t);
+});
