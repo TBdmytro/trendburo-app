@@ -483,7 +483,7 @@ export default async function handler(req, res) {
         // товары этого раздела у нас (артикул + ссылка): кнопка перепроверит по странице те, что не видны в разделе, — прежде чем считать «продано»
         const px = "product.manual." + String(req.query.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-", section = String(req.query.section || "").slice(0, 200);
         if (px.length < 18 || !section) return send(res, 400, { error: "Нет раздела" });
-        const list = (await allProducts(store)).filter(p => p._id.startsWith(px) && (p.webSections || []).includes(section) && p.sourceUrl).slice(0, 600).map(p => ({ code: p._id.slice(px.length).toUpperCase(), url: p.sourceUrl }));
+        const list = (await allProducts(store)).filter(p => p._id.startsWith(px) && (p.webSections || []).includes(section) && p.sourceUrl).slice(0, 3000).map(p => ({ code: p._id.slice(px.length).toUpperCase(), url: p.sourceUrl }));
         return send(res, 200, { list });
       }
       case "sectionSync": {
@@ -498,7 +498,7 @@ export default async function handler(req, res) {
           for (let i = 0; i < add.length; i += 200) await store.patchEach(add.slice(i, i + 200)); add.forEach(a => { const p = allPx.find(x => x._id === a.id); if (p) p.webSections = a.set.webSections; }); }
         const mine = allPx.filter(p => (p.webSections || []).includes(section));
         const gone = mine.filter(p => !codes.has(p._id.slice(px.length))).map(p => p._id);
-        if (mine.length && codes.size < mine.length * 0.8) { await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: 0, partial: true, complete: !!body.complete }); return send(res, 200, { gone: 0, skipped: true, inSection: mine.length, found: codes.size }); }
+        if (mine.length && codes.size < mine.length * 0.8) { await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: 0, partial: true, complete: !!body.complete, health: body.stats && typeof body.stats === "object" ? { links: Math.min(5000, +body.stats.links || 0), tried: Math.min(5000, +body.stats.tried || 0), read: Math.min(5000, +body.stats.read || 0) } : null }); return send(res, 200, { gone: 0, skipped: true, inSection: mine.length, found: codes.size }); }
         const goneN = gone.length && !(mine.length && codes.size < mine.length * 0.8) ? await markWebGone(store, gone.slice(0, 500), { by: me.name, pricingCfg }) : 0;
         // отчёт о сайте (что кнопка прочитала) + категории товаров раздела + образец страницы товара для разбора
         const st = body.stats && typeof body.stats === "object" ? Object.fromEntries(["links", "tried", "read", "price", "newN", "img", "needSz", "sz"].map(k => [k, Math.max(0, Math.min(5000, Number(body.stats[k]) || 0))])) : null;
