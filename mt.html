@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v66] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v67] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -130,7 +130,7 @@ async function tbCollect() {
     for (var i = 0; i < btns.length; i++) { var k = blockOf(btns[i]); if (k) return k; }
     return "";
   };
-  var OUT = /(sold ?out|notify ?me|join the wait ?list|wait ?list|warteliste|liste d.attente|ausverkauft|esaurit|agotad|épuisé|epuise|not available|unavailable|out of stock|nicht verfügbar)/i;
+  var OUT = /(sold ?out|notify ?me|join the wait ?list|wait ?list|warteliste|liste d.attente|ausverkauft|esaurit|agotad|épuisé|epuise|not available|unavailable|out of stock|nicht verfügbar|nicht vorr[äa]tig|vergriffen|nicht auf lager|derzeit nicht|benachrichtig)/i;
   var SZL = "(?:x{0,3}s|m|x{0,4}l|[2-6]xl)";
   var SZRE = new RegExp("^(?:" + SZL + "(?:\\s?[\\/-]\\s?" + SZL + ")?|one ?size|os|tu|u|uni|(?:(?:it|eu|fr|uk|us|de|ysl|f)\\s?)?\\d{1,3}(?:[.,]5)?(?:\\s?(?:it|eu|fr|uk|us))?|\\d{2}\\/\\d{2}|w\\d{2}(?:\\s?l\\d{2})?)(?:\\s?[\\/-]\\s?\\S+)?$", "i");
   var okLabel = function (t) { t = String(t == null ? "" : t).replace(/\s+/g, " ").trim()
@@ -254,6 +254,7 @@ async function tbCollect() {
       for (var t = 0; t < 24; t++) {
         await sleep(t < 2 ? 400 : 250);
         var d = f.contentDocument; if (!d || !d.body) continue;
+        if (p && p.__ns && t >= 5) break; // вещь без размеров (сумка, ремень): нужна только кнопка «в корзину / сообщить о поступлении»
         if (out.btn) { var ps = panelSizes(d, out.btn); if (!ps.length && t >= 3) ps = seqSizes(d); if (ps.length) { out.sst = ps; break; } }
         // размеры прячутся за кнопкой «Select your size» — нажимаем её один раз (как покупатель), чтобы список появился
         if (!clicked && t >= 1) { var sb = [].slice.call(d.querySelectorAll("button, [role='button'], a")).filter(function (b) { var tx = (b.textContent || "").replace(/\s+/g, " ").trim(); return tx.length < 40 && /(select|choose|choisir|w[äa]hlen|seleziona|kies|elige|selecciona)?\s*(your\s*|uw\s*|tu\s*)?(size|taille|gr[öo](ss|ß)e|taglia|maat|talla)/i.test(tx) && !/guide|chart|tabelle/i.test(tx); })[0]; if (sb) { clicked = true; try { sb.click(); out.btn = sb; info.push("click:" + (sb.textContent || "").replace(/\s+/g, " ").trim().slice(0, 30)); } catch (e) {} } else if (t >= 8) { clicked = true; info.push("nobtn"); } }
@@ -445,9 +446,11 @@ async function tbCollect() {
           if (at > 0) it.images.unshift(it.images.splice(at, 1)[0]); else if (at < 0) it.images.unshift({ u: ti[tcode] }); }
         // все цвета модели: ссылки на другие цвета на странице товара — добавляем в очередь (если их ещё нет)
         if (it && it.title && extraN < 300) colorLinks(new DOMParser().parseFromString(h, "text/html"), todo[i][0]).forEach(function (u) { var c = codeOf(u); if (!c || qd[c] || extraN >= 300) return; qd[c] = 1; extraN++; todo.push([u, false]); });
-        if (it && it.title && !it.sizes.length && !/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|g[uü]rtel|gurtel|portemonnaies?|kartenetuis?|schmuck|ketten?|ohrringe?|armb[aä]nder|sonnenbrillen?|t[uü]cher|schals?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear)\b/i.test(it.crumbs.join(" ") + " " + it.title.toLowerCase())) {
+        // Louis Vuitton: в коде страницы размеры есть, а наличия нет (LV подгружает его после открытия) — открываем товар как покупатель и читаем, что реально можно купить
+        var LVR = /louisvuitton\.com$/.test(location.hostname);
+        if (it && it.title && (LVR || !it.sizes.length) && (LVR || !/\b(bags?|handbags?|taschen?|borse|sacs?|wallets?|card ?(holder|case)s?|belts?|g[uü]rtel|gurtel|portemonnaies?|kartenetuis?|schmuck|ketten?|ohrringe?|armb[aä]nder|sonnenbrillen?|t[uü]cher|schals?|jewel(le)?ry|rings?|necklaces?|earrings?|bracelets?|sunglasses|eyewear)\b/i.test(it.crumbs.join(" ") + " " + it.title.toLowerCase()))) {
           note("Trend Büro: жду размеры на странице товара " + (i + 1) + " из " + todo.length + "…", true);
-          var rr = await rendered(todo[i][0], {}, h); if (rr.cap && sample && (!sample.szCap || (sample.szCap.fail && !rr.cap.fail))) sample.szCap = rr.cap; if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked; if (rr.gal && rr.gal.length && it.images.length < 3) { var hv0 = {}; it.images.forEach(function (x) { hv0[String(x.u).split("?")[0]] = 1; }); rr.gal.forEach(function (u) { if (it.images.length < 14 && !hv0[u.split("?")[0]]) { hv0[u.split("?")[0]] = 1; it.images.push({ u: u }); } }); }
+          var rr = await rendered(todo[i][0], LVR && !it.sizes.length ? { __ns: 1 } : {}, h); if (rr.cap && sample && (!sample.szCap || (sample.szCap.fail && !rr.cap.fail))) sample.szCap = rr.cap; if (rr.sst.length) { it.sizeStock = rr.sst; it.sizes = rr.sst.map(function (x) { return x.s; }); it.szDbg = ""; } else if (rr.dbg) it.szDbg = rr.dbg; if (rr.blocked) it.blocked = rr.blocked; if (rr.gal && rr.gal.length && it.images.length < 3) { var hv0 = {}; it.images.forEach(function (x) { hv0[String(x.u).split("?")[0]] = 1; }); rr.gal.forEach(function (u) { if (it.images.length < 14 && !hv0[u.split("?")[0]]) { hv0[u.split("?")[0]] = 1; it.images.push({ u: u }); } }); }
         }
         if (it && it.title && snapP.length < 3) snapP.push({ url: todo[i][0], html: h, got: { title: it.title, price: it.price, currency: it.currency, sku: it.sku, sizes: it.sizes.slice(0, 40), sizeStock: (it.sizeStock || []).slice(0, 40), images: it.images.length, isNew: !!it.isNew, blocked: it.blocked || "", gender: it.gender || "", cat: (it.crumbs || []).slice(-3).join("/") } });
         if (it && it.title && (it.blocked || (it.sizeStock.length && it.sizeStock.every(function (x) { return x.ok === false; })))) { it.ask = it.blocked || "wait"; askN++; }
@@ -491,8 +494,8 @@ async function tbCollect() {
     try { var gz = async function (t) { var b = await new Response(new Blob([t]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer(), u = new Uint8Array(b), out = ""; for (var q = 0; q < u.length; q += 32768) out += String.fromCharCode.apply(null, u.subarray(q, q + 32768)); return btoa(out); };
       var lean = function (t) { return String(t).replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<svg[\s\S]*?<\/svg>/gi, "<svg></svg>").replace(/data:[a-z]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+\/=]{200,}/g, "data:,"); }; // без стилей и картинок-иконок — только разметка и данные
       // по частям: раздел отдельно, каждый товар отдельно (большие страницы не влезают в один запрос)
-      w.postMessage({ type: "tb-snap", host: host, section: section, part: "list", list: { url: location.href.split("#")[0], gz: await gz(lean(listHtml)), got: { links: links.length, siteTotal: siteTotal(), newBadges: Object.keys(nb).length, blocked: Object.keys(tb).length, newSec: isNewSec } }, ver: "v66" }, ADM);
-      for (var sp = 0; sp < snapP.length; sp++) w.postMessage({ type: "tb-snap", host: host, section: section, part: "page", idx: sp, pages: [{ url: snapP[sp].url, gz: await gz(lean(snapP[sp].html)), got: snapP[sp].got }], ver: "v66" }, ADM); } catch (e) {}
+      w.postMessage({ type: "tb-snap", host: host, section: section, part: "list", list: { url: location.href.split("#")[0], gz: await gz(lean(listHtml)), got: { links: links.length, siteTotal: siteTotal(), newBadges: Object.keys(nb).length, blocked: Object.keys(tb).length, newSec: isNewSec } }, ver: "v67" }, ADM);
+      for (var sp = 0; sp < snapP.length; sp++) w.postMessage({ type: "tb-snap", host: host, section: section, part: "page", idx: sp, pages: [{ url: snapP[sp].url, gz: await gz(lean(snapP[sp].html)), got: snapP[sp].got }], ver: "v67" }, ADM); } catch (e) {}
     summary(ok); await waitSaved(sentN);
     if (siteStop) { note("Остановился: " + siteName + " временно ограничил доступ (ответ 403). Взято новых " + ok + " · проверено " + upd + ". Запустите кнопку снова через 15–30 минут — продолжит с того места, где остановился"); return; }
     note("Готово: новых " + ok + " · проверено добавленных " + upd + (saved.fail ? " · не сохранилось " + saved.fail + " (причины в админке)" : "") + (bad ? " · не прочитано " + bad : "") + (freshN ? " · недавно проверенных пропущено: " + freshN : "") + (rejN ? " · удалённых вами не берём: " + rejN : "") + (askN ? " · из них «уточнить наличие» (предзаказ, лист ожидания, нет размеров): " + askN : "") + (newTotal > MAX ? " · ещё новых: " + (newTotal - MAX) + " — нажмите кнопку ещё раз" : "") + ". Что продано и что пропало — в админке");
