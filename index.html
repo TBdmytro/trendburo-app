@@ -241,6 +241,26 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .pv-hero.ph .pv-gal .sl[data-full] img.geo{opacity:1;transition:opacity .18s ease}
 
 .dlv-face.dlv-front{position:relative}
+
+/* вход: наш знак TB с вращающимся кольцом, подпись «20 · Personal shopper · 23» — годы съезжаются к надписи */
+.sp-logo .r2{stroke:#e6d5b5}
+.sp-logo .r3{fill:none;stroke:rgba(230,213,181,.38);stroke-width:1;stroke-dasharray:1 7;stroke-linecap:round;opacity:0;transform-origin:86px 86px;animation:spf .9s 1s forwards,sprev 26s linear infinite}
+@keyframes sprev{to{transform:rotate(-360deg)}}
+.sp-est{margin-top:18px;display:flex;align-items:center;gap:14px;color:rgba(255,255,255,.62)}
+.sp-est .t{font:500 10.5px/1 "Onest",system-ui,sans-serif;letter-spacing:.34em;text-transform:uppercase;opacity:0;animation:spf .8s 1.5s forwards;padding-left:.34em}
+.sp-est .y{font:400 15px/1 "Prata",Georgia,serif;color:#e6d5b5;opacity:0;animation:spyear .9s 1.7s cubic-bezier(.22,1,.36,1) forwards}
+.sp-est .y.l{--x:-18px}.sp-est .y.r{--x:18px}
+@keyframes spyear{from{opacity:0;transform:translateX(var(--x))}to{opacity:1;transform:none}}
+.splash.quick .sp-est .t,.splash.quick .sp-est .y,.splash.quick .sp-logo .r3{animation-duration:.6s;animation-delay:.25s}
+.splash.quick .sp-logo .r3{animation:spf .6s .2s forwards,sprev 26s linear infinite}
+.splash.out .sp-est{transition:opacity .3s,transform .45s;opacity:0;transform:translateY(-10px)}
+.gt-logo{position:relative}
+.gt-logo::after{content:"";position:absolute;inset:-10px;border-radius:50%;border:1px dashed rgba(38,40,44,.28);animation:gtspin 30s linear infinite}
+@keyframes gtspin{to{transform:rotate(360deg)}}
+.gt-top h1{font-family:Prata,Georgia,serif;font-weight:400;letter-spacing:.01em}
+.gt-est{display:flex;align-items:center;gap:12px;font-size:11px!important;letter-spacing:.32em;text-transform:uppercase;color:var(--g2)}
+.gt-est span{font:400 14px/1 Prata,Georgia,serif;letter-spacing:0;color:#9a8460}
+@media (prefers-reduced-motion:reduce){.gt-logo::after,.sp-logo .r3{animation:none}}
 </style>
 <title>Trend Büro</title>
 <link rel="preload" href="/api/catalog?v=2" as="fetch" crossorigin>
@@ -1553,7 +1573,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
   var last=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-last<300&&!ok(e.target)&&!(e.target.closest&&e.target.closest("input,textarea,select,button,a,[role=button],label")))e.preventDefault();last=n},{passive:false});
 })();</script>
 
-<div id="splash" class="splash" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 172 172"><circle class="r0" cx="86" cy="86" r="80"/><circle class="r1" cx="86" cy="86" r="70"/><circle class="r2" cx="86" cy="86" r="70"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-sub">Personal shopping · Europe</div><div class="sp-bar"><i></i></div></div>
+<div id="splash" class="splash" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 172 172"><circle class="r3" cx="86" cy="86" r="84"/><circle class="r0" cx="86" cy="86" r="80"/><circle class="r1" cx="86" cy="86" r="70"/><circle class="r2" cx="86" cy="86" r="70"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-est"><span class="y l">20</span><span class="t">Personal shopper</span><span class="y r">23</span></div><div class="sp-bar"><i></i></div></div>
 <div class="tglogo" aria-hidden="true"><i>TB</i></div>
 <script>document.documentElement.classList.add("nologo")</script>
 <script>window.__spKey="tb_sp";
@@ -3405,7 +3425,7 @@ function authGate(force){if(!LIVE)return;const b=authBody();
   if(b&&store.get("tb_signed",0)&&!force){loadMe().then(r=>{if(!r&&ME_ERR&&ME_ERR.code==="no_account"){store.set("tb_signed",0);ME=null;renderTopIcons();return authGate(true)}if(r&&r.access&&r.access!=="ok")authGate(true);else if(r&&CLOSED)catReload()});return}
   document.querySelectorAll(".gate").forEach(x=>x.remove());
   const g=document.createElement("div");g.className="gate";g.setAttribute("role","dialog");g.setAttribute("aria-label","Вход");
-  g.innerHTML=`<div class="gt-top"><span class="gt-logo">TB</span><h1>Trend Büro</h1><p>Байер-сервис из бутиков Европы</p></div><div class="gt-card" id="gtc"></div>`;
+  g.innerHTML=`<div class="gt-top"><span class="gt-logo">TB</span><h1>Trend Büro</h1><p class="gt-est"><span>20</span>Personal shopper<span>23</span></p></div><div class="gt-card" id="gtc"></div>`;
   $("#app").append(g);requestAnimationFrame(()=>requestAnimationFrame(()=>g.classList.add("in")));
   const card=g.querySelector("#gtc"),close=()=>{g.classList.add("out");setTimeout(()=>g.remove(),520)};
   const skip=CLOSED?"":`<button type="button" class="gt-skip" data-skip>Смотреть без входа</button>`;
