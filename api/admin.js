@@ -350,12 +350,12 @@ export default async function handler(req, res) {
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
           await store.put({ _id: "settings.fixDiorImg2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXDIOR " + ch.length); } } catch (e) { FIXDIOR = false; console.log("FIXDIOR fail " + String(e.message).slice(0, 120)); } }
         // один раз: Golden Goose — убрать со страниц подборки «co-creation» (фото не этого товара)
-        if (!FIXGG) { FIXGG = true; try { if (!(await store.get("settings.fixGgImg2"))) { const { orderImages } = await import("../lib/imgorder.js");
+        if (!FIXGG) { FIXGG = true; try { if (!(await store.get("settings.fixGgImg3"))) { const { orderImages } = await import("../lib/imgorder.js");
           // 2: обложка — вид сбоку (кадр без номера), не плитка раздела; ваша обложка/порядок из админки — не трогаем
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides" })).filter(p => p._id.startsWith("product.manual.goldengoose-") && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
           const ch = []; for (const p of L) { const im = p.images || [], ord = orderImages(im.map(i => i.url), { max: 12, sku: p._id.replace(/^product\.manual\.goldengoose-/, "") }); if (ord.length && ord.join("|") !== im.map(i => i.url).join("|")) ch.push({ id: p._id, set: { images: ord.map(u => im.find(i => i.url === u)), coverFrom: null, coverTile: null } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
-          await store.put({ _id: "settings.fixGgImg2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXGG " + ch.length); } } catch (e) { FIXGG = false; console.log("FIXGG fail " + String(e.message).slice(0, 120)); } }
+          await store.put({ _id: "settings.fixGgImg3", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXGG " + ch.length); } } catch (e) { FIXGG = false; console.log("FIXGG fail " + String(e.message).slice(0, 120)); } }
         // один раз: фото Gucci — квадрат 1200×1200 вместо мелких 490 и баннеров 600x314 / 2400x1200 (белые полосы), без дублей; ваш порядок и обложку сохраняем
         if (!FIXGUCCI) { FIXGUCCI = true; try { if (!(await store.get("settings.fixGucciImg2"))) { const { orderImages } = await import("../lib/imgorder.js");
           // 2: плитка раздела больше не обложка (белый фон и рекламные LandscapeXL), дубли кадра убраны, кадры по порядку (001 — лицевой — первым); ваша обложка/порядок из админки — не трогаем
