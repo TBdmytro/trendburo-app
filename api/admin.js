@@ -59,7 +59,7 @@ async function copyWebImages(store, list, id = "") {
   return { images: ok.length ? ok : images, copied, srcOf };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer";
-let FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false;
+let FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
 /** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
@@ -349,6 +349,14 @@ export default async function handler(req, res) {
             if (next.length && next.map(i => i.url).join("|") !== im.map(i => i.url).join("|")) ch.push({ id: p._id, set: { images: next, coverFrom: null } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
           await store.put({ _id: "settings.fixDiorImg2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXDIOR " + ch.length); } } catch (e) { FIXDIOR = false; console.log("FIXDIOR fail " + String(e.message).slice(0, 120)); } }
+        // один раз: фото Gucci — квадрат 1200×1200 вместо мелких 490 и баннеров 600x314 / 2400x1200 (белые полосы), без дублей; ваш порядок и обложку сохраняем
+        if (!FIXGUCCI) { FIXGUCCI = true; try { if (!(await store.get("settings.fixGucciImg1"))) { const { gucciNorm } = await import("../lib/imgorder.js");
+          const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, coverTile" })).filter(p => p._id.startsWith("product.manual.gucci-"));
+          const ch = []; for (const p of L) { const seen = new Set(), im = []; for (const i of p.images || []) { const u = gucciNorm(i.url); if (seen.has(u)) continue; seen.add(u); im.push({ ...i, url: u, sourceUrl: gucciNorm(i.sourceUrl || i.url) }); }
+            const ct = p.coverTile ? gucciNorm(p.coverTile) : p.coverTile;
+            if (im.map(i => i.url).join("|") !== (p.images || []).map(i => i.url).join("|") || ct !== p.coverTile) ch.push({ id: p._id, set: { images: im, coverTile: ct || null } }); }
+          for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
+          await store.put({ _id: "settings.fixGucciImg1", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXGUCCI " + ch.length); } } catch (e) { FIXGUCCI = false; console.log("FIXGUCCI fail " + String(e.message).slice(0, 120)); } }
         // один раз: фото Louis Vuitton — убрать дубли и пустые заглушки, лицевой кадр первым, баннеры раздела не обложка (ваш порядок/обложку из админки не трогаем)
         if (!FIXLV) { FIXLV = true; try { if (!(await store.get("settings.fixLvImg2"))) { const { orderImages } = await import("../lib/imgorder.js");
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides, coverFrom, coverTile" })).filter(p => p._id.startsWith("product.manual.de-") && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
