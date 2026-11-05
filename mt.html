@@ -487,7 +487,7 @@ async function tbCollect() {
         var mh = await mr.text(), mit = mr.ok ? await build(new DOMParser().parseFromString(mh, "text/html"), mh, missing[mi].url, 0, extra) : null;
         if (!mr.ok) { alive.push(missing[mi].code); continue; } // сайт не ответил — ничего не меняем
         if (!mit || !mit.title || (mit.sku && mit.sku !== missing[mi].code && codeOf(mr.url) !== missing[mi].code)) continue; // перекинуло на раздел/другой товар — снят
-        if (!mit.sizes.length) { var mr2 = await rendered(missing[mi].url, {}); if (mr2.sst.length) { mit.sizeStock = mr2.sst; mit.sizes = mr2.sst.map(function (x) { return x.s; }); mit.szDbg = ""; } if (mr2.blocked) mit.blocked = mr2.blocked; }
+        if (!mit.sizes.length || LVR0) { var mr2 = await rendered(missing[mi].url, LVR0 && !mit.sizes.length ? { __ns: 1 } : {}); if (mr2.sst.length) { mit.sizeStock = mr2.sst; mit.sizes = mr2.sst.map(function (x) { return x.s; }); mit.szDbg = ""; } if (mr2.blocked) mit.blocked = mr2.blocked; }
         alive.push(missing[mi].code); mit.section = section; if (mit.blocked) mit.ask = mit.blocked;
         w.postMessage({ type: "tb-update", items: [mit] }, ADM); sentN++; upd++;
       } catch (e) { alive.push(missing[mi].code); }
