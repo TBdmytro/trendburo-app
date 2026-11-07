@@ -93,3 +93,14 @@ test("пол: вещь из мужского и женского раздела 
   assert.equal(genderOf({ gender: "w", webSections: ["gucci.com/de/de/ca/women/x", "gucci.com/de/de/ca/men/x"] }), "u");
   assert.equal(genderOf({ gender: "m", webSections: [m, w], overrides: { gender: "m" } }, { gender: "m" }), "m");
 });
+
+test("быстрый прогон без чтения наличия не трогает статусы размеров; чтение наличия ставит дату", async () => {
+  const { updateWebProduct } = await import("../lib/manual.js");
+  const doc = { _id: "product.manual.de-x1", category: "shoes", sizes: ["40", "41"], variants: [{ _key: "a", size: "40" }, { _key: "b", size: "41" }],
+    offers: [{ boutique: 500, availability: { a: { status: "ask" }, b: { status: "online" } } }], pricing: {} };
+  const store = { d: { [doc._id]: doc }, async get(id) { return JSON.parse(JSON.stringify(this.d[id] || null)); }, async put(x) { this.d[x._id] = x; return x; }, async patchMany() {} };
+  await updateWebProduct(store, doc._id, { boutique: 500, sizeStock: [{ s: "40", ok: true }, { s: "41", ok: true }], noStock: true }, {});
+  let p = store.d[doc._id]; assert.equal(p.offers[0].availability.a.status, "ask"); assert.ok(!p.offers[0].stockAt);
+  await updateWebProduct(store, doc._id, { boutique: 500, sizeStock: [{ s: "40", ok: true }, { s: "41", ok: false }], stockRead: true }, {});
+  p = store.d[doc._id]; assert.equal(p.offers[0].availability.a.status, "online"); assert.equal(p.offers[0].availability.b.status, "ask"); assert.ok(p.offers[0].stockAt);
+});

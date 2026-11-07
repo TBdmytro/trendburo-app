@@ -58,7 +58,7 @@ async function copyWebImages(store, list, id = "") {
   const ok = images.filter(u => /^https:\/\/cdn\.sanity\.io\//.test(u));
   return { images: ok.length ? ok : images, copied, srcOf };
 }
-const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer";
+const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer";
 let FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
@@ -316,8 +316,10 @@ export default async function handler(req, res) {
         // fresh — проверены кнопкой за последние 12 часов: при повторном прогоне их не открываем заново (быстрее)
         const status = {}, fresh = {}, since = Math.max(Date.now() - 24 * 36e5, px === "product.manual.de-" ? Date.parse("2026-11-07T22:40:00Z") : 0); // LV: наличие читается только с кнопки v67 — всё, что проверено раньше, проверяем заново
         for (const id of await deletedSet(store)) if (id.startsWith(px)) status[id.slice(px.length).toUpperCase()] = "rejected"; // вы удалили — кнопка не вернёт
-        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; const needSz = ["shoes", "clothing"].includes(p.overrides?.category || p.category) && !p.nSz; if (ck && Date.parse(ck) > since && !needSz && p.imgVer === IMGV(p._id) && /^https:\/\/(cdn\.sanity\.io|[a-z]+\.louisvuitton\.com)\//.test(p.images?.[0]?.url || "") && (p.nIm || 0) >= 2) fresh[k] = 1; } // фото не скопировано — открываем снова // без размеров — проверяем снова
-        return send(res, 200, { status, fresh });
+        for (const p of all) if (p._id.startsWith(px)) { const k = p._id.slice(px.length).toUpperCase(); status[k] = p.status || "draft"; const ck = p.chk || p.offers?.[0]?.checkedAt; const needSz = ["shoes", "clothing"].includes(p.overrides?.category || p.category) && !p.nSz; if (ck && Date.parse(ck) > since && !needSz && p.imgVer === IMGV(p._id) && /^https:\/\/(cdn\.sanity\.io|[a-z]+\.louisvuitton\.com)\//.test(p.images?.[0]?.url || "") && (p.nIm || 0) >= 2 && (px !== "product.manual.de-" || Date.parse(p.stAt || "") > Date.now() - 3 * 864e5)) fresh[k] = 1; } // LV: «свежий» — только если и наличие читали недавно // фото не скопировано — открываем снова // без размеров — проверяем снова
+        // когда у товара последний раз читали наличие (открытая страница как у покупателя) — кнопка проверяет сначала самые давние
+        const stockAt = {}; for (const p of all) if (p._id.startsWith(px)) { const t = Date.parse(p.stAt || ""); if (t) stockAt[p._id.slice(px.length).toUpperCase()] = t; }
+        return send(res, 200, { status, fresh, stockAt });
       }
       case "brandBoard": {
         // бренды, которые у нас есть: сколько товаров, что на витрине, разбивка по категориям, 4 обложки («Новые с сайтов» — отдельно)
@@ -479,7 +481,7 @@ export default async function handler(req, res) {
         // обложка как на плитке раздела бренда (один раз на товар)
         // Dior: на плитке раздела часто фото на модели — обложкой не ставим
         if (!/^product\.manual\.(dior|gucci|goldengoose)-/.test(id) && /^https:\/\/[^/]+\/[^&=]*(\?|$)/.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
-        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg }, { by: me.name, pricingCfg }));
+        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg, noStock: !!it.noStock, stockRead: !!it.stockRead }, { by: me.name, pricingCfg }));
       }
       case "fixBrands": {
         // выравнивание брендов и подразделов — отдельным запросом в фоне (админка не ждёт его, чтобы «Товары» открывались сразу)
