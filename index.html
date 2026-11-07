@@ -1468,6 +1468,36 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .bsubs .bsl{flex:none;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--g2)}.bsubs .bsep{flex:none;width:1px;height:20px;background:var(--line);margin:0 4px}
 .bsticky{position:sticky;top:calc(52px + var(--st));z-index:3;background:var(--bg);padding:12px 0 10px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)}
 .bsticky .toolrow .seg{flex:none}
+/* Новинки бренда: бежевый баннер со сменой фото; при прокрутке сжимается и «заезжает» в плашку «Новинки» в ряду фильтров */
+.nwban{position:relative;display:grid;grid-template-columns:44% 56%;width:100%;height:236px;border:0;padding:0;text-align:left;background:#efe8de;border-radius:24px;overflow:hidden;color:var(--fg)}
+.nwban .nwt{padding:18px 4px 16px 18px;display:flex;flex-direction:column;justify-content:space-between;z-index:2;min-width:0}
+.nwban .cap{color:#8d7f6b;letter-spacing:.12em}
+.nwban h3{font:400 27px/1.12 "Prata",Georgia,serif;letter-spacing:0;margin:8px 0 6px}
+.nwban .nwc{color:#8d7f6b;font-size:12.5px}
+.nwban .nwgo{align-self:flex-start;background:var(--ink-grad);color:#fff;border-radius:99px;padding:10px 16px;font-weight:600;font-size:13px}
+.nwst{position:relative}
+.nwph{position:absolute;top:50%;left:50%;width:132px;height:170px;border-radius:14px;overflow:hidden;background:#ece6dc;box-shadow:0 10px 26px rgba(38,40,44,.16);transition:transform .9s var(--ease),opacity .9s ease,filter .9s ease;will-change:transform}
+.nwph img{width:100%;height:100%;object-fit:cover;object-position:50% 62%;display:block}
+.nwph.c{transform:translate(-50%,-50%);z-index:3}
+.nwph.l{transform:translate(-112%,-50%) scale(.78);z-index:2;filter:saturate(.85)}
+.nwph.r{transform:translate(12%,-50%) scale(.78);z-index:2;filter:saturate(.85)}
+.nwph.h{transform:translate(-50%,-50%) scale(.6);z-index:1;opacity:0}
+.nwdots{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:5px;z-index:3}
+.nwdots i{width:5px;height:5px;border-radius:99px;background:rgba(38,40,44,.22);transition:width .4s,background .4s}.nwdots i.on{width:16px;background:var(--ink)}
+#bcats{position:relative}
+.brest{display:flex;gap:8px;flex:none;will-change:transform}
+.nwpill{display:inline-flex;align-items:center;gap:6px;padding:4px 13px 4px 4px;background:#efe8de;border-color:#e2d6c3}
+.nwpill.morph{position:absolute;left:18px;top:0;opacity:0;transition:opacity .18s ease;z-index:2}
+.nwpill.morph.full{opacity:1}
+.nwmini{position:relative;width:26px;height:26px;border-radius:99px;overflow:hidden;background:#e7dfd2;flex:none}
+.nwmini img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 62%;opacity:0;transition:opacity .6s}.nwmini img.on{opacity:1}
+.nwgh{position:fixed;left:0;top:0;z-index:60;pointer-events:none;background:#efe8de;overflow:hidden;display:none;box-shadow:0 6px 18px rgba(38,40,44,.08);will-change:transform,width,height}
+.nwgh > *{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform,opacity;white-space:nowrap}
+.nwgh .gi{overflow:hidden;background:#ece6dc}.nwgh .gi img{width:100%;height:100%;object-fit:cover;object-position:50% 62%;display:block}
+.nwgh .gt{font:400 27px/1.12 "Prata",Georgia,serif;color:var(--fg)}
+.nwgh .gx{color:#8d7f6b}
+.nwgh .gb{font-size:13.5px;color:var(--fg)}.nwgh .gb span{color:var(--faint);margin-left:4px}
+@media (prefers-reduced-motion:reduce){.nwph,.nwmini img{transition:none!important}}
 .bsticky select{width:auto;padding:8px 12px;font-size:13.5px;border-radius:10px;margin-left:auto}
 
 /* OPTIX entry on feed */
@@ -2933,6 +2963,7 @@ function renderFeedFollow(){const box=$("#followRail");if(!box)return;// «Ва�
 function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bname(bk);
   const st={cats:new Set(),subs:{},g:"all",sort:"pop"};{const bg=all.filter(p=>p.cat==="bags"&&p._sub===undefined);if(bg.length)bagModels(all.filter(p=>p.cat==="bags"));const gs=all.filter(p=>p.cat==="shoes"&&/golden ?goose/i.test(p.brand||"")&&p._sub===undefined);if(gs.length)ggLines(gs)}const lead=all.slice().sort((a,b)=>b.isNew-a.isNew)[0];
   const cats=[...new Set(all.map(p=>p.cat))],gs=[...new Set(all.map(p=>p.g))];
+  const nwAll=all.filter(p=>p.isNew),nwN=nwAll.length,nwPic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.src||i.thumb))||String(p.shape).replace(/^img:/,"")},nwPics=nwAll.slice().sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,6).map(nwPic).filter(u=>/^https?:/.test(u));st.nw=false;
   const s=push(bn,`<div class="bhero" style="--c:${lead.c}"><span class="mono" aria-hidden="true">${esc(initials(bn))}</span>
      <span class="cap">${BRAND_META[bk]||""}</span><h1>${esc(bn)}</h1>
      <div class="meta num"><span>${all.length} ${plural(all.length,["товар","товара","товаров"])}</span><span>от ${eur(Math.min(...all.map(p=>p.price)))}</span>${all.some(p=>p.isNew)?`<span>${all.filter(p=>p.isNew).length} новинки</span>`:""}${ICONS.some(ic=>ic.bk===bk)?`<span>${ICONS.filter(ic=>ic.bk===bk).length} моделей под заказ</span>`:""}</div>
@@ -2942,7 +2973,7 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
    ${(()=>{const bs=all.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best).slice(0,16),nw2=all.filter(p=>p.isNew).sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,16);
      // отдельные блоки: бестселлеры бренда (в его порядке) и новинки — как разделы на сайте самого бренда
      return (bs.length>=3?`<div class="sec"><div class="sech"><h2>Бестселлеры</h2><span class="muted" style="font-size:13px">как у ${esc(bn)}</span></div><div class="hrail">${bs.map(pcHTML).join("")}</div></div>`:"")
-       +(nw2.length>=3?`<div class="sec"><div class="sech"><h2>Новинки</h2><span class="muted" style="font-size:13px">${all.filter(p=>p.isNew).length}</span></div><div class="hrail">${nw2.map(pcHTML).join("")}</div></div>`:"")})()}
+       +(nw2.length>=3?`<div class="sec" style="padding-bottom:4px"><div class="pad"><button class="nwban press" data-nwban aria-label="Новинки ${esc(bn)}"><div class="nwt"><div><span class="cap">${esc(bn)}</span><h3>Новинки<br>сезона</h3><span class="nwc num">${nwN} ${plural(nwN,["вещь","вещи","вещей"])}</span></div><span class="nwgo">Смотреть все</span></div><div class="nwst">${nwPics.map(u=>`<div class="nwph h"><img src="${esc(u)}" alt="" decoding="async"></div>`).join("")}</div><div class="nwdots">${nwPics.map(()=>"<i></i>").join("")}</div></button></div></div>`:"")})()}
    <div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>В витрине сейчас</h2></div></div>
    <div class="bsticky"><div class="chips" id="bcats"></div><div class="chips bsubs" id="bsubs" hidden></div>${gs.length>1?`<div class="toolrow"><div class="seg" role="group" aria-label="Для кого" id="bgs"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button>${gs.includes("k")?'<button data-g="k">Детское</button>':""}</div><select id="bsort" aria-label="Сортировка"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`:`<div class="toolrow"><select id="bsort" aria-label="Сортировка" style="margin-left:0"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`}</div>
    <div class="grid2" id="bgrid" style="margin-top:14px"></div>
@@ -2950,24 +2981,55 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
    <div class="pad" style="margin:22px 0 10px"><div class="group"><b style="font-weight:600">Нет нужной модели?</b><span class="muted" style="font-size:14px">Напишите менеджеру — найдём в бутиках ${esc(bn)} в Европе или закажем на официальном сайте.</span><button class="btn sm" data-req2 style="align-self:flex-start;margin-top:4px">Написать менеджеру</button></div></div>`,{clear:true});
   const gOk=p=>st.g==="all"||p.g===st.g||(p.g==="u"&&st.g!=="k");
   const draw=()=>{const f=all.filter(gOk);
-    s.querySelector("#bcats").innerHTML=`<button class="chip" data-bc="" aria-pressed="${!st.cats.size}">Все<span class="c num">${f.length}</span></button>`+cats.map(c=>{const n=f.filter(p=>p.cat===c).length;return n?`<button class="chip" data-bc="${c}" aria-pressed="${st.cats.has(c)}">${CATS[c]||c}<span class="c num">${n}</span></button>`:""}).join("");
+    const nf=f.filter(p=>p.isNew).length,hasBan=!!s.querySelector("[data-nwban]");
+    s.querySelector("#bcats").innerHTML=(nf?`<button class="chip nwpill${hasBan?" morph":""}" data-nw aria-pressed="${!!st.nw}"><span class="nwmini">${nwPics.map((u,i)=>`<img src="${esc(u)}" alt=""${i===nwK?' class="on"':""}>`).join("")}</span>Новинки<span class="c num">${nf}</span></button>`:"")
+      +`<span class="brest"><button class="chip" data-bc="" aria-pressed="${!st.cats.size&&!st.nw}">Все<span class="c num">${f.length}</span></button>`+cats.map(c=>{const n=f.filter(p=>p.cat===c).length;return n?`<button class="chip" data-bc="${c}" aria-pressed="${st.cats.has(c)}">${CATS[c]||c}<span class="c num">${n}</span></button>`:""}).join("")+"</span>";nwMorph&&nwMorph(true);
     // вторая строка: виды вещей выбранных категорий (Одежда: Верхняя · Трикотаж | Сумки: Тоуты · Мини)
     const groups=cats.filter(c=>st.cats.has(c)).map(c=>{const cnt={};f.forEach(p=>{if(p.cat===c){const k=subOf(p);cnt[k]=(cnt[k]||0)+1}});
       const keys=(c==="bags"||Object.keys(cnt).some(k=>k.startsWith("m:gg-"))?Object.keys(cnt).filter(k=>k!=="other").sort((a,b)=>cnt[b]-cnt[a]).slice(0,16):(SUBCATS[c]||[]).map(x=>x[0]).filter(k=>cnt[k])).concat(cnt.other?["other"]:[]);return {c,cnt,keys}}).filter(g=>g.keys.length>1);
     const sr=s.querySelector("#bsubs");sr.hidden=!groups.length;
     sr.innerHTML=groups.map((g,i)=>`${i?'<i class="bsep" aria-hidden="true"></i>':""}${groups.length>1?`<span class="bsl">${esc(CATS[g.c]||g.c)}</span>`:""}`+g.keys.map(k=>`<button class="chip" data-bsc="${g.c}" data-bs="${k}" aria-pressed="${!!(st.subs[g.c]&&st.subs[g.c].has(k))}">${esc(subName(g.c,k))}<span class="c num">${g.cnt[k]}</span></button>`).join("")).join("");
     const bg=s.querySelector("#bgs");if(bg)bg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===st.g));
-    const f2=f.filter(p=>(!st.cats.size||st.cats.has(p.cat))&&(!(st.subs[p.cat]&&st.subs[p.cat].size)||st.subs[p.cat].has(subOf(p)))),list=st.sort==="pop"?popOrder(f2):f2.sort((a,b)=>st.sort==="asc"?a.price-b.price:st.sort==="desc"?b.price-a.price:(b.isNew-a.isNew)||(a.price-b.price));
+    const f2=f.filter(p=>(!st.nw||p.isNew)&&(!st.cats.size||st.cats.has(p.cat))&&(!(st.subs[p.cat]&&st.subs[p.cat].size)||st.subs[p.cat].has(subOf(p)))),list=st.sort==="pop"?popOrder(f2):f2.sort((a,b)=>st.sort==="asc"?a.price-b.price:st.sort==="desc"?b.price-a.price:(b.isNew-a.isNew)||(a.price-b.price));
     // товары бренда — порциями по 24 при прокрутке (у больших брендов их тысячи — разом всё рисовать нельзя)
     bl=list;bn0=0;bio&&bio.disconnect();s.querySelector("#bgrid").innerHTML="";bMore()};
   let bl=[],bn0=0,bio=null;
   const bMore=()=>{const g=s.querySelector("#bgrid"),to=Math.min(bl.length,bn0+GRID_STEP);if(bn0>=to)return;g.querySelector(".grid-more")?.remove();
     g.insertAdjacentHTML("beforeend",bl.slice(bn0,to).map(pcHTML).join("")+(to<bl.length?'<div class="grid-more"></div>':""));bn0=to;
     const m=g.querySelector(".grid-more");if(m){bio=bio||new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))bMore()},{root:s.querySelector(".scroll"),rootMargin:"900px 0px"});bio.observe(m)}};
-  s.querySelector("#bcats").addEventListener("click",e=>{const b=e.target.closest("[data-bc]");if(!b)return;const c=b.dataset.bc;if(!c){st.cats.clear();st.subs={}}else if(st.cats.has(c)){st.cats.delete(c);delete st.subs[c]}else st.cats.add(c);hap&&hap("light");draw()});
+  s.querySelector("#bcats").addEventListener("click",e=>{if(e.target.closest("[data-nw]")){st.nw=!st.nw;hap&&hap("light");draw();return}const b=e.target.closest("[data-bc]");if(!b)return;const c=b.dataset.bc;if(!c){st.cats.clear();st.subs={};st.nw=false}else if(st.cats.has(c)){st.cats.delete(c);delete st.subs[c]}else st.cats.add(c);hap&&hap("light");draw()});
   s.querySelector("#bsubs").addEventListener("click",e=>{const b=e.target.closest("[data-bs]");if(!b)return;const c=b.dataset.bsc,k=b.dataset.bs,S=st.subs[c]=st.subs[c]||new Set();S.has(k)?S.delete(k):S.add(k);hap&&hap("light");draw()});
   const bg=s.querySelector("#bgs");if(bg)bg.addEventListener("click",e=>{const b=e.target.closest("button");if(b){st.g=b.dataset.g;[...st.cats].forEach(c=>{if(!all.some(p=>p.cat===c&&gOk(p))){st.cats.delete(c);delete st.subs[c]}});draw()}});
   s.querySelector("#bsort").onchange=e=>{st.sort=e.target.value;draw()};
+  // ===== Новинки: смена фото в баннере и сжатие в плашку при прокрутке =====
+  let nwK=0,nwMorph=null;
+  const ban=s.querySelector("[data-nwban]");
+  if(ban){const phs=[...ban.querySelectorAll(".nwph")],dots=[...ban.querySelectorAll(".nwdots i")],n=phs.length;
+    const lay=()=>{phs.forEach((e,i)=>{const o=(i-nwK+n)%n;e.className="nwph "+(o===0?"c":o===1?"r":o===n-1?"l":"h")});dots.forEach((d,i)=>d.className=i===nwK?"on":"");s.querySelectorAll(".nwmini img").forEach((im,i)=>im.className=i===nwK?"on":"")};
+    lay();const tm=setInterval(()=>{if(!s.isConnected){clearInterval(tm);gh.remove();return}if(!document.hidden&&n>1){nwK=(nwK+1)%n;lay();if(gh.style.display==="block")ghI.src=nwPics[nwK]}},2800);
+    ban.onclick=()=>{st.nw=true;draw();const sc=s.querySelector(".scroll"),bs=s.querySelector(".bsticky");sc.scrollTo({top:sc.scrollTop+bs.getBoundingClientRect().top-sc.getBoundingClientRect().top-52,behavior:"smooth"})};
+    const gh=document.createElement("div");gh.className="nwgh";gh.setAttribute("aria-hidden","true");
+    gh.innerHTML=`<div class="gi"><img alt=""></div><div class="gx cap">${esc(bn)}</div><div class="gt">Новинки</div><div class="gt">сезона</div><div class="gx num" style="font-size:12.5px">${nwN} ${plural(nwN,["вещь","вещи","вещей"])}</div><div class="gb">Новинки<span class="num">${nwN}</span></div>`;document.body.appendChild(gh);
+    const ghI=gh.querySelector(".gi img"),ghIB=gh.querySelector(".gi"),[,gE,gT,gT2,gS,gB]=gh.children;
+    const sc=s.querySelector(".scroll"),L=(a,b,t)=>a+(b-a)*t,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    let cur=0,raf=0;
+    const target=()=>{const B=ban.getBoundingClientRect(),top=sc.getBoundingClientRect().top+52;return Math.max(0,Math.min(1,(top+40-B.top)/(B.height+20)))};
+    const paint=p=>{const pill=s.querySelector(".nwpill.morph"),rest=s.querySelector("#bcats .brest");if(!pill||!rest)return;const e=ease(p),PW=pill.offsetWidth,PH=pill.offsetHeight;
+      rest.style.transform=`translate3d(${((PW+8)*e).toFixed(2)}px,0,0)`;pill.classList.toggle("full",p>=1);ban.style.visibility=p>0?"hidden":"visible";
+      if(p<=0||p>=1||!s.isConnected){gh.style.display="none";return}
+      const B=ban.getBoundingClientRect(),cr=pill.getBoundingClientRect(),W=L(B.width,PW,e),H=L(B.height,PH,e);
+      if(gh.style.display!=="block"){gh.style.display="block";ghI.src=nwPics[nwK]}
+      gh.style.transform=`translate3d(${L(B.left,cr.left,e).toFixed(2)}px,${L(B.top,cr.top,e).toFixed(2)}px,0)`;gh.style.width=W.toFixed(2)+"px";gh.style.height=H.toFixed(2)+"px";gh.style.borderRadius=L(24,PH/2,e).toFixed(2)+"px";
+      const sx=B.width*.44+B.width*.56/2-66,sy=B.height/2-85,iw=L(132,26,e),ih=L(170,26,e),mx=(PH-26)/2;
+      ghIB.style.cssText=`width:${iw.toFixed(2)}px;height:${ih.toFixed(2)}px;border-radius:${L(14,13,e).toFixed(2)}px;transform:translate3d(${L(sx,4,e).toFixed(2)}px,${L(sy,mx,e).toFixed(2)}px,0)`;
+      const f=Math.max(0,1-p*3);
+      gT.style.cssText=`opacity:${Math.max(0,1-Math.max(0,p-.55)/.3).toFixed(3)};transform:translate3d(${L(18,36,e).toFixed(2)}px,${L(46,(PH-18)/2,e).toFixed(2)}px,0) scale(${L(1,13.5/27,e).toFixed(4)})`;
+      gT2.style.cssText=`opacity:${f.toFixed(3)};transform:translate3d(18px,76px,0)`;gE.style.cssText=`opacity:${f.toFixed(3)};transform:translate3d(18px,20px,0)`;gS.style.cssText=`opacity:${f.toFixed(3)};transform:translate3d(18px,114px,0)`;
+      gB.style.cssText=`opacity:${Math.max(0,(p-.6)/.35).toFixed(3)};transform:translate3d(36px,${((PH-19)/2).toFixed(2)}px,0)`};
+    const frame=()=>{raf=0;const w=target();cur+=(w-cur)*.32;if(Math.abs(w-cur)<.002)cur=w;paint(cur);if(cur!==w)raf=requestAnimationFrame(frame)};
+    nwMorph=now=>{if(now){cur=target();paint(cur)}else if(!raf)raf=requestAnimationFrame(frame)};
+    sc.addEventListener("scroll",()=>nwMorph(false),{passive:true});
+  }
   const fb=s.querySelector("[data-follow]");fb.onclick=()=>{toggleFollow(bk);fb.setAttribute("aria-pressed",follows.has(bk));fb.textContent=follows.has(bk)?"Вы следите":"Следить"};
   const req=()=>orderSheet("Запрос по "+bn,`Здравствуйте! Ищу ${bn}.\nМодель: \nЦвет / размер: \nБюджет: \nДоставка: Украина`);
   s.querySelector("[data-req]").onclick=req;s.querySelector("[data-req2]").onclick=req;
