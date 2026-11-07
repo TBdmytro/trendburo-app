@@ -81,6 +81,9 @@ export default async function handler(req, res) {
     const reason = /не настроена|не настроена|SANITY_PROJECT_ID/.test(m) ? "no-config"
       : /Sanity query (\d+)/.test(m) ? "sanity-" + m.match(/Sanity query (\d+)/)[1]
       : /fetch failed|ENOTFOUND|getaddrinfo/i.test(m) ? "sanity-unreachable" : "other";
-    res.end(JSON.stringify({ products: [], error: "Каталог временно недоступен", reason }));
+    let adm = null; try { adm = readSession(req); } catch {}
+    console.log("CATALOG fail " + m.replace(/postgres(ql)?:\/\/\S+/gi, "[db]").slice(0, 300));
+    // администратору — текст ошибки (без адресов и ключей), чтобы сразу было видно, что чинить
+    res.end(JSON.stringify({ products: [], error: "Каталог временно недоступен", reason, ...(adm ? { detail: m.replace(/postgres(ql)?:\/\/\S+/gi, "[db]").replace(/(key|token|secret|password)=\S+/gi, "$1=[…]").slice(0, 300) } : {}) }));
   }
 }
