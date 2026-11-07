@@ -59,7 +59,7 @@ async function copyWebImages(store, list, id = "") {
   return { images: ok.length ? ok : images, copied, srcOf };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer";
-let FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false;
+let FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
 /** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
@@ -351,6 +351,12 @@ export default async function handler(req, res) {
             if (next.length && next.map(i => i.url).join("|") !== im.map(i => i.url).join("|")) ch.push({ id: p._id, set: { images: next, coverFrom: null } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
           await store.put({ _id: "settings.fixDiorImg2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXDIOR " + ch.length); } } catch (e) { FIXDIOR = false; console.log("FIXDIOR fail " + String(e.message).slice(0, 120)); } }
+        // один раз: сумки LV, у которых на сайте видна только «Сообщить о поступлении» (прочитано кнопкой до v88), — распроданы: скрытые удаляем, на витрине — «продано»
+        if (!FIXLVSOLD) { FIXLVSOLD = true; try { if (!(await store.get("settings.fixLvSold1"))) {
+          const L = (await store.list("product", {}, { limit: 20000, fields: "_id, status, sizes, sizeDebug, offers[0...1]{availability}" })).filter(p => p._id.startsWith("product.manual.de-") && !(p.sizes || []).length && /buy:wait/.test(String(p.sizeDebug || "")) && Object.values(p.offers?.[0]?.availability || {}).every(a => a.status === "ask"));
+          const del = L.filter(p => p.status !== "published").map(p => p._id), pub = L.filter(p => p.status === "published").map(p => p._id);
+          if (del.length) await store.delMany(del); if (pub.length) await markWebGone(store, pub, { by: "система", pricingCfg });
+          await store.put({ _id: "settings.fixLvSold1", _type: "settings", at: new Date().toISOString(), del: del.length, sold: pub.length }); PCACHE = null; console.log("FIXLVSOLD " + del.length + "/" + pub.length); } } catch (e) { FIXLVSOLD = false; console.log("FIXLVSOLD fail " + String(e.message).slice(0, 120)); } }
         // один раз: Golden Goose — убрать со страниц подборки «co-creation» (фото не этого товара)
         if (!FIXGG) { FIXGG = true; try { if (!(await store.get("settings.fixGgImg3"))) { const { orderImages } = await import("../lib/imgorder.js");
           // 2: обложка — вид сбоку (кадр без номера), не плитка раздела; ваша обложка/порядок из админки — не трогаем
