@@ -104,3 +104,12 @@ test("быстрый прогон без чтения наличия не тро
   await updateWebProduct(store, doc._id, { boutique: 500, sizeStock: [{ s: "40", ok: true }, { s: "41", ok: false }], stockRead: true }, {});
   p = store.d[doc._id]; assert.equal(p.offers[0].availability.a.status, "online"); assert.equal(p.offers[0].availability.b.status, "ask"); assert.ok(p.offers[0].stockAt);
 });
+
+test("цвета одной модели — одна семья по артикулу, даже если названия переведены по-разному", async () => {
+  const { famKey } = await import("../lib/catalog.js");
+  const f = (id, title, brand = "Dior") => famKey({ _id: "product.manual." + id, title, brand });
+  assert.equal(f("dior-113j698a0531c888", "CD Icon Hoodie"), f("dior-113j698a0531c989", "CD Icon Hooded Sweatshirt"));
+  assert.notEqual(f("dior-113j698a0531c888", "CD Icon Hoodie"), f("dior-113j699a0531c888", "CD Icon Sweatshirt"));
+  assert.equal(f("gucci-1334833g2001160", "Schal aus GG Wolle", "Gucci"), f("gucci-1334833g2001763", "GG wool scarf", "Gucci"));
+  assert.equal(f("goldengoose-gwf00117f00934412615", "Ball Star", "Golden Goose"), f("goldengoose-gwf00117f00934410920", "Ball Star Damen", "Golden Goose"));
+});
