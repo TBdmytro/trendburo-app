@@ -135,7 +135,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body)
   function tick() { minis.forEach(function (m) { [].forEach.call(m.children, function (im, i) { im.className = i === k ? "on" : ""; }); }); }
   document.getElementById("th2").innerHTML = pics.slice(0, 3).map(function (u) { return '<span><img alt="" src="' + u + '"></span>'; }).join("");
   // сетка
-  document.getElementById("grid").innerHTML = (N.length ? N : P).slice(0, 24).map(function (p) { return '<div class="card"><div class="im"><img loading="lazy" alt="" src="' + src(p) + '"></div><div class="b">GOLDEN GOOSE</div><div class="n">' + String(p.title).replace(/</g, "&lt;") + '</div><div class="p">' + (p.price && p.price.eu || "") + ' €</div></div>'; }).join("");
+  document.getElementById("grid").innerHTML = N.concat(N, N, N).slice(0, 24).map(function (p) { return '<div class="card"><div class="im"><img loading="lazy" alt="" src="' + src(p) + '"></div><div class="b">GOLDEN GOOSE</div><div class="n">' + String(p.title).replace(/</g, "&lt;") + '</div><div class="p">' + (p.price && p.price.eu || "") + ' €</div></div>'; }).join("");
   // прокрутка: баннер ушёл из вида — показываем сжатую плашку
   var ban = document.getElementById("ban"), bar = document.getElementById("bar");
   function onScroll() { var r = ban.getBoundingClientRect(), past = r.bottom < 60;
