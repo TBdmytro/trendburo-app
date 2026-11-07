@@ -114,13 +114,13 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body)
     wrap.className = "wrap v" + b.dataset.v + (wrap.classList.contains("past") ? " past" : ""); document.body.className = "v" + b.dataset.v + (document.body.classList.contains("past") ? " past" : ""); onScroll(); }; });
   document.body.className = "v1";
   // живые данные витрины: новинки Golden Goose
-  var P = []; try { var j = await (await fetch("/api/catalog?v=2")).json(); P = (j.products || []).filter(function (p) { return p.bk === "goldengoose"; }); } catch (e) {}
+  var P = []; // пример открывается сразу, без загрузки всего каталога
   // каталог закрыт без входа — пример на нескольких вещах Golden Goose
   if (!P.length) P = ["GMF00113.F000322-50517", "GMF00113.F002454-35769", "GMF00113.F008612-15964", "GWF00117.F009344-12615", "GWF00117.F006675-90244", "GWF00101.F007930-40519"].map(function (c, i) { return { bk: "goldengoose", isNew: true, title: ["Ball Star", "Super-Star", "Stardan"][i % 3] + " · пример", price: { eu: [585, 620, 640][i % 3] }, im: ["https://static2.goldengoose.com/public/Style/ECOMM/" + c + ".jpg"] }; });
   var N = P.filter(function (p) { return p.isNew; }); if (!N.length) N = P;
   var src = function (p) { var u = (p.im || [])[0] || ""; return /^https?:/.test(u) ? u : "https://" + u; };
   var pics = N.slice(0, 6).map(src);
-  if (P.length) { document.getElementById("nAll").textContent = P.length + " товаров"; document.getElementById("nNew").textContent = N.length + " новинки";
+  if (false) { document.getElementById("nAll").textContent = P.length + " товаров"; document.getElementById("nNew").textContent = N.length + " новинки";
     ["n1", "n3"].forEach(function (id) { document.getElementById(id).textContent = N.length; }); document.getElementById("n2").textContent = N.length + " вещи"; document.getElementById("banN").textContent = N.length + " вещи · каждую неделю новые"; }
   // баннер: центральное фото сверху, по бокам — следующие, всё ровно; каждые 2,8 с сдвиг по кругу
   var stage = document.getElementById("stage"), dots = document.getElementById("dots");
