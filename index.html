@@ -4128,7 +4128,7 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
 <script>
 /* фото, которое не открылось «с разрешением» (crossorigin): показываем как обычное — лучше без подбора фона, чем пустая карточка */
 /* Gucci готовит фото нужного размера по первому запросу и иногда в первый раз отвечает ошибкой: пробуем ещё раз, затем берём размер, который точно есть */
-document.addEventListener("error",function(e){var im=e.target;if(!im||im.tagName!=="IMG"||im.hasAttribute("crossorigin"))return;var u=im.getAttribute("src")||"";if(!/^https:\/\/media\.gucci\.com\/style\//.test(u))return;var n=+(im.dataset.gr||0);if(n>=2)return;im.dataset.gr=n+1;setTimeout(function(){im.src=n===0?u.split("?")[0]+"?r=1":u.split("?")[0].replace(/(\/style\/)[^/]+\//,"$1DarkGray_Center_0_0_490x490/")},n===0?1200:0)},true);
+document.addEventListener("error",function(e){var im=e.target;if(!im||im.tagName!=="IMG"||im.hasAttribute("crossorigin"))return;var u=im.getAttribute("src")||"";if(!/^https:\/\/media\.gucci\.com\/style\//.test(u))return;var n=+(im.dataset.gr||0);if(n>=2)return;im.dataset.gr=n+1;setTimeout(function(){im.src=n===0?u.split("?")[0]+"?r=1":u.split("?")[0].replace(/(\/style\/)[^/]+\//,"$1DarkGray_Center_0_0_"+(/_490x490\//.test(u)?"1200x1200":"490x490")+"/")},n===0?1200:0)},true);
 document.addEventListener("error",function(e){var im=e.target;if(!im||im.tagName!=="IMG"||!im.hasAttribute("crossorigin"))return;im.removeAttribute("crossorigin");var u=im.getAttribute("src");if(u&&!/[?&]tbr=1/.test(u)){im.src=u+(u.indexOf("?")>=0?"&":"?")+"tbr=1"}},true);
 </script>
 <script>
