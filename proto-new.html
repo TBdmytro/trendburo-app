@@ -17,7 +17,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body)
 .demo{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:center;gap:6px;padding:8px max(12px,env(safe-area-inset-left)) 8px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .demo button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:7px 12px;font:600 12px var(--body);color:var(--ink)}
 .demo button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
-.hd{background:var(--ink);color:#fff;padding:64px 18px 18px;border-radius:0 0 26px 26px}
+.hd{background:var(--ink);color:#fff;padding:28px 18px 18px;border-radius:0 0 26px 26px}
 .hd h1{font:400 32px/1.1 var(--disp);margin:0 0 12px}
 .pills{display:flex;gap:6px;flex-wrap:wrap}.pills span{border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:4px 10px;font-size:12px}
 .pad{padding:16px}
@@ -39,15 +39,21 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body)
 .dots i{width:5px;height:5px;border-radius:99px;background:rgba(38,40,44,.22);transition:width .4s,background .4s}.dots i.on{width:16px;background:var(--ink)}
 /* витрина */
 .sec{font:600 19px var(--body);margin:22px 0 10px}
-.bar{position:sticky;top:44px;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:10px 16px;margin:0 -16px;border-bottom:1px solid transparent;transition:border-color .3s}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:10px 16px;margin:0 -16px;border-bottom:1px solid transparent;transition:border-color .3s}
 .bar.stuck{border-color:var(--line)}
 .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;border:1px solid var(--line);border-radius:99px;padding:8px 13px;font:500 13px var(--body);background:#fff;color:var(--ink);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .chip b{font-weight:500;opacity:.5}
 /* вариант 1: плашка в ряду фильтров */
-.nw1{background:var(--sand);border-color:var(--sand2);padding:4px 13px 4px 4px;max-width:0;opacity:0;padding-left:0;padding-right:0;border-width:0;overflow:hidden;transition:max-width .5s cubic-bezier(.32,.72,0,1),opacity .35s,padding .5s,border-width .5s}
-.v1 .stuck .nw1{max-width:170px;opacity:1;padding:4px 13px 4px 4px;border-width:1px}
+.nw1{background:var(--sand);border-color:var(--sand2);padding:4px 13px 4px 4px;width:0;padding-left:0;padding-right:0;border-width:0;overflow:hidden;margin-right:-8px}
+.nw1 > *{opacity:0;transition:opacity .2s}.nw1.full > *{opacity:1}
+/* «призрак» баннера: при прокрутке плавно сжимается и перелетает в плашку «Новинки» */
+.gh{position:fixed;z-index:30;pointer-events:none;background:var(--sand);overflow:hidden;display:none;box-shadow:0 6px 18px rgba(38,40,44,.08)}
+.gh .gi{position:absolute;overflow:hidden;background:#ece6dc}.gh .gi img{width:100%;height:100%;object-fit:cover;object-position:50% 74%;display:block}
+.gh .gt{position:absolute;white-space:nowrap;font-family:var(--disp);line-height:1.12;color:var(--ink)}
+.gh .gx{position:absolute;color:#8d7f6b}
+.gh .gn{position:absolute;font:500 13px var(--body);color:var(--ink);opacity:.5}
 .mini{position:relative;width:28px;height:28px;border-radius:99px;overflow:hidden;background:#e7dfd2;flex:0 0 28px}
 .mini img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 74%;opacity:0;transition:opacity .6s}.mini img.on{opacity:1}
 /* вариант 2: узкая полоса над фильтрами */
@@ -74,11 +80,6 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body)
 </style>
 </head>
 <body>
-<div class="demo" role="group" aria-label="Как сжимается баннер">
-  <button data-v="1" aria-pressed="true">Сжатие 1 · в фильтрах</button>
-  <button data-v="2" aria-pressed="false">2 · полоса</button>
-  <button data-v="3" aria-pressed="false">3 · капсула</button>
-</div>
 <div class="wrap v1" id="wrap">
   <header class="hd"><h1>Golden Goose</h1><div class="pills"><span id="nAll">639 товаров</span><span id="nNew">184 новинки</span></div></header>
   <div class="pad">
@@ -90,7 +91,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body)
       <div class="stage" id="stage"></div>
       <div class="dots" id="dots"></div>
     </div>
-    <p class="note">Фото сами меняются местами. Прокрутите вниз — баннер сожмётся.</p>
+    <p class="note">Фото сами меняются местами. Прокрутите вниз — баннер сожмётся и «заедет» в плашку «Новинки».</p>
 
     <div class="sec">В витрине сейчас</div>
     <div class="bar" id="bar">
@@ -104,14 +105,12 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body)
     <div class="grid" id="grid"></div>
   </div>
 </div>
-<button class="nw3" id="nw3"><span class="mini" id="mini3"></span>Новинки <small id="n3">184</small></button>
+<button class="nw3" id="nw3" hidden><span class="mini" id="mini3"></span>Новинки <small id="n3">184</small></button>
+<div class="gh" id="gh" aria-hidden="true"><div class="gi" id="ghi"><img id="ghimg" alt=""></div><div class="gx" id="ghe">GOLDEN GOOSE</div><div class="gt" id="ght">Новинки</div><div class="gt" id="ght2">сезона</div><div class="gx" id="ghs">184 вещи</div><div class="gn" id="ghn">184</div></div>
 <script>
 (async function () {
   var wrap = document.getElementById("wrap");
   // варианты сжатия
-  document.querySelectorAll(".demo button").forEach(function (b) { b.onclick = function () {
-    document.querySelectorAll(".demo button").forEach(function (x) { x.setAttribute("aria-pressed", x === b); });
-    wrap.className = "wrap v" + b.dataset.v + (wrap.classList.contains("past") ? " past" : ""); document.body.className = "v" + b.dataset.v + (document.body.classList.contains("past") ? " past" : ""); onScroll(); }; });
   document.body.className = "v1";
   // живые данные витрины: новинки Golden Goose
   var P = []; // пример открывается сразу, без загрузки всего каталога
@@ -138,11 +137,33 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body)
   document.getElementById("grid").innerHTML = N.concat(N, N, N).slice(0, 24).map(function (p) { return '<div class="card"><div class="im"><img loading="lazy" alt="" src="' + src(p) + '"></div><div class="b">GOLDEN GOOSE</div><div class="n">' + String(p.title).replace(/</g, "&lt;") + '</div><div class="p">' + (p.price && p.price.eu || "") + ' €</div></div>'; }).join("");
   // прокрутка: баннер ушёл из вида — показываем сжатую плашку
   var ban = document.getElementById("ban"), bar = document.getElementById("bar");
-  function onScroll() { var r = ban.getBoundingClientRect(), past = r.bottom < 60;
-    bar.classList.toggle("stuck", past); wrap.classList.toggle("past", past); document.body.classList.toggle("past", past); }
-  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+  var gh = document.getElementById("gh"), ghi = document.getElementById("ghi"), ghimg = document.getElementById("ghimg"), pill = document.getElementById("nw1"), chips = pill.parentNode;
+  var G = { e: document.getElementById("ghe"), t: document.getElementById("ght"), t2: document.getElementById("ght2"), s: document.getElementById("ghs"), n: document.getElementById("ghn") };
+  var L = function (a, b, t) { return a + (b - a) * t; }, ease = function (t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+  var PW = 132, PH = 38; // размер плашки «Новинки» в ряду фильтров
+  function onScroll() {
+    var B = ban.getBoundingClientRect(), br = bar.getBoundingClientRect(), cr = chips.getBoundingClientRect();
+    bar.classList.toggle("stuck", br.top <= 1 && B.bottom < br.top + 4);
+    // 0 — баннер на месте, 1 — уехал в плашку
+    var p = Math.max(0, Math.min(1, (40 - B.top) / (B.height + 20))), e = ease(p);
+    pill.style.width = (PW * e) + "px"; pill.style.marginRight = (e > .02 ? 0 : -8) + "px"; pill.style.borderWidth = e > .02 ? "1px" : "0";
+    pill.classList.toggle("full", p >= 1);
+    ban.style.visibility = p > 0 ? "hidden" : "visible";
+    if (p <= 0 || p >= 1) { gh.style.display = "none"; return; }
+    gh.style.display = "block"; ghimg.src = pics[k];
+    var tx = cr.left + 0, ty = cr.top + (cr.height - PH) / 2, W = L(B.width, PW, e), H = L(B.height, PH, e);
+    Object.assign(gh.style, { left: L(B.left, tx, e) + "px", top: L(B.top, ty, e) + "px", width: W + "px", height: H + "px", borderRadius: L(24, PH / 2, e) + "px" });
+    // главное фото: из центра баннера — в кружок слева в плашке
+    var sx = B.width * .44 + B.width * .56 / 2 - 66, sy = B.height / 2 - 85;
+    Object.assign(ghi.style, { left: L(sx, 4, e) + "px", top: L(sy, 5, e) + "px", width: L(132, 28, e) + "px", height: L(170, 28, e) + "px", borderRadius: L(14, 14, e) + "px" });
+    // «Новинки» уменьшается и встаёт рядом с фото; остальное тает
+    Object.assign(G.t.style, { left: L(18, 38, e) + "px", top: L(46, 10, e) + "px", fontSize: L(27, 14, e) + "px", fontFamily: e > .6 ? "var(--body)" : "var(--disp)" });
+    var f = Math.max(0, 1 - p * 3); G.t2.style.cssText = "left:18px;top:" + (46 + 30) + "px;font-size:27px;opacity:" + f; G.e.style.cssText = "left:18px;top:20px;font:600 11px var(--body);letter-spacing:.12em;opacity:" + f; G.s.style.cssText = "left:18px;top:114px;font-size:12.5px;opacity:" + f;
+    G.n.style.cssText = "left:" + L(120, 104, e) + "px;top:" + L(46, 10, e) + "px;opacity:" + Math.max(0, (p - .55) / .45);
+  }
+  addEventListener("scroll", onScroll, { passive: true }); addEventListener("resize", onScroll); onScroll();
   var up = function () { scrollTo({ top: 0, behavior: "smooth" }); };
-  ["nw1", "nw2", "nw3"].forEach(function (id) { document.getElementById(id).onclick = up; });
+  pill.onclick = up; ban.onclick = function () { scrollTo({ top: bar.offsetTop + 1, behavior: "smooth" }); };
 })();
 </script>
 </body>
