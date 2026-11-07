@@ -84,3 +84,12 @@ test("обувь: Low-Top/High-Top и Slip-on — не одежда (Gucci)", as
     assert.notEqual(headCategory(t), "clothing", t); assert.equal(detectCategory(t), "shoes", t); assert.equal(detectSubcategory("shoes", t), "sneakers", t); }
   assert.equal(headCategory("Crop Top"), "clothing"); assert.equal(detectSubcategory("clothing", "Silk Slip Dress"), "dresses");
 });
+
+test("пол: вещь из мужского и женского раздела бренда — унисекс; ручной выбор важнее", async () => {
+  const { genderOf } = await import("../lib/catalog.js");
+  const m = "de.louisvuitton.com/deu-de/herren/taschen/alle-taschen/_/N-t1", w = "de.louisvuitton.com/deu-de/damen/taschen/alle-taschen/_/N-t2";
+  assert.equal(genderOf({ gender: "m", webSections: [m] }), "m");
+  assert.equal(genderOf({ gender: "m", webSections: [m, w] }), "u");
+  assert.equal(genderOf({ gender: "w", webSections: ["gucci.com/de/de/ca/women/x", "gucci.com/de/de/ca/men/x"] }), "u");
+  assert.equal(genderOf({ gender: "m", webSections: [m, w], overrides: { gender: "m" } }, { gender: "m" }), "m");
+});
