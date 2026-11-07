@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Новинки бренда — примеры</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Prata&display=swap" rel="stylesheet">
+<style>
+/* Макет: страница бренда Golden Goose — баннер «Новинки» со сменой фото; при прокрутке он сжимается в плашку (3 варианта) */
+:root{--bg:#fff;--soft:#f2f3f4;--ink:#26282c;--navy:#12293e;--sand:#efe8de;--sand2:#e2d6c3;--mute:#8a8d93;--line:#e6e7e9;--body:"Onest",system-ui,sans-serif;--disp:"Prata",Georgia,serif;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:440px;margin:0 auto;padding-bottom:90px}
+/* переключатель вариантов (только для примера) */
+.demo{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:center;gap:6px;padding:8px max(12px,env(safe-area-inset-left)) 8px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.demo button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:7px 12px;font:600 12px var(--body);color:var(--ink)}
+.demo button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hd{background:var(--ink);color:#fff;padding:64px 18px 18px;border-radius:0 0 26px 26px}
+.hd h1{font:400 32px/1.1 var(--disp);margin:0 0 12px}
+.pills{display:flex;gap:6px;flex-wrap:wrap}.pills span{border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:4px 10px;font-size:12px}
+.pad{padding:16px}
+/* баннер */
+.ban{position:relative;height:236px;background:var(--sand);border-radius:24px;overflow:hidden;display:grid;grid-template-columns:44% 56%;cursor:pointer;transition:opacity .35s ease, transform .35s ease}
+.ban .txt{padding:18px 4px 16px 18px;display:flex;flex-direction:column;justify-content:space-between;z-index:2}
+.eyebrow{font:600 11px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#8d7f6b}
+.ban h2{font:400 27px/1.12 var(--disp);margin:8px 0 6px}
+.ban small{color:#8d7f6b;font-size:12.5px}
+.cta{align-self:flex-start;background:var(--ink);color:#fff;border-radius:99px;padding:10px 16px;font:600 13px var(--body);border:0}
+.stage{position:relative}
+.ph{position:absolute;top:50%;left:50%;width:132px;height:170px;border-radius:14px;overflow:hidden;background:#ece6dc;box-shadow:0 10px 26px rgba(38,40,44,.16);transition:transform .9s cubic-bezier(.32,.72,0,1),opacity .9s ease,filter .9s ease,z-index 0s .45s;will-change:transform}
+.ph img{width:100%;height:100%;object-fit:cover;object-position:50% 74%;display:block}
+.ph.c{transform:translate(-50%,-50%) scale(1);z-index:3;opacity:1}
+.ph.l{transform:translate(-112%,-50%) scale(.78);z-index:2;opacity:.95;filter:saturate(.85)}
+.ph.r{transform:translate(12%,-50%) scale(.78);z-index:2;opacity:.95;filter:saturate(.85)}
+.ph.h{transform:translate(-50%,-50%) scale(.6);z-index:1;opacity:0}
+.dots{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:5px;z-index:3}
+.dots i{width:5px;height:5px;border-radius:99px;background:rgba(38,40,44,.22);transition:width .4s,background .4s}.dots i.on{width:16px;background:var(--ink)}
+/* витрина */
+.sec{font:600 19px var(--body);margin:22px 0 10px}
+.bar{position:sticky;top:44px;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:10px 16px;margin:0 -16px;border-bottom:1px solid transparent;transition:border-color .3s}
+.bar.stuck{border-color:var(--line)}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--line);border-radius:99px;padding:8px 13px;font:500 13px var(--body);background:#fff;color:var(--ink);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip b{font-weight:500;opacity:.5}
+/* вариант 1: плашка в ряду фильтров */
+.nw1{background:var(--sand);border-color:var(--sand2);padding:4px 13px 4px 4px;max-width:0;opacity:0;padding-left:0;padding-right:0;border-width:0;overflow:hidden;transition:max-width .5s cubic-bezier(.32,.72,0,1),opacity .35s,padding .5s,border-width .5s}
+.v1 .stuck .nw1{max-width:170px;opacity:1;padding:4px 13px 4px 4px;border-width:1px}
+.mini{position:relative;width:28px;height:28px;border-radius:99px;overflow:hidden;background:#e7dfd2;flex:0 0 28px}
+.mini img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 74%;opacity:0;transition:opacity .6s}.mini img.on{opacity:1}
+/* вариант 2: узкая полоса над фильтрами */
+.nw2{display:none;align-items:center;gap:10px;background:var(--sand);border-radius:16px;padding:6px 12px 6px 6px;margin-bottom:8px;max-height:0;opacity:0;overflow:hidden;transition:max-height .5s cubic-bezier(.32,.72,0,1),opacity .35s,margin .5s}
+.v2 .nw2{display:flex}.v2 .stuck .nw2{max-height:60px;opacity:1}.v2 .bar:not(.stuck) .nw2{margin-bottom:0;padding-block:0}
+.thumbs{display:flex}.thumbs span{width:34px;height:42px;border-radius:8px;overflow:hidden;border:2px solid var(--sand);margin-left:-10px;background:#e7dfd2}.thumbs span:first-child{margin-left:0}
+.thumbs img{width:100%;height:100%;object-fit:cover;object-position:50% 74%;display:block}
+.nw2 .t{flex:1;min-width:0}.nw2 .t div{font:400 16px var(--disp)}.nw2 .t small{color:#8d7f6b;font-size:11.5px}
+.nw2 .go{font:600 13px var(--body)}
+/* вариант 3: капсула внизу экрана */
+.nw3{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,140%);z-index:40;display:none;align-items:center;gap:10px;background:var(--ink);color:#fff;border-radius:99px;padding:6px 16px 6px 6px;box-shadow:0 12px 30px rgba(38,40,44,.3);transition:transform .55s cubic-bezier(.32,.72,0,1);font:600 14px var(--body);border:0}
+.v3 .nw3{display:flex}.v3.past .nw3{transform:translate(-50%,0)}
+.nw3 .mini{width:34px;height:34px;flex-basis:34px}
+.nw3 small{font-weight:500;opacity:.6}
+/* сетка */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 10px;margin-top:14px}
+.card .im{aspect-ratio:4/5;border-radius:18px;overflow:hidden;background:var(--sand)}
+.card img{width:100%;height:100%;object-fit:cover;object-position:50% 74%;display:block}
+.card .b{font:600 10.5px var(--body);letter-spacing:.08em;color:var(--mute);margin-top:8px}
+.card .n{font-size:13px;margin-top:3px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .p{font:600 14px var(--body);margin-top:4px}
+.note{font-size:12px;color:var(--mute);text-align:center;margin:10px 0 0}
+@media (prefers-reduced-motion:reduce){.ph,.nw1,.nw2,.nw3,.mini img{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="demo" role="group" aria-label="Как сжимается баннер">
+  <button data-v="1" aria-pressed="true">Сжатие 1 · в фильтрах</button>
+  <button data-v="2" aria-pressed="false">2 · полоса</button>
+  <button data-v="3" aria-pressed="false">3 · капсула</button>
+</div>
+<div class="wrap v1" id="wrap">
+  <header class="hd"><h1>Golden Goose</h1><div class="pills"><span id="nAll">639 товаров</span><span id="nNew">184 новинки</span></div></header>
+  <div class="pad">
+    <div class="ban" id="ban" role="button" tabindex="0" aria-label="Открыть новинки">
+      <div class="txt">
+        <div><div class="eyebrow">Golden Goose</div><h2>Новинки<br>сезона</h2><small id="banN">184 вещи · каждую неделю новые</small></div>
+        <span class="cta">Смотреть все</span>
+      </div>
+      <div class="stage" id="stage"></div>
+      <div class="dots" id="dots"></div>
+    </div>
+    <p class="note">Фото сами меняются местами. Прокрутите вниз — баннер сожмётся.</p>
+
+    <div class="sec">В витрине сейчас</div>
+    <div class="bar" id="bar">
+      <div class="nw2" id="nw2"><div class="thumbs" id="th2"></div><div class="t"><div>Новинки сезона</div><small id="n2">184 вещи</small></div><span class="go">Все →</span></div>
+      <div class="chips">
+        <button class="chip nw1" id="nw1"><span class="mini" id="mini1"></span>Новинки <b id="n1">184</b></button>
+        <button class="chip on">Все <b>639</b></button><button class="chip">Обувь <b>639</b></button>
+        <button class="chip">Super-Star</button><button class="chip">Ball Star</button><button class="chip">Stardan</button><button class="chip">Mid Star</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+<button class="nw3" id="nw3"><span class="mini" id="mini3"></span>Новинки <small id="n3">184</small></button>
+<script>
+(async function () {
+  var wrap = document.getElementById("wrap");
+  // варианты сжатия
+  document.querySelectorAll(".demo button").forEach(function (b) { b.onclick = function () {
+    document.querySelectorAll(".demo button").forEach(function (x) { x.setAttribute("aria-pressed", x === b); });
+    wrap.className = "wrap v" + b.dataset.v + (wrap.classList.contains("past") ? " past" : ""); document.body.className = "v" + b.dataset.v + (document.body.classList.contains("past") ? " past" : ""); onScroll(); }; });
+  document.body.className = "v1";
+  // живые данные витрины: новинки Golden Goose
+  var P = []; try { var j = await (await fetch("/api/catalog?v=2")).json(); P = (j.products || []).filter(function (p) { return p.bk === "goldengoose"; }); } catch (e) {}
+  // каталог закрыт без входа — пример на нескольких вещах Golden Goose
+  if (!P.length) P = ["GMF00113.F000322-50517", "GMF00113.F002454-35769", "GMF00113.F008612-15964", "GWF00117.F009344-12615", "GWF00117.F006675-90244", "GWF00101.F007930-40519"].map(function (c, i) { return { bk: "goldengoose", isNew: true, title: ["Ball Star", "Super-Star", "Stardan"][i % 3] + " · пример", price: { eu: [585, 620, 640][i % 3] }, im: ["https://static2.goldengoose.com/public/Style/ECOMM/" + c + ".jpg"] }; });
+  var N = P.filter(function (p) { return p.isNew; }); if (!N.length) N = P;
+  var src = function (p) { var u = (p.im || [])[0] || ""; return /^https?:/.test(u) ? u : "https://" + u; };
+  var pics = N.slice(0, 6).map(src);
+  if (P.length) { document.getElementById("nAll").textContent = P.length + " товаров"; document.getElementById("nNew").textContent = N.length + " новинки";
+    ["n1", "n3"].forEach(function (id) { document.getElementById(id).textContent = N.length; }); document.getElementById("n2").textContent = N.length + " вещи"; document.getElementById("banN").textContent = N.length + " вещи · каждую неделю новые"; }
+  // баннер: центральное фото сверху, по бокам — следующие, всё ровно; каждые 2,8 с сдвиг по кругу
+  var stage = document.getElementById("stage"), dots = document.getElementById("dots");
+  var els = pics.map(function (u) { var d = document.createElement("div"); d.className = "ph h"; d.innerHTML = '<img alt="" src="' + u + '">'; stage.appendChild(d); return d; });
+  pics.forEach(function () { dots.appendChild(document.createElement("i")); });
+  var k = 0, n = els.length;
+  function lay() { els.forEach(function (e, i) { var o = (i - k + n) % n; e.className = "ph " + (o === 0 ? "c" : o === 1 ? "r" : o === n - 1 ? "l" : "h"); }); [].forEach.call(dots.children, function (d, i) { d.className = i === k ? "on" : ""; }); }
+  if (n) { lay(); setInterval(function () { if (!document.hidden) { k = (k + 1) % n; lay(); tick(); } }, 2800); }
+  // маленькие круглые превью в сжатой плашке меняются вместе с баннером
+  var minis = [document.getElementById("mini1"), document.getElementById("mini3")];
+  minis.forEach(function (m) { pics.forEach(function (u, i) { var im = document.createElement("img"); im.alt = ""; im.src = u; if (!i) im.className = "on"; m.appendChild(im); }); });
+  function tick() { minis.forEach(function (m) { [].forEach.call(m.children, function (im, i) { im.className = i === k ? "on" : ""; }); }); }
+  document.getElementById("th2").innerHTML = pics.slice(0, 3).map(function (u) { return '<span><img alt="" src="' + u + '"></span>'; }).join("");
+  // сетка
+  document.getElementById("grid").innerHTML = (N.length ? N : P).slice(0, 24).map(function (p) { return '<div class="card"><div class="im"><img loading="lazy" alt="" src="' + src(p) + '"></div><div class="b">GOLDEN GOOSE</div><div class="n">' + String(p.title).replace(/</g, "&lt;") + '</div><div class="p">' + (p.price && p.price.eu || "") + ' €</div></div>'; }).join("");
+  // прокрутка: баннер ушёл из вида — показываем сжатую плашку
+  var ban = document.getElementById("ban"), bar = document.getElementById("bar");
+  function onScroll() { var r = ban.getBoundingClientRect(), past = r.bottom < 60;
+    bar.classList.toggle("stuck", past); wrap.classList.toggle("past", past); document.body.classList.toggle("past", past); }
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+  var up = function () { scrollTo({ top: 0, behavior: "smooth" }); };
+  ["nw1", "nw2", "nw3"].forEach(function (id) { document.getElementById(id).onclick = up; });
+})();
+</script>
+</body>
+</html>
