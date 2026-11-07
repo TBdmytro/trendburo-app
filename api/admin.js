@@ -58,8 +58,8 @@ async function copyWebImages(store, list, id = "") {
   const ok = images.filter(u => /^https:\/\/cdn\.sanity\.io\//.test(u));
   return { images: ok.length ? ok : images, copied, srcOf };
 }
-const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer";
-let FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false;
+const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer, soldOld";
+let FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
 /** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
@@ -357,6 +357,14 @@ export default async function handler(req, res) {
           const del = L.filter(p => p.status !== "published").map(p => p._id), pub = L.filter(p => p.status === "published").map(p => p._id);
           if (del.length) await store.delMany(del); if (pub.length) await markWebGone(store, pub, { by: "система", pricingCfg });
           await store.put({ _id: "settings.fixLvSold1", _type: "settings", at: new Date().toISOString(), del: del.length, sold: pub.length }); PCACHE = null; console.log("FIXLVSOLD " + del.length + "/" + pub.length); } } catch (e) { FIXLVSOLD = false; console.log("FIXLVSOLD fail " + String(e.message).slice(0, 120)); } }
+        // один раз (новое правило): распроданные у LV сумки — новинка → «уточнить наличие» (остаётся на витрине); старая → «Распродано у бренда», с витрины в «Новые с сайтов»
+        if (!FIXLVSOLD2) { FIXLVSOLD2 = true; try { if (!(await store.get("settings.fixLvSold2"))) { const { saveOverrides } = await import("../lib/publish.js");
+          const L = (await store.list("product", {}, { limit: 20000, fields: "_id, status, sizes, sizeDebug, overrides, variants, offers" })).filter(p => p._id.startsWith("product.manual.de-") && /buy:wait/.test(String(p.sizeDebug || "")) && Object.values(p.offers?.[0]?.availability || {}).every(a => a.status === "out" || a.status === "ask"));
+          let nw = 0, old = 0; const ch = [];
+          for (const p of L) { const o = p.offers[0], av = Object.fromEntries(Object.keys(o.availability || {}).map(k => [k, { status: "ask", price: null }])); const isNew = p.overrides?.isNew === "on";
+            ch.push({ id: p._id, set: { offers: [{ ...o, availability: av, onlineOrder: false }], hasPre: true, soldOld: !isNew, ...(isNew ? {} : { status: "incoming" }) } }); isNew ? nw++ : old++; }
+          for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
+          await store.put({ _id: "settings.fixLvSold2", _type: "settings", at: new Date().toISOString(), nw, old }); PCACHE = null; console.log("FIXLVSOLD2 new " + nw + " old " + old); } } catch (e) { FIXLVSOLD2 = false; console.log("FIXLVSOLD2 fail " + String(e.message).slice(0, 120)); } }
         // один раз: Golden Goose — убрать со страниц подборки «co-creation» (фото не этого товара)
         if (!FIXGG) { FIXGG = true; try { if (!(await store.get("settings.fixGgImg3"))) { const { orderImages } = await import("../lib/imgorder.js");
           // 2: обложка — вид сбоку (кадр без номера), не плитка раздела; ваша обложка/порядок из админки — не трогаем
@@ -411,7 +419,7 @@ export default async function handler(req, res) {
         return send(res, 200, { total: list.length, incoming, offset, tabs: (srcDoc?.tabs || []).map(t => ({ ...t, n: secCounts[t.h] || 0 })), baseTotal: base.length,
           facets: { brands: facet(base.filter(p => !Q.cat || cat(p) === Q.cat), p => p.brand), cats: facet(base.filter(p => !Q.brand || p.brand === Q.brand), cat), sources: facet(all, p => (p.offers || [])[0]?.sourceId), genders: facet(base.filter(p => (!Q.brand || p.brand === Q.brand) && (!Q.cat || cat(p) === Q.cat)), gen) },
           shown: list.filter(p => p.status === "published").length,
-          products: page.map(p => ({ _id: p._id, g: genderOf(p), stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: p.overrides?.cover || (p.overrides?.imageOrder || [])[0] || (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null, newTill: p.overrides?.isNew === "on" && (!p.overrides?.newUntil || p.overrides.newUntil >= new Date().toISOString().slice(0, 10)) ? (p.overrides?.newUntil || "—") : null })) });
+          products: page.map(p => ({ _id: p._id, g: genderOf(p), stock: (p.overrides?.stock || p.stock)?.loc || null, brand: p.brand, title: p.overrides?.title || p.title, category: p.overrides?.category || p.category, status: p.status, cover: p.overrides?.cover || (p.overrides?.imageOrder || [])[0] || (p.images || [])[0]?.url || null, price: p.pricing, updatedAt: p.updatedAt, issues: p.issuesN ?? (p.issues || []).length, hidden: !!p.overrides?.hidden, source: (p.offers || [])[0]?.sourceId || null, avail: (p.offers || []).some(o => o.onlineOrder), pre: !!p.hasPre, gender: p.gender || null, sizes: sizeList(det.get(p._id) || p), createdAt: p.createdAt || null, soldOld: !!p.soldOld, newTill: p.overrides?.isNew === "on" && (!p.overrides?.newUntil || p.overrides.newUntil >= new Date().toISOString().slice(0, 10)) ? (p.overrides?.newUntil || "—") : null })) });
       }
       case "product": {
         const p = await store.get(req.query.id); if (!p) return send(res, 404, { error: "Не найден" });
@@ -487,7 +495,7 @@ export default async function handler(req, res) {
         // обложка как на плитке раздела бренда (один раз на товар)
         // Dior: на плитке раздела часто фото на модели — обложкой не ставим
         if (!/^product\.manual\.(dior|gucci|goldengoose)-/.test(id) && /^https:\/\/[^/]+\/[^&=]*(\?|$)/.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
-        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg, noStock: !!it.noStock, stockRead: !!it.stockRead }, { by: me.name, pricingCfg }));
+        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg, noStock: !!it.noStock, stockRead: !!it.stockRead, soldOld: !!it.soldOld }, { by: me.name, pricingCfg }));
       }
       case "fixBrands": {
         // выравнивание брендов и подразделов — отдельным запросом в фоне (админка не ждёт его, чтобы «Товары» открывались сразу)
@@ -735,7 +743,7 @@ export default async function handler(req, res) {
         // Такие товары сразу на витрине с отметкой «Новинка» (или в «Новых с сайтов», если так выбрано в админке). Первый прогон раздела — всё в «Новые с сайтов» на ваш отбор
         const novelty = await isNovelty(store, it.section);
         const arrivals = novelty ? ((await store.get("settings.newArrivals"))?.mode || "publish") : null;
-        const product = await saveManualProduct(store, { ...itEn, ...(/^product\.manual\.(dior|gucci|goldengoose)-/.test(id) ? { tileImg: "" } : {}), id, images, imageSrc: srcOf, imgVer: IMGV(id), availability: "online", status: novelty && arrivals === "publish" ? "published" : "incoming", isNew: !!it.isNew || novelty, boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
+        const product = await saveManualProduct(store, { ...itEn, ...(/^product\.manual\.(dior|gucci|goldengoose)-/.test(id) ? { tileImg: "" } : {}), id, images, imageSrc: srcOf, imgVer: IMGV(id), availability: "online", status: !it.soldOld && novelty && arrivals === "publish" ? "published" : "incoming", isNew: !!it.isNew || novelty, boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
         if (novelty) PCACHE = null;
         return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null, novelty, status: product.status });
       }
