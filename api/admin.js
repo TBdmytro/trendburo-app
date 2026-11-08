@@ -91,6 +91,13 @@ async function keySession(req, a, store) {
   return (d?.list || []).some(x => x.h === h) ? { name: "Кнопка", key: true } : null;
 }
 let FIXAT = 0; // приводить бренды/подразделы при открытии «Товаров» — не чаще раза в 30 минут (ночью — всегда, в cron)
+
+let COLLP = null, COLLP_AT = 0;
+async function collProds() {
+  if (COLLP && Date.now() - COLLP_AT < 120000) return COLLP;
+  const L = await store.list("product", {}, { limit: 60000, fields: "_id, status, webSections, images[0...1]{url}" });
+  COLLP = L.filter(p => (p.webSections || []).length); COLLP_AT = Date.now(); return COLLP;
+}
 export default async function handler(req, res) {
   const a = (req.query && req.query.a) || new URL(req.url, "http://x").searchParams.get("a");
   const body = typeof req.body === "string" ? safeJson(req.body) : (req.body || {});
@@ -663,7 +670,7 @@ export default async function handler(req, res) {
         if (Date.now() - COLLSCAN_AT > 10 * 60e3) { COLLSCAN_AT = Date.now(); try { const { upsertCollection, isCollection, collKey } = await import("../lib/collections.js"); const ws = (await store.get("settings.webSections"))?.list || {};
           for (const x of Object.values(ws)) { if (!x?.section || !isCollection(x.title, x.url || x.section)) continue; if (await store.get("collection." + collKey(x.section))) continue;
             await upsertCollection(store, { section: x.section, url: x.url, title: x.title || "", brand: "", found: x.found || 0 }); } } catch (e) { console.log("COLLSCAN " + String(e.message).slice(0, 100)); } }
-        const [colls, L] = await Promise.all([store.list("collection", {}, { limit: 500 }), store.list("product", {}, { limit: 60000, fields: "_id, status, webSections, images[0...1]{url}" })]);
+        const [colls, L] = await Promise.all([store.list("collection", {}, { limit: 500 }), collProds()]);
         const list = colls.map(c => { const mine = L.filter(p => (p.webSections || []).includes(c.section)); return { ...c, n: mine.length, live: mine.filter(p => p.status === "published").length, newN: 0, cover: c.cover || mine.map(p => p.images?.[0]?.url).find(Boolean) || null }; })
           .sort((a, b) => (b.pinned - a.pinned) || String(b.createdAt).localeCompare(String(a.createdAt)));
         return send(res, 200, { list });
