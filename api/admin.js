@@ -59,7 +59,7 @@ async function copyWebImages(store, list, id = "") {
   return { images: ok.length ? ok : images, copied, srcOf };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer, soldOld";
-let FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false;
+let FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
 /** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
@@ -659,10 +659,10 @@ export default async function handler(req, res) {
       case "collList": {
         // коллекции брендов: список с числом вещей (всего и на витрине)
         // уже пройденные разделы, которые оказались коллекциями (новые правила узнавания: «Dior Alps» и т.п.), — заводим коллекцию
-        try { const { upsertCollection, isCollection, collKey } = await import("../lib/collections.js"); const ws = (await store.get("settings.webSections"))?.list || {};
+        // (не чаще раза в 10 минут; бренд — по адресу сайта, без перебора всех товаров: раньше список коллекций открывался 4–5 с)
+        if (Date.now() - COLLSCAN_AT > 10 * 60e3) { COLLSCAN_AT = Date.now(); try { const { upsertCollection, isCollection, collKey } = await import("../lib/collections.js"); const ws = (await store.get("settings.webSections"))?.list || {};
           for (const x of Object.values(ws)) { if (!x?.section || !isCollection(x.title, x.url || x.section)) continue; if (await store.get("collection." + collKey(x.section))) continue;
-            const any = (await store.list("product", {}, { limit: 60000, fields: "_id, brand, webSections" })).find(p => (p.webSections || []).includes(x.section));
-            await upsertCollection(store, { section: x.section, url: x.url, title: x.title || "", brand: any?.brand || "", found: x.found || 0 }); } } catch (e) { console.log("COLLSCAN " + String(e.message).slice(0, 100)); }
+            await upsertCollection(store, { section: x.section, url: x.url, title: x.title || "", brand: "", found: x.found || 0 }); } } catch (e) { console.log("COLLSCAN " + String(e.message).slice(0, 100)); } }
         const [colls, L] = await Promise.all([store.list("collection", {}, { limit: 500 }), store.list("product", {}, { limit: 60000, fields: "_id, status, webSections, images[0...1]{url}" })]);
         const list = colls.map(c => { const mine = L.filter(p => (p.webSections || []).includes(c.section)); return { ...c, n: mine.length, live: mine.filter(p => p.status === "published").length, newN: 0, cover: c.cover || mine.map(p => p.images?.[0]?.url).find(Boolean) || null }; })
           .sort((a, b) => (b.pinned - a.pinned) || String(b.createdAt).localeCompare(String(a.createdAt)));

@@ -1371,7 +1371,15 @@ function itemCard(i, sel) {
 }
 
 /* ---------- Товары: все поставщики, фильтры, переключатель «на витрине» ---------- */
-const thumb = u => !u ? "" : /cdn\.shopify\.com/.test(u) ? u + (u.includes("?") ? "&" : "?") + "width=500" : u;
+// превью в админке — маленькие (раньше грузились фото 1200–2400 px: сотни карточек тормозили админку)
+const thumb = u => { if (!u) return ""; u = String(u);
+  if (/cdn\.shopify\.com/.test(u)) return u + (u.includes("?") ? "&" : "?") + "width=500";
+  if (/^https:\/\/cdn\.sanity\.io\/images\//.test(u)) return u + (u.includes("?") ? "&" : "?") + "w=500&auto=format";
+  if (/louisvuitton\.com\/images\//.test(u)) return /wid=\d+/.test(u) ? u.replace(/wid=\d+/, "wid=490").replace(/hei=\d+/, "hei=490") : u + (u.includes("?") ? "&" : "?") + "wid=490&hei=490";
+  if (/^https:\/\/media\.gucci\.com\/style\//.test(u)) return u.replace(/(\/style\/)[^/]+\//, "$1DarkGray_Center_0_0_490x490/");
+  if (/assets\.christiandior\.com/.test(u)) return u.replace(/wid=\d+/, "wid=500").replace(/hei=\d+/, "hei=625");
+  if (/static\d?\.goldengoose\.com/.test(u)) return u.split("?")[0] + "?im=Resize=(500)";
+  return u; };
 /* ---------- Поставщики, подключённые по ссылке ---------- */
 async function connectSupplier(preUrl) {
   const d = sheet("Подключить сайт поставщика", `<div class="form">
