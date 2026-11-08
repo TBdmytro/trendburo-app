@@ -27,6 +27,11 @@ html.pvtop .tglogo i::before{background:conic-gradient(from 0deg,rgba(255,255,25
 .tglogo i::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#1f2125 0 18%,transparent 18% 50%,#1f2125 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 16.5px,#000 17px);mask:radial-gradient(circle,transparent 16.5px,#000 17px);will-change:transform;animation:tgspin 6s linear infinite}
 @keyframes tgspin{to{transform:rotate(360deg)}}
 html.nologo .tglogo{opacity:0}
+/* приложение свёрнуто — вместо витрины логотип (в списке открытых приложений и при переключении) */
+.privcover{position:fixed;inset:0;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(120% 90% at 30% 15%,#45484e 0%,#26282c 52%,#141517 100%);color:#fff;transition:opacity .35s ease}
+.privcover.on{display:flex}.privcover.fade{opacity:0}
+.privcover i{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;border:1.5px solid rgba(255,255,255,.35);font:400 30px/1 "Prata",Georgia,serif;font-style:normal}
+.privcover b{font:400 26px/1 "Prata",Georgia,serif;letter-spacing:.01em;font-weight:400}
 .splash{position:fixed;inset:0;z-index:500;background:radial-gradient(120% 90% at 30% 15%,#45484e 0%,#26282c 52%,#141517 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;overflow:hidden;color:#fff}
 .splash::before{content:"";position:absolute;width:140vmax;height:140vmax;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.07) 0,rgba(255,255,255,0) 40%);animation:spglow 2.8s ease-out both}
 .sp-logo{position:relative;width:132px;height:132px;display:grid;place-items:center;animation:sppop 1s cubic-bezier(.22,1,.36,1) both}
@@ -4166,6 +4171,10 @@ async function syncOrders(){if(!LIVE)return null;try{const r=await fetch("/api/l
 
 /* ===== Запуск: живой каталог из /api/catalog; демо-данные только с ?demo=1 ===== */
 const LIVE=!/[?&]demo=1/.test(location.search);
+(function(){const c=document.createElement("div");c.className="privcover";c.setAttribute("aria-hidden","true");c.innerHTML="<i>TB</i><b>Trend Büro</b>";document.body.append(c);let t=0;
+  const on=()=>{clearTimeout(t);c.classList.remove("fade");c.classList.add("on")},off=()=>{if(!c.classList.contains("on"))return;c.classList.add("fade");clearTimeout(t);t=setTimeout(()=>c.classList.remove("on","fade"),360)};
+  document.addEventListener("visibilitychange",()=>document.hidden?on():off());addEventListener("pagehide",on);addEventListener("pageshow",off);
+  try{if(TGW&&TGW.onEvent){TGW.onEvent("deactivated",on);TGW.onEvent("activated",off)}}catch(e){}})();
 /* ===== Сотрудник Trend Büro: подборка для клиента =====
    роль даёт админка (Клиенты → «Сделать сотрудником»). В карточке товара — «+», внизу — «Подборка · N» → ссылка в чат клиента. */
 const isStaff=()=>{try{return !!(ME&&ME.staff)}catch(e){return false}};
