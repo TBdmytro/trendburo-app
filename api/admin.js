@@ -549,7 +549,8 @@ export default async function handler(req, res) {
         // товары этого раздела у нас (артикул + ссылка): кнопка перепроверит по странице те, что не видны в разделе, — прежде чем считать «продано»
         const px = "product.manual." + String(req.query.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-", section = String(req.query.section || "").slice(0, 200);
         if (px.length < 18 || !section) return send(res, 400, { error: "Нет раздела" });
-        const list = (await allProducts(store)).filter(p => p._id.startsWith(px) && (p.webSections || []).includes(section) && p.sourceUrl).slice(0, 3000).map(p => ({ code: p._id.slice(px.length).toUpperCase(), url: p.sourceUrl }));
+        const { secBase } = await import("../lib/collections.js"), sb = secBase(section); // Prada / Miu Miu: …/page/2, …/page/3 — один и тот же раздел
+        const list = (await allProducts(store)).filter(p => p._id.startsWith(px) && (p.webSections || []).some(x => secBase(x) === sb) && p.sourceUrl).slice(0, 3000).map(p => ({ code: p._id.slice(px.length).toUpperCase(), url: p.sourceUrl }));
         return send(res, 200, { list });
       }
       case "sectionSync": {
