@@ -2302,6 +2302,7 @@ window.addEventListener("message", async e => {
     try { e.source.postMessage({ type: "tb-known", status, fresh }, e.origin); } catch {}
     return;
   }
+  if (e.data.type === "tb-progress") { api("webProgress", { method: "POST", silent: true, body: { p: e.data } }).catch(() => {}); return; }
   if (e.data.type === "tb-summary") { mtSummary = e.data; mtQueue = mtQueue.then(() => { toast(`Новых: ${e.data.added} · уже были: ${e.data.had}${e.data.left ? ` · ещё новых: ${e.data.left} — нажмите кнопку ещё раз` : ""}${e.data.rej ? ` · ${e.data.rej} не взято: вы их удаляли раньше — вернуть можно в «Сайтах брендов»` : ""}`); if (view === "screens") vScreens(); else if (view === "import") vImport(); }); return; }
   if (e.data.type === "tb-mark-new") { // уже были, но стоят в «Новинках» сайта — отмечаем новинками
     const hk = mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, ""));

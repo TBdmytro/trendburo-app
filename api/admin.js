@@ -308,6 +308,15 @@ export default async function handler(req, res) {
         return send(res, 200, { ids });
       }
 
+      case "webProgress": {
+        // ход прогона кнопки (где стоит, сколько нашла и проверила) — последние 30 отметок по сайтам; читается в диагностике
+        if (req.method === "GET") return send(res, 200, (await store.get("settings.webProgress")) || { list: [] });
+        const p = body.p && typeof body.p === "object" ? body.p : null; if (!p) return send(res, 400, { error: "Нет данных" });
+        const clean = Object.fromEntries(Object.entries(p).filter(([k, v]) => /^[a-zA-Z]{1,12}$/.test(k) && (typeof v === "number" || (typeof v === "string" && v.length <= 160))));
+        const d = (await store.get("settings.webProgress")) || { _id: "settings.webProgress", _type: "settings", list: [] };
+        d.list = [{ ...clean, at: new Date().toISOString() }, ...(d.list || [])].slice(0, 30); delete d._rev; delete d._createdAt; delete d._updatedAt;
+        await store.put(d); return send(res, 200, { ok: true });
+      }
       case "knownProducts": {
         // какие товары с этого сайта уже есть (на витрине или скрыты) — кнопка «В Trend Büro» их не берёт повторно
         const px = "product.manual." + String(req.query.prefix || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) + "-";
