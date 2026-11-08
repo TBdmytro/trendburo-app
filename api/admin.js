@@ -383,11 +383,11 @@ export default async function handler(req, res) {
           await store.put({ _id: "settings.fixLvSold2", _type: "settings", at: new Date().toISOString(), nw, old }); PCACHE = null; console.log("FIXLVSOLD2 new " + nw + " old " + old); } } catch (e) { FIXLVSOLD2 = false; console.log("FIXLVSOLD2 fail " + String(e.message).slice(0, 120)); } }
         // один раз: Golden Goose — убрать со страниц подборки «co-creation» (фото не этого товара)
         // один раз: Miu Miu — обложка не фото на модели: товар спереди первым, «на модели» в конце; ваш порядок и обложку не трогаем
-        if (!FIXMIU) { FIXMIU = true; try { if (!(await store.get("settings.fixMiuImg2"))) { const { orderImages } = await import("../lib/imgorder.js");
+        if (!FIXMIU) { FIXMIU = true; try { if (!(await store.get("settings.fixMiuImg3"))) { const { orderImages } = await import("../lib/imgorder.js");
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides" })).filter(p => /^product\.manual\.(miumiu|prada)-/.test(p._id) && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
           const ch = []; for (const p of L) { const im = p.images || [], src = i => i.sourceUrl || i.url, ord = orderImages(im.map(src), { max: 12 }); if (ord.length && ord.join("|") !== im.map(src).join("|")) ch.push({ id: p._id, set: { images: ord.map(u => im.find(i => src(i) === u)), coverFrom: null, coverTile: null } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
-          await store.put({ _id: "settings.fixMiuImg2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXMIU " + ch.length); } } catch (e) { FIXMIU = false; console.log("FIXMIU fail " + String(e.message).slice(0, 120)); } }
+          await store.put({ _id: "settings.fixMiuImg3", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXMIU " + ch.length); } } catch (e) { FIXMIU = false; console.log("FIXMIU fail " + String(e.message).slice(0, 120)); } }
         if (!FIXGG) { FIXGG = true; try { if (!(await store.get("settings.fixGgImg3"))) { const { orderImages } = await import("../lib/imgorder.js");
           // 2: обложка — вид сбоку (кадр без номера), не плитка раздела; ваша обложка/порядок из админки — не трогаем
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides" })).filter(p => p._id.startsWith("product.manual.goldengoose-") && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
