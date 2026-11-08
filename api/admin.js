@@ -669,7 +669,7 @@ export default async function handler(req, res) {
         if (err) console.log("TRPENDING stop " + JSON.stringify({ done, err }));
         return send(res, 200, { done, left: L.length - done, limited: /429/.test(err || ""), err });
       }
-      case "collList": {
+      case "collList": { const { inColl } = await import("../lib/collections.js");
         // коллекции брендов: список с числом вещей (всего и на витрине)
         // уже пройденные разделы, которые оказались коллекциями (новые правила узнавания: «Dior Alps» и т.п.), — заводим коллекцию
         // (не чаще раза в 10 минут; бренд — по адресу сайта, без перебора всех товаров: раньше список коллекций открывался 4–5 с)
@@ -677,7 +677,7 @@ export default async function handler(req, res) {
           for (const x of Object.values(ws)) { if (!x?.section || !isCollection(x.title, x.url || x.section)) continue; if (await store.get("collection." + collKey(x.section))) continue;
             await upsertCollection(store, { section: x.section, url: x.url, title: x.title || "", brand: "", found: x.found || 0 }); } } catch (e) { console.log("COLLSCAN " + String(e.message).slice(0, 100)); } }
         const [colls, L] = await Promise.all([store.list("collection", {}, { limit: 500 }), collProds(store)]);
-        const list = colls.map(c => { const mine = L.filter(p => (p.webSections || []).includes(c.section)); return { ...c, n: mine.length, live: mine.filter(p => p.status === "published").length, newN: 0, cover: c.cover || mine.map(p => p.images?.[0]?.url).find(Boolean) || null }; })
+        const list = colls.map(c => { const mine = L.filter(p => inColl(p, c)); return { ...c, n: mine.length, live: mine.filter(p => p.status === "published").length, newN: 0, cover: c.cover || mine.map(p => p.images?.[0]?.url).find(Boolean) || null }; })
           .sort((a, b) => (b.pinned - a.pinned) || String(b.createdAt).localeCompare(String(a.createdAt)));
         return send(res, 200, { list });
       }
