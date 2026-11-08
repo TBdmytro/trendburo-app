@@ -2212,7 +2212,7 @@ function openOptixApp(ev){if(OXA)return;const locked=!/[?&]demo=1/.test(location
   w.innerHTML=`<iframe title="OPTIX"></iframe>${TGW?"":'<button class="oxa-x" aria-label="Вернуться в Trend Büro"><i>TB</i>Trend Büro</button>'}`;
   OXA=w;const fr=w.querySelector("iframe");let ready=false,shown=false;
   document.body.append(w); // грузится сразу, но невидимо — пока играет синий круг
-  const show=()=>{if(shown||!OXA)return;shown=true;requestAnimationFrame(()=>{w.classList.add("in");syncFlags();if(locked)setTimeout(()=>{if(OXA===w)optixGate()},350)})}; // закрыт — сначала загрузка OPTIX, на готовой странице — матовое стекло с заявкой
+  const show=()=>{if(shown||!OXA)return;shown=true;requestAnimationFrame(()=>{w.classList.add("in");syncFlags()});if(locked)setTimeout(()=>{if(OXA===w)optixGate()},450)}; // закрыт — сначала загрузка OPTIX, на готовой странице — матовое стекло с заявкой
   fr.addEventListener("load",()=>{ready=true;try{const d=fr.contentDocument,bg=getComputedStyle(d.body).backgroundColor;if(bg&&!/rgba\(0, 0, 0, 0\)|transparent/.test(bg))w.style.setProperty("--oxbg",bg)}catch(e){}});
   optixDoc().then(t=>{fr.srcdoc=t}).catch(()=>{fr.src=OPTIX_LINK});
   const x=w.querySelector(".oxa-x");if(x)x.onclick=closeOptixApp;
