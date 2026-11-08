@@ -2761,7 +2761,7 @@ function cvWire(root,sel,{cat="",onSel}={}){
   root.addEventListener("click",e=>{
     const ck=e.target.closest("[data-cvck]");if(ck){e.stopPropagation();const bk=ck.dataset.cvck;sel.has(bk)?sel.delete(bk):sel.add(bk);cvHaptic();
       root.querySelectorAll(`[data-cvb="${CSS.escape(bk)}"]`).forEach(t=>{t.classList.toggle("on",sel.has(bk));const c=t.querySelector(".ck");if(c)c.setAttribute("aria-pressed",sel.has(bk))});onSel&&onSel();return}
-    const t=e.target.closest("[data-cvb]");if(t){cvGo({brands:[t.dataset.cvb],cat,title:(cat?CATS[cat]+" · ":"")+cvName(t.dataset.cvb)});return}
+    const t=e.target.closest("[data-cvb]");if(t){if(!cat){openBrand(t.dataset.cvb);return} /* весь бренд — страница бренда: баннер «Новинки», бестселлеры, коллекции */ cvGo({brands:[t.dataset.cvb],cat,title:(cat?CATS[cat]+" · ":"")+cvName(t.dataset.cvb)});return}
     if(e.target.closest("[data-cvrs]")){sel.clear();root.querySelectorAll(".cvt.on").forEach(t=>{t.classList.remove("on");const c=t.querySelector(".ck");if(c)c.setAttribute("aria-pressed","false")});onSel&&onSel();return}
     if(e.target.closest("[data-cvgo]")&&sel.size){cvGo({brands:[...sel],cat,title:cvTitle(sel,cat)})}
   })}
@@ -2970,6 +2970,7 @@ function renderFeedFollow(){const box=$("#followRail");if(!box)return;// «Ва�
 function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bname(bk);
   const st={cats:new Set(),subs:{},g:"all",sort:"pop"};{const bg=all.filter(p=>p.cat==="bags"&&p._sub===undefined);if(bg.length)bagModels(all.filter(p=>p.cat==="bags"));const gs=all.filter(p=>p.cat==="shoes"&&/golden ?goose/i.test(p.brand||"")&&p._sub===undefined);if(gs.length)ggLines(gs)}const lead=all.slice().sort((a,b)=>b.isNew-a.isNew)[0];
   const cats=[...new Set(all.map(p=>p.cat))],gs=[...new Set(all.map(p=>p.g))];
+  if(gs.length>1&&(CV.g==="w"||CV.g==="m")&&all.some(p=>p.g===CV.g))st.g=CV.g; // зашли из «Для неё»/«Для него» — сразу эта половина бренда
   const nwAll=all.filter(p=>p.isNew),nwN=nwAll.length,nwPic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.src||i.thumb))||String(p.shape).replace(/^img:/,"")},nwPics=nwAll.slice().sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,6).map(nwPic).filter(u=>/^https?:/.test(u));st.nw=false;
   const s=push(bn,`<div class="bhero" style="--c:${lead.c}"><span class="mono" aria-hidden="true">${esc(initials(bn))}</span>
      <span class="cap">${BRAND_META[bk]||""}</span><h1>${esc(bn)}</h1>
