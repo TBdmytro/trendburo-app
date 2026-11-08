@@ -19,6 +19,9 @@ let BOT = null; // имя бота кэшируем на время жизни �
 export default async function handler(req, res) {
   try {
     if (req.method === "GET") {
+      // подборка от менеджера: по ссылке клиент видит выбранные вещи
+      const selId = new URL(req.url, "http://x").searchParams.get("sel");
+      if (selId) { if (!/^[a-z0-9]{10}$/.test(selId)) return send(res, 404, { error: "Подборка не найдена" }); const d = await getStore().get("selection." + selId); return d ? send(res, 200, { ids: d.ids || [], note: d.note || "", by: d.byName || "Trend Büro", at: d.at }) : send(res, 404, { error: "Подборка не найдена" }); }
       const ready = !!process.env.TELEGRAM_BOT_TOKEN || process.env.DEV_AUTH === "1";
       if (ready && !BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch { BOT = null; } }
       return send(res, 200, { ready, bot: BOT });
@@ -50,12 +53,22 @@ export default async function handler(req, res) {
       c = await store.put(c);
     } else if (body.a === "save") c = await saveProfile(store, user, body.profile || {});
     else c = await touchCustomer(store, user);
+    if (body.a === "sel") { // сотрудник (роль из админки) сохраняет подборку для клиента → ссылка
+      if (!c.staff) return send(res, 403, { error: "Только для сотрудников Trend Büro" });
+      const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String).filter(x => /^[\w.:-]{3,80}$/.test(x)))].slice(0, 40);
+      if (!ids.length) return send(res, 400, { error: "Подборка пустая" });
+      const { randomBytes } = await import("node:crypto"); const id = randomBytes(8).toString("hex").replace(/[^a-z0-9]/g, "").slice(0, 10).padEnd(10, "0");
+      await store.put({ _id: "selection." + id, _type: "selection", ids, note: String(body.note || "").replace(/\s+/g, " ").trim().slice(0, 300), by: String(user.id), byName: c.profile?.name || user.name || "Trend Büro", at: new Date().toISOString() });
+      if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
+      const site = "https://" + (req.headers["x-forwarded-host"] || req.headers.host || "trendburo-app.vercel.app");
+      return send(res, 200, { id, link: BOT ? `https://t.me/${BOT}?startapp=sel_${id}` : `${site}/?sel=${id}`, web: `${site}/?sel=${id}` });
+    }
     if (body.a === "optix") { const st = await optixRequest(store, c); return send(res, 200, { optix: st }); } // заявка на доступ к OPTIX
     const acc = await accessSettings(store), access = accessOf(c, acc);
     if (access === "pending") await notifyRequest(store, c).catch(() => {});
-    if (access !== "ok") return send(res, 200, { user: pub, profile: c.profile, orders: [], since: c.registeredAt || c.createdAt || null, closed: acc.closed, access, optix: optixOf(c) });
+    if (access !== "ok") return send(res, 200, { user: pub, profile: c.profile, orders: [], since: c.registeredAt || c.createdAt || null, closed: acc.closed, access, optix: optixOf(c), staff: !!c.staff });
     const orders = await ordersFor(store, user.id, body.client);
-    return send(res, 200, { closed: acc.closed, access, optix: optixOf(c), user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null });
+    return send(res, 200, { closed: acc.closed, access, optix: c.staff ? "ok" : optixOf(c), staff: !!c.staff, user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null });
   } catch (e) {
     console.error("me:", e.message);
     return send(res, 500, { error: "Не удалось загрузить кабинет" });

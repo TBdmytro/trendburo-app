@@ -12,6 +12,7 @@ html,body{overscroll-behavior:none}
 *{touch-action:pan-x pan-y}
 body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+img{-webkit-user-drag:none;user-drag:none}
 img{-webkit-user-drag:none}
 /* ===== Telegram: полный экран, безопасные отступы, заставка ===== */
 :root{--st:max(env(safe-area-inset-top,0px),var(--tgst,0px));--sb:max(env(safe-area-inset-bottom,0px),var(--tgsb,0px))}
@@ -1503,6 +1504,11 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 @media (prefers-reduced-motion:reduce){.nwph,.nwmini img{transition:none!important}}
 .bsticky select{width:auto;padding:8px 12px;font-size:13.5px;border-radius:10px;margin-left:auto}
 
+/* подборка сотрудника */
+.selbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + var(--sb));z-index:40;display:flex;align-items:center;gap:10px;border:0;border-radius:99px;padding:10px 12px 10px 18px;background:var(--ink-grad);color:#fff;font:600 14px var(--f);box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.selbar b{background:#fff;color:var(--fg);border-radius:99px;min-width:26px;height:26px;display:grid;place-items:center;font-size:13px;padding:0 6px}
+.pushed .selbar,.foot~.selbar{bottom:calc(96px + var(--sb))}
+.fv.selp[aria-pressed="true"]{background:#fff;color:var(--fg)}.fv.selp svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 /* OPTIX закрыт: матовое стекло и заявка */
 .oxg{position:fixed;inset:0;z-index:600;display:grid;place-items:center;padding:24px;background:rgba(240,244,248,.28);-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2);opacity:0;transition:opacity .26s ease}
 .oxg.in{opacity:1}
@@ -2561,7 +2567,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
    ${r?"":`<button class="pv-how press" type="button" data-how><span class="ic"><svg viewBox="0 0 24 24">${IC.shield}</svg></span><span><b>Как мы работаем</b><small>Поиск, выкуп, проверка, отправка</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`}
    <div class="ondark" id="pvlike"></div>
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
-    foot:`<div class="foot dark glass"><button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
+    foot:`<div class="foot dark glass">${isStaff()?`<button class="fv selp" data-selp aria-label="В подборку для клиента" aria-pressed="${SEL.has(it.id)}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`:""}<button class="fv" data-favp aria-label="В избранное" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
   // остальные фото карточки грузим, когда она уже выехала: иначе iPhone раскодирует все снимки разом и анимация замирает
   setTimeout(()=>{if(!s.isConnected)return;s.querySelectorAll("#pvg img[data-src]").forEach(im=>{im.setAttribute("style",im.dataset.style||"");im.src=im.dataset.src;im.removeAttribute("data-src")})},620);
   // «Похожие» дорисовываем после того, как карточка выехала — открытие без пауз
@@ -2609,6 +2615,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   const szSheet=()=>{const sh=openSheet("Размер",`<div class="szg">${sizes.map(z=>szOut.has(z)?`<button class="na" disabled aria-label="${z} — нет в наличии">${z}</button>`:szAsk.has(z)?`<button class="so" data-pz="${z}" aria-pressed="${size===z}" aria-label="${z} — распродан онлайн, уточним в бутике">${z}</button>`:`<button data-pz="${z}" aria-pressed="${size===z}">${z}</button>`).join("")}<button class="q" data-pz="?" aria-pressed="${size==="?"}">Подобрать</button></div>${szAsk.size?`<p class="szn"><s>${[...szAsk][0]}</s> — распродан онлайн у бренда. Можно выбрать: менеджер уточнит наличие в бутиках</p>`:""}`);
     sh.querySelectorAll("[data-pz]").forEach(b=>b.onclick=()=>{size=b.dataset.pz;resetBtn();draw();setTimeout(()=>closeSheet(),120);sh.querySelectorAll("[data-pz]").forEach(x=>x.setAttribute("aria-pressed",x===b))})};
   const ob=s.querySelector("[data-order]"),fb=s.querySelector("[data-favp]");
+  {const sp=s.querySelector("[data-selp]");if(sp)sp.onclick=()=>{selToggle(it.id);sp.setAttribute("aria-pressed",SEL.has(it.id))}}
   const setLbl=t=>{const l=ob.querySelector(".bl");if(!l){ob.textContent=t;return}ob.classList.add("swap");setTimeout(()=>{l.textContent=t;ob.classList.remove("swap")},180)};
   const resetBtn=()=>{if(!r){delete ob.dataset.added;setLbl(btnLabel())}};
   fb.onclick=()=>{toggleFav(it.id);fb.setAttribute("aria-pressed",favs.has(it.id))};
@@ -3538,7 +3545,7 @@ const DEV_AUTH=()=>/^(localhost|127\.0\.0\.1)$/.test(location.hostname)&&/[?&]de
 const authBody=()=>{const b={client:CLIENT};if(TGW&&TGW.initData)b.initData=TGW.initData;else if(DEV_AUTH())b.initData="dev:42:Дмитрий";else{const l=store.get("tb_login",null);if(l&&l.sess&&l.exp>Date.now())b.sess=l.sess;else if(l&&l.hash&&Date.now()/1000-l.auth_date<29*864e2)b.login=l;else return null}return b};
 async function meCall(extra){const b=authBody();if(!b||!LIVE)return{error:"Нет входа",code:"no_auth"};
   try{const r=await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...b,...(extra||{})})});const j=await r.json().catch(()=>({}));return r.ok?j:{error:j.error||"Ошибка "+r.status,code:j.code||String(r.status)}}catch(e){return{error:"Нет связи с сервером",code:"net"}}}
-async function loadMe(extra){const j=await meCall(extra);if(j.error){ME_ERR=j;return null}ME=j;ME_ERR=null;renderTopIcons();return ME}
+async function loadMe(extra){const j=await meCall(extra);if(j.error){ME_ERR=j;return null}ME=j;ME_ERR=null;renderTopIcons();try{selBar()}catch(e){}return ME}
 const meInitials=n=>String(n||"TB").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
 const avatarHTML=(u,cls="")=>u&&u.photo?`<img class="${cls}" src="${esc(u.photo)}" alt="" referrerpolicy="no-referrer">`:`<span class="${cls} ini">${esc(meInitials(u&&u.name))}</span>`;
 const I_TG='<svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><path d="M9 13l8-6"/></svg>';
@@ -4159,6 +4166,43 @@ async function syncOrders(){if(!LIVE)return null;try{const r=await fetch("/api/l
 
 /* ===== Запуск: живой каталог из /api/catalog; демо-данные только с ?demo=1 ===== */
 const LIVE=!/[?&]demo=1/.test(location.search);
+/* ===== Сотрудник Trend Büro: подборка для клиента =====
+   роль даёт админка (Клиенты → «Сделать сотрудником»). В карточке товара — «+», внизу — «Подборка · N» → ссылка в чат клиента. */
+const isStaff=()=>{try{return !!(ME&&ME.staff)}catch(e){return false}};
+const SEL=new Set((()=>{try{return JSON.parse(localStorage.getItem("tb_sel")||"[]")}catch(e){return[]}})());
+function selSave(){try{localStorage.setItem("tb_sel",JSON.stringify([...SEL]))}catch(e){}selBar()}
+function selToggle(id){SEL.has(id)?SEL.delete(id):SEL.add(id);selSave();try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(e){}toast(SEL.has(id)?"Добавлено в подборку · "+SEL.size:"Убрано из подборки")}
+function selBar(){let b=document.getElementById("selbar");if(!isStaff()||!SEL.size){if(b)b.remove();return}
+  if(!b){b=document.createElement("button");b.id="selbar";b.className="selbar press";b.onclick=selSheet;document.body.append(b)}
+  b.innerHTML=`<span>Подборка для клиента</span><b class="num">${SEL.size}</b>`}
+function selSheet(){const items=[...SEL].map(findItem).filter(Boolean);
+  openSheet("Подборка для клиента",`<div class="selist">${items.map(p=>`<div class="cartrow"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div class="tx"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span><span class="p num">${eur(priceFor(p,"ua"))}</span></div><button class="rm" data-selrm="${esc(p.id)}" aria-label="Убрать">×</button></div>`).join("")||'<p class="muted">Пусто</p>'}</div>
+    <label class="gt-f" style="margin-top:12px"><span>Комментарий клиенту <small>· по желанию</small></span><textarea id="selNote" rows="2" maxlength="300" placeholder="Например: подобрала сумки до 3000 €, как вы просили"></textarea></label>`,
+    `<button class="btn soft" data-selclr>Очистить</button><button class="btn" data-selgo style="flex:1">Отправить клиенту</button>`);
+  const sh=sheetEl;sh.querySelectorAll("[data-selrm]").forEach(x=>x.onclick=()=>{SEL.delete(x.dataset.selrm);selSave();SEL.size?selSheet():closeSheet()});
+  sh.querySelector("[data-selclr]").onclick=()=>{SEL.clear();selSave();closeSheet()};
+  sh.querySelector("[data-selgo]").onclick=async e=>{const bt=e.currentTarget;bt.disabled=true;bt.textContent="Готовим ссылку…";const note=sh.querySelector("#selNote").value.trim();
+    const r=await meCall({a:"sel",ids:[...SEL],note});if(!r||!r.link){bt.disabled=false;bt.textContent="Отправить клиенту";return toast(r&&r.error||"Не получилось")}
+    const txt=(note?note+"\n\n":"")+"Подборка Trend Büro для вас — "+SEL.size+" "+plural(SEL.size,["вещь","вещи","вещей"]);
+    const share="https://t.me/share/url?url="+encodeURIComponent(r.link)+"&text="+encodeURIComponent(txt);
+    try{navigator.clipboard&&navigator.clipboard.writeText(r.link)}catch(x){}
+    SEL.clear();selSave();closeSheet();toast("Ссылка готова — выберите чат клиента");
+    try{if(TGW&&TGW.openTelegramLink){TGW.openTelegramLink(share);return}}catch(x){}open(share,"_blank")}}
+/* клиент открыл ссылку подборки: t.me/<бот>?startapp=sel_… или сайт ?sel=… */
+async function selOpenFromLink(){let id="";try{const sp=(TGW&&TGW.initDataUnsafe&&TGW.initDataUnsafe.start_param)||new URLSearchParams(location.search).get("tgWebAppStartParam")||"";if(/^sel_[a-z0-9]{10}$/.test(sp))id=sp.slice(4)}catch(e){}
+  if(!id){const q=new URLSearchParams(location.search).get("sel");if(/^[a-z0-9]{10}$/.test(q||""))id=q}
+  if(!id)return;let d=null;try{const r=await fetch("/api/me?sel="+id,{cache:"no-store"});if(r.ok)d=await r.json()}catch(e){}
+  if(!d)return toast("Подборка не найдена");
+  for(let i=0;i<60&&!(typeof P!=="undefined"&&P.length);i++)await new Promise(r=>setTimeout(r,500));
+  const list=d.ids.map(findItem).filter(Boolean);if(!list.length)return toast("Вещи из подборки уже недоступны");
+  push("Подборка",`<div class="bigtitle" style="padding-top:12px"><div><div class="sub">от ${esc(d.by)} · Trend Büro</div><h1>Подборка для вас</h1></div></div>${d.note?`<div class="pad"><div class="group" style="padding:14px 16px;font-size:15px;line-height:1.45">${esc(d.note)}</div></div>`:""}<div class="grid2 cgrid" style="margin-top:14px">${list.map(pcHTML).join("")}</div><div style="height:90px"></div>`)}
+setTimeout(()=>{selOpenFromLink();selBar()},1500);
+// защита витрины: без меню «сохранить фото», без перетаскивания и копирования (кроме полей ввода)
+(function(){const ed=t=>t&&t.closest&&t.closest("input,textarea,[contenteditable]");
+  document.addEventListener("contextmenu",e=>{if(!ed(e.target))e.preventDefault()});
+  document.addEventListener("dragstart",e=>{if(e.target&&e.target.tagName==="IMG")e.preventDefault()});
+  document.addEventListener("copy",e=>{if(!ed(e.target)&&!ed(document.activeElement))e.preventDefault()});
+  document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&/^[sp]$/i.test(e.key))e.preventDefault()})})();
 // адрес фото нужной ширины (как lib/images.js sized): CDN сам отдаёт уменьшенную копию
 const szU=(u,w)=>!u?u:/^https:\/\/media\.gucci\.com\/style\/[^/]+\//.test(u)?u.replace(/(\/style\/)[^/]+\//,"$1DarkGray_Center_0_0_"+(W=>W+"x"+W)(w<=500?490:w<=1300?1200:2400)+"/"):/louisvuitton\.com\/images\/.*[?&]wid=\d+/.test(u)?(W=>u.replace(/([?&])wid=\d+/,"$1wid="+W).replace(/([?&])hei=\d+/,"$1hei="+W))(w<=500?490:w<=1300?1300:2400):/cdn\.sanity\.io\/images\//.test(u)?`${u}${u.includes("?")?"&":"?"}w=${w}&fit=max&auto=format&q=82`:/cdn\.shopify\.com\/|\/cdn\/shop\//.test(u)?(w>=1600?u.replace(/[?&]width=\d+/,""):`${u.replace(/[?&]width=\d+/,"")}${u.includes("?")&&!/\?width=\d+$/.test(u)?"&":"?"}width=${w}`):u;
 const XU=u=>typeof u==="string"&&u[0]==="~"?"https://cdn.shopify.com/s/files/"+u.slice(1):u;

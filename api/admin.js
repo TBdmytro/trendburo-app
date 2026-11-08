@@ -825,7 +825,7 @@ export default async function handler(req, res) {
         const mk = mergeConfig(pricingCfg).official.markup, acc = await accessSettings(store, { fresh: true });
         const by = {}; ls.forEach(l => { if (l.tgId) (by[l.tgId] = by[l.tgId] || []).push(l); });
         const list = cs.map(c => { const o = (by[c.tg?.id] || []).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-          return { id: c._id, tg: c.tg, profile: c.profile, apply: c.apply || null, registeredAt: c.registeredAt || null, createdAt: c.createdAt, lastSeen: c.lastSeen, note: c.note || "", loyalty: c.loyalty || null, access: accessOf(c, acc), optix: c.optix || null, accessAt: c.accessAt || null, accessBy: c.accessBy || "", ...clientStats(o, mk), leads: o.slice(0, 30) }; });
+          return { id: c._id, tg: c.tg, profile: c.profile, apply: c.apply || null, registeredAt: c.registeredAt || null, createdAt: c.createdAt, lastSeen: c.lastSeen, note: c.note || "", loyalty: c.loyalty || null, access: accessOf(c, acc), optix: c.optix || null, staff: !!c.staff, accessAt: c.accessAt || null, accessBy: c.accessBy || "", ...clientStats(o, mk), leads: o.slice(0, 30) }; });
         const sum = k => list.reduce((a, c) => a + (c[k] || 0), 0);
         return send(res, 200, { closed: acc.closed, customers: list, totals: { clients: list.length, buyers: list.filter(c => c.spent > 0).length, repeat: list.filter(c => c.orders > 1).length, orders: sum("orders"), viaManager: sum("viaManager"), spent: sum("spent"), earned: sum("earned"), active30: list.filter(c => c.lastSeen && Date.now() - Date.parse(c.lastSeen) < 30 * 864e5).length } });
       }
@@ -898,6 +898,12 @@ export default async function handler(req, res) {
         const c = await setAccess(store, id, body.access, { by: me.name });
         if (!c) return send(res, 404, { error: "Клиент не найден" });
         return send(res, 200, { access: c.access });
+      }
+      case "staffSet": { // роль «Сотрудник Trend Büro»: в приложении видит «+ В подборку» и отправляет подборки клиентам
+        const c = await store.get(String(body.customer || ""));
+        if (!c || c._type !== "customer") return send(res, 404, { error: "Клиент не найден" });
+        await store.patchMany([c._id], { staff: !!body.on, staffBy: me.name, staffAt: new Date().toISOString() });
+        return send(res, 200, { staff: !!body.on });
       }
       case "optixSet": {
         const id = String(body.customer || "").replace(/^customer\./, "");
