@@ -30,6 +30,12 @@ export default async function handler(req, res) {
     return done();
   }
   if (cq?.id) {
+    const ox = String(cq.data || "").match(/^ox:(ok|no):(\d{1,15})$/);
+    if (ox) { let own = false; try { own = (await adminChats(store)).includes(String(cq.message?.chat?.id)); } catch {}
+      const { setOptix } = await import("../lib/access.js"); let c = null; if (own) { try { c = await setOptix(store, ox[2], ox[1] === "ok", { by: cq.from?.username ? "@" + cq.from.username : cq.from?.first_name || "бот" }); } catch {} }
+      try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: !own ? "Только из подключённого чата" : c ? (ox[1] === "ok" ? "OPTIX открыт" : "Отклонено") : "Клиент не найден" }, T); } catch {}
+      if (own && c && cq.message?.chat?.id) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: (cq.message.text || "Заявка") + "\n\n" + (ox[1] === "ok" ? "✓ OPTIX открыт" : "✕ Отклонено") }, T); } catch {} }
+      return done(); }
     const ac = String(cq.data || "").match(/^ac:(ok|no):(\d{1,15})$/);
     if (!ac) { try { await tg("answerCallbackQuery", { callback_query_id: cq.id }, T); } catch {} return done(); }
     let own = false; try { own = (await adminChats(store)).includes(String(cq.message?.chat?.id)); } catch {}

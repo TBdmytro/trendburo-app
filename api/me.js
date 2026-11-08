@@ -10,7 +10,7 @@ import { getStore } from "../lib/store.js";
 import { userFrom, newLoginCode, pollLoginCode } from "../lib/tgauth.js";
 import { touchCustomer, saveProfile, ordersFor, customerId, cleanProfile } from "../lib/customers.js";
 import { tg } from "./bot.js";
-import { accessSettings, accessOf, notifyRequest } from "../lib/access.js";
+import { accessSettings, accessOf, notifyRequest, optixRequest, optixOf } from "../lib/access.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
 function readBody(req) { if (req.body && typeof req.body === "object") return req.body; try { return JSON.parse(req.body || "{}"); } catch { return {}; } }
@@ -50,11 +50,12 @@ export default async function handler(req, res) {
       c = await store.put(c);
     } else if (body.a === "save") c = await saveProfile(store, user, body.profile || {});
     else c = await touchCustomer(store, user);
+    if (body.a === "optix") { const st = await optixRequest(store, c); return send(res, 200, { optix: st }); } // заявка на доступ к OPTIX
     const acc = await accessSettings(store), access = accessOf(c, acc);
     if (access === "pending") await notifyRequest(store, c).catch(() => {});
-    if (access !== "ok") return send(res, 200, { user: pub, profile: c.profile, orders: [], since: c.registeredAt || c.createdAt || null, closed: acc.closed, access });
+    if (access !== "ok") return send(res, 200, { user: pub, profile: c.profile, orders: [], since: c.registeredAt || c.createdAt || null, closed: acc.closed, access, optix: optixOf(c) });
     const orders = await ordersFor(store, user.id, body.client);
-    return send(res, 200, { closed: acc.closed, access, user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null });
+    return send(res, 200, { closed: acc.closed, access, optix: optixOf(c), user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null });
   } catch (e) {
     console.error("me:", e.message);
     return send(res, 500, { error: "Не удалось загрузить кабинет" });

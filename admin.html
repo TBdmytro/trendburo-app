@@ -3132,7 +3132,7 @@ async function vCustomers(q) {
     const f = ($("#cFind")?.value || q || "").toLowerCase();
     const l = customers.filter(c => only ? c.access === only : c.access !== "pending").filter(c => !f || [c.tg?.name, c.tg?.username, c.profile?.name, c.profile?.phone].join(" ").toLowerCase().includes(f))
       .sort((a, b) => sort === "seen" ? 0 : (b[sort] || 0) - (a[sort] || 0));
-    $("#cList").innerHTML = l.length ? l.map(c => `<div class="orow" data-cu="${esc(c.id)}"><div class="tx"><b>${esc(c.profile?.name || c.tg?.name || "Клиент")}${c.tg?.username ? ` <span class="hint">@${esc(c.tg.username)}</span>` : ""}${ACC[c.access] ? ` <span class="acb" style="--c:${ACC[c.access][1]}">${ACC[c.access][0]}</span>` : ""}</b>
+    $("#cList").innerHTML = l.length ? l.map(c => `<div class="orow" data-cu="${esc(c.id)}"><div class="tx"><b>${esc(c.profile?.name || c.tg?.name || "Клиент")}${c.tg?.username ? ` <span class="hint">@${esc(c.tg.username)}</span>` : ""}${c.optix?.st === "pending" ? ` <span class="acb" style="--c:#3f6480">хочет OPTIX</span>` : ""}${ACC[c.access] ? ` <span class="acb" style="--c:${ACC[c.access][1]}">${ACC[c.access][0]}</span>` : ""}</b>
       <span>${[c.orders ? c.orders + " " + plural(c.orders, ["заказ", "заказа", "заказов"]) + (c.viaManager ? ` (${c.viaManager} через менеджера)` : "") : "без заказов", c.spent ? "оплачено " + eur(c.spent) : "", c.earned ? "заработок " + eur(c.earned) : "", c.profile?.city].filter(Boolean).map(esc).join(" · ")}</span></div><span class="hint">${dt(c.lastSeen)}</span></div>`).join("") : `<div class="hint" style="padding:20px 0">Клиентов пока нет — они появятся, когда войдут в мини-апп через Telegram.</div>`;
   };
   $("#main").innerHTML = `<div class="vh"><h1>Клиенты</h1><span class="hint">${customers.length}</span></div>
@@ -3188,6 +3188,8 @@ function customerSheet(c, dlv, reload, closed) {
       ${c.apply?.insta || c.apply?.note ? `<span>${[c.apply.insta ? "Instagram " + esc(c.apply.insta) : "", c.apply.note ? "«" + esc(c.apply.note) + "»" : ""].filter(Boolean).join(" · ")}</span>` : ""}</div>
       <div style="display:flex;gap:6px">${c.access === "pending" ? `<button type="button" class="btn" data-acc="ok">Принять</button><button type="button" class="btn ghost" data-acc="rejected">Отклонить</button>`
         : c.access === "ok" ? `<button type="button" class="btn ghost" data-acc="blocked">Заблокировать</button>` : `<button type="button" class="btn" data-acc="ok">${c.access === "blocked" ? "Разблокировать" : "Принять"}</button>`}</div></div>
+    ${c.optix ? `<div class="oitem" style="align-items:center;flex-wrap:wrap;gap:8px"><div class="tx"><b>OPTIX: ${{ pending: "хочет посмотреть каталог очков", ok: "доступ открыт", no: "отклонено" }[c.optix.st] || "—"}</b><span>${c.optix.at ? "заявка " + dt(c.optix.at) : ""}</span></div>
+      <div style="display:flex;gap:6px">${c.optix.st === "ok" ? `<button type="button" class="btn ghost" data-ox="0">Закрыть OPTIX</button>` : `<button type="button" class="btn" data-ox="1">Открыть OPTIX</button>${c.optix.st === "pending" ? `<button type="button" class="btn ghost" data-ox="0">Отклонить</button>` : ""}`}</div></div>` : ""}
     <div class="kvs"><div><span>Заказы</span><b class="num">${c.orders}${c.viaManager ? ` · ${c.viaManager} через менеджера` : ""}</b></div><div><span>Оплачено</span><b class="num">${eur(c.spent)}</b></div><div><span>Заработок</span><b class="num">${eur(c.earned)}</b></div><div><span>Средний чек</span><b class="num">${c.avg ? eur(c.avg) : "—"}</b></div><div><span>Лояльность</span><b>${c.loyalty?.level ? esc(c.loyalty.level) : "<span class='hint'>правила настроим позже</span>"}</b></div></div>
     <div class="oitem"><div class="tx"><b>Доставка</b><span>${esc([p.name, p.phone].filter(Boolean).join(", ")) || "не заполнено"}<br>${esc(dlv(p))}${p.comment ? "<br>" + esc(p.comment) : ""}</span></div></div>
     <label class="f">Заметка о клиенте (видите только вы)<textarea id="cuNote" style="min-height:60px" placeholder="размеры, любимые бренды, пожелания">${esc(c.note || "")}</textarea></label>
@@ -3201,6 +3203,8 @@ function customerSheet(c, dlv, reload, closed) {
   d.querySelector("[data-cudel]").onclick = async () => {
     if (!(await confirmBox("Удалить аккаунт?", "Человек выйдет из кабинета. При следующем входе он заново пройдёт регистрацию" + (closed ? " и подаст заявку — вы решите, пускать ли его." : ".") + " Заказы останутся в истории. Чтобы не пускать совсем — лучше «Заблокировать».", "Удалить"))) return;
     try { await api("customerDelete", { method: "POST", body: { customer: c.id } }); toast("Аккаунт удалён"); d.close(); reload(); } catch (err) { toast(err.message); } };
+  d.querySelectorAll("[data-ox]").forEach(b => b.onclick = async () => { b.disabled = true;
+    try { await api("optixSet", { method: "POST", body: { customer: c.id, ok: b.dataset.ox === "1" } }); toast(b.dataset.ox === "1" ? "OPTIX открыт — клиенту придёт сообщение" : "Готово"); d.close(); reload(); } catch (err) { toast(err.message); b.disabled = false; } });
   d.querySelectorAll("[data-acc]").forEach(b => b.onclick = async () => {
     if (b.dataset.acc === "blocked" && !(await confirmBox("Заблокировать?", "Человек не сможет войти и не увидит каталог в своём кабинете. Разблокировать можно в любой момент.", "Заблокировать"))) return;
     b.disabled = true;

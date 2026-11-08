@@ -17,6 +17,7 @@ img{-webkit-user-drag:none}
 :root{--st:max(env(safe-area-inset-top,0px),var(--tgst,0px));--sb:max(env(safe-area-inset-bottom,0px),var(--tgsb,0px))}
 .tglogo{display:none;position:fixed;z-index:400;left:50%;top:var(--tgs,0px);height:var(--tgc,0px);transform:translateX(-50%);align-items:center;justify-content:center;pointer-events:none}
 html.fs .tglogo{display:flex}
+.tglogo i{pointer-events:auto;cursor:pointer}
 /* над фото карточки товара: логотип — прозрачное стекло, сверху мягкое затемнение снимка */
 .tglogo i{transition:background .25s,border-color .25s}
 html.pvtop .tglogo i{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);-webkit-backdrop-filter:blur(10px) saturate(1.3);backdrop-filter:blur(10px) saturate(1.3);text-shadow:0 1px 2px rgba(0,0,0,.25)}
@@ -1502,6 +1503,19 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 @media (prefers-reduced-motion:reduce){.nwph,.nwmini img{transition:none!important}}
 .bsticky select{width:auto;padding:8px 12px;font-size:13.5px;border-radius:10px;margin-left:auto}
 
+/* OPTIX закрыт: матовое стекло и заявка */
+.oxg{position:fixed;inset:0;z-index:600;display:grid;place-items:center;padding:24px;background:rgba(18,41,62,.18);-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2);opacity:0;transition:opacity .26s ease}
+.oxg.in{opacity:1}
+.oxg-card{width:100%;max-width:360px;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.7);border-radius:26px;padding:26px 22px 18px;text-align:center;box-shadow:0 20px 60px rgba(18,41,62,.18);transform:translateY(14px) scale(.98);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.oxg.in .oxg-card{transform:none}
+.oxg-wm{display:block;font-size:30px;color:#3f6480;margin-bottom:6px}
+.oxg-card .cap{display:block;color:#3f6480;margin-bottom:14px}
+.oxg-card p{margin:0 0 8px;font-size:15px;line-height:1.45}
+.oxg-card p.muted{font-size:14px}
+.oxg-act{margin:16px 0 6px}
+.oxg-go{width:100%;background:linear-gradient(160deg,#3f6480,#2c4a62);color:#fff}
+.oxg-ok{font-weight:600;color:#2c4a62}
+.oxg-x{margin-top:6px;border:0;background:none;color:var(--muted);font:500 14px var(--f);padding:10px}
 /* OPTIX entry on feed */
 .o-entry{position:relative;margin:16px 18px 0;width:calc(100% - 36px);border:0;border-radius:22px;background:radial-gradient(90% 60% at 50% 22%,#2c4a63,#12293e 70%);color:#f1eee8;padding:0;text-align:left;display:flex;flex-direction:column;overflow:hidden}
 .o-entry-art{display:grid;place-items:center;height:150px}
@@ -1724,7 +1738,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
     <div class="scroll">
       <div class="bigtitle"><h1>Сервисы</h1><div class="topicons"></div></div>
       <div class="svc-list">
-        <button class="svc-card press big" style="--sc:var(--c-concierge)" data-act="svc" data-s="concierge" data-svc="concierge">
+        <button class="svc-card press big locked" style="--sc:var(--c-concierge)" data-act="soon" data-s="concierge" data-svc="concierge" aria-disabled="true"><span class="soon">Скоро</span>
           <div><div class="cap" data-t="svc.concierge.cap">Консьерж Trend Büro</div><h3 data-t="svc.concierge.title">Всё для вас — организуем</h3></div>
           <p data-t="svc.concierge.text">Покупки с доставкой вам в руки, отели, перелёты, трансферы, бронь лучших ресторанов — и всё, что вы загадаете, мы сделаем</p>
           <span class="gl"><svg viewBox="0 0 100 100"><path d="M18 70h64M26 70a24 24 0 0 1 48 0M50 42v-6M44 36h12"/></svg></span></button>
@@ -1832,7 +1846,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
     <button data-tab="services"><svg viewBox="0 0 24 24"><path d="M4 17h16M6 17a6 6 0 0 1 12 0M12 9V7M10 7h4"/></svg>Сервисы</button>
     <button data-tab="stylist"><svg viewBox="0 0 24 24"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>Стилист</button>
   </nav>
-  <a class="mchat" id="mchat" href="https://t.me/trendburo_manager" target="_blank" rel="noopener" aria-label="Написать менеджеру в Telegram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-11 6.6L4.5 19.5l1.4-4.2A7.5 7.5 0 1 1 20 11.5z"/><path d="M9 10.5h6M9 13.5h4"/></svg><span>Менеджер</span></a>
+  <a class="mchat" id="mchat" href="https://t.me/trendburomanager" target="_blank" rel="noopener" aria-label="Написать менеджеру в Telegram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-11 6.6L4.5 19.5l1.4-4.2A7.5 7.5 0 1 1 20 11.5z"/><path d="M9 10.5h6M9 13.5h4"/></svg><span>Менеджер</span></a>
   <div class="toast" id="toast" role="status"></div>
 </div>
 
@@ -1850,7 +1864,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
    ===================================================================== */
 /* ===== Настройки бренда: контакты ===== */
 const CONTACTS = [
-  {label:"Менеджер · Telegram", handle:"@trendburo_manager", url:"https://t.me/trendburo_manager"},
+  {label:"Менеджер · Telegram", handle:"@trendburomanager", url:"https://t.me/trendburomanager"},
   {label:"Instagram · женское", handle:"@trendburo.women", url:"https://instagram.com/trendburo.women"},
   {label:"Instagram · мужское", handle:"@trendburo.men", url:"https://instagram.com/trendburo.men"},
   {label:"Канал-витрина", handle:"@trendburo", url:"https://t.me/trendburo"},
@@ -2183,7 +2197,17 @@ function optixDoc(){if(!oxDocP)oxDocP=fetch("/optix/",{cache:"no-cache"}).then(r
   if(!/OPTIX/i.test(t))throw 0;
   t=t.replace(/<script[^>]*telegram-web-app\.js[^>]*><\/script>/i,"");
   return t.replace(/<head[^>]*>/i,m=>m+`<base href="/optix/"><script>try{window.Telegram=parent.Telegram}catch(e){}<\/script><style>:root{--tg-top:0px!important;--tg-bottom:0px!important}</style>`+OX_LOCK)}).catch(e=>{oxDocP=null;throw e});return oxDocP}
-function openOptixApp(ev){if(OXA)return;
+/* OPTIX пока закрыт: матовое стекло поверх приложения и заявка на доступ (в админке и в админ-боте — «хочет посмотреть каталог OPTIX»). Открыт — заходит как обычно. */
+const optixOpen=()=>{try{return !!(ME&&ME.optix==="ok")}catch(e){return false}};
+function optixGate(){if(document.querySelector(".oxg"))return;const st=ME&&ME.optix;
+  const g=document.createElement("div");g.className="oxg";g.setAttribute("role","dialog");g.setAttribute("aria-label","OPTIX скоро");
+  const body=st=>st==="pending"?`<p class="oxg-ok">Заявка отправлена ✦<br>Откроем доступ и напишем вам в Telegram.</p>`:st==="no"?`<p class="oxg-ok">Сейчас доступ закрыт. Мы напишем вам, когда OPTIX откроется для всех.</p>`:`<button class="btn oxg-go press" data-oxreq>Подать заявку</button>`;
+  g.innerHTML=`<div class="oxg-card"><span class="wordmark oxg-wm">OPTIX</span><span class="cap">Очки по выгодным ценам и со скидками</span><p>Дорогие клиенты, мы готовим OPTIX с особым вниманием и скоро его представим.</p><p class="muted">Хотите увидеть каталог раньше — оставьте заявку на доступ.</p><div class="oxg-act">${body(st)}</div><button class="oxg-x" data-oxx>Вернуться</button></div>`;
+  document.body.append(g);requestAnimationFrame(()=>g.classList.add("in"));try{syncBack()}catch(e){}
+  const close=()=>{g.classList.remove("in");setTimeout(()=>{g.remove();try{syncBack()}catch(e){}},260)};g.closeGate=close;
+  g.addEventListener("click",async e=>{if(e.target===g||e.target.closest("[data-oxx]"))return close();const b=e.target.closest("[data-oxreq]");if(!b)return;b.disabled=true;b.textContent="Отправляем…";
+    const r=await meCall({a:"optix"});if(r&&r.optix){if(ME)ME.optix=r.optix;g.querySelector(".oxg-act").innerHTML=body(r.optix);try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.notificationOccurred("success")}catch(x){}}else{b.disabled=false;b.textContent="Подать заявку";toast(r&&r.error||"Не получилось — попробуйте ещё раз")}})}
+function openOptixApp(ev){if(OXA)return;if(!/[?&]demo=1/.test(location.search)&&!optixOpen())return optixGate();
   const w=document.createElement("div");w.className="oxa";w.setAttribute("role","dialog");w.setAttribute("aria-label","OPTIX");
   w.innerHTML=`<iframe title="OPTIX"></iframe>${TGW?"":'<button class="oxa-x" aria-label="Вернуться в Trend Büro"><i>TB</i>Trend Büro</button>'}`;
   OXA=w;const fr=w.querySelector("iframe");let ready=false,shown=false;
@@ -2220,20 +2244,29 @@ function optixBack(){const fr=OXA&&OXA.querySelector("iframe");let d=null;try{d=
 /* ===== Кнопка «Назад» Telegram: закрывает верхний слой ===== */
 const TGW=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData?Telegram.WebApp:null;if(TGW)document.documentElement.classList.add("intg");
 function backLayer(){
+  {const g=document.querySelector(".oxg");if(g&&g.closeGate)return g.closeGate(),true}
   if(OXA){optixBack();return true}
   const z=document.querySelector(".zv [data-zx]");if(z)return z.click(),true;
   const x=document.querySelector(".sv2 [data-x],.sv [data-x]");if(x)return x.click(),true;
   if(sheetEl)return closeSheet(),true;
   if(stack.length)return pop(),true;
   if($("#app").classList.contains("in-optix"))return tab(lastMain||"feed"),true;
+  // своя кнопка «назад» Telegram и внутри разделов: список товаров каталога → главная каталога, любой раздел → лента (а не «Закрыть» всего приложения)
+  if($("#t-catalog.on.items"))return showCatHome(),syncBack(),true;
+  {const cur=document.querySelector(".tab.on");if(cur&&cur.id!=="t-feed")return tab("feed"),true}
   return false}
+// наверх: нажатие на шапку экрана (или на логотип TB в полноэкранном Telegram) — плавно к началу этого экрана
+function scrollTopNow(){const L=typeof stack!=="undefined"&&stack.length?stack[stack.length-1]:null;const root=L||document.querySelector(".o-screen.on, .tab.on");if(!root)return;
+  const sc=[...root.querySelectorAll(".scroll")].find(x=>x.offsetParent)||root.querySelector(".scroll");if(sc&&sc.scrollTop>0){sc.scrollTo({top:0,behavior:"smooth"});try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(e){}}}
+document.addEventListener("click",e=>{const t=e.target;if(!t||!t.closest)return;if(t.closest(".tglogo")){scrollTopNow();return}
+  const b=t.closest(".bar, .navbar");if(!b||t.closest("button, a, input, select, textarea, [role=button], .seg, .chips"))return;scrollTopNow()});
 // логотип TB поверх фото карточки товара — стеклянный; когда карточку листают и появилась плашка — обычный
 function updTop(){requestAnimationFrame(()=>{const L=typeof stack!=="undefined"&&stack.length?stack[stack.length-1]:null;
   document.documentElement.classList.toggle("pvtop",!!(L&&L.querySelector(".pv-hero.ph")&&!document.documentElement.classList.contains("intg")&&!L.querySelector(".navbar.moved")))})}
 // вместо селекторов :has() (на iPhone они пересчитывают стили всей страницы при каждом изменении): классы ставятся явно
 function syncFlags(){const R=document.documentElement;R.classList.toggle("nologo",!!document.querySelector(".sv,.splash,.oxa.in,.oxi"));const v=document.querySelectorAll(".pv-hero .v:not(.hasimg) img.shimg");v.forEach(i=>i.closest(".v").classList.add("hasimg"))}
 if(window.MutationObserver){const mo=new MutationObserver(syncFlags);mo.observe(document.body,{childList:true});mo.observe(document.getElementById("app"),{childList:true})}
-function syncBack(){updTop();syncFlags();if(!TGW||!TGW.BackButton)return;requestAnimationFrame(()=>{const need=!!(OXA||document.querySelector(".zv,.sv")||sheetEl||stack.length||$("#app").classList.contains("in-optix"));try{need?TGW.BackButton.show():TGW.BackButton.hide()}catch(e){}})}
+function syncBack(){updTop();syncFlags();if(!TGW||!TGW.BackButton)return;requestAnimationFrame(()=>{const cur=document.querySelector(".tab.on"),need=!!(OXA||document.querySelector(".zv,.sv,.oxg")||sheetEl||stack.length||$("#app").classList.contains("in-optix")||(cur&&cur.id!=="t-feed"));try{need?TGW.BackButton.show():TGW.BackButton.hide()}catch(e){}})}
 if(TGW&&TGW.BackButton){try{TGW.BackButton.onClick(()=>{backLayer();setTimeout(syncBack,60)})}catch(e){}
   new MutationObserver(syncBack).observe(document.getElementById("app")||document.body,{childList:true,attributes:true,attributeFilter:["class"]});
   new MutationObserver(syncBack).observe(document.body,{childList:true})}
@@ -2783,7 +2816,7 @@ function cvRender(anim){const root=$("#cv3");if(!root)return;
   <div class="cvh"><b>Категории</b></div><div class="cvl">${Object.entries(CATS).filter(([k])=>k!=="eyewear"&&pool.some(p=>p.cat===k)).map(([k,v])=>`<button class="press" data-cvcat="${k}">${v}<i></i></button>`).join("")}</div>
   <div class="cvfin">${fresh.length?`<button class="cvnv press" data-cvfresh><b>Новинки</b><small>Свежие<br>поступления</small><span class="a">Смотреть ›</span><span class="st">${fresh.map(p=>`<span ${cvPic(p)}></span>`).join("")}</span></button>`:""}
     <button class="cvaz press" data-cvallb="all"${OPTIX_ON?"":' style="grid-column:span 2"'}><b>Бренды</b><small>от A до Z</small><span class="lt">A–Z</span></button>
-    ${OPTIX_ON?`<button class="cvox press" data-act="optixapp"><span class="wm">OPTIX</span><small>Очки из бутиков<br>Европы</small><span class="go">Войти ›</span><span class="ln"></span></button>`:""}</div>
+    ${OPTIX_ON?`<button class="cvox press" data-act="optixapp"><span class="wm">OPTIX</span><small>Очки по выгодным<br>ценам и со скидками</small><span class="go">Войти ›</span><span class="ln"></span></button>`:""}</div>
   ${cvBarHTML(CV.sel)}</div>`;
   if(keepSeg){const n=$("#cvSeg");if(n&&n!==keepSeg)n.replaceWith(keepSeg)}
   if(anim){const b=$("#cvBody");b.classList.add("cvfade");setTimeout(()=>b.classList.remove("cvfade"),600)}
@@ -3402,8 +3435,8 @@ const SVC={
    ["Отели","Бронь проверенных адресов, апгрейд и поздний выезд",'<path d="M3 20V8l9-4 9 4v12M9 20v-6h6v6"/>'],["Авиабилеты","Бизнес и первый класс, лучшие стыковки",'<path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/>'],["Частные джеты","Аренда джета и джет-трансферы между городами",'<path d="M2 15l9-2 4-7h2l-2 7 5-1 1.5-2H23l-1.5 4.5L15 16l2 6h-2l-4-5-9 1z"/>'],["Трансферы","Аэропорт, водитель на день, вертолёт",'<path d="M5 16v-5l2-5h10l2 5v5M5 16h14M7 19v-3M17 19v-3"/>'],["Рестораны","Столики в местах, куда сложно попасть",'<path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8M17 3c-2 0-3 3-3 6s1 4 3 4v8"/>'],["Экскурсии и события","Частные гиды, показы, концерты, яхты",'<path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 16l-5.3 3 1.3-5.9-4.5-4 6-.6z"/>'],["Охрана","Личная охрана и водитель-телохранитель",'<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/>'],
    ["#","И ещё"],["Любая другая задача","Опишите, что нужно, — организуем",'<path d="M12 5v14M5 12h14"/>']]}
 };
-const SOON=new Set(["stylist","resale"]);
-function openService(k,sell){if(k==="travel")k="concierge";if(SOON.has(k)){toast((k==="stylist"?"AI-стилист":"Ресейл")+" — скоро запустим");return}
+const SOON=new Set(["stylist","resale","concierge","travel"]);
+function openService(k,sell){if(k==="travel")k="concierge";if(SOON.has(k)){toast(({stylist:"AI-стилист",concierge:"Консьерж-сервис"}[k]||"Ресейл")+" — скоро запустим");return}
   if(k==="resale")return openResale(sell);
   const S=SVC[k];
   const form=`
@@ -3481,9 +3514,14 @@ function openCart(){let d=prefs.dest||"ua",done=null;
      ${bnFor("cart").length?`<div class="cbwrap" style="margin-top:14px"><div class="cbstack">${bnFor("cart").slice(0,2).map(cbHTML).join("")}</div></div>`:""}
      <div class="sec"><div class="sech"><h2>Доставка</h2></div><div class="pad"><div class="seg" role="group" aria-label="Доставка">${[["ua","Украина"],["eu","Европа"],["dxb","Дубай"]].map(([k,v])=>`<button data-d="${k}" aria-pressed="${k===d}">${dIcon(k,15)}${v}</button>`).join("")}</div></div></div>
      <div class="pad" style="margin-top:14px"><div class="group">${rowsHTML(q)}<div class="row tot"><span>Итого</span><span class="num">${eur(q.t)}${d!=="ua"?" +":""}</span></div></div>
-     <p class="muted" style="font-size:13px;margin-top:10px">${d==="ua"?"Доставка в Украину бесплатно, отправка "+SHIPF()+" — точную дату менеджер укажет в заказе. ":d==="eu"?"Доставка по Европе — по тарифу перевозчика, рассчитает менеджер. ":"Стоимость доставки в Дубай менеджер назовёт до выкупа. "}Менеджер подтвердит наличие и размеры до выкупа.</p></div><div style="height:100px"></div>`;
+     <p class="muted" style="font-size:13px;margin-top:10px">${d==="ua"?"Доставка в Украину бесплатно, отправка "+SHIPF()+" — точную дату менеджер укажет в заказе. ":d==="eu"?"Доставка по Европе — по тарифу перевозчика, рассчитает менеджер. ":"Стоимость доставки в Дубай менеджер назовёт до выкупа. "}Менеджер подтвердит наличие и размеры до выкупа.</p><button class="btn soft block" data-tgord style="margin-top:12px;width:100%">Оформить через менеджера в Telegram</button></div><div style="height:100px"></div>`;
     s.querySelector("#cft").textContent=eur(q.t)+(d!=="ua"?" +":"");
     box.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{d=b.dataset.d;draw()});
+    // заказ не через приложение: открываем чат менеджера с готовым текстом заказа (товары, размеры, цены, доставка)
+    {const tb=box.querySelector("[data-tgord]");if(tb)tb.onclick=()=>{const dn={ua:"Украина",eu:"Европа",dxb:"Дубай"}[d];
+      const txt="Здравствуйте! Хочу оформить заказ:\n"+items.map((x,i)=>`${i+1}. ${x.p.brand} — ${x.p.name}${x.color?", "+x.color:""}${x.size?", размер "+(x.size==="?"?"подобрать":x.size):""} — ${eur(priceFor(x.p,d))}`).join("\n")+`\nИтого: ${eur(q.t)}${d!=="ua"?" + доставка":""}\nДоставка: ${dn}`;
+      const mg=(CONTACTS.find(c=>/менеджер/i.test(c.label))||{url:"https://t.me/trendburomanager"}).url,u=mg+(mg.includes("?")?"&":"?")+"text="+encodeURIComponent(txt);
+      try{if(TGW&&TGW.openTelegramLink){TGW.openTelegramLink(u);return}}catch(e){}open(u,"_blank")}}
     box.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{const it=items[+b.dataset.rm];cart=cart.filter(c=>!(c.id===it.id&&c.size===it.size&&(c.color||"")===(it.color||"")));store.set("tb_cart",cart);updateCounts();draw()});
     s.querySelector("#cgo").onclick=()=>checkoutSheet(items,d,q,(no,msg)=>{
       orders.unshift({no,date:Date.now(),items:items.map(x=>({id:x.id,size:x.size,color:x.color,hex:x.hex})),total:q.t,dest:d,st:0});store.set("tb_orders",orders);
@@ -3899,12 +3937,12 @@ let stylistRemote=false;
 
 /* ===== Навигация ===== */
 const TABS=["feed","catalog","optix","services","stylist"];
-function tab(t){if(!TABS.includes(t))t="feed";if(window.CATLAZY&&t!=="feed")window.CATLAZY();if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
+function tab(t){if(!TABS.includes(t))t="feed";if(t==="optix"&&!/[?&]demo=1/.test(location.search)&&!optixOpen())return optixGate();if(window.CATLAZY&&t!=="feed")window.CATLAZY();if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
   $$(".tab").forEach(s=>s.classList.toggle("on",s.id==="t-"+t));
   const hl=t;
   $$("#tabbar button").forEach(b=>b.dataset.tab===hl?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
   $("#app").classList.toggle("in-optix",t==="optix");
-  try{history.replaceState(null,"","#"+t)}catch(e){}}
+  try{history.replaceState(null,"","#"+t)}catch(e){}try{syncBack()}catch(e){}}
 
 /* Переход между брендами: шторка → нейминг → новое приложение */
 const RM=matchMedia("(prefers-reduced-motion: reduce)");
@@ -3977,7 +4015,7 @@ $("#app").addEventListener("click",e=>{
   else if(a==="tab")goTab(t.dataset.tab,e);
   else if(a==="optixapp")openOptixApp(e);
   else if(a==="svc"){closeSheet(true);openService(t.dataset.s,!!t.dataset.sell)}
-  else if(a==="soon"){toast((t.dataset.s==="stylist"?"AI-стилист":"Ресейл")+" — скоро запустим");hap&&hap("light")}
+  else if(a==="soon"){toast(({stylist:"AI-стилист",concierge:"Консьерж-сервис"}[t.dataset.s]||"Ресейл")+" — скоро запустим");hap&&hap("light")}
   else if(a==="filters")filtersSheet();
   else if(a==="cat"){const c=t.dataset.cat;if(F.cats.has(c)){F.cats.delete(c);delete F.subs[c]}else F.cats.add(c);renderCatalog()}
   else if(a==="csub"){const c=t.dataset.c,k=t.dataset.k,S=F.subs[c]=F.subs[c]||new Set();S.has(k)?S.delete(k):S.add(k);hap("light");renderCatalog()}

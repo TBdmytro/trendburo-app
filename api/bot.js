@@ -23,7 +23,7 @@ export async function tg(method, body, { token = botToken(), fetchImpl = fetch }
   return j.result;
 }
 
-const MANAGER = "https://t.me/trendburo_manager";
+const MANAGER = "https://t.me/trendburomanager";
 export const BOT_TEXT = {
   short: "Купим всё, что есть в наличии в бутиках Европы — найдём, выкупим, проверим и доставим.",
   about: "Trend Büro — ваш личный байер в Европе.\n\nКупим всё, что можно купить: если вещь есть в наличии в Европе — она будет у вас.\n\nLouis Vuitton, Dior, Saint Laurent, Prada и другие — из официальных бутиков, по европейским ценам.\n\n• Найдём модель, размер и цвет, даже если их нет онлайн\n• Выкупим в бутике и проверим каждую вещь\n• Доставим в Украину, Европу или Дубай\n\nБез поездок, очередей и переплат. Вы выбираете — мы делаем всё остальное.",
@@ -87,6 +87,12 @@ export default async function handler(req, res) {
   } else if (m?.chat?.id && typeof m.text === "string" && m.text.startsWith("/")) {
     try { await send(m.chat.id, replyFor(m.text, publicUrl(req), m.chat.id)); } catch {}
   } else if (cq?.id) {
+    const ox = String(cq.data || "").match(/^ox:(ok|no):(\d{1,15})$/);
+    if (ox) { let own = false; try { own = (await adminChats(getStore())).includes(String(cq.message?.chat?.id)); } catch {}
+      const { setOptix } = await import("../lib/access.js"); let c = null; if (own) { try { c = await setOptix(getStore(), ox[2], ox[1] === "ok", { by: cq.from?.username ? "@" + cq.from.username : cq.from?.first_name || "бот" }); } catch {} }
+      try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: !own ? "Только из чата менеджера" : c ? (ox[1] === "ok" ? "OPTIX открыт" : "Отклонено") : "Клиент не найден" }); } catch {}
+      if (own && c && cq.message?.chat?.id) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: (cq.message.text || "Заявка") + "\n\n" + (ox[1] === "ok" ? "✓ OPTIX открыт" : "✕ Отклонено") }); } catch {} }
+      return done(); }
     if (!/^(lg|ac):/.test(cq.data || "")) { try { await tg("answerCallbackQuery", { callback_query_id: cq.id }); } catch {} }
     const ac = String(cq.data || "").match(/^ac:(ok|no):(\d{1,15})$/);
     if (ac) {

@@ -445,7 +445,7 @@ test("telegram bot: replies and setup", async () => {
   assert.equal(st.reply_markup.inline_keyboard[0][0].web_app.url, base + "/#catalog");
   assert.equal(st.reply_markup.inline_keyboard[1][1].callback_data, "how");
   assert.equal(replyFor("/orders", base, 1).reply_markup.inline_keyboard[0][0].web_app.url, base + "/#account");
-  assert.match(replyFor("/manager", base, 1).reply_markup.inline_keyboard[0][0].url, /t\.me\/trendburo_manager/);
+  assert.match(replyFor("/manager", base, 1).reply_markup.inline_keyboard[0][0].url, /t\.me\/trendburomanager/);
   assert.equal(replyFor("/admin@tb_bot", base, 1).reply_markup.inline_keyboard[0][0].web_app.url, base + "/admin.html");
   assert.match(replyFor("/id", base, 42).text, /42/);
   assert.equal(hookSecret("a").length, 40); assert.notEqual(hookSecret("a"), hookSecret("b"));
