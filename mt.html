@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v100] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v101] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -320,11 +320,18 @@ async function tbCollect() {
     try { if (out.sst.length && f.contentDocument) { var labs = out.sst.map(function (x) { return x.s; }); out.cap = { url: url.split("?")[0], labels: labs.slice(0, 20), dom: capDom(f.contentDocument, labs), inHtml: capHtml(raw, labs) }; } } catch (e) {}
     if (!lvS) f.remove(); if (out.sst.length) { rOk++; rFail = 0; } else rFail++; rSave(); return out;
   };
-  var sizeInfo = function (doc, html, p) {
+  var sizeInfo = function (doc, html, p, url) {
     var out = [], seen = {}, add = function (s, ok, pre) { s = okLabel(s); if (!s) return; if (seen[s] !== undefined) { if (ok === false) out[seen[s]].ok = false; return; } seen[s] = out.length; out.push(pre && ok !== false ? { s: s, ok: ok, pre: true } : { s: s, ok: ok }); };
     var avail = function (a) { a = String(a || ""); return /InStock|LimitedAvailability|PreOrder|PreSale|BackOrder|OnlineOnly/i.test(a) ? true : /OutOfStock|SoldOut|Discontinued|InStoreOnly/i.test(a) ? false : null; }; // InStoreOnly — только в бутике: онлайн не купить, «уточнить наличие»
     var preA = function (a) { return /PreOrder|PreSale|BackOrder/i.test(String(a || "")); };
-    [].concat(p.hasVariant || []).forEach(function (v) { var o = [].concat(v.offers || [])[0] || {}; add(v.size || v.name, avail(o.availability), preA(o.availability)); });
+    // Prada / Miu Miu: размеры и наличие — в данных страницы __NUXT_DATA__ (sizeCodes: UK value → EU convertedValue, inventoryStatus); JSON-LD даёт только общий список UK
+    if (/(^|\.)(prada|miumiu)\.com$/i.test(location.hostname)) { try { var nx = (doc && doc.getElementById && doc.getElementById("__NUXT_DATA__")) ? doc.getElementById("__NUXT_DATA__").textContent : ((String(html || "").match(/<script[^>]*id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/) || [])[1]);
+      if (nx) { var NA = JSON.parse(nx), RV = function (v, d) { if (d > 8) return null; if (typeof v === "number") { var x = NA[v]; if (Array.isArray(x)) { if (typeof x[0] === "string" && /^(Shallow)?(Reactive|Ref)$/.test(x[0])) return RV(x[1], d + 1); return x.map(function (y) { return RV(y, d + 1); }); } if (x && typeof x === "object") { var o = {}; for (var k in x) o[k] = RV(x[k], d + 1); return o; } return x; } return v; };
+        var me1 = String(p.sku || "").toUpperCase().replace(/_/g, "") || (url ? codeOf(url) : ""), cand = [];
+        NA.forEach(function (x) { if (x && typeof x === "object" && !Array.isArray(x) && "sizeCodes" in x) { var sc = RV(x.sizeCodes, 0); if (Array.isArray(sc) && sc.length) cand.push(sc.filter(function (z) { return z && typeof z === "object"; })); } });
+        var pick = cand.find(function (sc) { return me1 && sc.some(function (z) { return String(z.colorProductId || "").toUpperCase().replace(/_/g, "") === me1; }); }) || (cand.length === 1 ? cand[0] : null);
+        if (pick) pick.forEach(function (z) { if (me1 && z.colorProductId && String(z.colorProductId).toUpperCase().replace(/_/g, "") !== me1) return; var lab = String(z.convertedValue || z.value || "").replace(",", ".").trim(); if (lab) add(lab, /^Available$/i.test(z.inventoryStatus || "") || (z.online === true && Number(z.availableQuantity) > 0)); }); } } catch (e) {} }
+    if (!out.length) [].concat(p.hasVariant || []).forEach(function (v) { var o = [].concat(v.offers || [])[0] || {}; add(v.size || v.name, avail(o.availability), preA(o.availability)); });
     // On: кнопки размеров data-test-id="purchasePodSizeButton"; распроданный размер помечен …OutOfStock («Notify me») — берём все размеры с отметкой, а не только те, что есть
     if (!out.length && doc && doc.querySelectorAll) { var pod = [].slice.call(doc.querySelectorAll('[data-test-id="purchasePodSizeButton"]')).map(function (b) { var v = b.querySelector('[data-wk-name^="purchasePodSizeOption"]'); return v ? [(v.textContent || "").trim(), !/OutOfStock/i.test(v.getAttribute("data-wk-name") || "") && !b.disabled] : null; }).filter(Boolean);
       // обувь в американских размерах (US 8, 9…) не берём отсюда — нужны европейские (их читает следующий способ)
@@ -363,7 +370,7 @@ async function tbCollect() {
     var bc = all.find(function (o) { return isT(o, "BreadcrumbList"); });
     var crumbs = ((bc && bc.itemListElement) || []).map(function (i) { return String((i.item && i.item.name) || i.name || "").toLowerCase(); }).concat(new URL(url).pathname.toLowerCase().split(/[/_-]+/), [String(p.category || "").toLowerCase()], extra || []);
     var brand = String((p.brand && (p.brand.name || p.brand)) || siteName).trim(); brand = BRANDS[brand.toLowerCase()] || brand;
-    var code = String(p.sku || "").toUpperCase() || codeOf(url), sst = sizeInfo(doc, html, p), sz = sst.map(function (x) { return x.s; });
+    var code = String(p.sku || "").toUpperCase() || codeOf(url), sst = sizeInfo(doc, html, p, url), sz = sst.map(function (x) { return x.s; });
     // цвет из ссылки (Brunello: …-262MZUEHRO342CBX11.html), а разметка страницы называет другой цвет той же модели — берём цвет из ссылки, если его фото есть на странице.
     // Иначе все цвета модели сливались в один товар (из 51 кроссовка загружалось 10) и обложка была не того цвета
     try { var uc1 = codeOf(url), c1 = code.replace(/[^A-Z0-9]/g, ""); if (uc1 && c1 && uc1 !== c1 && uc1.length === c1.length && uc1.length >= 12 && uc1.slice(0, uc1.length - 5) === c1.slice(0, c1.length - 5) && String(html || "").toUpperCase().indexOf(uc1 + "_") >= 0) code = uc1; } catch (e) {}
