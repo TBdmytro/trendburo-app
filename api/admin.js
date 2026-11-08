@@ -59,7 +59,7 @@ async function copyWebImages(store, list, id = "") {
   return { images: ok.length ? ok : images, copied, srcOf };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer, soldOld";
-let FIXALO = false, FIXOBJ = false, FIXMIU = false, FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
+let FIXCHK = false, FIXALO = false, FIXOBJ = false, FIXMIU = false, FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
 /** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
@@ -75,14 +75,36 @@ async function blockEmptied(store, removed) {
   for (const s of goneS) { const doc = await store.get("source." + s); if (doc && doc.schedule !== "off") await store.patchMany([doc._id], { schedule: "off", pausedBy: "deleted", pausedAt: new Date().toISOString() }); }
   return { blockedBrands: goneB, pausedSources: goneS };
 }
+// список всех товаров — самый тяжёлый запрос к базе. Держим его в памяти и после любой правки не перечитываем всё заново:
+// дочитываем только изменённые с прошлого раза (по updated_at) и убираем удалённые — два лёгких запроса вместо полного списка (раньше 10–30 с)
+const PTTL = 20e3; // свежесть без проверки: правки с других серверов видны через 20 с
+let PBASE = null, PLOAD = null;
+const pSort = L => L.sort((a, b) => (String(b.updatedAt || "") > String(a.updatedAt || "") ? 1 : String(b.updatedAt || "") < String(a.updatedAt || "") ? -1 : a._id < b._id ? -1 : 1));
 async function allProducts(store) {
-  // 5 минут: список всех товаров — самый тяжёлый запрос к базе; после любой правки PCACHE сбрасывается
-  if (PCACHE && Date.now() - PCACHE.at < 5 * 60e3) return PCACHE.data;
+  if (PCACHE && Date.now() - PCACHE.at < PTTL) return PCACHE.data;
   if (PLOAD) return PLOAD; // уже грузится — ждём тот же запрос, а не запускаем второй
-  PLOAD = store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS }).then(data => { PCACHE = { at: Date.now(), data }; return data; }).finally(() => { PLOAD = null; });
+  PLOAD = (async () => {
+    let data = null;
+    if (PBASE && store.changedSince && Date.now() - PBASE.loc < 30 * 60e3) {
+      try {
+        const now = await store.dbNow(), since = new Date(Date.parse(PBASE.ts) - 30e3).toISOString(); // 30 с запаса: запись, начатая раньше, могла закончиться позже
+        const [rows, ids] = await Promise.all([store.changedSince("product", since, PFIELDS), store.ids("product")]);
+        const m = PBASE.map; for (const r of rows) m.set(r._id, r);
+        const keep = new Set(ids); for (const k of [...m.keys()]) if (!keep.has(k)) m.delete(k);
+        if (m.size !== keep.size) throw new Error("рассинхрон"); // чего-то нет в памяти — читаем всё заново
+        PBASE.ts = now; PBASE.loc = Date.now(); data = pSort([...m.values()]);
+      } catch (e) { console.log("PCACHE delta fail " + String(e.message).slice(0, 80)); PBASE = null; data = null; }
+    }
+    if (!data) {
+      const now = store.dbNow ? await store.dbNow() : null;
+      const L = await store.list("product", {}, { limit: 50000, fields: PFIELDS }); // без сортировки в базе — по ключу, быстро; сортируем здесь
+      if (now && store.changedSince) PBASE = { ts: now, loc: Date.now(), map: new Map(L.map(p => [p._id, p])) };
+      data = pSort(L.slice());
+    }
+    PCACHE = { at: Date.now(), data }; return data;
+  })().finally(() => { PLOAD = null; });
   return PLOAD;
 }
-let PLOAD = null;
 // ключ кнопки «В Trend Büro»: даёт только загрузку товаров с сайтов брендов (скрытыми), без доступа к остальной админке.
 // Хранится на сервере только отпечаток (sha256); сам ключ — внутри закладки пользователя
 const KEY_ACTIONS = new Set(["me", "knownProducts", "webImport", "webUpdate", "sectionKnown", "sectionSync", "markNew", "imageUpload", "subcats", "snapSave"]);
@@ -115,7 +137,7 @@ export default async function handler(req, res) {
     if (!me) return send(res, 401, { error: "Нужен вход" });
     if (req.method !== "GET" && req.headers["x-tb"] !== "1") return send(res, 403, { error: "Запрос отклонён" });
     const store = getStore();
-    if (req.method !== "GET" && !["webImport", "webUpdate", "imageUpload", "imageFromUrl", "snapSave"].includes(a)) PCACHE = null;
+    if (req.method !== "GET" && !["webImport", "webUpdate", "imageUpload", "imageFromUrl", "snapSave", "webProgress", "ensurePrices", "fixBrands", "imgDedupe", "imgDrop", "trPending", "hotlinked", "catalogState"].includes(a)) PCACHE = null; // служебные запросы (ход прогона кнопки каждые 10 с, фоновые проверки) список товаров не сбрасывают — они сами сбрасывают, если что-то поменяли
     const pricingCfg = (await store.get("settings.pricing"))?.config || null;
 
     switch (a) {
@@ -184,11 +206,12 @@ export default async function handler(req, res) {
       }
       case "sources": {
         const jobs = await store.list("importJob", {}, { order: "createdAt desc", limit: 200, fields: "_id, sourceId, status, mode, createdAt, processed, found, errors, filtered" });
-        const products = await store.list("product", {}, { fields: "status, category, offers[]{sourceId}" });
+        const products = (await allProducts(store)).map(p => ({ status: p.status, category: p.category, offers: p.offers })); // тот же список в памяти, что у «Товаров»
         const out = [];
         const fx = await getFx(store);
-        for (const id of await allSourceIds(store)) {
-          const settings = await store.get("source." + id);
+        const sids = await allSourceIds(store), sdocs = new Map((await store.getMany(sids.map(i => "source." + i))).map(d => [d._id, d])); // настройки всех источников одним запросом
+        for (const id of sids) {
+          const settings = sdocs.get("source." + id) || null;
           const src = sourceWith(settings, id);
           const mine = products.filter(p => (p.offers || []).some(o => o.sourceId === id));
           const last = jobs.find(j => j.sourceId === id);
@@ -275,7 +298,7 @@ export default async function handler(req, res) {
         return send(res, 200, { load: L });
       }
       // пересчитать скрытые товары, если формула цен в коде новее (вызывает админка при открытии «Товаров»)
-      case "ensurePrices": return send(res, 200, await ensurePrices(store, { budgetMs: 40000, log: x => console.log("[price]", JSON.stringify(x)) }));
+      case "ensurePrices": { const r = await ensurePrices(store, { budgetMs: 40000, log: x => console.log("[price]", JSON.stringify(x)) }); if (r.changed) PCACHE = null; return send(res, 200, r); }
       case "dbStats": return send(res, 200, await dbStats(store));
       case "jobCancel": return send(res, 200, { job: slim(await cancelJob(store, body.id)) });
       case "jobDelete": {
@@ -356,6 +379,11 @@ export default async function handler(req, res) {
         return send(res, 200, { brands, total: all.length, incoming });
       }
       case "products": {
+        // разовые исправления ниже: какие уже сделаны — одним запросом (раньше при каждом холодном старте было 11 запросов подряд)
+        if (!FIXCHK) { FIXCHK = true; try { const done = new Set((await store.getMany(["settings.fixPre", "settings.fixDiorImg2", "settings.fixLvSold1", "settings.fixLvSold2", "settings.fixAloG1", "settings.fixObjPm3", "settings.fixMiuImg5", "settings.fixGgImg3", "settings.fixGucciImg2", "settings.fixLvImg2", "settings.fixOther"])).map(d => d._id));
+          if (done.has("settings.fixPre")) FIXPRE = true; if (done.has("settings.fixDiorImg2")) FIXDIOR = true; if (done.has("settings.fixLvSold1")) FIXLVSOLD = true; if (done.has("settings.fixLvSold2")) FIXLVSOLD2 = true;
+          if (done.has("settings.fixAloG1")) FIXALO = true; if (done.has("settings.fixObjPm3")) FIXOBJ = true; if (done.has("settings.fixMiuImg5")) FIXMIU = true; if (done.has("settings.fixGgImg3")) FIXGG = true;
+          if (done.has("settings.fixGucciImg2")) FIXGUCCI = true; if (done.has("settings.fixLvImg2")) FIXLV = true; if (done.has("settings.fixOther")) FIXOTHER = true; } catch { FIXCHK = false; } }
         // один раз: «уточнить наличие» пересчитываем по новому правилу (только если ни один размер не купить)
         if (!FIXPRE) { FIXPRE = true; try { const fl = await store.get("settings.fixPre"); if (!fl) { const { needAsk } = await import("../lib/manual.js");
           const L = await store.list("product", { hasPre: true }, { limit: 20000, fields: "_id, offers[]{availability}" });
