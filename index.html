@@ -213,7 +213,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .hcv-s.light .go{background:#26282c;color:#fff}
 .hcv-bars{position:absolute;top:14px;left:20px;right:20px;display:flex;gap:4px;pointer-events:none}
 .hcv-bars i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.35)}
-.hcv-bars i.on,.hcv-bars i.done{background:#fff}
+.hcv-bars i.on,.hcv-bars i.past{background:#fff}
 .hcv-all{display:flex;align-items:center;gap:4px;margin:10px 18px 0;border:0;background:none;padding:0;font-size:14px;color:var(--muted)}
 .hblk>.hk:not(:empty){margin-top:22px}
 .hchips{display:flex;gap:6px;overflow-x:auto;padding:0 18px 12px;scrollbar-width:none}
@@ -1317,7 +1317,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .cartrow .tx .z{font-size:12.5px;color:var(--muted)}
 .cartrow .tx .p{font-size:14.5px;font-weight:600;margin-top:4px}
 .cartrow .rm{border:0;background:var(--soft);width:32px;height:32px;border-radius:50%;font-size:17px;line-height:1;color:var(--g2);flex:none}
-.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--ink-grad);color:#fff;box-shadow:var(--ink-hi);display:flex;flex-direction:column;gap:6px}
+div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--ink-grad);color:#fff;box-shadow:var(--ink-hi);display:flex;flex-direction:column;gap:6px}
 .done .cap{color:rgba(255,255,255,.55)}
 .done h3{font-size:22px}
 .done p{color:rgba(255,255,255,.72);font-size:14px}
@@ -3113,7 +3113,7 @@ function hCover(){const box=$("#hCover");if(!box)return;clearInterval(HCT);
   box.innerHTML=`<div class="hcv"><div class="hcv-tr">${S.map((x,i)=>`<button class="hcv-s press ${x.light?"light":""}" ${x.k==="b"?`data-act="cbanner" data-bid="${esc(x.id)}" data-bn="${esc(x.id)}"`:`data-coll="${esc(x.id)}"`}>${x.img?`<img src="${esc(szU(x.img,1000))}" alt="" ${i?'loading="lazy"':""} decoding="async">`:""}<span class="sh"></span><span class="tx">${x.kick?`<span class="k">${esc(x.kick)}</span>`:""}${x.t?`<b>${esc(x.t)}</b>`:""}${x.sub?`<span class="s num">${esc(x.sub)}</span>`:""}${x.go?`<span class="go">${esc(x.go)}</span>`:""}</span></button>`).join("")}</div>${S.length>1?`<div class="hcv-bars">${S.map((_,i)=>`<i class="${i?"":"on"}"><b></b></i>`).join("")}</div>`:""}</div>${co.length>1?`<button class="hcv-all press" data-act="hcolls">Все коллекции<i class="chev"></i></button>`:""}`;
   if(S.length<2)return;
   const tr=box.querySelector(".hcv-tr"),bars=[...box.querySelectorAll(".hcv-bars i")];let hold=0;
-  const cur=()=>Math.round(tr.scrollLeft/tr.clientWidth),mark=()=>{const k=cur();bars.forEach((d,j)=>{d.classList.toggle("on",j===k);d.classList.toggle("done",j<k)})};
+  const cur=()=>Math.round(tr.scrollLeft/tr.clientWidth),mark=()=>{const k=cur();bars.forEach((d,j)=>{d.classList.toggle("on",j===k);d.classList.toggle("past",j<k)})};
   tr.addEventListener("scroll",mark,{passive:true});tr.addEventListener("touchstart",()=>{hold=Date.now()},{passive:true});
   HCT=setInterval(()=>{if(document.hidden||Date.now()-hold<8000||!tr.isConnected||!tr.offsetParent)return;const k=cur();tr.scrollTo({left:(k+1>=S.length?0:k+1)*tr.clientWidth,behavior:"smooth"})},5000)}
 // лента для каждого пола собирается один раз и хранится готовой: переключение — показать/спрятать, без пересборки и без пересчёта всей страницы
@@ -3368,7 +3368,7 @@ function frameTile(im,a){const key=(im.currentSrc||im.src)+"|"+im.naturalWidth+"
   const W=1,H=a.clientHeight/Math.max(1,a.clientWidth),s0=Math.min(W/b.ar,H)/1,dw=b.ar*s0,dh=s0,ox=(W-dw)/2,oy=(H-dh)/2;
   const Px=ox+b.x*dw,Py=oy+b.y*dh,Pw=b.w*dw,Ph=b.h*dh,k=Math.min(4,Math.max(.6,Math.min(W*.84/Pw,H*.7/Ph)));
   const tx=W/2-k*(Px+Pw/2),ty=H*.53-k*(Py+Ph/2);im.style.transformOrigin="0 0";im.style.transform=`translate(${(tx/W*100).toFixed(2)}%,${(ty/H*100).toFixed(2)}%) scale(${k.toFixed(3)})`;a.classList.add("framed")}
-document.addEventListener("load",e=>{const im=e.target;if(!(im instanceof HTMLImageElement)||!im.classList.contains("shimg"))return;const a=im.closest(".pc .art,.cartrow .th,.ordc .oth");if(!a)return;const c=edgeColor(im);if(c)a.style.setProperty("--tbg",c);
+document.addEventListener("load",e=>{const im=e.target;if(!(im instanceof HTMLImageElement)||!im.classList.contains("shimg"))return;const a=im.closest(".pc .art,.cartrow .th,.ordc .oth");if(!a)return;const c=edgeColor(im)||(/media\.gucci\.com\/style\/DarkGray_/.test(im.currentSrc||im.src)?"#e7e7e7":"");if(c)a.style.setProperty("--tbg",c); /* Gucci: фон съёмки всегда один (DarkGray) — ставим его, вещь целиком и по центру, без полос */
   if(a.matches(".pc .art")){const ar=im.naturalWidth/Math.max(1,im.naturalHeight);if(ar<=.95){a.classList.add("fill","framed");return}
     // квадратное фото, цвет фона которого браузер узнать не может (Gucci, Miu Miu…): заполняем плитку целиком (чуть обрезая края), а не оставляем светлые полосы сверху и снизу
     if(!c&&ar<=1.15&&!/louisvuitton\.com/.test(im.currentSrc||im.src)){a.classList.add("fill","framed");return}
