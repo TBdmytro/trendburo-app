@@ -30,8 +30,8 @@ html.nologo .tglogo{opacity:0}
 /* приложение свёрнуто — вместо витрины логотип (в списке открытых приложений и при переключении) */
 .privcover{position:fixed;inset:0;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(120% 90% at 30% 15%,#45484e 0%,#26282c 52%,#141517 100%);color:#fff;transition:opacity .35s ease}
 .privcover.on{display:flex}.privcover.fade{opacity:0}
-.privcover i{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;border:1.5px solid rgba(255,255,255,.35);font:400 30px/1 "Prata",Georgia,serif;font-style:normal}
-.privcover b{font:400 26px/1 "Prata",Georgia,serif;letter-spacing:.01em;font-weight:400}
+.privcover i{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;border:1px solid #9fc2b6;font:400 30px/1 "Cinzel","Prata",Georgia,serif;font-style:normal}
+.privcover b{font:400 20px/1 "Cinzel","Prata",Georgia,serif;letter-spacing:.1em;text-transform:uppercase;font-weight:400}
 .splash{position:fixed;inset:0;z-index:500;background:radial-gradient(120% 90% at 30% 15%,#45484e 0%,#26282c 52%,#141517 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;overflow:hidden;color:#fff}
 .splash::before{content:"";position:absolute;width:140vmax;height:140vmax;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.07) 0,rgba(255,255,255,0) 40%);animation:spglow 2.8s ease-out both}
 .sp-logo{position:relative;width:132px;height:132px;display:grid;place-items:center;will-change:transform,opacity;animation:sppop 1s cubic-bezier(.22,1,.36,1) both}
@@ -254,12 +254,17 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .dlv-face.dlv-front{position:relative}
 
 /* вход: наш знак TB с вращающимся кольцом, подпись «20 · Personal shopper · 23» — годы съезжаются к надписи */
-.sp-logo .r2{stroke:#e6d5b5}
-.sp-logo .r3{fill:none;stroke:rgba(230,213,181,.38);stroke-width:1;stroke-dasharray:1 7;stroke-linecap:round}
+/* вариант B (ноябрь 2026): графит, мятные кольца как пакет Trend Büro, белые буквы с засечками (Cinzel), без золота */
+.sp-logo b{font:400 48px/1 "Cinzel","Prata",Georgia,serif;letter-spacing:.02em;color:#fff}
+.sp-word{font:400 24px/1 "Cinzel","Prata",Georgia,serif;letter-spacing:.1em;text-transform:uppercase;margin-top:36px}
+.sp-logo .r1{stroke:#9fc2b6}
+.sp-logo .r0{stroke:rgba(159,194,182,.2)}
+.sp-logo .r2{stroke:#c6e0d6}
+.sp-logo .r3{fill:none;stroke:rgba(159,194,182,.45);stroke-width:1;stroke-dasharray:1 7;stroke-linecap:round}
 @keyframes sprev{from{transform:rotate(-90deg)}to{transform:rotate(-450deg)}}
 .sp-est{margin-top:18px;display:flex;align-items:center;gap:14px;color:rgba(255,255,255,.62)}
 .sp-est .t{font:500 10.5px/1 "Onest",system-ui,sans-serif;letter-spacing:.34em;text-transform:uppercase;opacity:0;animation:spf .8s 1.5s forwards;padding-left:.34em}
-.sp-est .y{font:400 15px/1 "Prata",Georgia,serif;color:#e6d5b5;opacity:0;animation:spyear .9s 1.7s cubic-bezier(.22,1,.36,1) forwards}
+.sp-est .y{font:400 15px/1 "Prata",Georgia,serif;color:rgba(255,255,255,.8);opacity:0;animation:spyear .9s 1.7s cubic-bezier(.22,1,.36,1) forwards}
 .sp-est .y.l{--x:-18px}.sp-est .y.r{--x:18px}
 @keyframes spyear{from{opacity:0;transform:translateX(var(--x))}to{opacity:1;transform:none}}
 .splash.quick .sp-est .t,.splash.quick .sp-est .y,.splash.quick .sp-logo .sp-r3{animation-duration:.6s;animation-delay:.25s}
@@ -280,7 +285,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 <link rel="preconnect" href="https://cdn.sanity.io">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Prata&family=IBM+Plex+Mono:wght@600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Prata&family=Cinzel:wght@400;500&family=IBM+Plex+Mono:wght@600&display=swap">
 <style>
 /* Layout: native-feeling app shell — tab screens with large titles that collapse on scroll, a push stack for detail screens, bottom sheets, full-screen stories. White + graphite; each service owns its own accent. */
 :root{
