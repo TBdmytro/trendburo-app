@@ -413,10 +413,10 @@ button{cursor:pointer}
 .colsw button{border:0;background:none;height:26px;padding:0 7px;border-radius:8px;display:flex;align-items:center;gap:2px;color:var(--g2)}
 .colsw button i{display:block;width:4px;height:12px;border-radius:1.5px;background:currentColor}
 .colsw button[aria-pressed="true"]{background:#fff;color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.08)}
-#grid.c3{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 8px}#grid.c4{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 6px;padding-inline:12px}
-#grid.c3 .pc .m .n,#grid.c4 .pc .m .n{font-size:11.5px;-webkit-line-clamp:1;line-clamp:1}#grid.c3 .pc .m .b,#grid.c4 .pc .m .b{font-size:9.5px;letter-spacing:.06em}
-#grid.c3 .pc .m .p,#grid.c4 .pc .m .p{font-size:12.5px}#grid.c4 .pc .m .n{display:none}#grid.c4 .pc .art,#grid.c3 .pc .art{border-radius:12px}
-#grid.c3 .pc .fav,#grid.c4 .pc .fav{transform:scale(.8);transform-origin:top right}#grid.c4 .pc .newb,#grid.c4 .pc .salb,#grid.c4 .pc .stk{font-size:9px;padding:2px 5px}
+.cgrid.c3{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 8px}.cgrid.c4{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 6px;padding-inline:12px}
+.cgrid.c3 .pc .m .n,.cgrid.c4 .pc .m .n{font-size:11.5px;-webkit-line-clamp:1;line-clamp:1}.cgrid.c3 .pc .m .b,.cgrid.c4 .pc .m .b{font-size:9.5px;letter-spacing:.06em}
+.cgrid.c3 .pc .m .p,.cgrid.c4 .pc .m .p{font-size:12.5px}.cgrid.c4 .pc .m .n{display:none}.cgrid.c4 .pc .art,.cgrid.c3 .pc .art{border-radius:12px}
+.cgrid.c3 .pc .fav,.cgrid.c4 .pc .fav{transform:scale(.8);transform-origin:top right}.cgrid.c4 .pc .newb,.cgrid.c4 .pc .salb,.cgrid.c4 .pc .stk{font-size:9px;padding:2px 5px}
 .grid2 .pc{animation:rise .5s var(--ease) both;animation-delay:calc(min(var(--i,0),12) * 35ms)}
 .grid2 .pc.nofx{animation:none}
 .grid2 .pc{content-visibility:auto;contain-intrinsic-size:auto 320px}
@@ -1713,7 +1713,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
         <div class="chips" id="catChips" style="margin-top:12px"></div><div class="chips bsubs" id="catSubs" hidden style="margin-top:10px"></div>
         <div class="af" id="af" style="margin-top:12px"></div>
         <div class="cntrow"><div class="count num" id="count"></div><div class="colsw" role="group" aria-label="Сколько товаров в ряд"><button data-cols="2" aria-label="2 в ряд"><i></i><i></i></button><button data-cols="3" aria-label="3 в ряд"><i></i><i></i><i></i></button><button data-cols="4" aria-label="4 в ряд"><i></i><i></i><i></i><i></i></button></div></div>
-        <div class="grid2" id="grid"></div>
+        <div class="grid2 cgrid" id="grid"></div>
       </div>
     </div>
   </div>
@@ -2126,7 +2126,7 @@ function gridMore(step){const g=$("#grid");if(!g)return;const from=gridShown,to=
   g.insertAdjacentHTML("beforeend",gridList.slice(from,to).map((p,i)=>pcHTML(p,from?0:i).replace('class="pc press"',from?'class="pc press nofx"':'class="pc press"')).join("")+(to<gridList.length?'<div class="grid-more"></div>':""));
   gridShown=to;const s=g.querySelector(".grid-more");if(s){gridIO=gridIO||new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))gridMore()},{root:g.closest(".scroll"),rootMargin:"900px 0px"});gridIO.observe(s)}}
 let COLS=(()=>{try{return +localStorage.getItem("tb_cols")||2}catch(e){return 2}})();
-function colsApply(){const g=$("#grid");if(g){g.classList.toggle("c3",COLS===3);g.classList.toggle("c4",COLS===4)}document.querySelectorAll(".colsw [data-cols]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.cols===COLS)))}
+function colsApply(){document.querySelectorAll("#grid,#bgrid").forEach(g=>{g.classList.toggle("c3",COLS===3);g.classList.toggle("c4",COLS===4)});document.querySelectorAll(".colsw [data-cols]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.cols===COLS)))}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".colsw [data-cols]");if(!b)return;COLS=+b.dataset.cols;try{localStorage.setItem("tb_cols",String(COLS))}catch(x){}colsApply();try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(x){}});
 function renderGrid(){const list=sorted(baseSet()),n=list.length;
   const filtered=!!(F.q||F.cats.size||F.brands.size||F.cities.size||F.onlyNew||F.onlyFav||F.stock||F.ids||Object.keys(F.budgets).some(k=>F.budgets[k]<catMax(k)));
@@ -2986,7 +2986,7 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
        +(nw2.length>=3?`<div class="sec" style="padding-bottom:4px"><div class="pad"><button class="nwban press" data-nwban aria-label="Новинки ${esc(bn)}"><div class="nwt"><div><span class="cap">${esc(bn)}</span><h3>Новинки<br>сезона</h3><span class="nwc num">${nwN} ${plural(nwN,["вещь","вещи","вещей"])}</span></div><span class="nwgo">Смотреть все</span></div><div class="nwst">${nwPics.map(u=>`<div class="nwph h"><img src="${esc(u)}" alt="" decoding="async"></div>`).join("")}</div><div class="nwdots">${nwPics.map(()=>"<i></i>").join("")}</div></button></div></div>`:"")})()}
    <div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>В витрине сейчас</h2></div></div>
    <div class="bsticky"><div class="chips" id="bcats"></div><div class="chips bsubs" id="bsubs" hidden></div>${gs.length>1?`<div class="toolrow"><div class="seg" role="group" aria-label="Для кого" id="bgs"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button>${gs.includes("k")?'<button data-g="k">Детское</button>':""}</div><select id="bsort" aria-label="Сортировка"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`:`<div class="toolrow"><select id="bsort" aria-label="Сортировка" style="margin-left:0"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`}</div>
-   <div class="grid2" id="bgrid" style="margin-top:14px"></div>
+   <div class="cntrow"><div class="count num" id="bcount"></div><div class="colsw" role="group" aria-label="Сколько товаров в ряд"><button data-cols="2" aria-label="2 в ряд"><i></i><i></i></button><button data-cols="3" aria-label="3 в ряд"><i></i><i></i><i></i></button><button data-cols="4" aria-label="4 в ряд"><i></i><i></i><i></i><i></i></button></div></div><div class="grid2 cgrid" id="bgrid"></div>
    ${nw.length?`<div class="sec"><div class="sech"><h2>Новости ${esc(bn)}</h2></div>${nw.map(n=>{const p=P.find(x=>x.id===n.pid);return `<button class="newsrow press" data-act="news" data-id="${n.id}" style="--c:${p.c}"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div><span class="cap">${n.tag} · ${n.when}</span><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div></button>`}).join("")}</div>`:""}
    <div class="pad" style="margin:22px 0 10px"><div class="group"><b style="font-weight:600">Нет нужной модели?</b><span class="muted" style="font-size:14px">Напишите менеджеру — найдём в бутиках ${esc(bn)} в Европе или закажем на официальном сайте.</span><button class="btn sm" data-req2 style="align-self:flex-start;margin-top:4px">Написать менеджеру</button></div></div>`,{clear:true});
   // липкая полоса фильтров — ровно под шапкой экрана (её высота разная: обычный режим, полноэкранный Telegram)
@@ -3005,7 +3005,7 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
     const bg=s.querySelector("#bgs");if(bg)bg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===st.g));
     const f2=f.filter(p=>(!st.nw||p.isNew)&&(!st.cats.size||st.cats.has(p.cat))&&(!(st.subs[p.cat]&&st.subs[p.cat].size)||st.subs[p.cat].has(subOf(p)))),list=st.sort==="pop"?popOrder(f2):f2.sort((a,b)=>st.sort==="asc"?a.price-b.price:st.sort==="desc"?b.price-a.price:(b.isNew-a.isNew)||(a.price-b.price));
     // товары бренда — порциями по 24 при прокрутке (у больших брендов их тысячи — разом всё рисовать нельзя)
-    bl=list;bn0=0;bio&&bio.disconnect();s.querySelector("#bgrid").innerHTML="";bMore()};
+    bl=list;bn0=0;bio&&bio.disconnect();s.querySelector("#bgrid").innerHTML="";const bc=s.querySelector("#bcount");if(bc)bc.textContent=list.length+" "+plural(list.length,["товар","товара","товаров"]);colsApply();bMore()};
   let bl=[],bn0=0,bio=null;
   const bMore=()=>{const g=s.querySelector("#bgrid"),to=Math.min(bl.length,bn0+GRID_STEP);if(bn0>=to)return;g.querySelector(".grid-more")?.remove();
     g.insertAdjacentHTML("beforeend",bl.slice(bn0,to).map(pcHTML).join("")+(to<bl.length?'<div class="grid-more"></div>':""));bn0=to;
