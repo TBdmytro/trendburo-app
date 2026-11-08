@@ -3366,7 +3366,10 @@ function frameTile(im,a){const key=(im.currentSrc||im.src)+"|"+im.naturalWidth+"
   const Px=ox+b.x*dw,Py=oy+b.y*dh,Pw=b.w*dw,Ph=b.h*dh,k=Math.min(4,Math.max(.6,Math.min(W*.84/Pw,H*.7/Ph)));
   const tx=W/2-k*(Px+Pw/2),ty=H*.53-k*(Py+Ph/2);im.style.transformOrigin="0 0";im.style.transform=`translate(${(tx/W*100).toFixed(2)}%,${(ty/H*100).toFixed(2)}%) scale(${k.toFixed(3)})`;a.classList.add("framed")}
 document.addEventListener("load",e=>{const im=e.target;if(!(im instanceof HTMLImageElement)||!im.classList.contains("shimg"))return;const a=im.closest(".pc .art,.cartrow .th,.ordc .oth");if(!a)return;const c=edgeColor(im);if(c)a.style.setProperty("--tbg",c);
-  if(a.matches(".pc .art")){if(im.naturalWidth/Math.max(1,im.naturalHeight)<=.95){a.classList.add("fill","framed");return}frameTile(im,a);a.classList.add("framed")}},true);
+  if(a.matches(".pc .art")){const ar=im.naturalWidth/Math.max(1,im.naturalHeight);if(ar<=.95){a.classList.add("fill","framed");return}
+    // квадратное фото, цвет фона которого браузер узнать не может (Gucci, Miu Miu…): заполняем плитку целиком (чуть обрезая края), а не оставляем светлые полосы сверху и снизу
+    if(!c&&ar<=1.15&&!/louisvuitton\.com/.test(im.currentSrc||im.src)){a.classList.add("fill","framed");return}
+    frameTile(im,a);a.classList.add("framed")}},true);
 document.addEventListener("error",e=>{const im=e.target;if(im instanceof HTMLImageElement&&im.classList.contains("shimg")){const a=im.closest(".pc .art");if(a)a.classList.add("framed")}},true);
 
 /* ===== Конфиденциальность ===== */
