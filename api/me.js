@@ -11,12 +11,14 @@ import { userFrom, newLoginCode, pollLoginCode } from "../lib/tgauth.js";
 import { touchCustomer, saveProfile, ordersFor, customerId, cleanProfile } from "../lib/customers.js";
 import { tg } from "./bot.js";
 import { accessSettings, accessOf, notifyRequest, optixRequest, optixOf } from "../lib/access.js";
+import { allow, tooMany } from "../lib/ratelimit.js";
 
 const send = (res, code, body) => { res.statusCode = code; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify(body)); };
 function readBody(req) { if (req.body && typeof req.body === "object") return req.body; try { return JSON.parse(req.body || "{}"); } catch { return {}; } }
 let BOT = null; // имя бота кэшируем на время жизни функции
 
 export default async function handler(req, res) {
+  if (!allow(req, "me", 120, 60000)) return tooMany(res); // защита от флуда с одного адреса
   try {
     if (req.method === "GET") {
       // подборка от менеджера: по ссылке клиент видит выбранные вещи

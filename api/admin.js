@@ -103,6 +103,7 @@ export default async function handler(req, res) {
   const body = typeof req.body === "string" ? safeJson(req.body) : (req.body || {});
   try {
     if (a === "login" && req.method === "POST") {
+      { const { allow, tooMany } = await import("../lib/ratelimit.js"); if (!allow(req, "login", 10, 600e3)) return tooMany(res, 600); } // не больше 10 попыток пароля за 10 минут с одного адреса
       if (!process.env.ADMIN_PASSWORD) return send(res, 500, { error: "На сервере не задан пароль: добавьте ADMIN_PASSWORD в Vercel и сделайте Redeploy" });
       if (!checkPassword(body.password)) { await new Promise(r => setTimeout(r, 1200)); return send(res, 401, { error: "Неверный пароль" }); }
       res.setHeader("Set-Cookie", issueCookie(body.name || "admin"));

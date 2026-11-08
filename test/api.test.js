@@ -534,3 +534,10 @@ test("повторный прогон раздела не превращает �
     assert.equal((await store.get(id)).category, "clothing");
   } finally { globalThis.fetch = real; }
 });
+
+test("защита от флуда: с одного адреса не больше лимита, другой адрес не страдает", async () => {
+  const { allow } = await import("../lib/ratelimit.js");
+  const a = { headers: { "x-real-ip": "1.2.3.4" } }, b = { headers: { "x-real-ip": "5.6.7.8" } };
+  let ok = 0; for (let i = 0; i < 15; i++) if (allow(a, "t", 10, 60000, 1000)) ok++;
+  assert.equal(ok, 10); assert.ok(allow(b, "t", 10, 60000, 1000)); assert.ok(allow(a, "t", 10, 60000, 70000));
+});

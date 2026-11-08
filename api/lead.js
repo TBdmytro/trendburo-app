@@ -9,6 +9,7 @@ import { createHash } from "node:crypto";
 import { userFrom } from "../lib/tgauth.js";
 import { nextOrderNo, verifyItems, cleanProfile, touchCustomer } from "../lib/customers.js";
 import { toAdmins } from "../lib/access.js";
+import { allow, tooMany } from "../lib/ratelimit.js";
 
 export const LEAD_KINDS = { order: "Заказ", availability: "Уточнить наличие", concierge: "Консьерж", travel: "Поездка", resale: "Ресейл", request: "Запрос под заказ", optix: "OPTIX" };
 export const LEAD_STATUS = ["new", "work", "paid", "bought", "shipping", "np", "delivered", "cancelled"];
@@ -60,6 +61,7 @@ async function notify(lead) {
 }
 
 export default async function handler(req, res) {
+  if (!allow(req, "lead", 20, 60000)) return tooMany(res); // защита от флуда с одного адреса
   try {
     const store = getStore();
     if (req.method === "GET") {

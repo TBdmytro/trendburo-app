@@ -4,8 +4,10 @@
  * Личных данных нет: только номера товаров.
  */
 import { getStore } from "../lib/store.js";
+import { allow, tooMany } from "../lib/ratelimit.js";
 export const popKey = id => String(id).replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 80);
 export default async function handler(req, res) {
+  if (!allow(req, "pop", 180, 60000)) return tooMany(res); // защита от флуда с одного адреса
   res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") { res.statusCode = 405; return res.end("{}"); }
   let b = req.body; if (typeof b === "string") { try { b = JSON.parse(b); } catch { b = {}; } } b = b || {};

@@ -7,6 +7,7 @@ import { userFrom } from "../lib/tgauth.js";
 import { customerId } from "../lib/customers.js";
 import { accessSettings, accessOf } from "../lib/access.js";
 import { readSession } from "../lib/auth.js";
+import { allow, tooMany } from "../lib/ratelimit.js";
 
 /* Каталог собирается не чаще раза в 20 с на экземпляр сервера; одновременные запросы ждут одну сборку (база не получает толпу одинаковых запросов) */
 const MEMO = [null, null];
@@ -39,6 +40,7 @@ async function catalogBody(compact) {
 }
 
 export default async function handler(req, res) {
+  if (!allow(req, "cat", 60, 60000)) return tooMany(res); // защита от флуда с одного адреса
   // Личный раздел «Мониторинг»: плитки отдаются только по коду владельца
   const wm = String(req.url || "").match(/[?&]watch=(\d{6})/);
   if (wm) {
