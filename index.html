@@ -1504,7 +1504,7 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 .bsticky select{width:auto;padding:8px 12px;font-size:13.5px;border-radius:10px;margin-left:auto}
 
 /* OPTIX закрыт: матовое стекло и заявка */
-.oxg{position:fixed;inset:0;z-index:600;display:grid;place-items:center;padding:24px;background:rgba(18,41,62,.18);-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2);opacity:0;transition:opacity .26s ease}
+.oxg{position:fixed;inset:0;z-index:600;display:grid;place-items:center;padding:24px;background:rgba(240,244,248,.28);-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2);opacity:0;transition:opacity .26s ease}
 .oxg.in{opacity:1}
 .oxg-card{width:100%;max-width:360px;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.7);border-radius:26px;padding:26px 22px 18px;text-align:center;box-shadow:0 20px 60px rgba(18,41,62,.18);transform:translateY(14px) scale(.98);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
 .oxg.in .oxg-card{transform:none}
@@ -1742,9 +1742,9 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
           <div><div class="cap" data-t="svc.concierge.cap">Консьерж Trend Büro</div><h3 data-t="svc.concierge.title">Всё для вас — организуем</h3></div>
           <p data-t="svc.concierge.text">Покупки с доставкой вам в руки, отели, перелёты, трансферы, бронь лучших ресторанов — и всё, что вы загадаете, мы сделаем</p>
           <span class="gl"><svg viewBox="0 0 100 100"><path d="M18 70h64M26 70a24 24 0 0 1 48 0M50 42v-6M44 36h12"/></svg></span></button>
-        <button class="svc-card press locked" style="--sc:var(--c-stylist)" data-act="soon" data-s="stylist" data-svc="stylist" aria-disabled="true"><span class="soon">Скоро</span>
-          <div><div class="cap" data-t="svc.stylist.cap">AI-стилист</div><h3 data-t="svc.stylist.title">Образ из витрины</h3></div>
-          <p data-t="svc.stylist.text">Повод, стиль и бюджет — подбор за минуту</p>
+        <button class="svc-card press locked" style="--sc:var(--c-stylist)" data-act="soon" data-s="stylist" data-svc="stylist" aria-disabled="true"><span class="soon">В разработке</span>
+          <div><div class="cap" data-t="svc.stylist.cap">Trend Büro AI</div><h3 data-t="svc.stylist.title">Новый AI-продукт</h3></div>
+          <p data-t="svc.stylist.text">Готовим для вас кое-что особенное</p>
           <span class="gl"><svg viewBox="0 0 100 100"><path d="M50 15l7 20 20 7-20 7-7 20-7-20-20-7 20-7z"/></svg></span></button>
       </div>
       <div class="sec"><div class="sech"><h2 data-t="how.title">Как мы работаем</h2></div>
@@ -1844,7 +1844,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
     <button data-tab="feed"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Лента</button>
     <button data-tab="catalog"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>Каталог</button>
     <button data-tab="services"><svg viewBox="0 0 24 24"><path d="M4 17h16M6 17a6 6 0 0 1 12 0M12 9V7M10 7h4"/></svg>Сервисы</button>
-    <button data-tab="stylist"><svg viewBox="0 0 24 24"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>Стилист</button>
+    <button data-tbact="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/></svg>Кабинет</button>
   </nav>
   <a class="mchat" id="mchat" href="https://t.me/trendburomanager" target="_blank" rel="noopener" aria-label="Написать менеджеру в Telegram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-11 6.6L4.5 19.5l1.4-4.2A7.5 7.5 0 1 1 20 11.5z"/><path d="M9 10.5h6M9 13.5h4"/></svg><span>Менеджер</span></a>
   <div class="toast" id="toast" role="status"></div>
@@ -2204,15 +2204,15 @@ function optixGate(){if(document.querySelector(".oxg"))return;const st=ME&&ME.op
   const body=st=>st==="pending"?`<p class="oxg-ok">Заявка отправлена ✦<br>Откроем доступ и напишем вам в Telegram.</p>`:st==="no"?`<p class="oxg-ok">Сейчас доступ закрыт. Мы напишем вам, когда OPTIX откроется для всех.</p>`:`<button class="btn oxg-go press" data-oxreq>Подать заявку</button>`;
   g.innerHTML=`<div class="oxg-card"><span class="wordmark oxg-wm">OPTIX</span><span class="cap">Очки по выгодным ценам и со скидками</span><p>Дорогие клиенты, мы готовим OPTIX с особым вниманием и скоро его представим.</p><p class="muted">Хотите увидеть каталог раньше — оставьте заявку на доступ.</p><div class="oxg-act">${body(st)}</div><button class="oxg-x" data-oxx>Вернуться</button></div>`;
   document.body.append(g);requestAnimationFrame(()=>g.classList.add("in"));try{syncBack()}catch(e){}
-  const close=()=>{g.classList.remove("in");setTimeout(()=>{g.remove();try{syncBack()}catch(e){}},260)};g.closeGate=close;
+  const close=()=>{g.classList.remove("in");if(OXA)closeOptixApp();else if($("#app").classList.contains("in-optix"))tab(lastMain||"feed");setTimeout(()=>{g.remove();try{syncBack()}catch(e){}},260)};g.closeGate=close; // «Вернуться» — обратно в Trend Büro
   g.addEventListener("click",async e=>{if(e.target===g||e.target.closest("[data-oxx]"))return close();const b=e.target.closest("[data-oxreq]");if(!b)return;b.disabled=true;b.textContent="Отправляем…";
     const r=await meCall({a:"optix"});if(r&&r.optix){if(ME)ME.optix=r.optix;g.querySelector(".oxg-act").innerHTML=body(r.optix);try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.notificationOccurred("success")}catch(x){}}else{b.disabled=false;b.textContent="Подать заявку";toast(r&&r.error||"Не получилось — попробуйте ещё раз")}})}
-function openOptixApp(ev){if(OXA)return;if(!/[?&]demo=1/.test(location.search)&&!optixOpen())return optixGate();
+function openOptixApp(ev){if(OXA)return;const locked=!/[?&]demo=1/.test(location.search)&&!optixOpen();
   const w=document.createElement("div");w.className="oxa";w.setAttribute("role","dialog");w.setAttribute("aria-label","OPTIX");
   w.innerHTML=`<iframe title="OPTIX"></iframe>${TGW?"":'<button class="oxa-x" aria-label="Вернуться в Trend Büro"><i>TB</i>Trend Büro</button>'}`;
   OXA=w;const fr=w.querySelector("iframe");let ready=false,shown=false;
   document.body.append(w); // грузится сразу, но невидимо — пока играет синий круг
-  const show=()=>{if(shown||!OXA)return;shown=true;requestAnimationFrame(()=>{w.classList.add("in");syncFlags()})};
+  const show=()=>{if(shown||!OXA)return;shown=true;requestAnimationFrame(()=>{w.classList.add("in");syncFlags();if(locked)setTimeout(()=>{if(OXA===w)optixGate()},350)})}; // закрыт — сначала загрузка OPTIX, на готовой странице — матовое стекло с заявкой
   fr.addEventListener("load",()=>{ready=true;try{const d=fr.contentDocument,bg=getComputedStyle(d.body).backgroundColor;if(bg&&!/rgba\(0, 0, 0, 0\)|transparent/.test(bg))w.style.setProperty("--oxbg",bg)}catch(e){}});
   optixDoc().then(t=>{fr.srcdoc=t}).catch(()=>{fr.src=OPTIX_LINK});
   const x=w.querySelector(".oxa-x");if(x)x.onclick=closeOptixApp;
@@ -3380,6 +3380,8 @@ function openAuto(ri){
 /* ===== Чат с менеджером и «замок оси» для горизонтальных лент ===== */
 (function(){const a=document.getElementById("mchat");if(!a)return;
   const upd=()=>{const m=CONTACTS.find(c=>/менеджер/i.test(c.label)&&/^https:\/\/t\.me\//.test(c.url))||CONTACTS.find(c=>/^https:\/\/t\.me\//.test(c.url));if(m)a.href=m.url};upd();window.__updChat=upd;
+  // в Telegram — сразу в чат с менеджером (переход внутри Telegram, без браузера)
+  a.addEventListener("click",e=>{try{if(TGW&&TGW.openTelegramLink){e.preventDefault();TGW.openTelegramLink(a.href)}}catch(x){}});
   setTimeout(()=>a.classList.add("mini"),3500);
   // прокрутка вниз — кнопка уезжает и не закрывает текст; вверх или остановка у конца — возвращается
   let ly=0;document.addEventListener("scroll",e=>{const t=e.target;if(!(t instanceof Element)||!t.classList.contains("scroll"))return;const y=t.scrollTop,end=t.scrollHeight-t.clientHeight-y<40;
@@ -3436,7 +3438,7 @@ const SVC={
    ["#","И ещё"],["Любая другая задача","Опишите, что нужно, — организуем",'<path d="M12 5v14M5 12h14"/>']]}
 };
 const SOON=new Set(["stylist","resale","concierge","travel"]);
-function openService(k,sell){if(k==="travel")k="concierge";if(SOON.has(k)){toast(({stylist:"AI-стилист",concierge:"Консьерж-сервис"}[k]||"Ресейл")+" — скоро запустим");return}
+function openService(k,sell){if(k==="travel")k="concierge";if(SOON.has(k)){toast(({stylist:"Новый AI-продукт",concierge:"Консьерж-сервис"}[k]||"Ресейл")+" — скоро запустим");return}
   if(k==="resale")return openResale(sell);
   const S=SVC[k];
   const form=`
@@ -3937,7 +3939,7 @@ let stylistRemote=false;
 
 /* ===== Навигация ===== */
 const TABS=["feed","catalog","optix","services","stylist"];
-function tab(t){if(!TABS.includes(t))t="feed";if(t==="optix"&&!/[?&]demo=1/.test(location.search)&&!optixOpen())return optixGate();if(window.CATLAZY&&t!=="feed")window.CATLAZY();if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
+function tab(t){if(!TABS.includes(t))t="feed";if(t==="optix"&&!/[?&]demo=1/.test(location.search)&&!optixOpen())setTimeout(()=>{if($("#app").classList.contains("in-optix"))optixGate()},350);if(window.CATLAZY&&t!=="feed")window.CATLAZY();if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
   $$(".tab").forEach(s=>s.classList.toggle("on",s.id==="t-"+t));
   const hl=t;
   $$("#tabbar button").forEach(b=>b.dataset.tab===hl?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
@@ -3973,7 +3975,7 @@ function goTab(t,ev){const cur=curTab();
   else if(cur==="optix"&&t!=="optix")playIntro("trend",t,ev);
   else tab(t)}
 $$(".tab .scroll").forEach(sc=>{const bar=sc.parentElement.querySelector(".bar");sc.addEventListener("scroll",()=>bar.classList.toggle("show",sc.scrollTop>44),{passive:true})});
-$("#tabbar").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+$("#tabbar").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.tbact==="account"){openAccount();try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(x){}return} // личный кабинет вместо стилиста
   if($("#t-"+b.dataset.tab).classList.contains("on")&&!stack.length){const sc=$("#t-"+b.dataset.tab+" .scroll");sc&&sc.scrollTo({top:0,behavior:"smooth"})}else goTab(b.dataset.tab,e)});
 $("#gSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;F.g=b.dataset.g;renderCatalog();renderCatHome()});
 
@@ -4015,7 +4017,7 @@ $("#app").addEventListener("click",e=>{
   else if(a==="tab")goTab(t.dataset.tab,e);
   else if(a==="optixapp")openOptixApp(e);
   else if(a==="svc"){closeSheet(true);openService(t.dataset.s,!!t.dataset.sell)}
-  else if(a==="soon"){toast(({stylist:"AI-стилист",concierge:"Консьерж-сервис"}[t.dataset.s]||"Ресейл")+" — скоро запустим");hap&&hap("light")}
+  else if(a==="soon"){toast(t.dataset.s==="stylist"?"AI-продукт в разработке":({concierge:"Консьерж-сервис"}[t.dataset.s]||"Ресейл")+" — скоро запустим");hap&&hap("light")}
   else if(a==="filters")filtersSheet();
   else if(a==="cat"){const c=t.dataset.cat;if(F.cats.has(c)){F.cats.delete(c);delete F.subs[c]}else F.cats.add(c);renderCatalog()}
   else if(a==="csub"){const c=t.dataset.c,k=t.dataset.k,S=F.subs[c]=F.subs[c]||new Set();S.has(k)?S.delete(k):S.add(k);hap("light");renderCatalog()}
