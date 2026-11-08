@@ -113,3 +113,12 @@ test("цвета одной модели — одна семья по артик
   assert.equal(f("gucci-1334833g2001160", "Schal aus GG Wolle", "Gucci"), f("gucci-1334833g2001763", "GG wool scarf", "Gucci"));
   assert.equal(f("goldengoose-gwf00117f00934412615", "Ball Star", "Golden Goose"), f("goldengoose-gwf00117f00934410920", "Ball Star Damen", "Golden Goose"));
 });
+
+test("Miu Miu: only women, colors of one model+material are one family", async () => {
+  const { genderOf, famKey } = await import("../lib/catalog.js");
+  assert.equal(genderOf({ brand: "Miu Miu", gender: "u" }), "w");
+  const a = famKey({ _id: "product.manual.miumiu-5bf131an88f0009volo", brand: "Miu Miu", title: "Caprice Clutch" });
+  const b = famKey({ _id: "product.manual.miumiu-5bf131an88f0007volo", brand: "Miu Miu", title: "Caprice Clutch" });
+  const c = famKey({ _id: "product.manual.miumiu-5bf1312ieof0041vooo", brand: "Miu Miu", title: "Caprice Leather Clutch" });
+  assert.equal(a, b); assert.notEqual(a, c);
+});
