@@ -391,13 +391,13 @@ export default async function handler(req, res) {
           const ch = []; for (const p of L) { const g = aloGender((p.variants || []).map(v => v.sku).find(Boolean), { brand: "Alo Yoga" }); if (g && g !== p.gender) ch.push({ id: p._id, set: { gender: g } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
           await store.put({ _id: "settings.fixAloG1", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXALO " + ch.length); } } catch (e) { FIXALO = false; console.log("FIXALO fail " + String(e.message).slice(0, 100)); } }
-        if (!FIXOBJ) { FIXOBJ = true; try { if (!(await store.get("settings.fixObjPm2"))) { const { objCategory, detectSubcategory } = await import("../lib/normalize.js");
+        if (!FIXOBJ) { FIXOBJ = true; try { if (!(await store.get("settings.fixObjPm3"))) { const { objCategory, detectSubcategory } = await import("../lib/normalize.js");
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, title, sourceTitle, category, subcategory, overrides" })).filter(p => /^product\.manual\.(miumiu|prada)-/.test(p._id) && !p.overrides?.category && !["jewelry", "eyewear"].includes(p.category));
           const ch = []; for (const p of L) { const oc = objCategory(p.sourceTitle) || objCategory(p.title) || p.category; const t = p.sourceTitle || p.title; // кошельки / чехлы / папки Prada — в аксессуары с правильным подразделом (раньше «Brieftasche» → сумки, чехол → «головные уборы»)
             const sc = p.overrides?.subcategory ? p.subcategory : (detectSubcategory(oc, t) || (oc === p.category ? p.subcategory : null) || null);
             if (oc !== p.category || (["accessories", "bags"].includes(oc) && sc !== p.subcategory)) ch.push({ id: p._id, set: { category: oc, subcategory: sc } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
-          await store.put({ _id: "settings.fixObjPm2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXOBJ " + ch.length); } } catch (e) { FIXOBJ = false; } }
+          await store.put({ _id: "settings.fixObjPm3", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXOBJ " + ch.length); } } catch (e) { FIXOBJ = false; } }
         if (!FIXMIU) { FIXMIU = true; try { if (!(await store.get("settings.fixMiuImg5"))) { const { orderImages } = await import("../lib/imgorder.js");
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides" })).filter(p => /^product\.manual\.(miumiu|prada)-/.test(p._id) && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
           const ch = []; for (const p of L) { const im = p.images || [], src = i => i.sourceUrl || i.url, ord = orderImages(im.map(src), { max: 12 }); if (ord.length && ord.join("|") !== im.map(src).join("|")) ch.push({ id: p._id, set: { images: ord.map(u => im.find(i => src(i) === u)), coverFrom: null, coverTile: null } }); }
