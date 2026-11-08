@@ -702,6 +702,8 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 /* рамка фото — скругление через overflow (не clip-path: iOS в Telegram недорисовывал куски фото при листании) */
 .pv-hero.ph .pv-gal .sl{flex:0 0 100%;padding:0;margin:10px 0 0;height:calc(100% - 70px);border-radius:20px;overflow:hidden;background:#fff}
 .pv-hero.ph .pv-gal .slb{display:none!important}
+/* углы гарантированно круглые на любом кадре: iOS иногда не обрезает слой фото при листании (последний кадр выходил с острыми углами) — поверх кладём белые «уголки» */
+.pv-hero.ph .pv-gal .sl::after{content:"";position:absolute;inset:0;border-radius:20px;box-shadow:0 0 0 9px #fff;pointer-events:none;z-index:3}
 .pv-hero.ph .pv-dots{bottom:43px;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0}
 .pv-hero.ph .pv-bdg,.intg .pushed.pvph .pv-hero.ph .pv-bdg{top:22px;right:34px}
 .pv-hero.ph .newp,.intg .pushed.pvph .pv-hero.ph .newp{top:22px;left:34px}
