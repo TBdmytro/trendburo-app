@@ -440,7 +440,7 @@ test("telegram bot: replies and setup", async () => {
   const { replyFor, hookSecret, setupBot } = await import("../api/bot.js");
   const base = "https://shop.example";
   const st = replyFor("/start", base, 1);
-  assert.equal(st.method, "sendPhoto"); assert.equal(st.photo, base + "/brand/bot-welcome.jpg");
+  assert.equal(st.method, "sendPhoto"); assert.equal(st.photo, base + "/brand/bot-welcome.jpg?v=3");
   assert.ok(st.caption.length <= 1024);
   assert.equal(st.reply_markup.inline_keyboard[0][0].web_app.url, base + "/#catalog");
   assert.equal(st.reply_markup.inline_keyboard[1][1].callback_data, "how");
