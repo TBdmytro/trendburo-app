@@ -78,9 +78,11 @@ async function blockEmptied(store, removed) {
 async function allProducts(store) {
   // 5 минут: список всех товаров — самый тяжёлый запрос к базе; после любой правки PCACHE сбрасывается
   if (PCACHE && Date.now() - PCACHE.at < 5 * 60e3) return PCACHE.data;
-  const data = await store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS });
-  PCACHE = { at: Date.now(), data }; return data;
+  if (PLOAD) return PLOAD; // уже грузится — ждём тот же запрос, а не запускаем второй
+  PLOAD = store.list("product", {}, { order: "updatedAt desc", limit: 50000, fields: PFIELDS }).then(data => { PCACHE = { at: Date.now(), data }; return data; }).finally(() => { PLOAD = null; });
+  return PLOAD;
 }
+let PLOAD = null;
 // ключ кнопки «В Trend Büro»: даёт только загрузку товаров с сайтов брендов (скрытыми), без доступа к остальной админке.
 // Хранится на сервере только отпечаток (sha256); сам ключ — внутри закладки пользователя
 const KEY_ACTIONS = new Set(["me", "knownProducts", "webImport", "webUpdate", "sectionKnown", "sectionSync", "markNew", "imageUpload", "subcats", "snapSave"]);
@@ -94,9 +96,8 @@ let FIXAT = 0; // приводить бренды/подразделы при о
 
 let COLLP = null, COLLP_AT = 0;
 async function collProds(store) {
-  if (COLLP && Date.now() - COLLP_AT < 120000) return COLLP;
-  const L = await store.list("product", {}, { limit: 60000, fields: "_id, status, webSections, images[0...1]{url}" });
-  COLLP = L.filter(p => (p.webSections || []).length); COLLP_AT = Date.now(); return COLLP;
+  // тот же кэш, что у списка товаров (5 минут): коллекции открываются мгновенно, без второго тяжёлого запроса к базе
+  return (await allProducts(store)).filter(p => (p.webSections || []).length);
 }
 export default async function handler(req, res) {
   const a = (req.query && req.query.a) || new URL(req.url, "http://x").searchParams.get("a");
@@ -126,7 +127,7 @@ export default async function handler(req, res) {
         d.list = [{ h: keyHash(key), at: new Date().toISOString() }, ...(d.list || [])].slice(0, 10); delete d._rev; delete d._createdAt; delete d._updatedAt;
         await store.put(d); return send(res, 200, { key });
       }
-      case "me": { if (!me.key) await seedRails(store, me.name).catch(() => {});
+      case "me": { if (!me.key) await seedRails(store, me.name).catch(() => {}); if (!me.key && !PCACHE) allProducts(store).catch(() => {}); // админка открылась — заранее грузим список товаров, пока рисуется экран
         if (!me.key) { const { ensureSanityCors } = await import("../lib/sanitycors.js"); await ensureSanityCors().catch(() => {}); } // фото с хранилища должны открываться на сайте
         return send(res, 200, { name: me.name, store: store.kind, demo: !!store.demo }); }
 
