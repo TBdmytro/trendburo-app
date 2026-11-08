@@ -688,7 +688,9 @@ export default async function handler(req, res) {
         // уже пройденные разделы, которые оказались коллекциями (новые правила узнавания: «Dior Alps» и т.п.), — заводим коллекцию
         // (не чаще раза в 10 минут; бренд — по адресу сайта, без перебора всех товаров: раньше список коллекций открывался 4–5 с)
         if (Date.now() - COLLSCAN_AT > 10 * 60e3) { COLLSCAN_AT = Date.now(); try { const { upsertCollection, isCollection, collKey } = await import("../lib/collections.js"); const ws = (await store.get("settings.webSections"))?.list || {};
-          for (const x of Object.values(ws)) { if (!x?.section || !isCollection(x.title, x.url || x.section)) continue; if (await store.get("collection." + collKey(x.section))) continue;
+          const have = new Set((await store.list("collection", {}, { limit: 1000, fields: "_id" })).map(c => c._id)); // одним запросом, а не по одному на каждый раздел (было до 10 с)
+          const { secBase } = await import("../lib/collections.js");
+          for (const x of Object.values(ws)) { if (!x?.section || !isCollection(x.title, x.url || x.section)) continue; if (have.has("collection." + collKey(x.section)) || have.has("collection." + collKey(secBase(x.section)))) continue;
             await upsertCollection(store, { section: x.section, url: x.url, title: x.title || "", brand: "", found: x.found || 0 }); } } catch (e) { console.log("COLLSCAN " + String(e.message).slice(0, 100)); } }
         const [colls, L] = await Promise.all([store.list("collection", {}, { limit: 500 }), collProds(store)]);
         const list = colls.map(c => { const mine = L.filter(p => inColl(p, c)); return { ...c, n: mine.length, live: mine.filter(p => p.status === "published").length, newN: 0, cover: c.cover || mine.map(p => p.images?.[0]?.url).find(Boolean) || null }; })
