@@ -59,7 +59,7 @@ async function copyWebImages(store, list, id = "") {
   return { images: ok.length ? ok : images, copied, srcOf };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer, soldOld";
-let FIXOBJ = false, FIXMIU = false, FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
+let FIXALO = false, FIXOBJ = false, FIXMIU = false, FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
 /** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
@@ -383,6 +383,12 @@ export default async function handler(req, res) {
           await store.put({ _id: "settings.fixLvSold2", _type: "settings", at: new Date().toISOString(), nw, old }); PCACHE = null; console.log("FIXLVSOLD2 new " + nw + " old " + old); } } catch (e) { FIXLVSOLD2 = false; console.log("FIXLVSOLD2 fail " + String(e.message).slice(0, 120)); } }
         // один раз: Golden Goose — убрать со страниц подборки «co-creation» (фото не этого товара)
         // один раз: Miu Miu — обложка не фото на модели: товар спереди первым, «на модели» в конце; ваш порядок и обложку не трогаем
+        // один раз: Alo Yoga — пол по артикулу (M… мужское, W… женское, U… унисекс): мужские вещи лежали в «Для неё»
+        if (!FIXALO) { FIXALO = true; try { if (!(await store.get("settings.fixAloG1"))) { const { aloGender } = await import("../lib/sources.js");
+          const L = (await store.list("product", {}, { limit: 60000, fields: "_id, gender, variants, offers, overrides, brand" })).filter(p => /alo/i.test(p.brand || "") && !p.overrides?.gender);
+          const ch = []; for (const p of L) { const g = aloGender((p.variants || []).map(v => v.sku).find(Boolean), { brand: "Alo Yoga" }); if (g && g !== p.gender) ch.push({ id: p._id, set: { gender: g } }); }
+          for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
+          await store.put({ _id: "settings.fixAloG1", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXALO " + ch.length); } } catch (e) { FIXALO = false; console.log("FIXALO fail " + String(e.message).slice(0, 100)); } }
         if (!FIXOBJ) { FIXOBJ = true; try { if (!(await store.get("settings.fixObjPm1"))) { const { objCategory } = await import("../lib/normalize.js");
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, title, sourceTitle, category, overrides" })).filter(p => /^product\.manual\.(miumiu|prada)-/.test(p._id) && !p.overrides?.category && !["jewelry", "eyewear"].includes(p.category));
           const ch = []; for (const p of L) { const oc = objCategory(p.sourceTitle) || objCategory(p.title); if (oc && oc !== p.category) ch.push({ id: p._id, set: { category: oc, subcategory: null } }); }

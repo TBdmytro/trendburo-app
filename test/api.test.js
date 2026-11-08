@@ -492,8 +492,9 @@ test("копии страниц по умолчанию не сохраняют�
   const ck = await adminCookie(), H = { cookie: ck, "x-tb": "1" };
   const r = await call(handler, { method: "POST", query: { a: "snapSave" }, body: { host: "x.com", section: "x.com/a", list: { url: "u", gz: "AAAA" } }, headers: H });
   assert.ok(!r.body.skipped, "первая копия сайта сохраняется");
-  const r2 = await call(handler, { method: "POST", query: { a: "snapSave" }, body: { host: "x.com", section: "x.com/b", list: { url: "u", gz: "AAAA" } }, headers: H });
-  assert.equal(r2.body.skipped, true, "вторая — нет");
+  for (const k of ["b", "c", "d", "e"]) { const rk = await call(handler, { method: "POST", query: { a: "snapSave" }, body: { host: "x.com", section: "x.com/" + k, list: { url: "u", gz: "AAAA" } }, headers: H }); assert.ok(!rk.body.skipped, "до 5 разделов сайта сохраняются"); }
+  const r2 = await call(handler, { method: "POST", query: { a: "snapSave" }, body: { host: "x.com", section: "x.com/f", list: { url: "u", gz: "AAAA" } }, headers: H });
+  assert.equal(r2.body.skipped, true, "шестой — нет");
   await store.put({ _id: "snap.old", _type: "snap", host: "y.com", at: "2020-01-01T00:00:00Z", list: { gz: "AAAA" } });
   await store.put({ _id: "product.manual.shop-262mzugnia357cbj62", _type: "product", title: "S", images: [{ url: "https://media.x.com/image/upload/w_1400/v1/262_D.jpg" }, { url: "https://media.x.com/image/upload/w_900/v1/262_D.jpg" }, { url: "https://media.x.com/image/upload/v2/PrenotaAppuntamento_2560x590.jpg" }, { url: "https://media.x.com/image/upload/v1/262_F.jpg" }] });
   await store.put({ _id: "weblogin." + "a".repeat(24), _type: "weblogin", exp: Date.now() - 1000 });
