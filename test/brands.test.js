@@ -219,7 +219,9 @@ test("Loro Piana Summer Walk / Open Walk: +200 €, меховые — обыч�
   const { computePricing } = await import("../lib/publish.js");
   const o = { sourceKind: "official", boutique: 890, flatMarkup: 0.1 };
   assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Mokassin Summer Walk" }).ua, 1140);
-  assert.equal(priceFor({ ...o, boutique: 2400 }, null, null, "shoes", "Loro Piana", { title: "Chukka-Stiefeletten Open Walk" }).ua, 2650);
+  assert.equal(priceFor({ ...o, boutique: 2400 }, null, null, "shoes", "Loro Piana", { title: "Chukka-Stiefeletten Open Walk" }).ua, 2640); // от 1200 € — +10%
+  assert.equal(priceFor({ ...o, boutique: 1200 }, null, null, "shoes", "Loro Piana", { title: "Loafer Summer Walk" }).ua, 1320);
+  assert.equal(priceFor({ ...o, boutique: 1150 }, null, null, "shoes", "Loro Piana", { title: "Loafer Summer Walk" }).ua, 1400);
   assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Summer Walk Moccasin" }).ua, 1140); // после перевода
   assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Mokassin Summer Walk", materials: ["Lammfell"] }).ua, 980); // мех: +10%
   assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Open Walk Shearling" }).ua, 980);
