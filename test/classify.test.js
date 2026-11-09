@@ -122,3 +122,16 @@ test("Miu Miu: only women, colors of one model+material are one family", async (
   const c = famKey({ _id: "product.manual.miumiu-5bf1312ieof0041vooo", brand: "Miu Miu", title: "Caprice Leather Clutch" });
   assert.equal(a, b); assert.notEqual(a, c);
 });
+
+test("Loro Piana: пол по адресу (без унисекса), цвета одной модели — одна семья, разные модели — разные", async () => {
+  const { genderOf, famKey } = await import("../lib/catalog.js");
+  const base = { brand: "Loro Piana", gender: "w", webSections: ["de.loropiana.com/de/c/herren/accessoires/schals", "de.loropiana.com/de/c/damen/accessoires/schals"] };
+  assert.equal(genderOf({ ...base, sourceUrl: "https://de.loropiana.com/de/damen/accessoires/schals/schal-grande-unita-FAA2448_W000.html" }), "w");
+  assert.equal(genderOf({ ...base, sourceUrl: "https://de.loropiana.com/de/herren/the-gift-of-kings/sakkos/jacke-FAP6827_BE11.html" }), "m");
+  assert.equal(genderOf({ ...base, sourceUrl: "https://de.loropiana.com/de/tops/man/t-shirt-como-FAF6689_1000.html" }), "m");
+  assert.equal(genderOf({ ...base, sourceUrl: "https://de.loropiana.com/de/x/y-FAA2448_W000.html" }), "w");
+  assert.equal(genderOf({ ...base, brand: "Gucci" }), "u"); // у других брендов правило «в обоих разделах — унисекс» как было
+  const sw = (sku, id) => famKey({ _id: "product.manual.de-" + id, brand: "Loro Piana", title: "Mokassin Summer Walk", modelSku: sku });
+  assert.equal(sw("FAE8124_50ZF", "a"), sw("FAE8124_W12S", "b"));
+  assert.notEqual(sw("FAE8124_50ZF", "a"), sw("FAQ2211_MH90", "c"));
+});

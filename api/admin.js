@@ -563,6 +563,19 @@ export default async function handler(req, res) {
         if (!/^product\.manual\.(dior|gucci|goldengoose|miumiu|prada)-/.test(id) && /^https:\/\/[^/]+\/[^&=]*(\?|$)/.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
         return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg, noStock: !!it.noStock, stockRead: !!it.stockRead, soldOld: !!it.soldOld, material: it.material }, { by: me.name, pricingCfg }));
       }
+      case "fixLoroSizes": {
+        // Loro Piana: у вещей одного размера («NR» — шарфы, сумки, кошельки…) кнопка до v117 записала «размеры» 1…10 из списка «количество» — убираем, вещь без размеров
+        const { createHash } = await import("node:crypto"); const k12 = s => createHash("sha1").update(String(s)).digest("hex").slice(0, 12);
+        const L = await store.list("product", {}, { limit: 30000, fields: "_id, brand, sizes, variants, offers, images" });
+        const FAKE = new Set(["1 2 3 4 5 6 7 8 9 10", "0 1 2 3 4 5 6 7 8 9"]), patches = [];
+        for (const p of L) { if (!/loro\s*piana/i.test(String(p.brand || "")) || !FAKE.has((p.sizes || []).join(" "))) continue;
+          const o = (p.offers || [])[0]; if (!o) continue; const v0 = (p.variants || [])[0] || {}, vk = k12(p._id + "|one");
+          const st = Object.values(o.availability || {}).some(a => a && a.status === "online") ? "online" : (Object.values(o.availability || {})[0]?.status || "online");
+          const offers = [{ ...o, availability: { [vk]: { status: st, price: null } }, onlineOrder: st === "online" }, ...(p.offers || []).slice(1)];
+          patches.push({ id: p._id, set: { sizes: [], variants: [{ _key: vk, sku: null, gtin: null, color: v0.color || null, size: null, material: null, images: (p.images || []).slice(0, 1) }], offers, hasPre: false } }); }
+        for (let i = 0; i < patches.length; i += 200) await store.patchEach(patches.slice(i, i + 200));
+        PCACHE = null; return send(res, 200, { fixed: patches.length });
+      }
       case "fixBrands": {
         // выравнивание брендов и подразделов — отдельным запросом в фоне (админка не ждёт его, чтобы «Товары» открывались сразу)
         if (Date.now() - FIXAT < 10 * 60e3) return send(res, 200, { fixed: 0, recent: true });
