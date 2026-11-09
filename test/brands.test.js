@@ -223,7 +223,11 @@ test("Loro Piana Summer Walk / Open Walk: +200 €, меховые — обыч�
   assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Summer Walk Moccasin" }).ua, 1090); // после перевода
   assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Mokassin Summer Walk", materials: ["Lammfell"] }).ua, 980); // мех: +10%
   assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Open Walk Shearling" }).ua, 980);
+  assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Mokassin Summer Anton Walk" }).ua, 1090);
+  assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Summer Knitted Walk" }).ua, 1090);
+  assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Boot Open Knitted Walk" }).ua, 1090);
   assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Sneaker Week End Walk" }).ua, 980); // другая модель
+  assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Sneaker Fast Walk" }).ua, 980);
   assert.equal(priceFor(o, null, null, "shoes", "Gucci", { title: "Summer Walk" }).ua, 980); // другой бренд
   assert.equal(priceFor(o, null, 1500, "shoes", "Loro Piana", { title: "Summer Walk" }).ua, 1500); // закреплённая цена главнее
   const p = { brand: "Loro Piana", title: "Mokassin Summer Walk", category: "shoes", offers: [{ _key: "a", ...o }] };
