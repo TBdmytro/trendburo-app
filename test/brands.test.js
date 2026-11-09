@@ -213,3 +213,20 @@ test("подразделы: обувь, сумки, одежда — по раз
   await fixBrands(s);
   assert.equal((await s.get("product.u.l1")).subcategory, "sport");
 });
+
+test("Loro Piana Summer Walk / Open Walk: +200 €, меховые — обычное правило", async () => {
+  const { priceFor } = await import("../lib/pipeline.js");
+  const { computePricing } = await import("../lib/publish.js");
+  const o = { sourceKind: "official", boutique: 890, flatMarkup: 0.1 };
+  assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Mokassin Summer Walk" }).ua, 1090);
+  assert.equal(priceFor({ ...o, boutique: 2400 }, null, null, "shoes", "Loro Piana", { title: "Chukka-Stiefeletten Open Walk" }).ua, 2600);
+  assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Summer Walk Moccasin" }).ua, 1090); // после перевода
+  assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Mokassin Summer Walk", materials: ["Lammfell"] }).ua, 980); // мех: +10%
+  assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Open Walk Shearling" }).ua, 980);
+  assert.equal(priceFor(o, null, null, "shoes", "Loro Piana", { title: "Sneaker Week End Walk" }).ua, 980); // другая модель
+  assert.equal(priceFor(o, null, null, "shoes", "Gucci", { title: "Summer Walk" }).ua, 980); // другой бренд
+  assert.equal(priceFor(o, null, 1500, "shoes", "Loro Piana", { title: "Summer Walk" }).ua, 1500); // закреплённая цена главнее
+  const p = { brand: "Loro Piana", title: "Mokassin Summer Walk", category: "shoes", offers: [{ _key: "a", ...o }] };
+  assert.equal(computePricing(p, null).ua, 1090);
+  assert.equal(computePricing({ ...p, description: "Innenfutter aus Lammfell" }, null).ua, 980);
+});

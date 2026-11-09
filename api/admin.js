@@ -561,7 +561,7 @@ export default async function handler(req, res) {
         // обложка как на плитке раздела бренда (один раз на товар)
         // Dior: на плитке раздела часто фото на модели — обложкой не ставим
         if (!/^product\.manual\.(dior|gucci|goldengoose|miumiu|prada)-/.test(id) && /^https:\/\/[^/]+\/[^&=]*(\?|$)/.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
-        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg, noStock: !!it.noStock, stockRead: !!it.stockRead, soldOld: !!it.soldOld }, { by: me.name, pricingCfg }));
+        return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg, noStock: !!it.noStock, stockRead: !!it.stockRead, soldOld: !!it.soldOld, material: it.material }, { by: me.name, pricingCfg }));
       }
       case "fixBrands": {
         // выравнивание брендов и подразделов — отдельным запросом в фоне (админка не ждёт его, чтобы «Товары» открывались сразу)
