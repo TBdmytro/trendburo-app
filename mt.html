@@ -48,7 +48,7 @@
 // в разделе — открывает товары по очереди с паузой, как обычный просмотр. Передаёт карточки в админку сообщением между вкладками.
 async function tbCollect() {
   var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
-  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v110] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v111] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
   // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
   // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
   var tick = null;
@@ -267,7 +267,13 @@ async function tbCollect() {
   var lvDenySet = function (k, min) { lvDeny[k] = Date.now() + min * 6e4; try { localStorage.setItem(LVDK, JSON.stringify(lvDeny)); } catch (e) {} };
   var lvLeft = function (k) { return Math.max(0, Math.ceil(((lvDeny[k] || 0) - Date.now()) / 6e4)); };
   // ответ сайта на запрос наличия внутри открытой страницы: 403 — LV не отдаёт наличие (ждать панель размеров бесполезно), 200 — отдал
-  var avStatus = function (w) { try { var es = w.performance.getEntriesByType("resource").filter(function (e) { return /\/availability(\?|$)/.test(e.name); }); var e = es[es.length - 1]; return e ? (e.responseStatus || 0) : -1; } catch (e) { return -1; } };
+  // Safari не сообщает код ответа в performance (responseStatus есть только в Chrome/Firefox) — поэтому ещё и смотрим ответ сайта на запрос наличия в самом окне
+  var hookAv = function (w) { try { if (!w || w.__tbAvHook) return; var of = w.fetch; if (typeof of !== "function") return; w.__tbAvHook = 1; w.__tbAv = [];
+    w.fetch = function (u) { var url = String(u && u.url || u), pr = of.apply(this, arguments); if (/\/availability(\?|$)/.test(url)) pr.then(function (r) { w.__tbAv.push(r.status); }, function () { w.__tbAv.push(-2); }); return pr; }; } catch (e) {} };
+  var avStatus = function (w) { try { var es = w.performance.getEntriesByType("resource").filter(function (e) { return /\/availability(\?|$)/.test(e.name); }); var e = es[es.length - 1]; if (!e) return -1;
+    if (typeof e.responseStatus === "number" && e.responseStatus > 0) return e.responseStatus; // Chrome / Firefox
+    var h = w.__tbAv || []; if (h.length) return h[h.length - 1]; // Safari: ответ, перехваченный в окне
+    return 200; } catch (e) { return -1; } }; // код ответа узнать нельзя — считаем, что ответил
   // LV одежда/аксессуары: размеры — «плашки» в окне выбора (не выпадающий список, как у обуви); у каждой подпись «46 - Verfügbar» / «50 - Nicht verfügbar.»
   var lvChips = function (d) { var out = [], seen = {};
     [].slice.call(d.querySelectorAll(".lv-product-variation-badges__item [aria-label], .lv-choice-group__item [aria-label], [role='option'][aria-label], [class*='variation'] [aria-label]")).forEach(function (e) {
@@ -285,7 +291,7 @@ async function tbCollect() {
       var app = d0.querySelector("#__nuxt") && d0.querySelector("#__nuxt").__vue_app__, R = app && app.config && app.config.globalProperties && app.config.globalProperties.$router; if (!R) return null;
       try { d0.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27, bubbles: true })); } catch (e) {}
       [].slice.call(d0.querySelectorAll(".lv-modal__close")).forEach(function (b) { try { b.click(); } catch (e) {} });
-      var avN0 = avCount(w), sk0 = lvSku(d0), p0 = w.location.pathname, pseg = path.replace(/\/[A-Za-z0-9]{5,8}\/?$/, "/"); R.push(path).catch(function () {});
+      hookAv(w); var avN0 = avCount(w), sk0 = lvSku(d0), p0 = w.location.pathname, pseg = path.replace(/\/[A-Za-z0-9]{5,8}\/?$/, "/"); R.push(path).catch(function () {});
       for (var q = 0; q < 50; q++) { await sleep(160); var d = lvF.contentDocument; if (!d || !d.body) continue;
         var sk = lvSku(d), lp = w.location.pathname; if (lp === path && sk && (sk === code || sk !== sk0) && d.querySelector("h1")) { lvF.__av0 = avN0; lvF.__want = path; lvF.__alias = ""; lvSpa++; return { avN0: avN0 }; }
         // мужская обувь LV: у каждого размера свой код; сайт при переходе сам выбирает другой размер той же модели и цвета (1AL3M1 → 1AL3LZ).
@@ -301,7 +307,7 @@ async function tbCollect() {
       if (!lvF || !lvF.isConnected) { lvF = document.createElement("iframe"); lvF.setAttribute("aria-hidden", "true"); lvF.tabIndex = -1; lvF.style.cssText = "position:fixed;left:0;top:0;width:100vw;height:100vh;opacity:0;pointer-events:none;border:0;z-index:-2147483647"; document.body.appendChild(lvF); }
       var old = null; try { old = lvF.contentDocument; } catch (e) {}
       lvF.__av0 = null; lvF.__want = path; lvF.__alias = ""; lvF.src = url; lvFull++;
-      for (var q = 0; q < 80; q++) { await sleep(200); var d1 = null; try { d1 = lvF.contentDocument; } catch (e) { return null; } if (d1 && d1 !== old && d1.body && lvSku(d1) && d1.querySelector("h1")) { lvF.__av0 = 0; break; } }
+      for (var q = 0; q < 80; q++) { await sleep(200); var d1 = null; try { d1 = lvF.contentDocument; } catch (e) { return null; } if (d1 && d1 !== old && d1.body && lvSku(d1) && d1.querySelector("h1")) { lvF.__av0 = 0; hookAv(lvF.contentWindow); break; } }
       if (lvF.__av0 == null) return null;
     }
     try { var dd = lvF.contentDocument; if (/Access Denied|Zugriff verweigert/i.test(dd.title || "")) return { denied: true }; return { html: "<!DOCTYPE html>" + dd.documentElement.outerHTML, alias: lvF.__alias || "" }; } catch (e) { return null; }
@@ -464,6 +470,7 @@ async function tbCollect() {
       else if (K1.status && K1.status[String(one.sku).toUpperCase().replace(/[^A-Z0-9]/g, "")]) { w.postMessage({ type: "tb-update", items: [one] }, ADM); await waitSaved(1); note("Обновил: " + one.title + (one.lvSz ? " · размеры: " + one.lvSz : "") + " — цена и размеры (" + stName(K1.status[String(one.sku).toUpperCase().replace(/[^A-Z0-9]/g, "")]) + ")"); return; }
       note("Trend Büro: передаю в админку…", true); await send(one); await waitSaved(1); note(saved.ok ? "Готово: " + one.brand + " — " + one.title + (one.lvSz ? " · размеры: " + one.lvSz : "") + " — в «Новых с сайтов» в админке" : "Не сохранилось — откройте админку, там написана причина"); return;
     }
+    if (/louisvuitton\.com$/.test(location.hostname) && lvLeft("pages") && document.querySelectorAll('a[href*="/produkte/"]').length >= 4) { lvDeny.pages = 0; lvDeny.stock = 0; try { localStorage.setItem(LVDK, JSON.stringify(lvDeny)); } catch (e) {} } // раздел открылся с товарами — LV уже отвечает: паузу снимаем (блок LV закрывает и сами страницы)
     if (/louisvuitton\.com$/.test(location.hostname) && lvLeft("pages")) { note("Louis Vuitton недавно ограничил доступ (403). Чтобы не продлевать блокировку, кнопка подождёт ещё " + lvLeft("pages") + " мин. Тогда нажмите снова — продолжит с того же места"); return; }
     // раздел: ссылки на товары этого же сайта (с кодом товара в адресе); сначала листаем вниз, чтобы подгрузились все товары
     var countLinks = function () { return [].slice.call(document.querySelectorAll("a[href]")).filter(function (a) { return !!codeOf(a.href); }).length; };
@@ -482,7 +489,7 @@ async function tbCollect() {
     // сайт сам пишет, сколько товаров в разделе («229 Artikel») — листаем, пока не дойдём до этого числа (Dior подгружает порциями и не сразу)
     var LVR0 = /louisvuitton\.com$/.test(location.hostname); // LV догружает порции медленно — ждём дольше, прежде чем считать, что раздел кончился
     var siteTotal = function () { try { var cid = (location.pathname.match(/\/c\/([A-Za-z0-9]+)\/?$/) || [])[1]; if (cid) { var mm = document.documentElement.innerHTML.match(new RegExp('"' + cid + '\\|false\\|false"\\s*:\\s*(\\d+)')); if (mm) return +mm[1]; } } catch (e) {} var m = (document.body.innerText || "").match(/(\d{1,4})\s*(Artikel|Produkte|Ergebnisse|items|products|results|articles|artikelen|prodotti|товар)/i); return m ? +m[1] : 0; };
-    var progT = 0, prog = function (o, force) { if (!force && Date.now() - progT < 10000) return; progT = Date.now(); try { w && w.postMessage(Object.assign({ type: "tb-progress", host: location.hostname, path: location.pathname.slice(0, 160), ver: "v110", t: Date.now() }, o), ADM); } catch (e) {} };
+    var progT = 0, prog = function (o, force) { if (!force && Date.now() - progT < 10000) return; progT = Date.now(); try { w && w.postMessage(Object.assign({ type: "tb-progress", host: location.hostname, path: location.pathname.slice(0, 160), ver: "v111", t: Date.now() }, o), ADM); } catch (e) {} };
     for (var sc = 0, last = -1, same = 0, T0 = siteTotal(); sc < 200 && same < (T0 ? 8 : LVR0 ? 6 : 3); sc++) { if (document.hidden) { note("Trend Büro: вкладка не на экране — сайт не подгружает товары. Вернитесь на эту вкладку, листание продолжится", true); while (document.hidden) await new Promise(function (r) { setTimeout(r, 700); }); same = 0; last = -1; } var n = countLinks(); if (T0 && n >= T0) break; same = n === last ? same + 1 : 0; last = n; note("Trend Büro: листаю раздел, найдено товаров: " + n + (T0 ? " из " + T0 : "") + (clicks ? " · нажал «ещё» " + clicks : ""), true);
       if (same >= 2) { window.scrollBy(0, -1400); await sleep(500); } // «застряло» — чуть вверх и снова вниз, чтобы сайт догрузил следующую порцию
       window.scrollTo(0, document.documentElement.scrollHeight - window.innerHeight * 1.6); await sleep(350); window.scrollTo(0, document.documentElement.scrollHeight); await sleep(same >= 2 ? 1800 : 1100);
@@ -637,8 +644,8 @@ async function tbCollect() {
     try { var gz = async function (t) { var b = await new Response(new Blob([t]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer(), u = new Uint8Array(b), out = ""; for (var q = 0; q < u.length; q += 32768) out += String.fromCharCode.apply(null, u.subarray(q, q + 32768)); return btoa(out); };
       var lean = function (t) { return String(t).replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<svg[\s\S]*?<\/svg>/gi, "<svg></svg>").replace(/data:[a-z]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+\/=]{200,}/g, "data:,"); }; // без стилей и картинок-иконок — только разметка и данные
       // по частям: раздел отдельно, каждый товар отдельно (большие страницы не влезают в один запрос)
-      w.postMessage({ type: "tb-snap", host: host, section: section, part: "list", list: { url: location.href.split("#")[0], gz: await gz(lean(listHtml)), got: { links: links.length, siteTotal: siteTotal(), newBadges: Object.keys(nb).length, blocked: Object.keys(tb).length, newSec: isNewSec } }, ver: "v110" }, ADM);
-      for (var sp = 0; sp < snapP.length; sp++) w.postMessage({ type: "tb-snap", host: host, section: section, part: "page", idx: sp, pages: [{ url: snapP[sp].url, gz: await gz(lean(snapP[sp].html)), got: snapP[sp].got }], ver: "v110" }, ADM); } catch (e) {}
+      w.postMessage({ type: "tb-snap", host: host, section: section, part: "list", list: { url: location.href.split("#")[0], gz: await gz(lean(listHtml)), got: { links: links.length, siteTotal: siteTotal(), newBadges: Object.keys(nb).length, blocked: Object.keys(tb).length, newSec: isNewSec } }, ver: "v111" }, ADM);
+      for (var sp = 0; sp < snapP.length; sp++) w.postMessage({ type: "tb-snap", host: host, section: section, part: "page", idx: sp, pages: [{ url: snapP[sp].url, gz: await gz(lean(snapP[sp].html)), got: snapP[sp].got }], ver: "v111" }, ADM); } catch (e) {}
     summary(ok); await waitSaved(sentN);
     if (siteStop) { note("Остановился: " + siteName + " временно ограничил доступ (ответ 403). Взято новых " + ok + " · проверено " + upd + ". Запустите кнопку снова через 15–30 минут — продолжит с того места, где остановился"); return; }
     note("Готово: новых " + ok + (LVR0 && ok ? " (наличие всех вещей LV прочитано)" : "") + " · проверено добавленных " + upd + (saved.fail ? " · не сохранилось " + saved.fail + " (причины в админке)" : "") + (bad ? " · не прочитано " + bad : "") + (freshN ? " · недавно проверенных пропущено: " + freshN : "") + (rejN ? " · удалённых вами не берём: " + rejN : "") + (soldN ? " · старых распроданных (в админке, на витрину не выставлены): " + soldN : "") + (lvDenied ? " · LV закрыл открытие страниц товара — наличие у остальных прочитаем в следующий раз" : "") + (errN ? " · ошибок: " + errN : "") + (stockN && /louisvuitton\.com$/.test(location.hostname) ? " · наличие прочитано у " + stockN + (stockLater ? ", у " + stockLater + " — при следующих прогонах" : "") : "") + (askN ? " · из них «уточнить наличие» (предзаказ, лист ожидания, нет размеров): " + askN : "") + (newTotal > MAX ? " · ещё новых: " + (newTotal - MAX) + " — нажмите кнопку ещё раз" : "") + (partialL ? " · ⚠️ раздел подгрузился не полностью — держите вкладку на экране и нажмите кнопку ещё раз" : "") + ". Что продано и что пропало — в админке");
