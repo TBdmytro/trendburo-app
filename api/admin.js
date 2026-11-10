@@ -568,7 +568,9 @@ export default async function handler(req, res) {
         // Loro Piana: при прогоне раздела обложкой ставилась мелкая картинка из списка (SMALL 690 px) перед большими ZOOM — убираем SMALL/MEDIUM, если есть ZOOM; ваш порядок/обложку не трогаем
         const L = await store.list("product", {}, { limit: 30000, fields: "_id, brand, images, overrides, coverFrom" }), patches = [];
         for (const p of L) { if (!/loro\s*piana/i.test(String(p.brand || "")) || p.overrides?.cover || (p.overrides?.imageOrder || []).length) continue; const im = p.images || [], src = i => String(i.sourceUrl || i.url || "");
-          const zoom = im.filter(i => /_ZOOM\.jpg/i.test(src(i))); if (!zoom.length || zoom.length === im.length) continue; patches.push({ id: p._id, set: { images: zoom, coverFrom: null, coverTile: null } }); }
+          const rk = i => { const c = (src(i).match(/\/([A-Z]{1,2}\d?)\/[A-F0-9-]{36}_/) || [])[1] || ""; return c === "FR" ? 0 : /^L\d$/.test(c) ? 2 : 1; }; // порядок: FR (спереди) → детали → на модели (L1…L4)
+          const zoom0 = im.filter(i => /_ZOOM\.jpg/i.test(src(i))), zoom = (zoom0.length ? zoom0 : im).map((x, k) => [x, k]).sort((a, b) => rk(a[0]) - rk(b[0]) || a[1] - b[1]).map(x => x[0]);
+          if (zoom.length === im.length && zoom.every((x, k) => x === im[k])) continue; patches.push({ id: p._id, set: { images: zoom, coverFrom: null, coverTile: null } }); }
         for (let i = 0; i < patches.length; i += 200) await store.patchEach(patches.slice(i, i + 200));
         PCACHE = null; return send(res, 200, { fixed: patches.length });
       }
