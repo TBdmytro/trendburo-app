@@ -567,7 +567,7 @@ export default async function handler(req, res) {
       case "imgFirst": {
         // обложка: переставить указанное фото первым (по sourceUrl) — для разовой правки обложек по анализу снимков; ваш порядок/обложку не трогаем
         const items = (body.items || []).filter(x => x && typeof x.id === "string" && x.id.startsWith("product.") && typeof x.url === "string").slice(0, 300), ps = (await store.getMany(items.map(x => x.id))), patches = [];
-        items.forEach((x, k) => { const p = ps[k]; if (!p || p.overrides?.cover || (p.overrides?.imageOrder || []).length) return; const im = p.images || [], j = im.findIndex(i => (i.sourceUrl || i.url) === x.url); if (j > 0) patches.push({ id: p._id, set: { images: [im[j], ...im.slice(0, j), ...im.slice(j + 1)], coverFrom: null, coverTile: null } }); });
+        const byId = new Map(ps.filter(Boolean).map(p => [p._id, p])); items.forEach(x => { const p = byId.get(x.id); if (!p || p.overrides?.cover || (p.overrides?.imageOrder || []).length) return; const im = p.images || [], j = im.findIndex(i => (i.sourceUrl || i.url) === x.url); if (j > 0) patches.push({ id: p._id, set: { images: [im[j], ...im.slice(0, j), ...im.slice(j + 1)], coverFrom: null, coverTile: null } }); });
         if (patches.length) await store.patchEach(patches); PCACHE = null; return send(res, 200, { moved: patches.length });
       }
       case "fixLoroImg": {
