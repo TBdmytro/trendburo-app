@@ -431,11 +431,11 @@ export default async function handler(req, res) {
           const ch = []; for (const p of L) { const im = p.images || [], src = i => i.sourceUrl || i.url, ord = orderImages(im.map(src), { max: 12 }); if (ord.length && ord.join("|") !== im.map(src).join("|")) ch.push({ id: p._id, set: { images: ord.map(u => im.find(i => src(i) === u)), coverFrom: null, coverTile: null } }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
           await store.put({ _id: "settings.fixMiuImg5", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXMIU " + ch.length); } } catch (e) { FIXMIU = false; console.log("FIXMIU fail " + String(e.message).slice(0, 120)); } }
-        if (!FIXVCA) { FIXVCA = true; try { if (!(await store.get("settings.fixVca1"))) { const { vcaVersion } = await import("../lib/vca.js"); // Van Cleef: версия (металл, камень) из описания — чтобы одинаковые названия не выглядели дублями
-          const L = (await store.list("product", {}, { limit: 30000, fields: "_id, colors, description" })).filter(p => /^product\.manual\.vancleefarpe-/.test(p._id) && !(p.colors || []).length);
-          const ch = []; for (const p of L) { const v = vcaVersion(p.description); if (v) ch.push({ id: p._id, set: { colors: [v] } }); }
+        if (!FIXVCA) { FIXVCA = true; try { if (!(await store.get("settings.fixVca2"))) { const { vcaVersion, vcaTitle } = await import("../lib/vca.js"); // Van Cleef: версия (металл, камень) из описания — чтобы одинаковые названия не выглядели дублями
+          const L = (await store.list("product", {}, { limit: 30000, fields: "_id, colors, description, title, overrides, sourceUrl" })).filter(p => /^product\.manual\.vancleefarpe-/.test(p._id));
+          const ch = []; for (const p of L) { const set = {}, v = vcaVersion(p.description), t = !p.overrides?.title && vcaTitle(p.sourceUrl); if (v && !(p.colors || []).length) set.colors = [v]; if (t && t !== p.title) set.title = t; if (Object.keys(set).length) ch.push({ id: p._id, set }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
-          await store.put({ _id: "settings.fixVca1", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXVCA " + ch.length); } } catch (e) { FIXVCA = false; } }
+          await store.put({ _id: "settings.fixVca2", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXVCA " + ch.length); } } catch (e) { FIXVCA = false; } }
         if (!FIXGG) { FIXGG = true; try { if (!(await store.get("settings.fixGgImg3"))) { const { orderImages } = await import("../lib/imgorder.js");
           // 2: обложка — вид сбоку (кадр без номера), не плитка раздела; ваша обложка/порядок из админки — не трогаем
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides" })).filter(p => p._id.startsWith("product.manual.goldengoose-") && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
