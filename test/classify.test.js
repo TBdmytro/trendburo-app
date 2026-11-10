@@ -135,3 +135,10 @@ test("Loro Piana: пол по адресу (без унисекса), цвета
   assert.equal(sw("FAE8124_50ZF", "a"), sw("FAE8124_W12S", "b"));
   assert.notEqual(sw("FAE8124_50ZF", "a"), sw("FAQ2211_MH90", "c"));
 });
+
+test("Hermès: цвета одной модели — одна семья", async () => {
+  const { famKey } = await import("../lib/catalog.js");
+  const f = (sku, id) => famKey({ _id: "product.manual.hermes-" + id, brand: "Hermès", title: "Sneakers Day", modelSku: sku });
+  assert.equal(f("H241856ZHC9", "a"), f("H241856ZH90", "b"));
+  assert.notEqual(f("H241856ZHC9", "a"), f("H212901ZH90", "c"));
+});
