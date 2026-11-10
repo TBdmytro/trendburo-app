@@ -1526,6 +1526,48 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 .selbar b{background:#fff;color:var(--fg);border-radius:99px;min-width:26px;height:26px;display:grid;place-items:center;font-size:13px;padding:0 6px}
 .pushed .selbar,.foot~.selbar{bottom:calc(96px + var(--sb))}
 .fv.selp[aria-pressed="true"]{background:#fff;color:var(--fg)}.fv.selp svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+/* ÉCRIN — украшения, отдельный раздел (как OPTIX): песочный, золото, засечки */
+.jewel{--acc:#9a7a3c;--j-fg:#2b2318;--j-raise:#f5efe4;--j-tile:#fbf8f2;--sc:#9a7a3c}
+#app.in-jewel #tabbar{transform:translateY(110%);pointer-events:none}
+.jewel .j-screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);opacity:0;visibility:hidden;transition:opacity .25s var(--ease),visibility 0s .25s}
+.jewel .j-screen.on{opacity:1;visibility:inherit;transition:opacity .25s var(--ease)}
+.j-head{padding:calc(22px + var(--st)) 18px 4px}
+.j-head .wordmark{font-size:36px;line-height:1;color:var(--j-fg);letter-spacing:.22em}
+.j-head small{display:block;font-size:12.5px;color:var(--muted);margin-top:8px;letter-spacing:.04em}
+.j-line{height:1px;margin:14px 18px 0;background:linear-gradient(90deg,transparent,#c9ab6e,transparent)}
+.j-types{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 18px}
+.j-type{border:0;background:var(--j-raise);border-radius:16px;padding:12px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--j-fg)}
+.j-type svg{width:28px;height:28px;stroke:var(--acc);fill:none;stroke-width:1.4}
+.j-type small{font-size:11px;color:var(--muted)}
+.j-size{margin:0 18px;border:0;width:calc(100% - 36px);border-radius:18px;background:var(--j-fg);color:#f5efe4;padding:16px 18px;text-align:left;display:flex;align-items:center;gap:14px}
+.j-size svg{width:40px;height:40px;stroke:#c9ab6e;fill:none;stroke-width:1.3;flex:none}
+.j-size b{font-size:15.5px;font-weight:600;display:block}
+.j-size span{font-size:12.5px;color:rgba(245,239,228,.7)}
+.j-size i{margin-left:auto;font-style:normal;font:400 22px "Prata",serif;color:#e7d3a6}
+.jewel .chip[aria-pressed="true"]{background:var(--j-fg);border-color:var(--j-fg);color:#fff}
+.jewel .seg button[aria-pressed="true"]{background:var(--j-fg);color:#fff}
+.j-tabbar{grid-template-columns:repeat(5,1fr);background:linear-gradient(180deg,rgba(43,35,24,.95),rgba(28,22,14,.97))}
+.j-tabbar button{color:rgba(245,239,228,.6)}
+.j-tabbar button[aria-current="page"]{color:#e7d3a6}
+.j-tabbar button[data-j="exit"]{color:rgba(245,239,228,.45)}
+.j-sizes{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:0 18px}
+.j-sizes button{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 0;font-size:15px}
+.j-sizes button[aria-pressed="true"]{background:var(--j-fg);border-color:var(--j-fg);color:#fff}
+.j-guide{margin:0 18px;background:var(--j-raise);border-radius:16px;padding:14px 16px;font-size:13.5px;line-height:1.5;color:var(--g2)}
+.j-guide b{color:var(--j-fg)}
+.j-entry{position:relative;margin:16px 18px 0;width:calc(100% - 36px);border:0;border-radius:22px;background:linear-gradient(150deg,#f3ebdc,#e6d6b8);color:#2b2318;text-align:left;padding:20px 18px 18px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.j-entry .cap{color:#8a6d38}
+.j-entry .wordmark{font-size:30px;letter-spacing:.22em;line-height:1.1}
+.j-entry .sub{font-size:14px;color:#5b4a30}
+.j-entry .br{font-size:12px;color:#8a7552;margin-top:4px}
+.j-entry .go{position:absolute;right:14px;top:14px;font-size:13.5px;font-weight:600;background:rgba(43,35,24,.08);padding:7px 11px;border-radius:99px}
+.j-entry .gem{position:absolute;right:-18px;bottom:-26px;width:130px;height:130px;stroke:#b8913f;fill:none;stroke-width:1;opacity:.55}
+.ctile.jw{grid-column:1/-1;min-height:118px;background:linear-gradient(135deg,#f3ebdc,#e3d1ae);color:#2b2318;flex-direction:row;align-items:center;justify-content:space-between;padding:16px 18px;box-shadow:none}
+.ctile.jw .t{display:flex;flex-direction:column;gap:5px}
+.ctile.jw small{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#8a6d38;font-weight:600}
+.ctile.jw .wordmark{font-size:26px;letter-spacing:.2em}
+.ctile.jw .br{font-size:12px;color:#7a6440}
+.ctile.jw svg.go{width:22px;height:22px;stroke:#2b2318;fill:none;stroke-width:2}
 /* OPTIX закрыт: матовое стекло и заявка */
 .oxg{position:fixed;inset:0;z-index:600;display:grid;place-items:center;padding:24px;background:rgba(240,244,248,.28);-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2);opacity:0;transition:opacity .26s ease}
 .oxg.in{opacity:1}
@@ -1687,6 +1729,10 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
       <div class="bnr" id="bnr" hidden></div>
       <div id="homeA" hidden></div><div class="hblk" id="hCover"></div><div class="hblk" id="hNew"></div><div class="hblk" id="hSec"></div><div class="hblk" id="hCats"></div>
       <div class="ship" hidden><div><small id="shipTitle">Отправки в Украину</small><b id="shipDate"></b></div><span class="pulse" aria-hidden="true"></span></div>
+      <button class="j-entry press" data-act="tab" data-tab="jewel" aria-label="Открыть ÉCRIN — украшения" id="jEntry" hidden>
+        <span class="cap">Наш продукт</span><span class="wordmark">ÉCRIN</span><span class="sub">Украшения · кольца, серьги, браслеты</span><span class="br" id="jEntryBr">Van Cleef &amp; Arpels</span>
+        <span class="go">Открыть ›</span><svg class="gem" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6l7 7-7 7-7-7zM24 28l7 7-7 7-7-7zM13 17l7 7-7 7-7-7zM35 17l7 7-7 7-7-7z"/></svg>
+      </button>
       <button class="o-entry press" data-act="tab" data-tab="optix" aria-label="Открыть OPTIX" hidden>
         <span class="o-entry-art" id="oEntryArt"></span>
         <span class="o-entry-tx"><span class="cap">Наш продукт</span><span class="wordmark">OPTIX</span><span class="o-entry-sub">Солнцезащитные очки со скидками</span>
@@ -1839,6 +1885,58 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
       <button data-o="fav"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>Избранное</button>
       <button data-o="info"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4z"/></svg>Связь</button>
       <button data-o="exit"><svg viewBox="0 0 24 24"><path d="M10 7l-5 5 5 5M5 12h10a4 4 0 0 0 4-4V5"/></svg>Trend Büro</button>
+    </nav>
+  </div>
+
+  <!-- ÉCRIN: украшения — отдельный раздел внутри (как OPTIX) -->
+  <div class="screen tab jewel" id="t-jewel">
+    <div class="j-screen on" id="j-home">
+      <div class="bar"><b class="wordmark" style="font-size:17px;letter-spacing:.2em">ÉCRIN</b></div>
+      <div class="scroll">
+        <div class="j-head"><span class="wordmark">ÉCRIN</span><small>by Trend Büro · украшения ювелирных домов под заказ</small></div>
+        <div class="j-line"></div>
+        <div class="sec"><div class="j-types" id="jTypes"></div></div>
+        <div class="sec"><button class="j-size press" data-act="jsize"><svg viewBox="0 0 48 48"><circle cx="24" cy="26" r="12"/><path d="M19 13l5-6 5 6"/></svg><div><b>Ваш размер кольца</b><span id="jSizeHint">Укажите — покажем, что есть в вашем размере</span></div><i id="jSizeVal"></i></button></div>
+        <div class="sec" id="jCollWrap"><div class="sech"><h2>Коллекции</h2></div><div class="chips" id="jColls"></div></div>
+        <div class="sec" id="jMineWrap" hidden><div class="sech"><h2>В вашем размере</h2><button class="more" data-act="jcat-mine">Все</button></div><div class="hrail" id="jMine"></div></div>
+        <div class="sec" id="jNewWrap"><div class="sech"><h2>Новинки</h2><button class="more" data-act="jcat-all">Все</button></div><div class="hrail" id="jNew"></div></div>
+        <div id="jBrands"></div>
+        <div class="empty" id="jEmpty" hidden><h3>Скоро</h3><p>Украшения появятся здесь в ближайшее время. Пока можно написать менеджеру — найдём любое изделие.</p></div>
+        <div style="height:24px"></div>
+      </div>
+    </div>
+    <div class="j-screen" id="j-cat">
+      <div class="bar"><b>Каталог</b></div>
+      <div class="scroll">
+        <div class="bigtitle"><h1>Украшения</h1></div>
+        <div class="chips" id="jTypeChips"></div>
+        <div class="chips" id="jCollChips" style="margin-top:10px"></div>
+        <div class="chips" id="jBrandChips" style="margin-top:10px"></div>
+        <div class="count num" id="jCount" style="margin:14px 18px 10px"></div>
+        <div class="grid2" id="jGrid"></div>
+        <div style="height:24px"></div>
+      </div>
+    </div>
+    <div class="j-screen" id="j-size">
+      <div class="bar"><b>Размер кольца</b></div>
+      <div class="scroll">
+        <div class="bigtitle"><h1>Размер кольца</h1></div>
+        <div class="j-guide"><b>Как узнать размер.</b> Оберните нитку или полоску бумаги вокруг пальца у основания, отметьте место соединения и измерьте длину в миллиметрах. Это и есть размер: 52 мм → размер 52. Если между размерами — берите больший.</div>
+        <div class="sec"><div class="sech"><h2>Ваш размер</h2></div><div class="j-sizes" id="jSizes"></div></div>
+        <div class="sec" id="jSizeRes"></div>
+        <div style="height:24px"></div>
+      </div>
+    </div>
+    <div class="j-screen" id="j-fav">
+      <div class="bar"><b>Избранное</b></div>
+      <div class="scroll"><div class="bigtitle"><h1>Избранное</h1></div><div id="jFavWrap"></div></div>
+    </div>
+    <nav class="tabbar j-tabbar" id="jTabbar" aria-label="Разделы ÉCRIN">
+      <button data-j="home" aria-current="page"><svg viewBox="0 0 24 24"><path d="M12 4l4 4-4 4-4-4zM12 13l4 4-4 4-4-4z"/></svg>Главная</button>
+      <button data-j="cat"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>Каталог</button>
+      <button data-j="size"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="6"/><path d="M9.5 6.5L12 4l2.5 2.5"/></svg>Размер</button>
+      <button data-j="fav"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>Избранное</button>
+      <button data-j="exit"><svg viewBox="0 0 24 24"><path d="M10 7l-5 5 5 5M5 12h10a4 4 0 0 0 4-4V5"/></svg>Trend Büro</button>
     </nav>
   </div>
 
@@ -2794,6 +2892,7 @@ function renderCatHome(){try{cvInit();cvRender()}catch(e){console.error(e)}try{r
   const oxTile=OPTIX_ON?`<button class="ctile ox press" data-act="optixapp" aria-label="Очки OPTIX — открыть"><span class="t"><small>Очки</small><span class="wordmark">OPTIX</span><span class="br">Cartier · Gucci · Miu Miu · Saint Laurent</span></span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`:"";
   let nTiles=0;
   $("#catGrid").innerHTML=Object.entries(CATS).filter(([k])=>k!=="eyewear").map(([k,v])=>{const l=pool.filter(p=>p.cat===k);if(!l.length)return"";nTiles++;const after=nTiles===4?oxTile:"";const lead=l.slice().sort((a,b)=>b.isNew-a.isNew)[0];
+    if(k==="jewelry")return `<button class="ctile jw press" data-act="tab" data-tab="jewel" aria-label="ÉCRIN — украшения, открыть"><span class="t"><small>Украшения</small><span class="wordmark">ÉCRIN</span><span class="br">${esc([...new Set(l.map(p=>p.brand))].slice(0,4).join(" · "))} · ${l.length} ${plural(l.length,["изделие","изделия","изделий"])}</span></span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`+after;
     const cc=CATC[k]||CATC.other;return `<button class="ctile v2 press" data-act="catopen" data-cat="${k}" style="--tb:${cc[0]};--ti:${cc[1]}"><svg class="ci" viewBox="0 0 24 24" aria-hidden="true">${CAT_ICON[k]||CAT_ICON.other}</svg><span><b>${v}</b><br><span class="num">${l.length} ${plural(l.length,["вещь","вещи","вещей"])}</span></span></button>`+after}).join("")+(nTiles<4?oxTile:"");
   const bset=[...new Set(pool.map(p=>p.bk))];
   const mine=[...follows].filter(bk=>bset.includes(bk));
@@ -3888,6 +3987,59 @@ $("#oTabbar").addEventListener("click",e=>{const b=e.target.closest("button");if
   if(n==="exit"){playIntro("trend",lastMain,e);return}
   if(n===oCur){const sc=$("#o-"+n+" .scroll");sc&&sc.scrollTo({top:0,behavior:"smooth"})}else oTab(n)});
 $("#oDest").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;OF.dest=b.dataset.d;renderOptix()});
+/* ===== ÉCRIN — украшения: отдельный раздел (как OPTIX) на товарах категории «Украшения» ===== */
+const JCOLL=[["Alhambra",/alhambra/i],["Perlée",/perl[eé]e/i],["Frivole",/frivole/i],["Lucky",/lucky/i],["Fleurette",/fleurette/i],["Flowerlace",/flowerlace/i],["Love",/\blove\b/i],["Juste un Clou",/juste un clou/i],["Trinity",/trinity/i],["Panthère",/panth[eè]re/i],["Clash",/\bclash\b/i],["Serpenti",/serpenti/i],["B.zero1",/b\.?zero ?1/i],["Possession",/possession/i],["Quatre",/quatre/i]];
+const JTYPES=[["ring","Кольца",'<circle cx="12" cy="14" r="6"/><path d="M9.5 7.5L12 5l2.5 2.5"/>'],["earr","Серьги",'<path d="M9 4v4a3 3 0 1 0 6 0V4"/><circle cx="12" cy="17" r="3"/>'],["brac","Браслеты",'<ellipse cx="12" cy="12" rx="8" ry="5"/><ellipse cx="12" cy="12" rx="5" ry="2.5"/>'],["neck","Колье",'<path d="M5 5c0 6 3 10 7 10s7-4 7-10"/><path d="M12 15l2.5 2.5L12 20l-2.5-2.5z"/>'],["brooch","Броши",'<circle cx="12" cy="12" r="3"/><path d="M12 4v5M12 15v5M4 12h5M15 12h5"/>']];
+const JF={type:"",coll:"",brand:"",mine:false};let jCur="home",jRing=String(store.get("tb_ring","")||"");
+const jList=()=>P.filter(p=>p.cat==="jewelry");
+const jColl=p=>{const t=String(p.name||"");const c=JCOLL.find(x=>x[1].test(t));return c?c[0]:""};
+const jHas=(p,z)=>!!(z&&p.sizes&&p.sizes.some(x=>String(x.size)===String(z)&&(x.status==="online"||x.status==="boutique")));
+const jMine=p=>subOf(p)==="ring"&&jHas(p,jRing);
+function jFilter(){return jList().filter(p=>(!JF.type||subOf(p)===JF.type)&&(!JF.coll||jColl(p)===JF.coll)&&(!JF.brand||p.bk===JF.brand)&&(!JF.mine||jMine(p)))}
+function renderJewel(){const L=jList();
+  const ent=$("#jEntry");if(ent){ent.hidden=!L.length;const b=[...new Set(L.map(p=>p.brand))].slice(0,4).join(" · ");$("#jEntryBr").textContent=b||"Van Cleef & Arpels"}
+  if(!$("#t-jewel"))return;
+  $("#jEmpty").hidden=!!L.length;
+  $("#jTypes").innerHTML=JTYPES.filter(([k])=>k!=="brooch"||L.some(p=>subOf(p)==="brooch")).map(([k,v,ic])=>{const n=L.filter(p=>subOf(p)===k).length;return `<button class="j-type press" data-act="jtype" data-k="${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg>${v}<small class="num">${n||"—"}</small></button>`}).join("");
+  $("#jSizeVal").textContent=jRing||"";$("#jSizeHint").textContent=jRing?"Покажем, что есть в размере "+jRing:"Укажите — покажем, что есть в вашем размере";
+  const colls=JCOLL.map(c=>c[0]).filter(c=>L.some(p=>jColl(p)===c));$("#jCollWrap").hidden=!colls.length;
+  $("#jColls").innerHTML=colls.map(c=>`<button class="chip" data-act="jcoll" data-c="${esc(c)}">${esc(c)} <span class="num muted">${L.filter(p=>jColl(p)===c).length}</span></button>`).join("");
+  const mine=L.filter(jMine);$("#jMineWrap").hidden=!mine.length;$("#jMine").innerHTML=mine.slice(0,12).map(pcHTML).join("");
+  const nw=L.slice().sort((a,b)=>(b.isNew-a.isNew)||(b.na-a.na));$("#jNewWrap").hidden=!L.length;$("#jNew").innerHTML=nw.slice(0,12).map(pcHTML).join("");
+  const br=[...new Map(L.map(p=>[p.bk,p.brand])).entries()];
+  $("#jBrands").innerHTML=br.length>1?br.map(([bk,bn])=>{const l=L.filter(p=>p.bk===bk);return `<div class="sec"><div class="sech"><h2>${esc(bn)}</h2><button class="more" data-act="jbrand" data-bk="${bk}">Все ${l.length}</button></div><div class="hrail">${l.slice(0,10).map(pcHTML).join("")}</div></div>`}).join(""):"";
+  renderJCat();renderJSize();renderJFav()}
+function renderJCat(){if(!$("#jGrid"))return;const L=jList(),l=jFilter();
+  const chip=(act,val,cur,label,n)=>`<button class="chip" data-act="${act}" data-v="${esc(val)}" aria-pressed="${cur===val}">${label}${n!=null?` <span class="num muted">${n}</span>`:""}</button>`;
+  $("#jTypeChips").innerHTML=chip("jf-type","",JF.type,"Все",L.length)+JTYPES.map(([k,v])=>{const n=L.filter(p=>subOf(p)===k).length;return n?chip("jf-type",k,JF.type,v,n):""}).join("")+(jRing?`<button class="chip" data-act="jf-mine" aria-pressed="${JF.mine}">Мой размер ${esc(jRing)}</button>`:"");
+  const colls=JCOLL.map(c=>c[0]).filter(c=>L.some(p=>jColl(p)===c));$("#jCollChips").innerHTML=colls.length?chip("jf-coll","",JF.coll,"Все коллекции")+colls.map(c=>chip("jf-coll",c,JF.coll,esc(c))).join(""):"";
+  const br=[...new Map(L.map(p=>[p.bk,p.brand])).entries()];$("#jBrandChips").innerHTML=br.length>1?chip("jf-brand","",JF.brand,"Все бренды")+br.map(([bk,bn])=>chip("jf-brand",bk,JF.brand,esc(bn))).join(""):"";
+  $("#jCount").textContent=l.length?l.length+" "+plural(l.length,["изделие","изделия","изделий"]):"";
+  $("#jGrid").innerHTML=l.length?l.map(pcHTML).join(""):`<div class="empty" style="grid-column:1/-1"><h3>Ничего не нашли</h3><p>${L.length?"Попробуйте другой вид или коллекцию.":"Украшения скоро появятся."}</p></div>`}
+function renderJSize(){if(!$("#jSizes"))return;const Z=[];for(let z=44;z<=64;z++)Z.push(String(z));
+  $("#jSizes").innerHTML=Z.map(z=>`<button class="press" data-act="jring" data-z="${z}" aria-pressed="${jRing===z}">${z}</button>`).join("");
+  const r=jList().filter(jMine);$("#jSizeRes").innerHTML=jRing?`<div class="sech"><h2>Кольца в размере ${esc(jRing)}</h2></div>${r.length?`<div class="grid2">${r.map(pcHTML).join("")}</div>`:`<div class="empty"><h3>Пока нет</h3><p>Напишите менеджеру — проверим в бутиках.</p></div>`}`:""}
+function renderJFav(){if(!$("#jFavWrap"))return;const l=jList().filter(p=>favs.has(p.id));
+  $("#jFavWrap").innerHTML=l.length?`<div class="grid2">${l.map(pcHTML).join("")}</div>`:`<div class="empty"><h3>Пока пусто</h3><p>Нажмите на сердце на изделии — оно появится здесь.</p></div>`}
+function jTab(n){jCur=n;$$("#t-jewel .j-screen").forEach(x=>x.classList.toggle("on",x.id==="j-"+n));$$("#jTabbar button").forEach(b=>b.dataset.j===n?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));if(n==="fav")renderJFav()}
+function jOpenCat(){renderJCat();jTab("cat");const sc=$("#j-cat .scroll");if(sc)sc.scrollTop=0}
+$("#jTabbar").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const n=b.dataset.j;
+  if(n==="exit"){playIntro("trend",lastMain,e);return}
+  if(n===jCur){const sc=$("#j-"+n+" .scroll");sc&&sc.scrollTo({top:0,behavior:"smooth"})}else jTab(n)});
+function jAct(a,t){
+  if(a==="jtype"){Object.assign(JF,{type:t.dataset.k,coll:"",brand:"",mine:false});jOpenCat()}
+  else if(a==="jcoll"){Object.assign(JF,{type:"",coll:t.dataset.c,brand:"",mine:false});jOpenCat()}
+  else if(a==="jbrand"){Object.assign(JF,{type:"",coll:"",brand:t.dataset.bk,mine:false});jOpenCat()}
+  else if(a==="jcat-all"){Object.assign(JF,{type:"",coll:"",brand:"",mine:false});jOpenCat()}
+  else if(a==="jcat-mine"){Object.assign(JF,{type:"ring",coll:"",brand:"",mine:true});jOpenCat()}
+  else if(a==="jsize")jTab("size");
+  else if(a==="jring"){jRing=t.dataset.z===jRing?"":t.dataset.z;store.set("tb_ring",jRing);if(!jRing)JF.mine=false;renderJewel();try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(x){}}
+  else if(a==="jf-type"){JF.type=t.dataset.v;renderJCat()}
+  else if(a==="jf-coll"){JF.coll=t.dataset.v;renderJCat()}
+  else if(a==="jf-brand"){JF.brand=t.dataset.v;renderJCat()}
+  else if(a==="jf-mine"){JF.mine=!JF.mine;if(JF.mine)JF.type="ring";renderJCat()}
+  else return false;return true}
+
 function openOptix(id,ci=0){const o=O.find(x=>x.id===id);if(!o)return;
   const s=push(o.brand,`<div class="o-hero" id="oh"></div><div class="pbody" id="opb"></div><div style="height:90px"></div>`,{clear:true,accent:"#3f6480",
     foot:`<div class="foot"><div class="pr"><small>${o.disc?"Со скидкой "+o.disc+"%":"Цена"}</small><b class="num">${eur(oPrice(o))}</b></div><button class="btn" data-order style="background:#3f6480">Заказать</button></div>`});
@@ -3973,12 +4125,13 @@ let stylistRemote=false;
     return}if(!sampleFn)aiOff("Стилист работает внутри Claude — откройте приложение в claude.ai.")})();
 
 /* ===== Навигация ===== */
-const TABS=["feed","catalog","optix","services","stylist"];
+const TABS=["feed","catalog","optix","jewel","services","stylist"];
 function tab(t){if(!TABS.includes(t))t="feed";if(t==="optix"&&!/[?&]demo=1/.test(location.search)&&!optixOpen())setTimeout(()=>{if($("#app").classList.contains("in-optix"))optixGate()},350);if(window.CATLAZY&&t!=="feed")window.CATLAZY();if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
   $$(".tab").forEach(s=>s.classList.toggle("on",s.id==="t-"+t));
   const hl=t;
   $$("#tabbar button").forEach(b=>b.dataset.tab===hl?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
-  $("#app").classList.toggle("in-optix",t==="optix");
+  $("#app").classList.toggle("in-optix",t==="optix"||t==="jewel");$("#app").classList.toggle("in-jewel",t==="jewel");if(t==="jewel")try{renderJewel()}catch(e){}
+  try{if(t!=="optix"&&t!=="jewel")lastMain=t}catch(e){}
   try{history.replaceState(null,"","#"+t)}catch(e){}try{syncBack()}catch(e){}}
 
 /* Переход между брендами: шторка → нейминг → новое приложение */
@@ -3986,6 +4139,7 @@ const RM=matchMedia("(prefers-reduced-motion: reduce)");
 let introBusy=false;
 const INTRO={
   optix:{bg:"#12293e",fg:"#f1eee8",word:"OPTIX",sub:"by Trend Büro",cls:"wordmark",tc:.55,hold:780,tr:.6},
+  jewel:{bg:"#efe6d6",fg:"#2b2318",word:"ÉCRIN",sub:"украшения · by Trend Büro",cls:"wordmark",tc:.55,hold:780,tr:.6},
   trend:{bg:"#2f3136",fg:"#ffffff",word:"Trend Büro",sub:"",cls:"",tc:.42,hold:380,tr:.45}
 };
 function curTab(){const s=$(".tab.on");return s?s.id.slice(2):"feed"}
@@ -4007,7 +4161,8 @@ function playIntro(kind,target,ev){
 }
 function goTab(t,ev){const cur=curTab();
   if(t==="optix"&&cur!=="optix")playIntro("optix",t,ev);
-  else if(cur==="optix"&&t!=="optix")playIntro("trend",t,ev);
+  else if(t==="jewel"&&cur!=="jewel")playIntro("jewel",t,ev);
+  else if((cur==="optix"||cur==="jewel")&&t!==cur)playIntro("trend",t,ev);
   else tab(t)}
 $$(".tab .scroll").forEach(sc=>{const bar=sc.parentElement.querySelector(".bar");sc.addEventListener("scroll",()=>bar.classList.toggle("show",sc.scrollTop>44),{passive:true})});
 $("#tabbar").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.tbact==="account"){openAccount();try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(x){}return} // личный кабинет вместо стилиста
@@ -4051,6 +4206,7 @@ $("#app").addEventListener("click",e=>{
   else if(a==="askany")orderSheet("Запрос менеджеру",`Здравствуйте! Ищу: ${$("#uq").value.trim()}\nЦвет / размер: \nБюджет: \nДоставка: Украина`);
   else if(a==="tab")goTab(t.dataset.tab,e);
   else if(a==="optixapp")openOptixApp(e);
+  else if(a&&a[0]==="j"&&jAct(a,t)){}
   else if(a==="svc"){closeSheet(true);openService(t.dataset.s,!!t.dataset.sell)}
   else if(a==="soon"){toast(t.dataset.s==="stylist"?"AI-продукт в разработке":({concierge:"Консьерж-сервис"}[t.dataset.s]||"Ресейл")+" — скоро запустим");hap&&hap("light")}
   else if(a==="filters")filtersSheet();
@@ -4301,7 +4457,7 @@ async function catNet(){const b=authBody(),r=await fetch(b?CATK+"&a=1":CATK,b?{h
 const catSig=l=>(l||[]).length+":"+(l||[]).reduce((a,x)=>(a+((x.price&&x.price.ua)||0)+x.id.length*7+(x.stock?1:0))%1e9,0);
 function catApply(j,fresh){COLL=Array.isArray(j.collections)?j.collections:[];if(j.content)CMS={banners:[],stories:[],news:[],rails:[],site:null,...j.content};applySite(CMS.site);applyLive(j.products||[],fresh)}
 async function catReload(){CLOSED=false;const n=await catNet().catch(()=>null);if(n&&n.ok){catApply(n.j,true);catRefreshUI()}}
-function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();renderCatHome();if(LIVE)renderBanners()}catch(e){}}
+function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();renderCatHome();if(LIVE)renderBanners()}catch(e){}try{renderJewel()}catch(e){}}
 (async()=>{
   loadWatch();
   let net=null,local=null;
