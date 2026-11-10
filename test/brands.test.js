@@ -236,3 +236,11 @@ test("Loro Piana Summer Walk / Open Walk: +200 €, меховые — обыч�
   assert.equal(computePricing(p, null).ua, 1140);
   assert.equal(computePricing({ ...p, description: "Innenfutter aus Lammfell" }, null).ua, 980);
 });
+
+test("Hermès: обувь +12%, одежда +10%", async () => {
+  const { priceFor } = await import("../lib/pipeline.js");
+  const o = { sourceKind: "official", boutique: 895, flatMarkup: 0.1 };
+  assert.equal(priceFor(o, null, null, "shoes", "Hermès").ua, 1005); // 895*1.12=1002.4 → 1005
+  assert.equal(priceFor(o, null, null, "shoes", "Hermes").ua, 1005);
+  assert.equal(priceFor({ ...o, boutique: 1000 }, null, null, "clothing", "Hermès").ua, 1100);
+});
