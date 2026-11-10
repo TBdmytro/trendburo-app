@@ -564,6 +564,15 @@ export default async function handler(req, res) {
         if (!/^product\.manual\.(dior|gucci|goldengoose|miumiu|prada)-/.test(id) && /^https:\/\/[^/]+\/[^&=]*(\?|$)/.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
         return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg, noStock: !!it.noStock, stockRead: !!it.stockRead, soldOld: !!it.soldOld, material: it.material }, { by: me.name, pricingCfg }));
       }
+      case "fixHermesImg": {
+        // Hermès: фото по порядку сайта (спереди, видео, на модели, сбоку…) → спереди → сбоку → сзади → сверху → крупный план → на модели; ваш порядок/обложку не трогаем
+        const L = await store.list("product", {}, { limit: 30000, fields: "_id, brand, images, overrides" }), R = { front: 0, side: 1, back: 2, above: 3, detail: 4, worn: 9 }, patches = [];
+        const rank = i => { const m = String(i.sourceUrl || i.url || "").match(/_([a-z]+)(?:_[a-z]+)?_(\d{3})\?/); return m ? (m[1] in R ? R[m[1]] : 5) * 1000 + +m[2] : 99999; };
+        for (const p of L) { if (!/herm[eè]s/i.test(String(p.brand || "")) || p.overrides?.cover || (p.overrides?.imageOrder || []).length) continue; const im = p.images || [], so = [...im].sort((a, b) => rank(a) - rank(b));
+          if (so.some((x, i) => x !== im[i])) patches.push({ id: p._id, set: { images: so } }); }
+        for (let i = 0; i < patches.length; i += 200) await store.patchEach(patches.slice(i, i + 200));
+        PCACHE = null; return send(res, 200, { fixed: patches.length });
+      }
       case "fixLoroSizes": {
         // Loro Piana: у вещей одного размера («NR» — шарфы, сумки, кошельки…) кнопка до v117 записала «размеры» 1…10 из списка «количество» — убираем, вещь без размеров
         const { createHash } = await import("node:crypto"); const k12 = s => createHash("sha1").update(String(s)).digest("hex").slice(0, 12);
