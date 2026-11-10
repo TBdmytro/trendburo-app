@@ -2286,6 +2286,7 @@ const MT_CATS = [[/\b(bags?|handbags?|totes?|clutch(es)?|backpacks?|pouch(es)?|c
 // категория товара с кнопки: сначала главное слово названия («tank top with ring detail» → «tank top» — одежда, не украшение),
 // потом хлебные крошки и раздел сайта, в конце — описание
 const mtCat = it => {
+  if (["watches", "jewelry"].includes(it.category)) return it.category; // кнопка уже знает категорию (Van Cleef: часы — по адресу)
   const title = String(it.title || "").toLowerCase(), head = title.split(/\s+(?:in|with|featuring|and|from|for)\s+/)[0];
   const sec = String(it.section || "").toLowerCase().replace(/[-_]+/g, " ").split("/").reverse();
   const parts = [head, ...[...(it.crumbs || [])].reverse(), ...sec, title, String(it.description || "")].map(x => String(x).toLowerCase()).filter(Boolean);
