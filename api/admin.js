@@ -578,6 +578,14 @@ export default async function handler(req, res) {
         for (let i = 0; i < patches.length; i += 200) await store.patchEach(patches.slice(i, i + 200));
         PCACHE = null; return send(res, 200, { restored: patches.length });
       }
+      case "loroRestore": {
+        // вернуть наличие вещам, которые кнопка до v131 ошибочно отметила «пропали с сайта» (все размеры «нет»): items [{id, one: true|false} | {id, sizes: {"39": true, …}}] — проверено по странице бренда
+        const items = (body.items || []).filter(x => x && typeof x.id === "string" && x.id.startsWith("product.")).slice(0, 300), ps = await store.getMany(items.map(x => x.id)), byId = new Map(ps.filter(Boolean).map(p => [p._id, p])), now = new Date().toISOString(); let n = 0;
+        for (const x of items) { const p = byId.get(x.id), o = p?.offers?.[0]; if (!o) continue;
+          o.availability = Object.fromEntries((p.variants || []).map(v => { const ok = x.sizes ? x.sizes[String(v.size)] : x.one; return [v._key, { status: ok === true ? "online" : ok === false ? "ask" : (o.availability?.[v._key]?.status || "out"), price: null }]; }));
+          o.onlineOrder = Object.values(o.availability).some(a => a.status === "online"); o.checkedAt = now; p.updatedAt = now; p.history = [...(p.history || []).slice(-49), { at: now, by: "Claude", action: "restore-stock" }]; await store.put(p); n++; }
+        PCACHE = null; return send(res, 200, { restored: n });
+      }
       case "fixLoroImg": {
         // Loro Piana: при прогоне раздела обложкой ставилась мелкая картинка из списка (SMALL 690 px) перед большими ZOOM — убираем SMALL/MEDIUM, если есть ZOOM; ваш порядок/обложку не трогаем
         const L = await store.list("product", {}, { limit: 30000, fields: "_id, brand, images, overrides, coverFrom" }), patches = [];
