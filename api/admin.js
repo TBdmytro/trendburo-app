@@ -570,6 +570,14 @@ export default async function handler(req, res) {
         const byId = new Map(ps.filter(Boolean).map(p => [p._id, p])); items.forEach(x => { const p = byId.get(x.id); if (!p || p.overrides?.cover || (p.overrides?.imageOrder || []).length) return; const im = p.images || [], j = im.findIndex(i => (i.sourceUrl || i.url) === x.url); if (j > 0) patches.push({ id: p._id, set: { images: [im[j], ...im.slice(0, j), ...im.slice(j + 1)], coverFrom: null, coverTile: null } }); });
         if (patches.length) await store.patchEach(patches); PCACHE = null; return send(res, 200, { moved: patches.length });
       }
+      case "loroUnhide": {
+        // Loro Piana: кнопка до v130 не узнавала вещи одного размера (код с «NR») в разделе и снимала их с витрины как пропавшие — возвращаем то, что сняла кнопка (не вы)
+        const since = String(body.since || "2026-11-10T00:00:00Z"), L = await store.list("product", {}, { limit: 30000, fields: "_id, brand, status, history, soldOld" }), patches = [];
+        for (const p of L) { if (!/loro\s*piana/i.test(String(p.brand || "")) || p.status !== "incoming") continue; const h = (p.history || []).slice(-1)[0];
+          if (h && h.by === "Кнопка" && h.from === "published" && h.to === "incoming" && String(h.at || "") >= since) patches.push({ id: p._id, set: { status: "published", soldOld: false, history: [...(p.history || []), { at: new Date().toISOString(), by: "Claude", from: "incoming", to: "published", action: "status", note: "вернул: ошибка кнопки (NR)" }].slice(-30) } }); }
+        for (let i = 0; i < patches.length; i += 200) await store.patchEach(patches.slice(i, i + 200));
+        PCACHE = null; return send(res, 200, { restored: patches.length });
+      }
       case "fixLoroImg": {
         // Loro Piana: при прогоне раздела обложкой ставилась мелкая картинка из списка (SMALL 690 px) перед большими ZOOM — убираем SMALL/MEDIUM, если есть ZOOM; ваш порядок/обложку не трогаем
         const L = await store.list("product", {}, { limit: 30000, fields: "_id, brand, images, overrides, coverFrom" }), patches = [];
