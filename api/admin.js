@@ -564,6 +564,12 @@ export default async function handler(req, res) {
         if (!/^product\.manual\.(dior|gucci|goldengoose|miumiu|prada)-/.test(id) && /^https:\/\/[^/]+\/[^&=]*(\?|$)/.test(String(it.tileImg || ""))) { try { const p0 = await store.get(id); const { coverFromTile } = await import("../lib/imgdedupe.js"); const { fetchBinary } = await import("../lib/images.js"); if (p0 && await coverFromTile(store, p0, String(it.tileImg), { fetchBinary })) { await store.patchMany([id], { images: p0.images, coverFrom: "tile", coverTile: p0.coverTile }); PCACHE = null; } } catch (e) { console.log("COVER fail " + String(e.message).slice(0, 100)); } }
         return send(res, 200, await updateWebProduct(store, id, { boutique: it.boutique, sizeStock: it.sizeStock, preorder: !!it.preorder, unavailable: !!it.unavailable, ask: ["pre", "wait", "store"].includes(it.ask) ? it.ask : "", isNew: !!it.isNew, section: it.section, szDbg: it.szDbg, noStock: !!it.noStock, stockRead: !!it.stockRead, soldOld: !!it.soldOld, material: it.material }, { by: me.name, pricingCfg }));
       }
+      case "imgFirst": {
+        // обложка: переставить указанное фото первым (по sourceUrl) — для разовой правки обложек по анализу снимков; ваш порядок/обложку не трогаем
+        const items = (body.items || []).filter(x => x && typeof x.id === "string" && x.id.startsWith("product.") && typeof x.url === "string").slice(0, 300), ps = (await store.getMany(items.map(x => x.id))), patches = [];
+        items.forEach((x, k) => { const p = ps[k]; if (!p || p.overrides?.cover || (p.overrides?.imageOrder || []).length) return; const im = p.images || [], j = im.findIndex(i => (i.sourceUrl || i.url) === x.url); if (j > 0) patches.push({ id: p._id, set: { images: [im[j], ...im.slice(0, j), ...im.slice(j + 1)], coverFrom: null, coverTile: null } }); });
+        if (patches.length) await store.patchEach(patches); PCACHE = null; return send(res, 200, { moved: patches.length });
+      }
       case "fixLoroImg": {
         // Loro Piana: при прогоне раздела обложкой ставилась мелкая картинка из списка (SMALL 690 px) перед большими ZOOM — убираем SMALL/MEDIUM, если есть ZOOM; ваш порядок/обложку не трогаем
         const L = await store.list("product", {}, { limit: 30000, fields: "_id, brand, images, overrides, coverFrom" }), patches = [];
