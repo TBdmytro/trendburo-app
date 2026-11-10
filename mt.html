@@ -65,7 +65,7 @@ async function tbCollect() {
   var sleep = function (ms) { return tick ? Promise.race([tick(ms), new Promise(function (r) { setTimeout(r, ms + 4000); })]) : new Promise(function (r) { setTimeout(r, ms); }); };
   var host = location.hostname.replace(/^www\./, "");
   var SITE = { "mytheresa.com": "Mytheresa", "ysl.com": "Saint Laurent", "de.loropiana.com": "Loro Piana", "loropiana.com": "Loro Piana", "vancleefarpels.com": "Van Cleef & Arpels" }, siteName = SITE[host] || host.split(".")[0].replace(/^\w/, function (c) { return c.toUpperCase(); });
-  var BRANDS = { "yves saint laurent": "Saint Laurent", "saint laurent paris": "Saint Laurent", "ysl": "Saint Laurent" };
+  var BRANDS = { "yves saint laurent": "Saint Laurent", "saint laurent paris": "Saint Laurent", "ysl": "Saint Laurent", "vancleefarpels": "Van Cleef & Arpels", "van cleef": "Van Cleef & Arpels", "van cleef and arpels": "Van Cleef & Arpels", "van cleef & arpels": "Van Cleef & Arpels", "vca": "Van Cleef & Arpels" };
   var flat = function (x) { var out = []; (Array.isArray(x) ? x : [x]).forEach(function (o) { if (!o) return; if (o["@graph"]) out = out.concat(flat(o["@graph"])); else out.push(o); }); return out; };
   var lds = function (doc) { var all = []; [].slice.call(doc.querySelectorAll('script[type="application/ld+json"]')).forEach(function (s) { try { all = all.concat(flat(JSON.parse(s.textContent))); } catch (e) {} }); return all; };
   var isT = function (o, t) { var v = o["@type"]; return v === t || (Array.isArray(v) && v.indexOf(t) >= 0); };

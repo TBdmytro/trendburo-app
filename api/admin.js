@@ -671,6 +671,12 @@ export default async function handler(req, res) {
             await upsertCollection(store, { section, url: body.url, title: String(body.h1 || body.title || "").slice(0, 200), desc: String(body.desc || "").slice(0, 600), brand: any?.brand || "", found: codes.size, translate: t => translateRu(t) }); } } catch (e) { console.log("COLL fail " + String(e.message).slice(0, 120)); }
         return send(res, 200, { gone: goneN, inSection: mine.length });
       }
+      case "unblockBrand": {
+        // снять «бренд удалён целиком» (ставится сам, когда удалили последнюю вещь бренда)
+        const { brandKey } = await import("../lib/normalize.js"); const k = brandKey(body.brand), bb = await store.get("settings.blockedBrands");
+        if (!k || !bb?.list?.includes(k)) return send(res, 200, { unblocked: 0 });
+        await store.put({ _id: bb._id, _type: "settings", list: bb.list.filter(b => b !== k), at: new Date().toISOString() }); return send(res, 200, { unblocked: 1 });
+      }
       case "forgetDeleted": {
         const site = String(body.site || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
         if (!site) return send(res, 400, { error: "Нет сайта" });
