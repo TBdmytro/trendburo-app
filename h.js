@@ -1,8 +1,23 @@
-window.__H=(function(){var tick=null;
+window.__H=(function(){
+  var ADM = "https://trendburo-app.vercel.app", MAX = 400, PAUSE = 400, KEY = "__TBKEY__";
+  // Hermès ограничивает частые запросы (страница проверки, 403): по одной вещи, спокойно (≈4–6 с), при отказе — сразу стоп и пауза 60 мин (запоминается в браузере)
+  // Loro Piana: у вещей одного размера код в базе с «NR» (FAI0988C04QNR), а в ссылке раздела без него (FAI0988C04Q) — сравниваем без «NR» (иначе вещь считалась новой/пропавшей и снималась с витрины)
+  var VCAW = {}; // Van Cleef & Arpels: вещи без размера, которых нет онлайн
+  var LPS = /(^|\.)loropiana\.com$/.test(location.hostname), kc = function (c) { c = String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); return LPS ? c.replace(/NR$/, "") : c; };
+  var HMS = /(^|\.)hermes\.com$/.test(location.hostname), HMK = "tbHmDeny", hmLeft = function () { try { var t = +localStorage.getItem(HMK) || 0; return t > Date.now() ? Math.ceil((t - Date.now()) / 60000) : 0; } catch (e) { return 0; } }, hmDeny = function (min) { try { localStorage.setItem(HMK, String(Date.now() + min * 60000)); } catch (e) {} };
+  var note = function (t, keep) { var d = document.getElementById("tb-note"); if (!d) { d = document.createElement("div"); d.id = "tb-note"; d.style.cssText = "position:fixed;z-index:2147483647;top:16px;right:16px;background:#1d2a44;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;max-width:340px;box-shadow:0 6px 24px rgba(0,0,0,.2)"; document.body.appendChild(d); } d.textContent = "[v134] " + t; clearTimeout(d._t); if (!keep) d._t = setTimeout(function () { d.remove(); }, 7000); };
+  // паузы — через фоновый таймер (Worker): браузер сильно замедляет обычные таймеры во вкладке, которая не на экране,
+  // из-за этого второй раздел в соседней вкладке почти стоял. Сайт не пускает Worker — обычный таймер
+  var tick = null;
+  try { var wk = new Worker(URL.createObjectURL(new Blob(["onmessage=function(e){setTimeout(function(){postMessage(e.data)},e.data.ms)}"], { type: "text/javascript" }))), cbs = {}, seq = 0;
+    wk.onmessage = function (e) { var f = cbs[e.data.id]; delete cbs[e.data.id]; if (f) f(); }; wk.onerror = function () { tick = null; };
+    var wkTick = function (ms) { return new Promise(function (r) { var id = ++seq; cbs[id] = r; wk.postMessage({ id: id, ms: ms }); }); };
+    tick = wkTick; var probe = false; wkTick(5).then(function () { probe = true; }); setTimeout(function () { if (!probe) tick = null; }, 1500);
+  } catch (e) { tick = null; }
   var sleep = function (ms) { return tick ? Promise.race([tick(ms), new Promise(function (r) { setTimeout(r, ms + 4000); })]) : new Promise(function (r) { setTimeout(r, ms); }); };
   var host = location.hostname.replace(/^www\./, "");
   var SITE = { "mytheresa.com": "Mytheresa", "ysl.com": "Saint Laurent", "de.loropiana.com": "Loro Piana", "loropiana.com": "Loro Piana", "vancleefarpels.com": "Van Cleef & Arpels" }, siteName = SITE[host] || host.split(".")[0].replace(/^\w/, function (c) { return c.toUpperCase(); });
-  var BRANDS = { "yves saint laurent": "Saint Laurent", "saint laurent paris": "Saint Laurent", "ysl": "Saint Laurent" };
+  var BRANDS = { "yves saint laurent": "Saint Laurent", "saint laurent paris": "Saint Laurent", "ysl": "Saint Laurent", "vancleefarpels": "Van Cleef & Arpels", "van cleef": "Van Cleef & Arpels", "van cleef and arpels": "Van Cleef & Arpels", "van cleef & arpels": "Van Cleef & Arpels", "vca": "Van Cleef & Arpels" };
   var flat = function (x) { var out = []; (Array.isArray(x) ? x : [x]).forEach(function (o) { if (!o) return; if (o["@graph"]) out = out.concat(flat(o["@graph"])); else out.push(o); }); return out; };
   var lds = function (doc) { var all = []; [].slice.call(doc.querySelectorAll('script[type="application/ld+json"]')).forEach(function (s) { try { all = all.concat(flat(JSON.parse(s.textContent))); } catch (e) {} }); return all; };
   var isT = function (o, t) { var v = o["@type"]; return v === t || (Array.isArray(v) && v.indexOf(t) >= 0); };
@@ -377,7 +392,7 @@ window.__H=(function(){var tick=null;
   };
   var gender = function (path) { var t = "/" + path.toLowerCase().replace(/[-_]/g, "/") + "/"; return /\/(women|womens|woman|donna|damen|damenmode|femme|femmes|dames|damesmode|womenswear)\//.test(t) ? "w" : /\/(men|mens|man|uomo|herren|herrenmode|homme|hommes|heren|herenmode|menswear)\//.test(t) ? "m" : "u"; };
   var build = async function (doc, html, url, limit, extra) {
-    var all = lds(doc), p = all.find(function (o) { return isT(o, "Product") || isT(o, "ProductGroup"); }); if (!p) return null;
+    var all = lds(doc), p = all.find(function (o) { return isT(o, "Product") || isT(o, "ProductGroup"); }); if (!p) return null; if (/(^|\.)vancleefarpels\.com$/.test(location.hostname) && !codeOf(url)) return null; /* Van Cleef & Arpels: на странице коллекции тоже есть данные одной вещи — коллекцию не принимаем за товар */
     // группа товаров (On и др.: одна модель, варианты — цвета): берём вариант этой страницы — его цену, наличие, фото и артикул
     if (isT(p, "ProductGroup") && p.hasVariant && !p.offers) { var vs = [].concat(p.hasVariant), uc = codeOf(url), pu = url.split(/[?#]/)[0];
       var v0 = vs.find(function (x) { return String(x.sku || "").toUpperCase().replace(/[^A-Z0-9]/g, "") === uc; }) || vs.find(function (x) { var o = [].concat(x.offers || [])[0] || {}; return o.url && o.url.split(/[?#]/)[0] === pu; }) || vs[0];
@@ -387,11 +402,11 @@ window.__H=(function(){var tick=null;
     var bc = all.find(function (o) { return isT(o, "BreadcrumbList"); });
     var crumbs = ((bc && bc.itemListElement) || []).map(function (i) { return String((i.item && i.item.name) || i.name || "").toLowerCase(); }).concat(new URL(url).pathname.toLowerCase().split(/[/_-]+/), [String(p.category || "").toLowerCase()], extra || []);
     var brand = String((p.brand && (p.brand.name || p.brand)) || siteName).trim(); brand = BRANDS[brand.toLowerCase()] || brand;
-    var code = (/(^|\.)hermes\.com$/.test(location.hostname) && codeOf(url)) || String(p.sku || "").toUpperCase() || codeOf(url), sst = sizeInfo(doc, html, p, url), /* Hermès: в разметке sku размера (H242810ZH90390) — код товара берём из адреса (H242810ZH90) */ sz = sst.map(function (x) { return x.s; });
+    var code = (/(^|\.)(hermes|vancleefarpels)\.com$/.test(location.hostname) && codeOf(url)) || String(p.sku || "").toUpperCase() || codeOf(url), sst = sizeInfo(doc, html, p, url), /* Hermès: в разметке sku размера (H242810ZH90390) — код товара берём из адреса (H242810ZH90) */ sz = sst.map(function (x) { return x.s; });
     // Van Cleef & Arpels: размеры и наличие — в данных самой страницы (…/товар.productinfo.DE.variants.json; без размера — …productinfo.DE.json); «stock:false» — нет онлайн (узнать в бутике)
     if (/(^|\.)vancleefarpels\.com$/.test(location.hostname) && code) { try { var vB = String(url).split("#")[0].split("?")[0].replace(/\.html$/, ""), vC = ((new URL(url).pathname.split("/")[2]) || "de").toUpperCase(), vV = await fetch(vB + ".productinfo." + vC + ".variants.json", { credentials: "include" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), vP = vV && vV[code] && vV[code].variants && vV[code].variants.products;
         if (vP && Object.keys(vP).length) { var vL = []; Object.keys(vP).forEach(function (k) { var q = vP[k], z = q && q.attributes && (q.attributes.Size || q.attributes.size); if (z && q.sellable !== false) vL.push({ s: String(z).replace(",", "."), ok: !!q.stock }); }); vL.sort(function (a, b) { return parseFloat(a.s) - parseFloat(b.s); }); if (vL.length) { sst = vL; sz = vL.map(function (x) { return x.s; }); } }
-        else { var vO = await fetch(vB + ".productinfo." + vC + ".json", { credentials: "include" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); if (vO && vO[code] && vO[code].stock === false) VCAW[code] = 1; } } catch (e) {} }
+        else { sst = []; sz = []; /* без размера (серьги, колье): выбор количества 1–5 — не размеры */ var vO = await fetch(vB + ".productinfo." + vC + ".json", { credentials: "include" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); if (vO && vO[code] && vO[code].stock === false) VCAW[code] = 1; } } catch (e) {} }
     // цвет из ссылки (Brunello: …-262MZUEHRO342CBX11.html), а разметка страницы называет другой цвет той же модели — берём цвет из ссылки, если его фото есть на странице.
     // Иначе все цвета модели сливались в один товар (из 51 кроссовка загружалось 10) и обложка была не того цвета
     try { var uc1 = codeOf(url), c1 = code.replace(/[^A-Z0-9]/g, ""); if (uc1 && c1 && uc1 !== c1 && uc1.length === c1.length && uc1.length >= 12 && uc1.slice(0, uc1.length - 5) === c1.slice(0, c1.length - 5) && String(html || "").toUpperCase().indexOf(uc1 + "_") >= 0) code = uc1; } catch (e) {}
@@ -410,4 +425,4 @@ window.__H=(function(){var tick=null;
       sizes: sz, sizeStock: sst, blocked: (function (b) { return b === "wait" && sst.some(function (x) { return x.ok === true; }) ? "" : b; })(pageBlock(doc, html, p, code)) /* «Сообщить о поступлении» у распроданного размера (Golden Goose) — не значит, что вся вещь недоступна */ || (sst.some(function (x) { return x.pre; }) && sst.every(function (x) { return x.pre || x.ok === false; }) ? "pre" : ""), szDbg: sz.length || /bag|handbag|tasche|borse|sac\b/.test(crumbs.join(" ")) ? "" : sizeDbg(html), color: String(p.color || ""), material: String(p.material || "").slice(0, 80), sku: code, description: String(p.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
       url: url.split("?")[0].split("#")[0], crumbs: crumbs, isNew: isNewSec, gender: (function (g0) { if (g0 !== "u") return g0; var au = String(((p.audience || {}).suggestedGender) || ""); return /^(herren|men|male|homme|uomo)$/i.test(au) ? "m" : /^(damen|women|female|femme|donna)$/i.test(au) ? "w" : /(^|\.)vancleefarpels\.com$/.test(location.hostname) ? "w" : g0; })(gender(new URL(url).pathname + "/" + (extra || []).join("/"))), /* Hermès: адрес товара без пола — берём audience.suggestedGender */ images: images };
   };
-return {codeOf:codeOf,build:build,sizeInfo:sizeInfo,pickImages:pickImages};})();"ok"
+return {build:build,codeOf:codeOf,VCAW:VCAW};})();
