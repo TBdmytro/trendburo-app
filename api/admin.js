@@ -543,7 +543,7 @@ export default async function handler(req, res) {
           const lvc = a => new Set(a.map(u => (String(u || "").match(/--([A-Z0-9]+)_[A-Z]{1,3}\d_/) || [])[1]).filter(Boolean)), lvNew = lvc(it.images), lvOld = p0 ? lvc((p0.images || []).map(i => i.sourceUrl || i.url)) : new Set();
           const lvWrong = lvNew.size > 0 && lvOld.size > 0 && ![...lvNew].some(c => lvOld.has(c));
           const wrongColor = !!p0 && (lvWrong || (hasOwn(it.images) && !hasOwn((p0.images || []).map(i => i.sourceUrl || i.url)) && !hasOwn([p0.coverTile])));
-          const lpZoom = !!p0 && /loro\s*piana/i.test(String(p0.brand || "")) && (p0.images || []).some(i => /_(SMALL|MEDIUM)\.jpg/i.test(String(i.sourceUrl || ""))) && it.images.some(u => /_ZOOM\.jpg/i.test(String(u || ""))) || (!!p0 && /herm[eè]s/i.test(String(p0.brand || "")) && (p0.images || []).some(i => /wid=240\b/.test(String(i.sourceUrl || ""))) && it.images.some(u => /wid=1600\b/.test(String(u || "")))); // Hermès: были фото 240 px — берём 1600 px // Loro Piana: были мелкие фото (690 px, с повтором) — один раз берём галерею ZOOM 1920 px
+          const lpZoom = !!p0 && /loro\s*piana/i.test(String(p0.brand || "")) && (p0.images || []).some(i => /_(SMALL|MEDIUM)\.jpg/i.test(String(i.sourceUrl || ""))) && it.images.some(u => /_ZOOM\.jpg/i.test(String(u || ""))) || (!!p0 && /herm[eè]s/i.test(String(p0.brand || "")) && (p0.images || []).some(i => /wid=(240|1600)\b/.test(String(i.sourceUrl || ""))) && it.images.some(u => /wid=1500\b/.test(String(u || "")))); // Hermès: были фото 240 px — берём 1600 px // Loro Piana: были мелкие фото (690 px, с повтором) — один раз берём галерею ZOOM 1920 px
           if (p0 && (wrongColor || lpZoom || p0.imgVer !== IMGV(id) || (p0.images || []).length < Math.min(3, it.images.length) || !/^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "") || it.images.length > (p0.images || []).length) && (!p0.overrides?.cover || it.images.includes(p0.overrides.cover)) && !(p0.overrides?.imageOrder || []).length) { const { images, copied, srcOf } = await copyWebImages(store, it.images, id); const dior = /^product\.manual\.dior-/.test(id);
             const hadCopies = /^https:\/\/cdn\.sanity\.io\//.test(p0.images?.[0]?.url || "");
             // скопировать к себе не вышло (сайт не отдаёт фото серверу), а на странице фото больше, чем у нас, — показываем все по ссылке сайта
@@ -574,10 +574,11 @@ export default async function handler(req, res) {
       }
       case "fixHermesImg": {
         // Hermès: фото по порядку сайта (спереди, видео, на модели, сбоку…) → спереди → сбоку → сзади → сверху → крупный план → на модели; ваш порядок/обложку не трогаем
-        const L = await store.list("product", {}, { limit: 30000, fields: "_id, brand, images, overrides" }), R = { front: 0, side: 1, back: 2, above: 3, detail: 4, worn: 9 }, patches = [];
+        const L = await store.list("product", {}, { limit: 30000, fields: "_id, brand, images, overrides, coverFrom" }), R = { front: 0, side: 1, back: 2, above: 3, detail: 4, worn: 9 }, patches = [];
         const rank = i => { const m = String(i.sourceUrl || i.url || "").match(/_([a-z]+)(?:_[a-z]+)?_(\d{3})\?/); return m ? (m[1] in R ? R[m[1]] : 5) * 1000 + +m[2] : 99999; };
-        for (const p of L) { if (!/herm[eè]s/i.test(String(p.brand || "")) || p.overrides?.cover || (p.overrides?.imageOrder || []).length) continue; const im = p.images || [], so = [...im].sort((a, b) => rank(a) - rank(b));
-          if (so.some((x, i) => x !== im[i])) patches.push({ id: p._id, set: { images: so } }); }
+        const fix34 = u => String(u || "").replace(/wid=1600&hei=1600/, "wid=1500&hei=2000"); // родные фото Hermès 3:4 — без белых полей
+        for (const p of L) { if (!/herm[eè]s/i.test(String(p.brand || "")) || p.overrides?.cover || (p.overrides?.imageOrder || []).length) continue; const im = (p.images || []).map(i => ({ ...i, url: fix34(i.url), sourceUrl: fix34(i.sourceUrl) })), so = [...im].sort((a, b) => rank(a) - rank(b));
+          if (so.some((x, i) => x.url !== (p.images[i] || {}).url) || p.coverFrom) patches.push({ id: p._id, set: { images: so, coverFrom: null, coverTile: null } }); }
         for (let i = 0; i < patches.length; i += 200) await store.patchEach(patches.slice(i, i + 200));
         PCACHE = null; return send(res, 200, { fixed: patches.length });
       }
