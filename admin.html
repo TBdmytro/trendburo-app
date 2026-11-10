@@ -1070,7 +1070,7 @@ function readPrefill() {
   return { brand, title, category, gender, boutique: parsePrice(d.price) || "", currency: d.currency ? String(d.currency).toUpperCase() : null, color: d.color ? String(d.color) : "", url: String(d.url || ""), images: (d.images || []).filter(u => /^https:\/\//.test(u)).slice(0, 8), host };
 }
 const BRAND_LIST = ["Louis Vuitton", "Dior", "Gucci", "Hermès", "Chanel", "Prada", "Miu Miu", "Bottega Veneta", "Saint Laurent", "Celine", "Loewe", "The Row", "Balenciaga", "Fendi", "Valentino", "Cartier", "Loro Piana", "Brunello Cucinelli"];
-const SIZE_PRESETS = { clothing: ["XS", "S", "M", "L", "XL"], shoes: ["35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45"], jewelry: ["15", "16", "17", "18"] };
+const SIZE_PRESETS = { clothing: ["XS", "S", "M", "L", "XL"], shoes: ["35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45"], jewelry: ["48", "50", "52", "54", "56", "58"] };
 async function vAdd(editId) {
   const F = { id: null, brand: "", title: "", category: "bags", gender: "w", boutique: "", sizes: [], color: "", colors: [], availability: "online", images: [], url: "", status: "published", stock: { loc: "", city: "", size: "" } };
   // «add:stock-ua» / «add:stock-eu» — новая вещь, которая уже лежит у нас (из раздела «В наличии»)
