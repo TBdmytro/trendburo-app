@@ -2323,6 +2323,11 @@ window.addEventListener("message", async e => {
     let list = []; try { list = (await api("sectionKnown", { query: { prefix: mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), section: e.data.section || "" }, silent: true })).list || []; } catch {}
     try { e.source.postMessage({ type: "tb-secknown", list }, e.origin); } catch {} return;
   }
+  if (e.data.type === "tb-covers") { // Loro Piana: обложка как на плитке раздела бренда — без открытия страниц товаров
+    const hk = mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), items = (e.data.items || []).slice(0, 100).map(x => ({ id: "product.manual." + hk + "-" + String(x.code || "").toLowerCase().replace(/[^a-z0-9]/g, ""), tile: String(x.tile || "") })).filter(x => /^https:\/\//.test(x.tile));
+    let r = { moved: 0 }; try { r = await api("webCover", { method: "POST", silent: true, body: { items } }); } catch {}
+    try { e.source.postMessage({ type: "tb-covers-done", n: (e.data.items || []).length, moved: r.moved || 0 }, e.origin); } catch {} return;
+  }
   if (e.data.type === "tb-snap") { // копии страниц бренда для автопроверки кнопки — сохраняем молча
     try { await api("snapSave", { method: "POST", silent: true, body: { host: e.data.host || "", section: e.data.section || "", part: e.data.part || "", idx: e.data.idx || 0, list: e.data.list || null, pages: e.data.pages || [], ver: e.data.ver || "" } }); } catch {} return;
   }

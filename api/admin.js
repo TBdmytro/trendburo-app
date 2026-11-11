@@ -179,7 +179,7 @@ export default async function handler(req, res) {
     if (!me) return send(res, 401, { error: "Нужен вход" });
     if (req.method !== "GET" && req.headers["x-tb"] !== "1") return send(res, 403, { error: "Запрос отклонён" });
     const store = getStore();
-    if (req.method !== "GET" && !["lpCover", "webImport", "webUpdate", "imageUpload", "imageFromUrl", "snapSave", "webProgress", "ensurePrices", "fixBrands", "imgDedupe", "imgDrop", "trPending", "hotlinked", "catalogState"].includes(a)) PCACHE = null; // служебные запросы (ход прогона кнопки каждые 10 с, фоновые проверки) список товаров не сбрасывают — они сами сбрасывают, если что-то поменяли
+    if (req.method !== "GET" && !["webCover", "lpCover", "webImport", "webUpdate", "imageUpload", "imageFromUrl", "snapSave", "webProgress", "ensurePrices", "fixBrands", "imgDedupe", "imgDrop", "trPending", "hotlinked", "catalogState"].includes(a)) PCACHE = null; // служебные запросы (ход прогона кнопки каждые 10 с, фоновые проверки) список товаров не сбрасывают — они сами сбрасывают, если что-то поменяли
     const pricingCfg = (await store.get("settings.pricing"))?.config || null;
 
     switch (a) {
@@ -642,6 +642,18 @@ export default async function handler(req, res) {
           o.availability = Object.fromEntries((p.variants || []).map(v => { const ok = x.sizes ? x.sizes[String(v.size)] : x.one; return [v._key, { status: ok === true ? "online" : ok === false ? "ask" : (o.availability?.[v._key]?.status || "out"), price: null }]; }));
           o.onlineOrder = Object.values(o.availability).some(a => a.status === "online"); o.checkedAt = now; p.updatedAt = now; p.history = [...(p.history || []).slice(-49), { at: now, by: "Claude", action: "restore-stock" }]; await store.put(p); n++; }
         PCACHE = null; return send(res, 200, { restored: n });
+      }
+      case "webCover": {
+        // Loro Piana: обложка — как на плитке раздела бренда. Та же картинка из галереи (общий код GUID, большая) — первой; нет в галерее — плитку первой.
+        // Вашу обложку / порядок из админки не трогаем
+        const items = (Array.isArray(body.items) ? body.items : []).slice(0, 100).filter(x => x && /^product\.manual\.[a-z0-9]+-[a-z0-9_]+$/.test(String(x.id)) && /^https:\/\/media\.loropiana\.com\//.test(String(x.tile)));
+        const g = u => (String(u || "").match(/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/i) || [""])[0].toUpperCase();
+        const docs = await store.getMany(items.map(x => x.id)), ch = [];
+        for (const x of items) { const p = docs.find(d => d && d._id === x.id); if (!p || p.overrides?.cover || (p.overrides?.imageOrder || []).length) continue; const im = p.images || [], k = g(x.tile); if (!k) continue;
+          const i = im.findIndex(q => g(q.sourceUrl || q.url) === k);
+          if (i > 0) ch.push({ id: p._id, set: { images: [im[i], ...im.slice(0, i), ...im.slice(i + 1)] } }); else if (i < 0) ch.push({ id: p._id, set: { images: [{ url: x.tile, sourceUrl: x.tile, rights: "copied" }, ...im].slice(0, 13) } }); }
+        for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100)); if (ch.length) PCACHE = null;
+        return send(res, 200, { moved: ch.length });
       }
       case "lpCover": {
         // Loro Piana: обложка — фото самого товара на фоне, а не на модели. Какое фото «чистое», определяет админка по самой картинке
