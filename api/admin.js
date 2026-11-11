@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import { gunzipSync } from "node:zlib";
 /**
  * API админки. Один обработчик на все действия (?a=…), чтобы укладываться в лимит функций Vercel.
  * Все действия, кроме входа, требуют авторизации; изменяющие — ещё и заголовок X-TB (защита от CSRF).
@@ -59,7 +60,7 @@ async function copyWebImages(store, list, id = "") {
   return { images: ok.length ? ok : images, copied, srcOf };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, colors[0...1], overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer, soldOld";
-let FIXVSZ = false, FIXVCA = false, FIXCHK = false, FIXALO = false, FIXOBJ = false, FIXMIU = false, FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
+let FIXKIT = false, FIXVSZ = false, FIXVCA = false, FIXCHK = false, FIXALO = false, FIXOBJ = false, FIXMIU = false, FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
 /** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
@@ -145,6 +146,22 @@ export async function mergeVcaSizes(store, only) {
   for (let i = 0; i < patches.length; i += 100) await store.patchEach(patches.slice(i, i + 100));
   if (gone.length) { const linked = await store.list("importItem", { publishedAs: gone }, { limit: 20000, fields: "_id" }); if (linked.length) await store.patchMany(linked.map(i => i._id), { publishedAs: null, publishedAt: null }); await store.delMany(gone); await rememberDeleted(store, gone); }
   return { merged: patches.length, removed: gone.length };
+}
+
+// Hermès: ремень-конструктор — один товар на ширину (32 мм, 38 мм…). Внутри (поле kit): пряжки, ремни, наборы и цены частей.
+// Новый — в «Новые с сайтов»; уже есть — обновляем только данные конструктора (наборы, цены), ваши правки и статус не трогаем
+export async function buildBeltKits(store, kits, pricingCfg, by = "button") {
+  const { kitModel, kitImg } = await import("../lib/beltkit.js"), { saveManualProduct } = await import("../lib/manual.js");
+  const all = kitModel(kits), done = [];
+  for (const [key, M] of Object.entries(all)) { if (!M.def) continue;
+    const id = "product.manual.hermes-ubelt" + key, prev = await store.get(id);
+    // наборы, найденные раньше (другой прогон раздела), не теряем: объединяем
+    if (prev && prev.kit) { const seen = new Set(M.combos.map(x => x.b + x.s)); for (const x of prev.kit.combos || []) if (!seen.has(x.b + x.s)) M.combos.push(x); for (const [c, b] of Object.entries(prev.kit.buckles || {})) if (!M.buckles[c]) M.buckles[c] = b; for (const [c, st] of Object.entries(prev.kit.straps || {})) if (!M.straps[c]) M.straps[c] = st; }
+    const kit = { ...M, at: new Date().toISOString() };
+    if (!prev) await saveManualProduct(store, { id, brand: "Hermès", title: "Gürtel zum Zusammenstellen " + M.w + " mm", category: "accessories", subcategory: "belts", gender: M.g, boutique: M.def.p, currency: "EUR", sizes: M.sizes, images: [kitImg(M.w, M.def.b, M.def.s, "103", 1500), kitImg(M.w, M.def.b, M.def.s, "104", 1500)], url: "https://www.hermes.com/de/de/category/herren/gurtel/", status: "incoming", availability: "online", description: "Конструктор: выберите пряжку, ремень и размер — как на сайте Hermès", sku: "UBELT" + key }, { by, pricingCfg });
+    await store.patchEach([{ id, set: { kit } }]); done.push(key + ":" + Object.keys(M.buckles).length + "x" + Object.keys(M.straps).length);
+  }
+  return done.length ? done : null;
 }
 export default async function handler(req, res) {
   const a = (req.query && req.query.a) || new URL(req.url, "http://x").searchParams.get("a");
@@ -466,6 +483,7 @@ export default async function handler(req, res) {
             if (Object.keys(set).length) ch.push({ id: p._id, set }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
           await store.put({ _id: "settings.fixVca5", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXVCA " + ch.length); } } catch (e) { FIXVCA = false; } }
+        if (!FIXKIT) { FIXKIT = true; try { if (!(await store.get("settings.fixKits1"))) { const L = (await store.list("snap", {}, { limit: 500, fields: "_id, list" })).filter(x => /__kits$/.test(x._id) && x.list && x.list.gz); let r = []; for (const x of L) { const q = await buildBeltKits(store, JSON.parse(gunzipSync(Buffer.from(x.list.gz, "base64")).toString("utf8")).kits, pricingCfg, "migration"); if (q) r = r.concat(q); } await store.put({ _id: "settings.fixKits1", _type: "settings", at: new Date().toISOString(), r }); if (r.length) PCACHE = null; console.log("FIXKIT " + JSON.stringify(r)); } } catch (e) { FIXKIT = false; console.log("FIXKIT fail " + String(e.message).slice(0, 160)); } } // ремень-конструктор из уже собранных наборов
         if (!FIXVSZ) { FIXVSZ = true; try { if (!(await store.get("settings.fixVcaSz1"))) { const r = await mergeVcaSizes(store); await store.put({ _id: "settings.fixVcaSz1", _type: "settings", at: new Date().toISOString(), ...r }); if (r.merged) PCACHE = null; console.log("FIXVSZ " + JSON.stringify(r)); } } catch (e) { FIXVSZ = false; console.log("FIXVSZ fail " + String(e.message).slice(0, 160)); } }
         if (!FIXGG) { FIXGG = true; try { if (!(await store.get("settings.fixGgImg3"))) { const { orderImages } = await import("../lib/imgorder.js");
           // 2: обложка — вид сбоку (кадр без номера), не плитка раздела; ваша обложка/порядок из админки — не трогаем
@@ -766,6 +784,7 @@ export default async function handler(req, res) {
         let list = pg(body.list), pages = (Array.isArray(body.pages) ? body.pages : []).slice(0, 3).map(pg).filter(Boolean);
         if (!list && !pages.length) return send(res, 400, { error: "Пусто" });
         const sid = "snap." + secKey(section);
+        if (/#kits$/.test(section) && /hermes\.com$/.test(host) && list) { try { const r = await buildBeltKits(store, JSON.parse(gunzipSync(Buffer.from(list.gz, "base64")).toString("utf8")).kits, pricingCfg, me.name); if (r) PCACHE = null; console.log("KITS " + JSON.stringify(r)); } catch (e) { console.log("KITS fail " + String(e.message).slice(0, 200)); } } // Hermès: наборы «пряжка + ремень» → конструктор ремня
         if (body.part === "page") { // части одного прогона: раздел приходит первым, товары — следом
           const prev = await store.get(sid); const idx = Math.max(0, Math.min(2, Number(body.idx) || 0));
           const fresh = prev && Date.now() - Date.parse(prev.at) < 30 * 60e3; list = fresh ? prev.list : null;

@@ -425,6 +425,7 @@ button{cursor:pointer}
 .pv-sib button{flex:none;width:64px;border:0;background:none;padding:0;display:flex;flex-direction:column;gap:5px;align-items:center;color:inherit;font:inherit}
 .pv-sib .t{width:64px;height:76px;border-radius:14px;background:#f6f5f3 center/contain no-repeat;border:2px solid transparent}
 .pv-sib button.on .t{border-color:#fff}.pc .nv{display:block;font-size:11px;opacity:.6;margin-top:2px}
+.kit .kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin:6px 0 14px}.kit .kgrid button{border:2px solid transparent;border-radius:14px;background:rgba(255,255,255,.07);padding:6px;display:flex;flex-direction:column;align-items:center;gap:3px;color:inherit;font:inherit;cursor:pointer}.kit .kgrid button[aria-pressed="true"]{border-color:currentColor}.kit .kgrid img{width:100%;aspect-ratio:3/2;object-fit:contain;background:#f2f3f4;border-radius:10px}.kit .kgrid span{font-size:11px;line-height:1.2;text-align:center}.kit .kgrid small{font-size:10.5px;opacity:.65}.kit .kz{margin-bottom:6px}
 .pv-sib .c{font-size:10.5px;opacity:.7;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pv-sib.ver button{width:88px}.pv-sib.ver .t{width:88px;height:96px}.pv-sib.ver .c{max-width:88px;white-space:normal;text-align:center;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}.pv-sib .c.sp{opacity:1;font-weight:600;-webkit-line-clamp:1}
 /* сколько товаров в ряд: 2 (как было), 3 или 4 — компактнее подписи */
@@ -2682,7 +2683,8 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   if(sizes){const pz=p.cat==="shoes"?prefs.shoe:prefs.cloth;if(pz&&sizes.includes(pz)&&!szOut.has(pz))size=pz}
   let like=null;const likeOf=()=>like||(like=p?similarTo(p):RESALE.filter(x=>x.id!==it.id));
   const showDl=!r&&!(st&&st.loc==="ua");
-  const btnLabel=()=>r?"Купить":isPor(it)?"Уточнить цену":isPre()?"Уточнить наличие":"В корзину · "+eur(priceFor(it,d));
+  const K=p&&p.kit&&p.kit.def?p.kit:null;let kb=K?K.def.b:"",ks=K?K.def.s:"",kz="";
+  const btnLabel=()=>r?"Купить":K?"Заказать этот ремень":isPor(it)?"Уточнить цену":isPre()?"Уточнить наличие":"В корзину · "+eur(priceFor(it,d));
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
   const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наличии</span>":p&&p.availability==="preorder"?"<span>Предзаказ</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img ${i?"data-":""}style="background:url(&quot;${esc(im.thumb||im.src)}&quot;) center/contain no-repeat" ${i?"data-":""}src="${esc(im.src)}"${/^https:\/\/cdn\.sanity\.io\//.test(im.src)?' crossorigin="anonymous"':""} data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?"":'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -2714,18 +2716,33 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     ims.forEach((im,i)=>{const th=p.imgs[i]&&p.imgs[i].thumb;if(i||!th||im.classList.contains("geo")||(im.complete&&im.naturalWidth))return;const t=new Image();t.onload=()=>{if(!im.classList.contains("geo")&&!(im.complete&&im.naturalWidth))placeFull(im,im.parentNode,t.naturalWidth,t.naturalHeight)};t.src=th});
     ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.addEventListener("load",go,{once:true});im.src=im.src}else if(!/[?&]tbr=1/.test(im.src)){im.addEventListener("load",go,{once:true});im.src=im.src+(im.src.includes("?")?"&":"?")+"tbr=1"}else im.classList.add("fit")}))});
     g.addEventListener("click",e=>{const im=e.target.closest("img[data-zi]");if(im)zoomView(p.imgs.slice(0,8),+im.dataset.zi,it.brand+" "+it.name)})}}
+  // Hermès: ремень-конструктор — пряжка + ремень + размер; фото пары рисует сервер фото Hermès, цена = набор или пряжка + ремень
+  const kImg=(b,st,w)=>`https://assets.hermes.com/is/image/hermesproduct/beltkits-${K.w}-f34?$leatherstrap=${st.slice(1)}_composite_103&$buckle=${b.slice(1)}_composite_103&wid=${w||1200}&extend=0,0,0,0&align=0,0`;
+  const kRaw=(b,st)=>{const h=K.combos.find(x=>x[0]===b&&x[1]===st);if(h)return h[2];const B=K.buckles.find(x=>x.c===b),S=K.straps.find(x=>x.c===st);return K.additive&&B&&S&&B.k===S.k&&B.p!=null&&S.p!=null?B.p+S.p:null};
+  const kOur=(b,st)=>{const v=kRaw(b,st);if(!v)return null;const base=K.base||K.def.p,our=priceFor(it,d);return Math.round(v*our/base/5)*5};
+  const kTxt=(b,st)=>{const v=kOur(b,st);return v==null?"по запросу":v>POR_EUR?"по запросу":eur(v)};
+  const kB=()=>K.buckles.find(x=>x.c===kb)||{n:""},kS=()=>K.straps.find(x=>x.c===ks)||{n:"",col:""};
+  const kHTML=()=>{const bl=[...K.buckles].sort((a,b)=>(kRaw(a.c,ks)==null)-(kRaw(b.c,ks)==null)),sl=[...K.straps].sort((a,b)=>(kRaw(kb,a.c)==null)-(kRaw(kb,b.c)==null));
+    return `<div class="kit"><div class="pv-lbl">Пряжка · ${esc(kB().n)}</div><div class="kgrid">${bl.map(x=>`<button data-kb="${x.c}" aria-pressed="${x.c===kb}"><img src="${kImg(x.c,ks,300)}" alt="" loading="lazy" decoding="async"><span>${esc(x.n)}</span><small>${kTxt(x.c,ks)}</small></button>`).join("")}</div>
+      <div class="pv-lbl">Ремень · ${esc([kS().col,/wendbar/i.test(kS().n)?"двусторонний":kS().n?"кожа экзотическая / особая":""].filter(Boolean).join(", "))}</div><div class="kgrid">${sl.map(x=>`<button data-ks="${x.c}" aria-pressed="${x.c===ks}"><img src="${kImg(kb,x.c,300)}" alt="" loading="lazy" decoding="async"><span>${esc(x.col||"")}${/wendbar/i.test(x.n)?" · двуст.":""}</span><small>${kTxt(kb,x.c)}</small></button>`).join("")}</div>
+      <div class="pv-lbl">Размер (длина, см)${kz?" · "+kz:""}</div><div class="szg kz">${K.sizes.map(z=>`<button data-kz="${z}" aria-pressed="${kz===z}">${z}</button>`).join("")}</div></div>`};
+  const kHero=()=>{const im=s.querySelector("#pvg img");if(im){im.removeAttribute("crossorigin");im.src=kImg(kb,ks,1500)}};
+  const kOrder=()=>{if(!kz){toast("Выберите размер ремня");s.querySelector(".kz")?.scrollIntoView({behavior:"smooth",block:"center"});return}
+    const sku=`U_BELT_${K.w}_HOMME-${kb}-${ks}${String(kz).padStart(3,"0")}`;
+    orderSheet("Ремень Hermès "+K.w+" мм",`Здравствуйте! Хочу ремень-конструктор Hermès ${K.w} мм:\nПряжка: ${kB().n} (${kb})\nРемень: ${[kS().col,kS().n].filter(Boolean).join(", ")} (${ks})\nРазмер: ${kz}\nЦена: ${kTxt(kb,ks)}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]||d}\nАртикул Hermès: ${sku}`)};
   const oldP=()=>p&&p.sale&&p.oldPrices?(p.oldPrices[d]??p.oldPrices.ua):0;
   const draw=()=>{const cw=cws[ci];
     s.querySelector("#pvb").innerHTML=`
     <div class="pv-top"><div style="min-width:0">${p?`<button class="bl" data-act="brand" data-bk="${p.bk}">${esc(it.brand)} ›</button>`:`<span class="bl">${esc(it.brand)}</span>`}<h2>${esc(it.name)}</h2></div>
-      <div class="pr"><b class="num">${!r&&isPor(it)?"Цена по запросу":eur(r?it.price:priceFor(it,d))}</b>${oldP()?`<s class="num">${eur(oldP())}</s>`:r?"<span>Цена продавца</span>":""}</div></div>
+      <div class="pr"><b class="num">${K?kTxt(kb,ks).replace("по запросу","Цена по запросу"):!r&&isPor(it)?"Цена по запросу":eur(r?it.price:priceFor(it,d))}</b>${oldP()?`<s class="num">${eur(oldP())}</s>`:r?"<span>Цена продавца</span>":""}</div></div>
     ${st?`<span class="avail"><span class="gdot"></span>В наличии · ${st.city}${st.loc==="ua"?", Украина":", Германия"}</span>`:""}
     ${st&&st.loc==="ua"?`<div class="pv-note">Уже в Украине — отправим Новой почтой за 1–3 дня</div>`:!st&&p&&p.live&&isPre()?`<div class="pv-note">${p.availability==="preorder"?"У бутика предзаказ — наличие и срок уточнит менеджер":noSz?"Размер и наличие уточнит менеджер — выкупим в бутике":"Онлайн сейчас нет — менеджер уточнит наличие и выкупит в бутике"}</div>`:!st&&p&&p.live&&!p.orderable?`<div class="pv-note">Наличие и размер менеджер подтвердит после заказа</div>`:""}`;
     s.querySelector("#pvx").innerHTML=`
     ${st&&st.size?`<div><div class="pv-lbl">Размер</div><div class="fixsz"><b>${st.size}</b><span>один экземпляр</span></div></div>`:""}
     ${r?`<div class="tags"><span class="dark" style="background:#fff;color:var(--fg)">Проверено Trend Büro</span><span style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">${esc(r.set)}</span></div>`:""}
     ${cws.length>1?`<div><div class="pv-lbl">Цвет · ${cw.name}${cw.ok?"":" · под заказ"}</div><div class="cw">${cws.map((c,i)=>`<button data-ci="${i}" class="${c.ok?"":"na"}" aria-pressed="${i===ci}" aria-label="Цвет ${c.name}"><span class="t">${shapeSVG(it.shape,c.c,"")}</span><span>${c.name}</span></button>`).join("")}</div></div>`:""}
-    ${sizes?`<button class="szpick press" type="button" data-szopen><span>${p.cat==="jewelry"?"Размер кольца":"Размер"} <small>· ${size&&size!=="?"?size:size==="?"?"подобрать":"выбрать"}</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`:""}
+    ${K?kHTML():""}
+    ${sizes&&!K?`<button class="szpick press" type="button" data-szopen><span>${p.cat==="jewelry"?"Размер кольца":"Размер"} <small>· ${size&&size!=="?"?size:size==="?"?"подобрать":"выбрать"}</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`:""}
     ${(()=>{const L=famSibs(p);if(!L.length)return "";const pp=x=>isPor(x)?"по запросу":eur(priceFor(x,d)),dif=new Set(L.map(pp)).size>1,ver=dif||/van cleef/i.test(p.brand||"");/* версии отличаются не только цветом (размер модели, ряды, камни) — подпись «Версии» и цена каждой */return `<div><div class="pv-lbl">${ver?"Версии":"Другие цвета"} · ${L.length}</div><div class="pv-sib${ver?" ver":""}">${L.map(x=>{const im=x.imgs&&x.imgs[0];return `<button class="${x.id===p.id?"on":""}" ${x.id===p.id?"disabled":`data-sib="${x.id}"`} aria-label="${esc((x.col||x.name)+(dif?", "+pp(x):""))}"><span class="t" style="${im?`background-image:url(&quot;${esc(im.thumb||im.src)}&quot;)`:""}"></span><span class="c">${esc(x.col||"")}</span>${dif?`<span class="c sp num">${esc(pp(x))}</span>`:""}</button>`}).join("")}</div></div>`})()}
     ${p&&(p.dims||p.material)?`<div class="pv-specs">${p.dims?`<span><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/></svg>${esc(p.dims)}</span>`:""}${p.material?`<span><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/></svg>${esc(p.material)}</span>`:""}</div>`:""}
     ${r?`<div class="trust"><div><svg viewBox="0 0 24 24">${IC.shield}</svg><span>Проверяем подлинность, сделку ведём сами</span></div></div>`:""}`;
@@ -2743,6 +2760,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   const setLbl=t=>{const l=ob.querySelector(".bl");if(!l){ob.textContent=t;return}ob.classList.add("swap");setTimeout(()=>{l.textContent=t;ob.classList.remove("swap")},180)};
   const resetBtn=()=>{if(!r){delete ob.dataset.added;setLbl(btnLabel())}};
   fb.onclick=()=>{toggleFav(it.id);fb.setAttribute("aria-pressed",favs.has(it.id))};
+  if(K)s.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-kb],[data-ks],[data-kz]");if(!t)return;if(t.dataset.kb){kb=t.dataset.kb;kHero()}else if(t.dataset.ks){ks=t.dataset.ks;kHero()}else kz=t.dataset.kz;const sc=s.querySelector(".kit .kgrid")?.scrollLeft;draw();resetBtn()});
   draw();
   if(showDl){const box=s.querySelector("#pvd");box.innerHTML=dlvHTML(d);
     {const dl=box.querySelector(".dlv"),sc=s.querySelector(".scroll"),open=()=>dl.classList.add("open"),
@@ -2762,6 +2780,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     const onR=()=>{if(!s.isConnected)return removeEventListener("resize",onR);size()};addEventListener("resize",onR)}}
   // высота фото задаётся пропорциями снимка (см. --phh в стилях .pv-hero.ph) — фото на всю ширину, без полос и без обрезки
   ob.onclick=()=>{
+    if(K){kOrder();return}
     if(sizes&&!size){szSheet();return}
     const cw=cws[ci];
     if(!r&&isPor(it)){orderSheet("Уточнить цену: "+it.brand,`Здравствуйте! Хочу уточнить цену и наличие:\n${it.brand} — ${it.name}${cws.length>1?"\nЦвет: "+cw.name:""}${sizes?"\nРазмер: "+(size==="?"?"помочь подобрать":size):""}\nДоставка: ${{ua:"Украина",eu:"Европа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`);return}
@@ -4412,7 +4431,7 @@ function applyLive(list,fresh){PV++;CMXV++;
   list.forEach(x=>{if(!CATS[x.cat])CATS[x.cat]="Другое";
     // скидка закончилась, а каталог ещё из кэша — показываем обычную цену
     const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn?x.oldPrice:x.price;
-    P.push({id:x.id,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,por:Math.max(+pr.ua||0,+pr.eu||0,+pr.dxb||0)>POR_EUR,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
+    P.push({id:x.id,kit:x.kit||null,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,por:Math.max(+pr.ua||0,+pr.eu||0,+pr.dxb||0)>POR_EUR,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
       shape:(()=>{const u=x.im?x.im[0]&&szU(XU(x.im[0]),400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),get imgs(){return this._im||(this._im=imgsOf(x))},colors:(x.colors||[]).map(c=>c.image&&c.image[0]==="~"?{...c,image:XU(c.image)}:c),sizes:x.sizes||[],
       orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0,na:x.na?Date.parse(x.na):0,fam:x.fam||null,col:x.col||""})});FAMS=null;
   NEWS.length=0;RESALE.length=0;ICONS.length=0;
