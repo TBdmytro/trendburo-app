@@ -211,9 +211,9 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .hgen button[aria-pressed=true]{color:#fff}
 @media (prefers-reduced-motion:reduce){.hgen::before{transition:none}}
 .hcv{position:relative;margin:4px 18px 0}
-.hcv-tr{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;border-radius:26px}
+.hcv-tr{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 .hcv-tr::-webkit-scrollbar{display:none}
-.hcv-s{flex:0 0 100%;scroll-snap-align:start;position:relative;aspect-ratio:4/5;border:0;padding:0;background:#2a2b2e;color:#fff;text-align:left;overflow:hidden}
+.hcv-s{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;position:relative;aspect-ratio:4/5;border:0;padding:0;background:#2a2b2e;color:#fff;text-align:left;overflow:hidden;border-radius:26px;transform:translateZ(0)}
 .hcv-s img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
 .hcv-s .sh{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,.6))}
 .hcv-s.light{color:#26282c}.hcv-s.light .sh{background:linear-gradient(180deg,rgba(255,255,255,0) 50%,rgba(255,255,255,.7))}
@@ -426,6 +426,7 @@ button{cursor:pointer}
 .pv-sib button{flex:none;width:64px;border:0;background:none;padding:0;display:flex;flex-direction:column;gap:5px;align-items:center;color:inherit;font:inherit}
 .pv-sib .t{width:64px;height:76px;border-radius:14px;background:#f6f5f3 center/contain no-repeat;border:2px solid transparent}
 .pv-sib button.on .t{border-color:#fff}.pc .nv{display:block;font-size:11px;opacity:.6;margin-top:2px}
+.kit .kprev{position:sticky;top:calc(56px + var(--st));z-index:3;display:flex;align-items:center;gap:12px;padding:8px 12px 8px 8px;margin:0 0 10px;border-radius:16px;background:rgba(34,36,40,.94);color:#fff;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 6px 18px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1)}.kit .kprev img{width:96px;height:64px;object-fit:contain;background:#f2f3f4;border-radius:10px;flex:none}.kit .kprev div{display:flex;flex-direction:column;gap:2px;min-width:0}.kit .kprev b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kit .kprev span{font-size:13px;color:rgba(255,255,255,.7)}
 .kit .kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin:6px 0 14px}.kit .kgrid button{border:2px solid transparent;border-radius:14px;background:rgba(255,255,255,.07);padding:6px;display:flex;flex-direction:column;align-items:center;gap:3px;color:inherit;font:inherit;cursor:pointer}.kit .kgrid button[aria-pressed="true"]{border-color:currentColor}.kit .kgrid img{width:100%;aspect-ratio:3/2;object-fit:contain;background:#f2f3f4;border-radius:10px}.kit .kgrid .kbi{display:block;width:100%;aspect-ratio:3/2;overflow:hidden;background:#fff;border-radius:10px}.kit .kgrid .kbi img{background:#fff;border-radius:0;transform:scale(2.3);transform-origin:60% 72%}.kit .kgrid span{font-size:11px;line-height:1.2;text-align:center}.kit .kgrid small{font-size:10.5px;opacity:.65}.kit .kz{margin-bottom:6px}
 .pv-sib .c{font-size:10.5px;opacity:.7;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pv-sib.ver button{width:88px}.pv-sib.ver .t{width:88px;height:96px}.pv-sib.ver .c{max-width:88px;white-space:normal;text-align:center;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}.pv-sib .c.sp{opacity:1;font-weight:600;-webkit-line-clamp:1}
@@ -1516,7 +1517,7 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 .nwpill.morph.full{opacity:1}
 .nwmini{position:relative;width:26px;height:26px;border-radius:99px;overflow:hidden;background:#e7dfd2;flex:none}
 .nwmini img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 62%;opacity:0;transition:opacity .6s}.nwmini img.on{opacity:1}
-.nwgh{position:fixed;left:0;top:0;z-index:60;pointer-events:none;background:#efe8de;overflow:hidden;display:none;box-shadow:0 6px 18px rgba(38,40,44,.08);will-change:transform,width,height}
+.nwgh{position:absolute;left:0;top:0;z-index:4;pointer-events:none;background:#efe8de;overflow:hidden;display:none;box-shadow:0 6px 18px rgba(38,40,44,.08);will-change:transform,width,height}
 .nwgh > *{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform,opacity;white-space:nowrap}
 .nwgh .gi{overflow:hidden;background:#ece6dc}.nwgh .gi img{width:100%;height:100%;object-fit:cover;object-position:50% 62%;display:block}
 .nwgh .gt{font:400 27px/1.12 "Prata",Georgia,serif;color:var(--fg)}
@@ -2600,6 +2601,8 @@ const THSI=new Map();function thumbSI(u){const k=siKey(u),m=SIMEM.get(k);if(m)re
 // заполняем рамку целиком (по краям срезается до 12% с каждой стороны, человек и вещь остаются целиком по высоте). Вещь LV на прозрачном фоне — целиком на белом.
 function fullScale(im,w,h,W,H){const u=im.currentSrc||im.src||"",r=(w/h)/(W/H),canRead=/cdn\.sanity\.io|cdn\.shopify\.com/.test(u),lvItem=/louisvuitton\.com/.test(u)&&/_(front|side|back|interior2?|top|bottom|open) view/i.test(decodeURIComponent(u)); // только снимки самой вещи на прозрачном фоне; на модели, «в масштабе», атмосфера — заполняют рамку
   const lvWorn=/louisvuitton\.com/.test(u)&&!lvItem; // LV на модели: человек по центру квадрата — заполняем рамку всегда
+  // Hermès: студийный снимок 3:4 на тёплом сером фоне — заполняем рамку (как у Hermès), если товар целиком попадает в кадр; иначе снимок целиком
+  if(/assets\.hermes\.com/.test(u)){const sC=Math.max(W/w,H/h),si=im._si;if(!si||!si.box)return sC;const vw=W/(w*sC),vh=H/(h*sC),b=si.box,e=.01;return b[0]>=.5-vw/2-e&&b[2]<=.5+vw/2+e&&b[1]>=.5-vh/2-e&&b[3]<=.5+vh/2+e?sC:Math.min(W/w,H/h)}
   return (lvWorn&&r<1.9)||(!canRead&&!lvItem&&r>.76&&r<1.32)?Math.max(W/w,H/h):Math.min(W/w,H/h)}
 // карточка товара: снимок целиком, по центру рамки, со скруглёнными углами — место считаем по пропорциям (своим или лёгкой копии из каталога)
 function placeFull(im,box,w,h){const c0=getComputedStyle(box),p0=parseFloat(c0.paddingTop)||0,W0=box.clientWidth,H0=box.clientHeight-p0-(parseFloat(c0.paddingBottom)||0);
@@ -2658,7 +2661,10 @@ function similarTo(p){const TM=new Map(),T=b=>{let v=TM.get(b);if(v===undefined)
   let l=pool.filter(x=>Math.abs(T(x.brand)-t)<=1&&x.price>=p.price*.6&&x.price<=p.price*1.4);
   if(l.length<4)l=pool;return l.map(x=>[Math.abs(T(x.brand)-t)*0.6+Math.abs(Math.log((x.price||1)/(p.price||1)))+(x.bk===p.bk?0.15:0),x]).sort((a,b)=>a[0]-b[0]).slice(0,10).map(v=>v[1])}
 // «Другие цвета»: та же модель в других цветах (по ключу семьи из каталога)
-let FAMS=null;function famSibs(p){if(!p||!p.fam)return [];if(!FAMS){FAMS=new Map();P.forEach(x=>{if(x.fam){if(!FAMS.has(x.fam))FAMS.set(x.fam,[]);FAMS.get(x.fam).push(x)}})}const seen=new Set(),L=[p,...(FAMS.get(p.fam)||[]).filter(x=>x!==p)].filter(x=>{const im=x.imgs&&x.imgs[0];const k=im&&!/van cleef/i.test(x.brand||"")?(im.thumb||im.src):x.id;/* VCA: у версий бывает одно фото — различаем по товару */if(seen.has(k))return false;seen.add(k);return true}); // один цвет — один раз
+const COLC={schwarz:"black",noir:"black",nero:"black",черный:"black","чёрный":"black",weiss:"white","weiß":"white",blanc:"white",bianco:"white",белый:"white",braun:"brown",marron:"brown",brun:"brown",коричневый:"brown",grau:"grey",gris:"grey",gray:"grey",серый:"grey",blau:"blue",bleu:"blue",синий:"blue",rot:"red",rouge:"red",красный:"red",grün:"green","grun":"green",vert:"green",зелёный:"green",beige:"beige",бежевый:"beige"};
+const colCanon=c=>{const t=String(c||"").toLowerCase().trim();if(!t)return "";return t.split(/\s*[\/,&+]\s*|\s+/).map(w=>COLC[w]||w).join(" ")};
+let FAMS=null;function famSibs(p){if(!p||!p.fam)return [];if(!FAMS){FAMS=new Map();P.forEach(x=>{if(x.fam){if(!FAMS.has(x.fam))FAMS.set(x.fam,[]);FAMS.get(x.fam).push(x)}})}const seen=new Set(),seenC=new Set(),L=[p,...(FAMS.get(p.fam)||[]).filter(x=>x!==p&&(x.g===p.g||x.g==="u"||p.g==="u"||!p.g))/* мужская модель — только мужские версии, женская — женские */].filter(x=>{const im=x.imgs&&x.imgs[0];const k=im&&!/van cleef/i.test(x.brand||"")?(im.thumb||im.src):x.id;
+    /* один и тот же цвет на разных языках (Black / Schwarz / Noir) при той же цене — один раз */const ck=colCanon(x.col)?colCanon(x.col)+"|"+priceFor(x,"ua"):"";if(ck&&!/van cleef/i.test(x.brand||"")){if(seenC.has(ck))return false;seenC.add(ck)}/* VCA: у версий бывает одно фото — различаем по товару */if(seen.has(k))return false;seen.add(k);return true}); // один цвет — один раз
   return L.length>1?L.slice(0,16):[]}
 // большое фото карточки начинаем грузить уже при касании плитки — к открытию карточки оно готово (а не после выезда)
 const PREF=new Set();document.addEventListener("pointerdown",e=>{const t=e.target.closest&&e.target.closest('[data-act="product"][data-id]');if(!t)return;const p=P.find(x=>x.id===t.dataset.id),im=p&&p.imgs&&p.imgs[0];if(!im||PREF.has(im.src))return;PREF.add(im.src);const m=new Image();if(/^https:\/\/cdn\.sanity\.io\//.test(im.src))m.crossOrigin="anonymous";m.decoding="async";m.src=im.src},{passive:true,capture:true});
@@ -2727,10 +2733,21 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   const kOur=(b,st)=>{const v=kRaw(b,st);if(!v)return null;const base=K.base||K.def.p,our=priceFor(it,d);return Math.round(v*our/base/5)*5};
   const kTxt=(b,st)=>{const v=kOur(b,st);return v==null?"по запросу":v>POR_EUR?"по запросу":eur(v)};
   const kB=()=>K.buckles.find(x=>x.c===kb)||{n:""},kS=()=>K.straps.find(x=>x.c===ks)||{n:"",col:""};
-  const kHTML=()=>{const bl=[...K.buckles].sort((a,b)=>(kRaw(a.c,ks)==null)-(kRaw(b.c,ks)==null)),sl=[...K.straps].sort((a,b)=>(kRaw(kb,a.c)==null)-(kRaw(kb,b.c)==null));
-    return `<div class="kit"><div class="pv-lbl">Пряжка · ${esc(kB().n)}</div><div class="kgrid">${bl.map(x=>`<button data-kb="${x.c}" aria-pressed="${x.c===kb}"><span class="kbi"><img src="https://assets.hermes.com/is/image/hermesproduct/${x.c.slice(1)}_composite_103?wid=500" alt="" loading="lazy" decoding="async"></span><span>${esc(x.n)}</span><small>${kTxt(x.c,ks)}</small></button>`).join("")}</div>
-      <div class="pv-lbl">Ремень · ${esc([kS().col,/wendbar/i.test(kS().n)?"двусторонний":kS().n?"кожа экзотическая / особая":""].filter(Boolean).join(", "))}</div><div class="kgrid">${sl.map(x=>`<button data-ks="${x.c}" aria-pressed="${x.c===ks}"><img src="${kImg(kb,x.c,300)}" alt="" loading="lazy" decoding="async"><span>${esc(x.col||"")}${/wendbar/i.test(x.n)?" · двуст.":""}</span><small>${kTxt(kb,x.c)}</small></button>`).join("")}</div>
-      <div class="pv-lbl">Размер (длина, см)${kz?" · "+kz:""}</div><div class="szg kz">${K.sizes.map(z=>`<button data-kz="${z}" aria-pressed="${kz===z}">${z}</button>`).join("")}</div></div>`};
+  // порядок плиток фиксирован (сначала те, у которых есть цена с выбранным по умолчанию) — при выборе ничего не переставляется и экран не прыгает
+  const kBL=K?[...K.buckles].sort((a,b)=>(kRaw(a.c,ks)==null)-(kRaw(b.c,ks)==null)):[],kSL=K?[...K.straps].sort((a,b)=>(kRaw(kb,a.c)==null)-(kRaw(kb,b.c)==null)):[];
+  const kSLbl=()=>[kS().col,/wendbar/i.test(kS().n)?"двусторонний":kS().n?"кожа экзотическая / особая":""].filter(Boolean).join(", ");
+  const kHTML=()=>`<div class="kit"><div class="kprev"><img data-kpi src="${kImg(kb,ks,300)}" alt=""><div><b data-kpn>${esc(kB().n)} · ${esc(kS().col||"")}</b><span class="num" data-kpp>${kTxt(kb,ks)}</span></div></div>
+      <div class="pv-lbl">Пряжка · <span data-klb>${esc(kB().n)}</span></div><div class="kgrid">${kBL.map(x=>`<button data-kb="${x.c}" aria-pressed="${x.c===kb}"><span class="kbi"><img src="https://assets.hermes.com/is/image/hermesproduct/${x.c.slice(1)}_composite_103?wid=500" alt="" loading="lazy" decoding="async"></span><span>${esc(x.n)}</span><small>${kTxt(x.c,ks)}</small></button>`).join("")}</div>
+      <div class="pv-lbl">Ремень · <span data-kls>${esc(kSLbl())}</span></div><div class="kgrid">${kSL.map(x=>`<button data-ks="${x.c}" aria-pressed="${x.c===ks}"><img src="${kImg(kb,x.c,300)}" alt="" loading="lazy" decoding="async"><span>${esc(x.col||"")}${/wendbar/i.test(x.n)?" · двуст.":""}</span><small>${kTxt(kb,x.c)}</small></button>`).join("")}</div>
+      <div class="pv-lbl">Размер (длина, см)<span data-klz>${kz?" · "+kz:""}</span></div><div class="szg kz">${K.sizes.map(z=>`<button data-kz="${z}" aria-pressed="${kz===z}">${z}</button>`).join("")}</div></div>`;
+  // выбор пряжки / ремня / размера — обновляем на месте: отметки, цены, фото ремней с новой пряжкой, большое фото и мини-превью; страница не перерисовывается
+  const kUpd=bChanged=>{const q=(a,v)=>{const e=s.querySelector(a);if(e)e.textContent=v};
+    s.querySelectorAll("[data-kb]").forEach(x=>{x.setAttribute("aria-pressed",x.dataset.kb===kb);x.querySelector("small").textContent=kTxt(x.dataset.kb,ks)});
+    s.querySelectorAll("[data-ks]").forEach(x=>{x.setAttribute("aria-pressed",x.dataset.ks===ks);x.querySelector("small").textContent=kTxt(kb,x.dataset.ks);if(bChanged)x.querySelector("img").src=kImg(kb,x.dataset.ks,300)});
+    s.querySelectorAll("[data-kz]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.kz===kz));
+    q("[data-klb]",kB().n);q("[data-kls]",kSLbl());q("[data-klz]",kz?" · "+kz:"");q("[data-kpn]",kB().n+" · "+(kS().col||""));q("[data-kpp]",kTxt(kb,ks));
+    const pi=s.querySelector("[data-kpi]");if(pi)pi.src=kImg(kb,ks,300);
+    const pb=s.querySelector(".pv-top .pr b");if(pb)pb.textContent=kTxt(kb,ks).replace("по запросу","Цена по запросу")};
   const kHero=()=>{const im=s.querySelector("#pvg img");if(im){im.removeAttribute("crossorigin");im.src=kImg(kb,ks,1500)}};
   const kOrder=()=>{if(!kz){toast("Выберите размер ремня");s.querySelector(".kz")?.scrollIntoView({behavior:"smooth",block:"center"});return}
     const sku=`U_BELT_${K.w}_HOMME-${kb}-${ks}${String(kz).padStart(3,"0")}`;
@@ -2767,7 +2784,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   const resetBtn=()=>{if(!r){delete ob.dataset.added;setLbl(btnLabel())}};
   fb.onclick=()=>{toggleFav(it.id);fb.setAttribute("aria-pressed",favs.has(it.id))};
   if(kitFor)s.addEventListener("click",e=>{if(!(e.target.closest&&e.target.closest("[data-kitgo]")))return;window.KIT_PRE=kitFor.isS?{s:kitFor.code,col:(cws&&cws[ci]&&cws[ci].name)||p.col||""}:{b:kitFor.code};openProduct(kitFor.kp.id)});
-  if(K)s.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-kb],[data-ks],[data-kz]");if(!t)return;if(t.dataset.kb){kb=t.dataset.kb;kHero()}else if(t.dataset.ks){ks=t.dataset.ks;kHero()}else kz=t.dataset.kz;const sc=s.querySelector(".kit .kgrid")?.scrollLeft;draw();resetBtn()});
+  if(K)s.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-kb],[data-ks],[data-kz]");if(!t)return;e.preventDefault();let bc=false;if(t.dataset.kb){if(kb===t.dataset.kb)return;kb=t.dataset.kb;bc=true;kHero()}else if(t.dataset.ks){if(ks===t.dataset.ks)return;ks=t.dataset.ks;kHero()}else kz=t.dataset.kz;kUpd(bc);resetBtn()});
   draw();
   if(showDl){const box=s.querySelector("#pvd");box.innerHTML=dlvHTML(d);
     {const dl=box.querySelector(".dlv"),sc=s.querySelector(".scroll"),open=()=>dl.classList.add("open"),
@@ -3206,7 +3223,7 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
   const fixSticky=()=>{const bs=s.querySelector(".bsticky");if(bs)bs.style.top=nbH()+"px"};requestAnimationFrame(fixSticky);setTimeout(fixSticky,400);addEventListener("resize",fixSticky);
   const gOk=p=>st.g==="all"||p.g===st.g||(p.g==="u"&&st.g!=="k");
   const draw=()=>{const f=all.filter(gOk);
-    const nf=f.filter(p=>p.isNew).length,hasBan=false; /* баннер «Новинки сезона» просто уезжает вверх при прокрутке; кнопка «Новинки» стоит на месте */
+    const nf=f.filter(p=>p.isNew).length,hasBan=!!s.querySelector("[data-nwban]");
     s.querySelector("#bcats").innerHTML=(nf?`<button class="chip nwpill${hasBan?" morph":""}" data-nw aria-pressed="${!!st.nw}"><span class="nwmini">${nwPics.map((u,i)=>`<img src="${esc(u)}" alt=""${i===nwK?' class="on"':""}>`).join("")}</span>Новинки<span class="c num">${nf}</span></button>`:"")
       +`<span class="brest"><button class="chip" data-bc="" aria-pressed="${!st.cats.size&&!st.nw}">Все<span class="c num">${f.length}</span></button>`+cats.map(c=>{const n=f.filter(p=>p.cat===c).length;return n?`<button class="chip" data-bc="${c}" aria-pressed="${st.cats.has(c)}">${CATS[c]||c}<span class="c num">${n}</span></button>`:""}).join("")+"</span>";nwMorph&&nwMorph(true);
     // вторая строка: виды вещей выбранных категорий (Одежда: Верхняя · Трикотаж | Сумки: Тоуты · Мини)
@@ -3236,8 +3253,40 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
   const ban=s.querySelector("[data-nwban]");
   if(ban){const phs=[...ban.querySelectorAll(".nwph")],dots=[...ban.querySelectorAll(".nwdots i")],n=phs.length;
     const lay=()=>{phs.forEach((e,i)=>{const o=(i-nwK+n)%n;e.className="nwph "+(o===0?"c":o===1?"r":o===n-1?"l":"h")});dots.forEach((d,i)=>d.className=i===nwK?"on":"");s.querySelectorAll(".nwmini img").forEach((im,i)=>im.className=i===nwK?"on":"")};
-    lay();const tm=setInterval(()=>{if(!s.isConnected){clearInterval(tm);return}if(!document.hidden&&n>1){nwK=(nwK+1)%n;lay()}},2800);
+    lay();const tm=setInterval(()=>{if(!s.isConnected){clearInterval(tm);return}if(!document.hidden&&n>1){nwK=(nwK+1)%n;lay();if(gh.style.display==="block")ghI.src=nwPics[nwK]}},2800);
     ban.onclick=()=>{st.nw=true;draw();const sc=s.querySelector(".scroll"),bs=s.querySelector(".bsticky");sc.scrollTo({top:sc.scrollTop+bs.getBoundingClientRect().top-sc.getBoundingClientRect().top-nbH(),behavior:"smooth"})};
+    /* баннер «Новинки сезона» при прокрутке плавно сжимается в кнопку «Новинки». Копия-«призрак» живёт внутри экрана бренда
+       (а не поверх всего приложения): уезжает вместе с экраном, не остаётся над другими экранами, прячется под шапкой */
+    const gh=document.createElement("div");gh.className="nwgh";gh.setAttribute("aria-hidden","true");
+    gh.innerHTML=`<div class="gi"><img alt=""></div><div class="gx cap">${esc(bn)}</div><div class="gt">Новинки</div><div class="gt">сезона</div><div class="gx num" style="font-size:12.5px">${nwN} ${plural(nwN,["вещь","вещи","вещей"])}</div><div class="gb">Новинки<span class="num">${nwN}</span></div>`;s.appendChild(gh);
+    const ghI=gh.querySelector(".gi img"),ghIB=gh.querySelector(".gi"),[,gE,gT,gT2,gS,gB]=gh.children;
+    const sc=s.querySelector(".scroll"),L=(a,b,t)=>a+(b-a)*t,ease=t=>t*t*(3-2*t);
+    let cur=0,raf=0;
+    // прогресс 0…1: 0 — баннер дошёл до шапки, 1 — строка фильтров прилипла под шапкой; между ними баннер плавно уходит в кнопку
+    let D=0;const bsE=s.querySelector(".bsticky");
+    const target=()=>{const B=ban.getBoundingClientRect();if(!B.height||!bsE)return cur;const top=sc.getBoundingClientRect().top+nbH();if(!D||sc.scrollTop<4){const d=bsE.getBoundingClientRect().top-B.top;if(d>B.height*.8&&B.top>=top-1)D=d}if(!D)return cur;return Math.max(0,Math.min(1,(top-B.top)/D))};
+    const hide=()=>{gh.style.display="none";ban.style.visibility="visible"};
+    const paint=p=>{const pill=s.querySelector(".nwpill.morph"),rest=s.querySelector("#bcats .brest");if(!pill||!rest||!s.isConnected||s.classList.contains("behind")&&p>0&&p<1){if(rest)rest.style.transform="";if(pill)pill.classList.add("full");hide();return}
+      const e=ease(p),PW=pill.offsetWidth,PH=pill.offsetHeight;
+      rest.style.transform=e>0?`translate3d(${((PW+8)*e).toFixed(2)}px,0,0)`:"";pill.classList.toggle("full",p>=1);ban.style.visibility=p>0?"hidden":"visible";
+      if(p<=0||p>=1){gh.style.display="none";return}
+      // баннер уезжает под шапку (видна только его нижняя часть), сжимается и к концу садится на место кнопки; ниже своей видимой части не опускается — не наезжает на заголовок под ним
+      const S=s.getBoundingClientRect(),B=ban.getBoundingClientRect(),cr=pill.getBoundingClientRect(),navB=sc.getBoundingClientRect().top+nbH(),clip=Math.max(0,Math.min(B.height,navB-B.top)),vis=B.height-clip,
+        W=L(B.width,PW,e),H=Math.max(PH,Math.min(L(B.height,PH,e),vis)),gy=L(B.top+clip,cr.top,e*e),dy=-(L(B.height,PH,e)-H)*(1-e)*(1-e);
+      if(gh.style.display!=="block"){gh.style.display="block";ghI.src=nwPics[nwK]}
+      gh.style.transform=`translate3d(${(L(B.left,cr.left,e)-S.left).toFixed(1)}px,${(gy-S.top).toFixed(1)}px,0)`;gh.style.width=W.toFixed(1)+"px";gh.style.height=H.toFixed(1)+"px";gh.style.borderRadius=L(24,PH/2,e).toFixed(1)+"px";
+      const sx=B.width*.44+B.width*.56/2-66,sy=B.height/2-85,iw=L(132,26,e),ih=L(170,26,e),mx=(PH-26)/2;
+      ghIB.style.cssText=`width:${iw.toFixed(1)}px;height:${ih.toFixed(1)}px;border-radius:${L(14,13,e).toFixed(1)}px;transform:translate3d(${L(sx,4,e).toFixed(1)}px,${(L(sy,mx,e)+dy).toFixed(1)}px,0)`;
+      const f=Math.max(0,1-p*2.2);
+      gT.style.cssText=`opacity:${Math.max(0,1-Math.max(0,p-.55)/.3).toFixed(3)};transform:translate3d(${L(18,36,e).toFixed(1)}px,${(L(46,(PH-18)/2,e)+dy).toFixed(1)}px,0) scale(${L(1,13.5/27,e).toFixed(4)})`;
+      gT2.style.cssText=`opacity:${f.toFixed(3)};transform:translate3d(18px,${(76+dy).toFixed(1)}px,0)`;gE.style.cssText=`opacity:${f.toFixed(3)};transform:translate3d(18px,${(20+dy).toFixed(1)}px,0)`;gS.style.cssText=`opacity:${f.toFixed(3)};transform:translate3d(18px,${(114+dy).toFixed(1)}px,0)`;
+      gB.style.cssText=`opacity:${Math.max(0,(p-.6)/.35).toFixed(3)};transform:translate3d(36px,${((PH-19)/2).toFixed(1)}px,0)`};
+    // мягкое догоняние (без рывков, если палец дёрнул скролл)
+    const frame=()=>{raf=0;if(!s.isConnected)return;const w=target();cur+=(w-cur)*.2;if(Math.abs(w-cur)<.002)cur=w;paint(cur);if(cur!==w)raf=requestAnimationFrame(frame)};
+    nwMorph=now=>{if(now){cur=target();paint(cur)}else if(!raf)raf=requestAnimationFrame(frame)};
+    sc.addEventListener("scroll",()=>nwMorph(false),{passive:true});
+    // экран бренда ушёл назад (открыли товар) и вернулся — перерисовать положение баннера и кнопки
+    new MutationObserver(()=>{if(!s.classList.contains("behind"))setTimeout(()=>nwMorph&&nwMorph(true),60)}).observe(s,{attributes:true,attributeFilter:["class"]});
   }
   const fb=s.querySelector("[data-follow]");fb.onclick=()=>{toggleFollow(bk);fb.setAttribute("aria-pressed",follows.has(bk));fb.textContent=follows.has(bk)?"Вы следите":"Следить"};
   const req=()=>orderSheet("Запрос по "+bn,`Здравствуйте! Ищу ${bn}.\nМодель: \nЦвет / размер: \nБюджет: \nДоставка: Украина`);
@@ -3317,12 +3366,13 @@ function hCover(){const box=$("#hCover");if(!box)return;clearInterval(HCT);
     .concat(co.map(c=>({k:"c",id:c.id,img:c.cover,kick:c.brand+" · "+(collSeen(c.id)?"коллекция":"новая коллекция"),t:c.title,sub:c.n+" "+plural(c.n,["вещь","вещи","вещей"])+(collFrom(c)?" · от "+eur(collFrom(c)):""),go:"Смотреть коллекцию"}))).slice(0,5);
   if(!S.length){box.innerHTML="";box.dataset.k="";return}
   const key=S.map(x=>x.k+x.id).join(",");if(box.dataset.k===key&&box.firstChild)return;box.dataset.k=key;
-  box.innerHTML=`<div class="hcv"><div class="hcv-tr">${S.map((x,i)=>`<button class="hcv-s press ${x.light?"light":""}" ${x.k==="b"?`data-act="cbanner" data-bid="${esc(x.id)}" data-bn="${esc(x.id)}"`:`data-coll="${esc(x.id)}"`}>${x.img?`<img src="${esc(szU(x.img,1000))}" alt="" ${i?'loading="lazy"':""} decoding="async">`:""}<span class="sh"></span><span class="tx">${x.kick?`<span class="k">${esc(x.kick)}</span>`:""}${x.t?`<b>${esc(x.t)}</b>`:""}${x.sub?`<span class="s num">${esc(x.sub)}</span>`:""}${x.go?`<span class="go">${esc(x.go)}</span>`:""}</span></button>`).join("")}</div>${S.length>1?`<div class="hcv-bars">${S.map((_,i)=>`<i class="${i?"":"on"}"><b></b></i>`).join("")}</div>`:""}</div>${co.length>1?`<button class="hcv-all press" data-act="hcolls">Все коллекции<i class="chev"></i></button>`:""}`;
+  box.innerHTML=`<div class="hcv"><div class="hcv-tr">${S.map((x,i)=>`<button class="hcv-s ${x.light?"light":""}" ${x.k==="b"?`data-act="cbanner" data-bid="${esc(x.id)}" data-bn="${esc(x.id)}"`:`data-coll="${esc(x.id)}"`}>${x.img?`<img src="${esc(szU(x.img,1000))}" alt="" ${i?'loading="lazy"':""} decoding="async">`:""}<span class="sh"></span><span class="tx">${x.kick?`<span class="k">${esc(x.kick)}</span>`:""}${x.t?`<b>${esc(x.t)}</b>`:""}${x.sub?`<span class="s num">${esc(x.sub)}</span>`:""}${x.go?`<span class="go">${esc(x.go)}</span>`:""}</span></button>`).join("")}</div>${S.length>1?`<div class="hcv-bars">${S.map((_,i)=>`<i class="${i?"":"on"}"><b></b></i>`).join("")}</div>`:""}</div>${co.length>1?`<button class="hcv-all press" data-act="hcolls">Все коллекции<i class="chev"></i></button>`:""}`;
   if(S.length<2)return;
   const tr=box.querySelector(".hcv-tr"),bars=[...box.querySelectorAll(".hcv-bars i")];let hold=0;
-  const cur=()=>Math.round(tr.scrollLeft/tr.clientWidth),mark=()=>{const k=cur();bars.forEach((d,j)=>{d.classList.toggle("on",j===k);d.classList.toggle("past",j<k)})};
-  tr.addEventListener("scroll",mark,{passive:true});tr.addEventListener("touchstart",()=>{hold=Date.now()},{passive:true});
-  HCT=setInterval(()=>{if(document.hidden||Date.now()-hold<8000||!tr.isConnected||!tr.offsetParent)return;const k=cur();tr.scrollTo({left:(k+1>=S.length?0:k+1)*tr.clientWidth,behavior:"smooth"})},5000)}
+  const step=()=>tr.clientWidth+10,cur=()=>Math.max(0,Math.min(S.length-1,Math.round(tr.scrollLeft/step()))),mark=()=>{const k=cur();bars.forEach((d,j)=>{d.classList.toggle("on",j===k);d.classList.toggle("past",j<k)})};
+  tr.addEventListener("scroll",mark,{passive:true});["touchstart","touchmove","pointerdown","wheel"].forEach(ev=>tr.addEventListener(ev,()=>{hold=Date.now()},{passive:true}));
+  // листаем сами раз в 6 с, только когда лента видна и её не трогали 8 с; к началу — без «перемотки» через все слайды
+  HCT=setInterval(()=>{if(document.hidden||Date.now()-hold<8000||!tr.isConnected||!tr.offsetParent)return;const r=tr.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;const k=cur(),n=k+1>=S.length?0:k+1;tr.scrollTo({left:n*step(),behavior:n?"smooth":"instant"})},6000)}
 // лента для каждого пола собирается один раз и хранится готовой: переключение — показать/спрятать, без пересборки и без пересчёта всей страницы
 function hPut(id,key,html,show){const box=$(id);if(!box)return;let el=null;for(const c of box.children)if(c.dataset.hk===key){el=c;break}
   if(!el){el=document.createElement("div");el.dataset.hk=key;el.className="hk";el.innerHTML=html;el.hidden=!show;box.appendChild(el);while(box.children.length>6){const o=[...box.children].find(c=>c.hidden);if(!o)break;o.remove()}}
