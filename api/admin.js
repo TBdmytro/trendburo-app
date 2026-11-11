@@ -59,7 +59,7 @@ async function copyWebImages(store, list, id = "") {
   return { images: ok.length ? ok : images, copied, srcOf };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, colors[0...1], overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer, soldOld";
-let FIXVCA = false, FIXCHK = false, FIXALO = false, FIXOBJ = false, FIXMIU = false, FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
+let FIXVSZ = false, FIXVCA = false, FIXCHK = false, FIXALO = false, FIXOBJ = false, FIXMIU = false, FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
 const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
 /** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
@@ -120,6 +120,31 @@ let COLLP = null, COLLP_AT = 0;
 async function collProds(store) {
   // тот же кэш, что у списка товаров (5 минут): коллекции открываются мгновенно, без второго тяжёлого запроса к базе
   return (await allProducts(store)).filter(p => (p.webSections || []).length);
+}
+
+// Van Cleef: браслет в размерах на руку (Extra Small … Extra Large Model) — один товар с размерами XS–XL; лишние записи убираем (запоминаем как удалённые — кнопка их не вернёт)
+export async function mergeVcaSizes(store, only) {
+  const { vcaSizeGroups, vcaPlainColor } = await import("../lib/vca.js"), k12 = x => createHash("sha1").update(String(x)).digest("hex").slice(0, 12);
+  let L = (await store.list("product", {}, { limit: 30000, fields: "_id, title, colors, status, sizes, variants, offers, overrides, sourceUrl, brand, vcaSizes" })).filter(p => /^product\.manual\.vancleefarpe-/.test(p._id));
+  if (only) { const { vcaSizeOf } = await import("../lib/vca.js"), b = new Set(L.filter(p => only.includes(p._id)).map(p => (vcaSizeOf(p.title) || {}).base).filter(Boolean)); L = L.filter(p => b.has((vcaSizeOf(p.title) || {}).base) || (p.vcaSizes && b.has(p.title))); }
+  // уже объединённый товар (название без размера) — к нему добавляем новые размеры
+  const merged = L.filter(p => p.vcaSizes), RANK = { XS: 0, S: 1, M: 2, L: 3, XL: 4 }, patches = [], gone = [];
+  for (const grp of vcaSizeGroups(L, 1)) {
+    const base = grp[0].base, col = vcaPlainColor((grp[0].p.colors || [])[0]), price = grp[0].p.offers?.[0]?.boutique || 0;
+    const prev = merged.find(m => m.title === base && vcaPlainColor((m.colors || [])[0]) === col && (m.offers?.[0]?.boutique || 0) === price);
+    if (grp.length < 2 && !prev) continue;
+    const keep = prev || (grp.find(x => x.p.status === "published") || grp.find(x => x.sz === "M") || grp[0]).p;
+    const map = { ...(keep.vcaSizes || {}) }, st = {}; for (const x of grp) { map[x.sz] = x.p._id; const a = Object.values(x.p.offers?.[0]?.availability || {})[0]; st[x.sz] = (a && a.status) || "online"; }
+    const sizes = Object.keys(map).sort((a, b) => RANK[a] - RANK[b]), off = { ...(keep.offers || [])[0] }, oldAv = off.availability || {}, color = col || null;
+    const variants = sizes.map(z => { const ex = (keep.variants || []).find(v => v.size === z); return ex || { _key: k12(keep._id + "|" + z), sku: map[z].split("-").pop().toUpperCase(), gtin: null, color, size: z, material: null, images: [] }; });
+    off.availability = Object.fromEntries(variants.map(v => [v._key, oldAv[v._key] && keep.vcaSizes ? oldAv[v._key] : { status: st[v.size] || "online", price: null }]));
+    off.onlineOrder = Object.values(off.availability).some(a => a.status === "online");
+    patches.push({ id: keep._id, set: { title: base, colors: col ? [col] : (keep.colors || []), sizes, variants, offers: [off, ...(keep.offers || []).slice(1)], vcaSizes: map } });
+    for (const x of grp) if (x.p._id !== keep._id) gone.push(x.p._id);
+  }
+  for (let i = 0; i < patches.length; i += 100) await store.patchEach(patches.slice(i, i + 100));
+  if (gone.length) { const linked = await store.list("importItem", { publishedAs: gone }, { limit: 20000, fields: "_id" }); if (linked.length) await store.patchMany(linked.map(i => i._id), { publishedAs: null, publishedAt: null }); await store.delMany(gone); await rememberDeleted(store, gone); }
+  return { merged: patches.length, removed: gone.length };
 }
 export default async function handler(req, res) {
   const a = (req.query && req.query.a) || new URL(req.url, "http://x").searchParams.get("a");
@@ -441,6 +466,7 @@ export default async function handler(req, res) {
             if (Object.keys(set).length) ch.push({ id: p._id, set }); }
           for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100));
           await store.put({ _id: "settings.fixVca5", _type: "settings", at: new Date().toISOString(), fixed: ch.length }); if (ch.length) PCACHE = null; console.log("FIXVCA " + ch.length); } } catch (e) { FIXVCA = false; } }
+        if (!FIXVSZ) { FIXVSZ = true; try { if (!(await store.get("settings.fixVcaSz1"))) { const r = await mergeVcaSizes(store); await store.put({ _id: "settings.fixVcaSz1", _type: "settings", at: new Date().toISOString(), ...r }); if (r.merged) PCACHE = null; console.log("FIXVSZ " + JSON.stringify(r)); } } catch (e) { FIXVSZ = false; console.log("FIXVSZ fail " + String(e.message).slice(0, 160)); } }
         if (!FIXGG) { FIXGG = true; try { if (!(await store.get("settings.fixGgImg3"))) { const { orderImages } = await import("../lib/imgorder.js");
           // 2: обложка — вид сбоку (кадр без номера), не плитка раздела; ваша обложка/порядок из админки — не трогаем
           const L = (await store.list("product", {}, { limit: 20000, fields: "_id, images, overrides" })).filter(p => p._id.startsWith("product.manual.goldengoose-") && !p.overrides?.cover && !(p.overrides?.imageOrder || []).length);
@@ -886,6 +912,7 @@ export default async function handler(req, res) {
         const arrivals = novelty ? ((await store.get("settings.newArrivals"))?.mode || "publish") : null;
         const product = await saveManualProduct(store, { ...itEn, ...(/^product\.manual\.(dior|gucci|goldengoose|miumiu|prada)-/.test(id) ? { tileImg: "" } : {}), id, images, imageSrc: srcOf, imgVer: IMGV(id), availability: "online", status: !it.soldOld && novelty && arrivals === "publish" ? "published" : "incoming", isNew: !!it.isNew || novelty, boutique: Number(it.boutique), fromWeb: true }, { by: me.name, pricingCfg });
         if (novelty) PCACHE = null;
+        if (/^product\.manual\.vancleefarpe-/.test(product._id)) { try { const r = await mergeVcaSizes(store, [product._id]); if (r.merged) PCACHE = null; } catch (e) {} } // браслет VCA другого размера — к уже добавленному товару
         return send(res, 200, { id: product._id, images: images.length, copied, price: product.pricing?.eu || null, novelty, status: product.status });
       }
       case "pricePreview": {
