@@ -2956,7 +2956,10 @@ function cvWire(root,sel,{cat="",onSel}={}){
   })}
 function cvBarUpd(root,sel){const b=root.querySelector(".cvbar");if(!b)return;b.hidden=!sel.size;const g=b.querySelector("[data-cvgo]");if(g)g.textContent=`Показать вещи · ${sel.size} ${plural(sel.size,["бренд","бренда","брендов"])}`}
 function cvRender(anim){const root=$("#cv3");if(!root)return;
-  const pool=cvPool(),H=cvBrands(pool,false),S=cvBrands(pool,true);
+  const pool=cvPool(),S=cvBrands(pool,true);
+  // ювелирные дома (Van Cleef, Cartier…) — отдельным блоком «Украшения», без деления на неё/него; из «Модных домов» их убираем
+  const jbk=b=>{const l=P.filter(p=>p.bk===b);return l.length&&isJHouse(bname(b),l)};const J=[...new Set(P.filter(p=>p.cat==="jewelry"||p.cat==="watches").map(p=>p.bk))].filter(jbk).sort((a,b)=>P.filter(p=>p.bk===b).length-P.filter(p=>p.bk===a).length);
+  const H=cvBrands(pool,false).filter(b=>!J.includes(b));
   // новости: новые поступления по брендам (потом — коллекции из админки)
   const nw=new Map();pool.filter(p=>p.isNew).forEach(p=>{if(!nw.has(p.bk))nw.set(p.bk,[]);nw.get(p.bk).push(p)});
   const news=[...nw.entries()].sort((a,b)=>b[1].length-a[1].length).slice(0,6);
@@ -2966,6 +2969,7 @@ function cvRender(anim){const root=$("#cv3");if(!root)return;
   <div class="cvseg" id="cvSeg" data-g="${CV.g}" role="group" aria-label="Для кого"><button data-g="w" aria-pressed="${CV.g==="w"}">Для неё</button><button data-g="m" aria-pressed="${CV.g==="m"}">Для него</button></div>
   <div id="cvBody">
   ${H.length?`<div class="cvh"><b>Модные дома</b></div><div class="cvg">${H.slice(0,6).map(bk=>cvTile(bk,CV.sel)).join("")}</div><button class="cvall press" data-cvallb="h">Все бренды<i></i></button>`:""}
+  ${J.length?`<div class="cvh"><b>Украшения</b></div><div class="cvg">${J.slice(0,6).map(bk=>cvTile(bk,CV.sel)).join("")}</div><button class="cvall press" data-act="tab" data-tab="jewel">Все украшения<i></i></button>`:""}
   ${S.length?`<div class="cvh"><b>Sport</b></div><div class="cvg">${S.slice(0,4).map(bk=>cvTile(bk,CV.sel)).join("")}</div><button class="cvall sp press" data-cvallb="s">Все бренды Sport<i></i></button>`:""}
   <div class="cvh"><b>Категории</b></div><div class="cvl">${Object.entries(CATS).filter(([k])=>k!=="eyewear"&&pool.some(p=>p.cat===k)).map(([k,v])=>`<button class="press" data-cvcat="${k}">${v}<i></i></button>`).join("")}</div>
   <div class="cvfin">${fresh.length?`<button class="cvnv press" data-cvfresh><b>Новинки</b><small>Свежие<br>поступления</small><span class="a">Смотреть ›</span><span class="st">${fresh.map(p=>`<span ${cvPic(p)}></span>`).join("")}</span></button>`:""}
