@@ -2685,7 +2685,7 @@ function openProduct(id){popTrack("v",id);
     if(/handschuh|glove|gant/i.test(t))return w?["6","6.5","7","7.5","8","8.5"]:["7","7.5","8","8.5","9","9.5","10"];
     if(/m[üu]tze|beanie|bonnet/i.test(t))return ["S","M","L"];
     if(/\b(hut|bob|kappe|cap|chapeau|casquette)\b|bob-hut/i.test(t))return ["56","57","58","59","60","61"];
-    if(p.cat==="clothing"&&/t-?shirt|polo|pullover|sweat|hoodie|hemd|shirt|strick/i.test(t))return w?["34","36","38","40","42","44"]:["XS","S","M","L","XL","XXL","XXXL"];return null})();
+    if(p.cat==="clothing"){if(w)return ["34","36","38","40","42","44"];return /t-?shirt|polo|pullover|sweat|hoodie|strick|cardigan/i.test(t)?["XS","S","M","L","XL","XXL","XXXL"]:["44","46","48","50","52","54","56"]}return null})();
   if(hmGrid)sizes=hmGrid;
   if(sizes&&sizes.length===1&&/^(U|TU|OS|UNI|NS|ONE ?SIZE|EINHEITSGR(Ö|OE)SSE|TAILLE UNIQUE|UNICA)$/i.test(String(sizes[0]).trim())){size=size||sizes[0];sizes=null} // один размер (Prada «TU», Dior «U») — без выбора размера
   // размеры, которых нет у поставщика, показываем зачёркнутыми и не даём выбрать
