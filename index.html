@@ -424,7 +424,8 @@ button{cursor:pointer}
 .pv-sib{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0 4px}.pv-sib::-webkit-scrollbar{display:none}
 .pv-sib button{flex:none;width:64px;border:0;background:none;padding:0;display:flex;flex-direction:column;gap:5px;align-items:center;color:inherit;font:inherit}
 .pv-sib .t{width:64px;height:76px;border-radius:14px;background:#f6f5f3 center/contain no-repeat;border:2px solid transparent}
-.pv-sib button.on .t{border-color:#fff}.pv-sib .c{font-size:10.5px;opacity:.7;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-sib button.on .t{border-color:#fff}.pc .nv{display:block;font-size:11px;opacity:.6;margin-top:2px}
+.pv-sib .c{font-size:10.5px;opacity:.7;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pv-sib.ver button{width:88px}.pv-sib.ver .t{width:88px;height:96px}.pv-sib.ver .c{max-width:88px;white-space:normal;text-align:center;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}.pv-sib .c.sp{opacity:1;font-weight:600;-webkit-line-clamp:1}
 /* сколько товаров в ряд: 2 (как было), 3 или 4 — компактнее подписи */
 .cntrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 18px 10px;min-height:30px}.cntrow .count{margin:0;padding:0}
@@ -2181,7 +2182,7 @@ function toggleFav(id){if(!(id[0]==="o"?ofavs:favs).has(id))popTrack("f",id);con
 
 function pcHTML(p,i=0){const r=p.id[0]==="r";return `<button class="pc press" data-act="product" data-id="${p.id}" style="--c:${p.c};--i:${i}">
   <div class="art s-${p.shape}${String(p.shape).startsWith("img:")?" hasimg":""}">${p.sale?`<span class="salb">−${p.sale}%</span>`:p.st?`<span class="stk"><span class="gdot"></span>В наличии</span>`:p.availability==="preorder"?'<span class="newb">Предзаказ</span>':p.isNew?'<span class="newb">Новинка</span>':r?`<span class="newb">${esc(p.cond)}</span>`:""}<span class="fav" role="button" tabindex="0" data-fav="${p.id}" aria-label="В избранное" aria-pressed="${favs.has(p.id)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span>${shapeSVG(p.shape,p.c)}</div>
-  <div class="m"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span><span class="pr"><span class="p num">${!r&&isPor(p)?"Цена по запросу":eur(r?p.price:priceFor(p,prefs.dest||"ua"))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[prefs.dest||"ua"]??p.oldPrices.ua)}</s>`:""}</span><span class="ct">${r?"проверено":p.st?p.st.city:""}</span></span></div></button>`}
+  <div class="m"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span>${p._nv>1?`<span class="nv">${p._nv} ${plural(p._nv,["версия","версии","версий"])}</span>`:""}<span class="pr"><span class="p num">${!r&&isPor(p)?"Цена по запросу":eur(r?p.price:priceFor(p,prefs.dest||"ua"))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[prefs.dest||"ua"]??p.oldPrices.ua)}</s>`:""}</span><span class="ct">${r?"проверено":p.st?p.st.city:""}</span></span></div></button>`}
 
 /* ===== Лента ===== */
 let seen=new Set(store.get("tb_seen",[]));
@@ -2260,6 +2261,8 @@ function popOrder(list){const best=list.filter(p=>p.best!=null).sort((a,b)=>a.be
     for(let k=0;out.length-st<n0;k++)for(const c of T){if(c==="other"&&k%3&&T.some(x=>x!=="other"&&(at[x]||0)<G[x].length))continue;const g=G[c],j=at[c]||0;if(j<g.length){out.push(g[j]);at[c]=j+1}}}
   return [...best,...hot,...out]}
 function sorted(list){const s=F.sort;if(s==="pop")return popOrder(list);return list.sort((a,b)=>s==="asc"?a.price-b.price:s==="desc"?b.price-a.price:(!!b.st-!!a.st)||(b.isNew-a.isNew)||(a.price-b.price))}
+// Van Cleef: версии одной модели (металл, малая/большая модель, ряды) — в сетке одна плитка с числом версий; выбор версии — в карточке
+function vcaOne(list){const cnt=new Map(),seen=new Set();list.forEach(p=>{if(p.fam&&/van cleef/i.test(p.brand||""))cnt.set(p.fam,(cnt.get(p.fam)||0)+1)});return list.filter(p=>{if(!cnt.has(p.fam)){p._nv=0;return true}if(seen.has(p.fam))return false;seen.add(p.fam);p._nv=cnt.get(p.fam);return true})}
 let gridList=[],gridShown=0,gridIO=null;const GRID_STEP=24;
 function gridMore(step){const g=$("#grid");if(!g)return;const from=gridShown,to=Math.min(gridList.length,gridShown+(step||GRID_STEP));if(from>=to)return;
   g.querySelector(".grid-more")?.remove();
@@ -2268,7 +2271,7 @@ function gridMore(step){const g=$("#grid");if(!g)return;const from=gridShown,to=
 let COLS=(()=>{try{return +localStorage.getItem("tb_cols")||2}catch(e){return 2}})();
 function colsApply(){document.querySelectorAll("#grid,#bgrid").forEach(g=>{g.classList.toggle("c3",COLS===3);g.classList.toggle("c4",COLS===4)});document.querySelectorAll(".colsw [data-cols]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.cols===COLS)))}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".colsw [data-cols]");if(!b)return;COLS=+b.dataset.cols;try{localStorage.setItem("tb_cols",String(COLS))}catch(x){}colsApply();try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(x){}});
-function renderGrid(){const list=sorted(baseSet()),n=list.length;
+function renderGrid(){const list=vcaOne(sorted(baseSet())),n=list.length;
   const filtered=!!(F.q||F.cats.size||F.brands.size||F.cities.size||F.onlyNew||F.onlyFav||F.stock||F.ids||Object.keys(F.budgets).some(k=>F.budgets[k]<catMax(k)));
   $("#count").textContent=filtered?n+" "+plural(n,["товар","товара","товаров"]):"";colsApply();
   gridIO&&gridIO.disconnect();gridList=list;gridShown=0;
