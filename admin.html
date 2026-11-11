@@ -2457,7 +2457,6 @@ async function mtOne(it, origin) {
     let images = urls;
     if (!urls.length && datas.length) { images = []; for (const d of datas.slice(0, 8)) { try { images.push((await api("imageUpload", { method: "POST", body: { data: d.split(",")[1] }, silent: true })).url); } catch {} } } // старая версия кнопки
     if (!images.length) return fail("сайт не отдал фото");
-    if (!it.lpTile && images.some(u => /^https:\/\/media\.loropiana\.com\//.test(u))) { try { const ci = await lpCleanIdx(images.slice(0, 5)); if (ci > 0) images = [images[ci], ...images.slice(0, ci), ...images.slice(ci + 1)]; } catch {} } // Loro Piana: обложка — сам товар, не на модели
     const r = await api("webImport", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { ...base, images } } });
     mtSaved.push({ brand: base.brand, title: base.title, id: r.id }); if (r.novelty) { MTP.novel = (MTP.novel || 0) + 1; if (r.status === "published") MTP.novelPub = (MTP.novelPub || 0) + 1; } return true;
   } catch (err) { return fail(String(err.message || err).slice(0, 120)); }
