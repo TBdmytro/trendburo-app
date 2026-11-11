@@ -651,7 +651,7 @@ export default async function handler(req, res) {
         const docs = await store.getMany(items.map(x => x.id)), ch = [];
         for (const x of items) { const p = docs.find(d => d && d._id === x.id); if (!p || p.overrides?.cover || (p.overrides?.imageOrder || []).length) continue; const im = p.images || [], k = g(x.tile); if (!k) continue;
           const i = im.findIndex(q => g(q.sourceUrl || q.url) === k);
-          if (i > 0) ch.push({ id: p._id, set: { images: [im[i], ...im.slice(0, i), ...im.slice(i + 1)] } }); else if (i < 0) ch.push({ id: p._id, set: { images: [{ url: x.tile, sourceUrl: x.tile, rights: "copied" }, ...im].slice(0, 13) } }); }
+          if (i < 0 && im.length) continue; /* плитки нет в галерее — оставляем как есть */ if (i > 0) ch.push({ id: p._id, set: { images: [im[i], ...im.slice(0, i), ...im.slice(i + 1)] } }); }
         for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100)); if (ch.length) PCACHE = null;
         return send(res, 200, { moved: ch.length });
       }

@@ -2325,6 +2325,7 @@ window.addEventListener("message", async e => {
   }
   if (e.data.type === "tb-covers") { // Loro Piana: обложка как на плитке раздела бренда — без открытия страниц товаров
     const hk = mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), items = (e.data.items || []).slice(0, 100).map(x => ({ id: "product.manual." + hk + "-" + String(x.code || "").toLowerCase().replace(/[^a-z0-9]/g, ""), tile: String(x.tile || "") })).filter(x => /^https:\/\//.test(x.tile));
+    { const ok = []; let q = 0; await Promise.all([1, 2, 3, 4, 5, 6].map(async () => { while (q < items.length) { const x = items[q++]; try { if (await lpEdge(x.tile) <= 12) ok.push(x); } catch {} } })); items.length = 0; items.push(...ok); } // плитка — фото на модели / крупный план? Такой обложкой не ставим
     let r = { moved: 0 }; try { r = await api("webCover", { method: "POST", silent: true, body: { items } }); } catch {}
     try { e.source.postMessage({ type: "tb-covers-done", n: (e.data.items || []).length, moved: r.moved || 0 }, e.origin); } catch {} return;
   }
@@ -2432,6 +2433,7 @@ async function mtUpd(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
   if (!sku) return false;
   if (Array.isArray(it.images)) it = { ...it, images: await liveImgs(it.images.map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || ""))) };
+  if (Array.isArray(it.images) && it.images.length > 1) it = { ...it, images: await lpCover(it.images) }; // Loro Piana: обложка — фото самого товара
   try { const r = await api("webUpdate", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { material: String(it.material || "").slice(0, 80), boutique: it.currency === "EUR" ? Number(it.price) || null : null, sizeStock: it.sizeStock || [], preorder: !!it.preorder, unavailable: !!it.unavailable, ask: String(it.ask || it.blocked || ""), isNew: !!it.isNew, section: it.section || "", tileImg: /^https:\/\//.test(String(it.tileImg || "")) ? String(it.tileImg).slice(0, 600) : "", images: (it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || "")).slice(0, 14), category: mtCat(it), gender: ["w", "m"].includes(it.gender) ? it.gender : "", szDbg: String(it.szDbg || "").slice(0, 900), noStock: !!it.noStock, stockRead: !!it.stockRead, soldOld: !!it.soldOld, availOnly: !!it.availOnly } } });
     MTP.upd = (MTP.upd || 0) + 1; if (r.price) MTP.priceCh = (MTP.priceCh || 0) + 1; if (r.changes) MTP.changed = (MTP.changed || 0) + 1; return true; }
   catch (err) { MTP.last.unshift("✕ " + (it.title || sku) + ": " + err.message); return false; }
@@ -2448,6 +2450,8 @@ async function lpEdge(u) { const b = await (await fetch(u)).blob(), bm = await c
   let e = 0; for (let x = 0; x < 96; x++) for (let y = 0; y < 3; y++) { if (on(x, y)) e++; if (on(x, 133 - y)) e++; } for (let y = 0; y < 134; y++) for (let x = 0; x < 2; x++) { if (on(x, y)) e++; if (on(95 - x, y)) e++; } return e; }
 async function lpCleanIdx(urls) { for (let i = 0; i < urls.length; i++) { try { if (await lpEdge(urls[i]) <= 12) return i; } catch { return -1; } } return -1; }
 window.lpCleanIdx = lpCleanIdx;
+// Loro Piana: первым ставим первое «чистое» фото (товар на фоне); если первое и так чистое или чистого нет — порядок как есть
+async function lpCover(urls) { if (!urls.some(u => /^https:\/\/media\.loropiana\.com\//.test(u))) return urls; try { const i = await lpCleanIdx(urls.slice(0, 6)); return i > 0 ? [urls[i], ...urls.slice(0, i), ...urls.slice(i + 1)] : urls; } catch { return urls; } }
 
 async function mtOne(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
@@ -2462,6 +2466,7 @@ async function mtOne(it, origin) {
     let images = urls;
     if (!urls.length && datas.length) { images = []; for (const d of datas.slice(0, 8)) { try { images.push((await api("imageUpload", { method: "POST", body: { data: d.split(",")[1] }, silent: true })).url); } catch {} } } // старая версия кнопки
     if (!images.length) return fail("сайт не отдал фото");
+    images = await lpCover(images); // Loro Piana: обложка — фото самого товара на фоне (не на модели, не крупный план)
     const r = await api("webImport", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { ...base, images } } });
     mtSaved.push({ brand: base.brand, title: base.title, id: r.id }); if (r.novelty) { MTP.novel = (MTP.novel || 0) + 1; if (r.status === "published") MTP.novelPub = (MTP.novelPub || 0) + 1; } return true;
   } catch (err) { return fail(String(err.message || err).slice(0, 120)); }
