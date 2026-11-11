@@ -2963,8 +2963,8 @@ function cvRender(anim){const root=$("#cv3");if(!root)return;
   const H=cvBrands(pool,false).filter(b=>!J.includes(b));
   // новости: новые поступления по брендам (потом — коллекции из админки)
   const nw=new Map();pool.filter(p=>p.isNew).forEach(p=>{if(!nw.has(p.bk))nw.set(p.bk,[]);nw.get(p.bk).push(p)});
-  const news=[...nw.entries()].sort((a,b)=>b[1].length-a[1].length).slice(0,6);
-  const fresh=pool.filter(p=>p.isNew&&p.imgs&&p.imgs[0]).slice(0,3);
+  const news=[...nw.entries()].sort((a,b)=>b[1].length-a[1].length).slice(0,6).map(([bk,L])=>[bk,showFirst(L)]);
+  const fresh=showFirst(pool.filter(p=>p.isNew&&p.imgs&&p.imgs[0])).slice(0,3);
   const keepSeg=anim&&$("#cvSeg");
   root.innerHTML=`${news.length?`<div class="cvnews" id="cvNews">${news.map(([bk,L],i)=>`<button class="cvn press${i%2?"":" d"}" data-cvnew="${esc(bk)}"><span><span class="k">НОВИНКИ</span><b>${esc(cvName(bk))}</b><small>Новые поступления</small></span><span class="a">Смотреть ›</span><span class="pic" ${cvPic(L[0])}>${cvPicIn(L[0])}</span></button>`).join("")}</div><div class="cvdots" id="cvDots">${news.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}
   <div class="cvseg" id="cvSeg" data-g="${CV.g}" role="group" aria-label="Для кого"><button data-g="w" aria-pressed="${CV.g==="w"}">Для неё</button><button data-g="m" aria-pressed="${CV.g==="m"}">Для него</button></div>
@@ -3070,9 +3070,13 @@ const nImg=p=>{const im=p.imgs&&p.imgs[0];return im?im:null};
 const nMid=p=>{const im=nImg(p);if(!im)return "";const m=String(im.src).match(/[?&](width|w)=1000/);return m?im.src.replace(/([?&](?:width|w)=)1000/,"$1800"):im.src};
 // «Новое»: отмеченные новинки (админка или раздел «Новинки» у бренда); если таких пока нет — последние добавленные в каталог вещи (каталог приходит от новых к старым), чтобы блок не пустовал
 function nwPool(){const a=P.filter(p=>p.isNew&&nImg(p));NW.fb=!a.length;if(a.length)return a;const c={},o=[];for(const p of P){if(!p.live||!nImg(p)||(c[p.bk]=(c[p.bk]||0)+1)>15)continue;o.push(p);if(o.length>=150)break}return o}
+// «витринные» вещи для баннеров и сторис: обувь, сумки, верхняя одежда, головные уборы. Юбки, брелоки, мелочи в баннеры не ставим (в каталоге они есть)
+const showOK=p=>{if(!p)return false;if(p.cat==="shoes"||p.cat==="bags")return !/charm|anh[aä]nger|key ?(ring|holder)|schl[uü]ssel|strap|riemen/i.test(p.name||"");try{const t=subTypeOf(p);return (p.cat==="clothing"&&t==="outer")||(p.cat==="accessories"&&t==="hat")}catch(e){return false}};
+const showFirst=l=>{const a=[],b=[];l.forEach(p=>(showOK(p)?a:b).push(p));return a.concat(b)};
+const showOnly=(l,min)=>{const a=l.filter(showOK);return a.length>=(min||4)?a:l};
 function nwGroups(){const m=new Map();nwPool().forEach(p=>{if(!m.has(p.bk))m.set(p.bk,[]);m.get(p.bk).push(p)});
   const seen=store.get("tb_nseen",{}),wk=Math.floor(Date.now()/6048e5);
-  return [...m.entries()].map(([bk,L])=>({bk,name:bname(bk),all:L,seen:seen[bk]===wk})).sort((a,b)=>(a.seen-b.seen)||(b.all.length-a.all.length))}
+  return [...m.entries()].map(([bk,L])=>({bk,name:bname(bk),all:showFirst(L),seen:seen[bk]===wk})).sort((a,b)=>(a.seen-b.seen)||(b.all.length-a.all.length))}
 function nwBusy(){return !$("#t-catalog").classList.contains("on")||$("#catHome").hidden||(typeof stack!=="undefined"&&stack.length)||!!document.querySelector(".sv,.sheet.in,.zv")||document.hidden}
 function nwItems(){return NW.G[NW.gi].all.slice(0,NW.SHOW)}
 function nwRings(){$("#nRings").innerHTML=NW.G.map((g,i)=>{const im=nImg(g.all[0]);return `<button class="nrg${i===NW.gi?" on":""}${g.seen&&i!==NW.gi?" seen":""}" data-ngi="${i}"><span class="o">${im?`<img src="${esc(im.thumb)}" alt="" loading="lazy" decoding="async">`:`<span class="mono">${initials(g.name)}</span>`}<em>${g.all.length>99?"99+":g.all.length}</em></span><small>${esc(g.name)}</small></button>`}).join("")}
@@ -3169,7 +3173,7 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
   const st={cats:new Set(),subs:{},g:"all",sort:"pop"};{const bg=all.filter(p=>p.cat==="bags"&&p._sub===undefined);if(bg.length)bagModels(all.filter(p=>p.cat==="bags"));const gs=all.filter(p=>p.cat==="shoes"&&/golden ?goose/i.test(p.brand||"")&&p._sub===undefined);if(gs.length)ggLines(gs)}const lead=all.slice().sort((a,b)=>b.isNew-a.isNew)[0];
   const cats=[...new Set(all.map(p=>p.cat))],gs=[...new Set(all.map(p=>p.g))];
   if(!JH&&gs.length>1&&(CV.g==="w"||CV.g==="m")&&all.some(p=>p.g===CV.g))st.g=CV.g; // зашли из «Для неё»/«Для него» — сразу эта половина бренда
-  const nwAll=all.filter(p=>p.isNew),nwN=nwAll.length,nwPic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.src||i.thumb))||String(p.shape).replace(/^img:/,"")},nwPics=nwAll.slice().sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,6).map(nwPic).filter(u=>/^https?:/.test(u));st.nw=false;
+  const nwAll=all.filter(p=>p.isNew),nwN=nwAll.length,nwPic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.src||i.thumb))||String(p.shape).replace(/^img:/,"")},nwPics=showOnly(nwAll,3).slice().sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,6).map(nwPic).filter(u=>/^https?:/.test(u));st.nw=false;
   const s=push(bn,`<div class="bhero" style="--c:${lead.c}">
      <span class="cap">${BRAND_META[bk]||""}</span><h1>${esc(bn)}</h1>
      <div class="meta num"><span>${all.length} ${plural(all.length,["товар","товара","товаров"])}</span><span>от ${eur(Math.min(...all.map(p=>p.price)))}</span>${all.some(p=>p.isNew)?`<span>${all.filter(p=>p.isNew).length} новинки</span>`:""}${ICONS.some(ic=>ic.bk===bk)?`<span>${ICONS.filter(ic=>ic.bk===bk).length} моделей под заказ</span>`:""}</div>
@@ -3342,7 +3346,7 @@ const hKey=()=>[CV.g,PV,HSEC,new Date().toISOString().slice(0,10)].join("|");
 function hBuild(){const used=new Set(),G=P.filter(hG),NW=G.filter(p=>p.isNew),o={};
   // новинки недели: вещи, вышедшие у нас за 7 дней; мало — за 30 дней («Новинки месяца»); ещё меньше — блока нет
   {let l=NW.filter(p=>p.na&&Date.now()-p.na<7*HDAY),t="Новинки недели";if(l.length<4){l=NW.filter(p=>p.na&&Date.now()-p.na<30*HDAY);t="Новинки месяца"}
-   const pk=l.length>=4?hPick(hRank(l),12,used):[];o.n=pk.length?hRail(t,pk,`<button class="more" data-act="catalog-new">Все</button>`).replace('class="sec"','class="sec band"'):""}
+   const pk=l.length>=4?hPick(showFirst(hRank(l)),12,used):[];o.n=pk.length?hRail(t,pk,`<button class="more" data-act="catalog-new">Все</button>`).replace('class="sec"','class="sec band"'):""}
   // новое по разделам: кнопка меняет ряд на месте; раздел без 4 новинок не показываем
   {const secs=H_SECS.map(s=>[s,NW.filter(p=>hIn(p,s[0],s[1])&&!used.has(p.id))]).filter(x=>x[1].length>=4);o.s="";
    if(secs.length){const hs=HSEC<secs.length?HSEC:0;const [s,l]=secs[hs],pk=hPick(hRank(l),12,new Set(used));
@@ -3398,9 +3402,9 @@ const AUTOM=new Map();
 function buildAuto(){const key=PV+"|"+daySeed()+"|"+(prefs.dest||"ua")+"|"+CV.g;if(AUTOC&&AUTOC.key===key){autoSeen(AUTOC.R);return AUTOC.R}const m=AUTOM.get(key);if(m){AUTOC={key,R:m};autoSeen(m);return m}const R=buildAuto0();if(AUTOM.size>6)AUTOM.clear();AUTOM.set(key,R);AUTOC={key,R};return R}
 const autoSeen=R=>R.forEach(r=>{r.seen=r.coll?collSeen(r.coll.id):r.build().every(s=>s.t==="in"||(s.p?svToday(s.p.id):s.t==="du"?svToday(s.a.id)&&svToday(s.b.id):true))});
 function buildAuto0(){
-  const W=P.filter(p=>svImg(p)),d=prefs.dest||"ua",pr=p=>priceFor(p,d);if(W.length<2)return[];
+  const W0=P.filter(p=>svImg(p)),W=showOnly(W0,12),d=prefs.dest||"ua",pr=p=>priceFor(p,d);if(W.length<2)return[];
   const R=[];let salt=0;
-  COLL.filter(collG).forEach(c=>{const ids=new Set(c.ids),pool=W.filter(p=>ids.has(p.id));if(!pool.length)return;salt++;const s0=salt;R.push({k:"col:"+c.id,name:c.brand,coll:c,pool,build:()=>[{t:"cin"}].concat(svFresh(pool,s0).map(p=>({t:"p",p})))})});
+  COLL.filter(collG).forEach(c=>{const ids=new Set(c.ids),pool=W0.filter(p=>ids.has(p.id));if(!pool.length)return;salt++;const s0=salt;R.push({k:"col:"+c.id,name:c.brand,coll:c,pool,build:()=>[{t:"cin"}].concat(svFresh(pool,s0).map(p=>({t:"p",p})))})});
   const add=(o,pool)=>{if(pool.length>=(o.min||1)){salt++;const s=salt;R.push({...o,pool,build:o.build||(()=>{const l=svFresh(pool,s);return (o.intro&&pool.length>=4?[{t:"in",ps:svShuffle(pool,s+1).slice(0,4)}]:[]).concat(l.map(p=>({t:"p",p})))})})}};
   add({k:"new",name:"Новинки",tag:"NEW",intro:{k:"Только что",h:"Новинки",d:"Новое в каталоге"}},W.filter(p=>p.isNew));
   add({k:"sale",name:"Скидки",tag:"−%"},W.filter(p=>p.sale));
