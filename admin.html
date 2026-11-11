@@ -2436,6 +2436,14 @@ const imgOk = u => /^https:\/\/cdn\.sanity\.io\//.test(u) ? Promise.resolve(true
 // не открылось, а в адресе версия кадра («…_E02-8») — у Dior часто есть тот же кадр без версии: берём его
 const imgFix = async u => { if (await imgOk(u)) return u; const alt = u.replace(/-\d+(\?|$)/, "$1"); return alt !== u && await imgOk(alt) ? alt : null; };
 const liveImgs = async urls => { const fx = await Promise.all(urls.map(imgFix)); const keep = [...new Set(fx.filter(Boolean))]; return keep.length ? keep : urls; };
+// Loro Piana: «чистое» фото — товар на однотонном фоне, не касается краёв кадра (на модели или крупный план — касается).
+// Смотрим по самой картинке (уменьшенная копия 96 px), возвращаем номер первого чистого фото среди первых пяти; -1 — нет такого
+async function lpEdge(u) { const b = await (await fetch(u)).blob(), bm = await createImageBitmap(b, { resizeWidth: 96, resizeHeight: 134 }), c = new OffscreenCanvas(96, 134), g = c.getContext("2d"); g.drawImage(bm, 0, 0); const D = g.getImageData(0, 0, 96, 134).data, px = (x, y) => { const i = (y * 96 + x) * 4; return [D[i], D[i + 1], D[i + 2]]; };
+  const cs = [px(1, 1), px(94, 1), px(1, 132), px(94, 132)], bg = [0, 1, 2].map(k => cs.map(q => q[k]).sort((a, z) => a - z)[1]), on = (x, y) => { const p = px(x, y); return Math.abs(p[0] - bg[0]) + Math.abs(p[1] - bg[1]) + Math.abs(p[2] - bg[2]) > 45; };
+  let e = 0; for (let x = 0; x < 96; x++) for (let y = 0; y < 3; y++) { if (on(x, y)) e++; if (on(x, 133 - y)) e++; } for (let y = 0; y < 134; y++) for (let x = 0; x < 2; x++) { if (on(x, y)) e++; if (on(95 - x, y)) e++; } return e; }
+async function lpCleanIdx(urls) { for (let i = 0; i < urls.length; i++) { try { if (await lpEdge(urls[i]) <= 12) return i; } catch { return -1; } } return -1; }
+window.lpCleanIdx = lpCleanIdx;
+
 async function mtOne(it, origin) {
   const sku = String(it.sku || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30), hk = mtPrefix(it.host || origin.replace(/^https:\/\//, ""));
   const urls = await liveImgs((it.images || []).map(x => typeof x === "string" ? x : x && x.u).filter(u => /^https:\/\//.test(u || "")));
@@ -2449,6 +2457,7 @@ async function mtOne(it, origin) {
     let images = urls;
     if (!urls.length && datas.length) { images = []; for (const d of datas.slice(0, 8)) { try { images.push((await api("imageUpload", { method: "POST", body: { data: d.split(",")[1] }, silent: true })).url); } catch {} } } // старая версия кнопки
     if (!images.length) return fail("сайт не отдал фото");
+    if (images.some(u => /^https:\/\/media\.loropiana\.com\//.test(u))) { try { const ci = await lpCleanIdx(images.slice(0, 5)); if (ci > 0) images = [images[ci], ...images.slice(0, ci), ...images.slice(ci + 1)]; } catch {} } // Loro Piana: обложка — сам товар, не на модели
     const r = await api("webImport", { method: "POST", silent: true, body: { id: "product.manual." + hk + "-" + sku, item: { ...base, images } } });
     mtSaved.push({ brand: base.brand, title: base.title, id: r.id }); if (r.novelty) { MTP.novel = (MTP.novel || 0) + 1; if (r.status === "published") MTP.novelPub = (MTP.novelPub || 0) + 1; } return true;
   } catch (err) { return fail(String(err.message || err).slice(0, 120)); }

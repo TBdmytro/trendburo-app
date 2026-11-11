@@ -179,7 +179,7 @@ export default async function handler(req, res) {
     if (!me) return send(res, 401, { error: "Нужен вход" });
     if (req.method !== "GET" && req.headers["x-tb"] !== "1") return send(res, 403, { error: "Запрос отклонён" });
     const store = getStore();
-    if (req.method !== "GET" && !["webImport", "webUpdate", "imageUpload", "imageFromUrl", "snapSave", "webProgress", "ensurePrices", "fixBrands", "imgDedupe", "imgDrop", "trPending", "hotlinked", "catalogState"].includes(a)) PCACHE = null; // служебные запросы (ход прогона кнопки каждые 10 с, фоновые проверки) список товаров не сбрасывают — они сами сбрасывают, если что-то поменяли
+    if (req.method !== "GET" && !["lpCover", "webImport", "webUpdate", "imageUpload", "imageFromUrl", "snapSave", "webProgress", "ensurePrices", "fixBrands", "imgDedupe", "imgDrop", "trPending", "hotlinked", "catalogState"].includes(a)) PCACHE = null; // служебные запросы (ход прогона кнопки каждые 10 с, фоновые проверки) список товаров не сбрасывают — они сами сбрасывают, если что-то поменяли
     const pricingCfg = (await store.get("settings.pricing"))?.config || null;
 
     switch (a) {
@@ -639,6 +639,15 @@ export default async function handler(req, res) {
           o.availability = Object.fromEntries((p.variants || []).map(v => { const ok = x.sizes ? x.sizes[String(v.size)] : x.one; return [v._key, { status: ok === true ? "online" : ok === false ? "ask" : (o.availability?.[v._key]?.status || "out"), price: null }]; }));
           o.onlineOrder = Object.values(o.availability).some(a => a.status === "online"); o.checkedAt = now; p.updatedAt = now; p.history = [...(p.history || []).slice(-49), { at: now, by: "Claude", action: "restore-stock" }]; await store.put(p); n++; }
         PCACHE = null; return send(res, 200, { restored: n });
+      }
+      case "lpCover": {
+        // Loro Piana: обложка — фото самого товара на фоне, а не на модели. Какое фото «чистое», определяет админка по самой картинке
+        // (товар не касается краёв кадра); здесь только ставим его первым. Вашу обложку / порядок из админки не трогаем
+        const items = (Array.isArray(body.items) ? body.items : []).slice(0, 300).filter(x => x && /^product\.manual\.[a-z0-9]+-[a-z0-9_]+$/.test(String(x.id)) && /^https:\/\/media\.loropiana\.com\//.test(String(x.url)));
+        const docs = await store.getMany(items.map(x => x.id)), ch = [];
+        for (const x of items) { const p = docs.find(d => d && d._id === x.id); if (!p || p.overrides?.cover || (p.overrides?.imageOrder || []).length) continue; const im = p.images || [], i = im.findIndex(q => q.url === x.url || q.sourceUrl === x.url); if (i > 0) ch.push({ id: p._id, set: { images: [im[i], ...im.slice(0, i), ...im.slice(i + 1)], lpCov: 1 } }); else if (i === 0) ch.push({ id: p._id, set: { lpCov: 1 } }); }
+        for (let i = 0; i < ch.length; i += 100) await store.patchEach(ch.slice(i, i + 100)); if (ch.length) PCACHE = null;
+        return send(res, 200, { moved: ch.filter(c => c.set.images).length, checked: ch.length });
       }
       case "fixLoroImg": {
         // Loro Piana: при прогоне раздела обложкой ставилась мелкая картинка из списка (SMALL 690 px) перед большими ZOOM — убираем SMALL/MEDIUM, если есть ZOOM; ваш порядок/обложку не трогаем
