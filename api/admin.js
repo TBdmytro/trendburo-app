@@ -179,7 +179,7 @@ export default async function handler(req, res) {
     if (!me) return send(res, 401, { error: "Нужен вход" });
     if (req.method !== "GET" && req.headers["x-tb"] !== "1") return send(res, 403, { error: "Запрос отклонён" });
     const store = getStore();
-    if (req.method !== "GET" && !["webCover", "lpCover", "webImport", "webUpdate", "imageUpload", "imageFromUrl", "snapSave", "webProgress", "ensurePrices", "fixBrands", "imgDedupe", "imgDrop", "trPending", "hotlinked", "catalogState"].includes(a)) PCACHE = null; // служебные запросы (ход прогона кнопки каждые 10 с, фоновые проверки) список товаров не сбрасывают — они сами сбрасывают, если что-то поменяли
+    if (req.method !== "GET" && !["lpGallery", "webCover", "lpCover", "webImport", "webUpdate", "imageUpload", "imageFromUrl", "snapSave", "webProgress", "ensurePrices", "fixBrands", "imgDedupe", "imgDrop", "trPending", "hotlinked", "catalogState"].includes(a)) PCACHE = null; // служебные запросы (ход прогона кнопки каждые 10 с, фоновые проверки) список товаров не сбрасывают — они сами сбрасывают, если что-то поменяли
     const pricingCfg = (await store.get("settings.pricing"))?.config || null;
 
     switch (a) {
@@ -642,6 +642,15 @@ export default async function handler(req, res) {
           o.availability = Object.fromEntries((p.variants || []).map(v => { const ok = x.sizes ? x.sizes[String(v.size)] : x.one; return [v._key, { status: ok === true ? "online" : ok === false ? "ask" : (o.availability?.[v._key]?.status || "out"), price: null }]; }));
           o.onlineOrder = Object.values(o.availability).some(a => a.status === "online"); o.checkedAt = now; p.updatedAt = now; p.history = [...(p.history || []).slice(-49), { at: now, by: "Claude", action: "restore-stock" }]; await store.put(p); n++; }
         PCACHE = null; return send(res, 200, { restored: n });
+      }
+      case "lpGallery": {
+        // Loro Piana: полная галерея товара (у которого сохранилось одно фото) — список фото с сайта бренда в нужном порядке. Ручную обложку / порядок не трогаем
+        const id = String(body.id || ""), urls = [...new Set((Array.isArray(body.urls) ? body.urls : []).map(String).filter(u => /^https:\/\/media\.loropiana\.com\/[\w\-./]+\.jpg$/i.test(u)))].slice(0, 12);
+        if (!/^product\.manual\.[a-z0-9]+-[a-z0-9_]+$/.test(id) || urls.length < 2) return send(res, 400, { error: "Нужен товар и минимум 2 фото" });
+        const p = await store.get(id); if (!p) return send(res, 404, { error: "Товар не найден" });
+        if (p.overrides?.cover || (p.overrides?.imageOrder || []).length) return send(res, 200, { skipped: true });
+        await store.patchEach([{ id, set: { images: urls.map(u => ({ url: u, sourceUrl: u, rights: "copied" })) } }]); PCACHE = null;
+        return send(res, 200, { images: urls.length });
       }
       case "webCover": {
         // Loro Piana: обложка — как на плитке раздела бренда. Та же картинка из галереи (общий код GUID, большая) — первой; нет в галерее — плитку первой.
