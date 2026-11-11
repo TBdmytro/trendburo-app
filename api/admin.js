@@ -732,7 +732,7 @@ export default async function handler(req, res) {
         // копии страниц больше не храним: каждая — несколько МБ в базе, а автопроверку кнопки делаем без них
         // храним не больше одной копии на сайт и неделю (для разбора, если кнопка что-то взяла не так); остальное не пишем
         if (!process.env.TB_SNAPS) { const h0 = String(body.host || "").replace(/[^a-z0-9.-]/gi, "").slice(0, 80); const ex = (await store.list("snap", { host: h0 }, { limit: 10, fields: "_id, section, at" })).filter(x => Date.now() - Date.parse(x.at) < 7 * 864e5);
-          if (ex.length >= (/hermes/.test(h0) ? 9 : 5) && !ex.some(x => x.section === String(body.section || "").slice(0, 200))) return send(res, 200, { ok: true, skipped: true }); } // до 5 разделов на сайт (сумки, обувь, одежда… — у каждого свои размеры)
+          if (ex.length >= (/hermes|louisvuitton/.test(h0) ? 9 : 5) && !ex.some(x => x.section === String(body.section || "").slice(0, 200))) return send(res, 200, { ok: true, skipped: true }); } // до 5 разделов на сайт (сумки, обувь, одежда… — у каждого свои размеры)
         // копии страниц сайта бренда (раздел + до 3 товаров, сжатые) и что кнопка из них прочитала — для автопроверки новых версий кнопки
         const host = String(body.host || "").replace(/[^a-z0-9.-]/gi, "").slice(0, 80), section = String(body.section || "").slice(0, 200);
         if (!host || !section) return send(res, 400, { error: "Нет раздела" });
