@@ -2324,8 +2324,8 @@ window.addEventListener("message", async e => {
     try { e.source.postMessage({ type: "tb-secknown", list }, e.origin); } catch {} return;
   }
   if (e.data.type === "tb-covers") { // Loro Piana: обложка как на плитке раздела бренда — без открытия страниц товаров
-    const hk = mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), items = (e.data.items || []).slice(0, 100).map(x => ({ id: "product.manual." + hk + "-" + String(x.code || "").toLowerCase().replace(/[^a-z0-9]/g, ""), tile: String(x.tile || "") })).filter(x => /^https:\/\//.test(x.tile));
-    { const ok = []; let q = 0; await Promise.all([1, 2, 3, 4, 5, 6].map(async () => { while (q < items.length) { const x = items[q++]; try { if (await lpEdge(x.tile) <= 12) ok.push(x); } catch {} } })); items.length = 0; items.push(...ok); } // плитка — фото на модели / крупный план? Такой обложкой не ставим
+    const hk = mtPrefix(e.data.host || e.origin.replace(/^https:\/\//, "")), items = (e.data.items || []).slice(0, 100).map(x => ({ id: "product.manual." + hk + "-" + String(x.code || "").toLowerCase().replace(/[^a-z0-9]/g, ""), tile: String(x.tile || ""), tiles: (Array.isArray(x.tiles) ? x.tiles : [x.tile]).map(String).filter(u => /^https:\/\//.test(u)).slice(0, 6) })).filter(x => x.tiles.length);
+    { const ok = []; let q = 0; await Promise.all([1, 2, 3, 4, 5, 6].map(async () => { while (q < items.length) { const x = items[q++]; for (const u of x.tiles) { try { if (await lpEdge(u) <= 12) { ok.push({ id: x.id, tile: u }); break; } } catch {} } } })); items.length = 0; items.push(...ok); } // из картинок плитки — та, где товар на фоне // плитка — фото на модели / крупный план? Такой обложкой не ставим
     let r = { moved: 0 }; try { r = await api("webCover", { method: "POST", silent: true, body: { items } }); } catch {}
     try { e.source.postMessage({ type: "tb-covers-done", n: (e.data.items || []).length, moved: r.moved || 0 }, e.origin); } catch {} return;
   }
