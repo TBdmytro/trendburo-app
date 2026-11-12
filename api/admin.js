@@ -62,7 +62,7 @@ async function copyWebImages(store, list, id = "") {
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, colors[0...1], overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer, soldOld";
 let FIXHMC = false, FIXHMW = false, FIXTRD = false, FIXKIT = false, FIXVSZ = false, FIXVCA = false, FIXCHK = false, FIXALO = false, FIXOBJ = false, FIXMIU = false, FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
 // версия набора фото: 3 — с галереей страницы (фото на модели) для сайтов, где у таких кадров нет артикула в адресе
-const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.on-/.test(id) ? 3 : 2; // dior 5: все фото страницы товара (все кадры на модели)
+const IMGV = id => /^product\.manual\.dior-/.test(id) ? 5 : /^product\.manual\.(on|vancleefarpe)-/.test(id) ? 3 : 2; // vancleefarpe 3: без мелкой копии первого фото (кнопка v200) // dior 5: все фото страницы товара (все кадры на модели)
 /** После удаления: бренд, у которого не осталось ни одного товара, — в «не брать»; поставщик без товаров — ночное обновление выключаем. */
 async function blockEmptied(store, removed) {
   const brands = new Set(removed.map(p => String(p.brand || "").trim()).filter(Boolean)), srcs = new Set(removed.flatMap(p => (p.offers || []).map(o => o.sourceId)).filter(s => s && s !== "manual"));

@@ -67,7 +67,7 @@ html.appin #app{animation:appin .7s cubic-bezier(.22,1,.36,1) both}
 @keyframes spglow{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
 @keyframes spout{0%{opacity:1}55%{opacity:1}to{opacity:0;visibility:hidden}}
 @keyframes spshrink{to{transform:scale(1.12);opacity:0}}
-@keyframes appin{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes appin{from{opacity:0}to{opacity:1}} /* только проявление: сдвиг и масштаб при входе выглядели как «прыжок» */
 @media (prefers-reduced-motion:reduce){.splash{display:none}}
 body{margin:0}img{max-width:100%}/* ===== Наполнение из админки ===== */
 .announce{margin:0 18px 14px;padding:11px 14px;border-radius:14px;background:var(--soft);font-size:13.5px;line-height:1.4;color:var(--fg)}
@@ -218,8 +218,8 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .hcv{position:relative;margin:4px 18px 0}
 .hcv-tr{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 .hcv-tr::-webkit-scrollbar{display:none}
-.hcv-s{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;position:relative;aspect-ratio:4/5;border:0;padding:0;background:#2a2b2e;color:#fff;text-align:left;overflow:hidden;border-radius:26px;transform:translateZ(0)}
-.hcv-s img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
+.hcv-s{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;position:relative;aspect-ratio:4/5;border:0;padding:0;background:#e9e7e3;color:#fff;text-align:left;overflow:hidden;border-radius:26px;transform:translateZ(0)}
+.hcv-s img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;opacity:0;transition:opacity .45s ease}.hcv-s img.ld{opacity:1}
 .hcv-s .sh{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,.6))}
 .hcv-s.light{color:#26282c}.hcv-s.light .sh{background:linear-gradient(180deg,rgba(255,255,255,0) 50%,rgba(255,255,255,.7))}
 .hcv-s .tx{position:absolute;left:20px;right:20px;bottom:20px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
@@ -2744,6 +2744,10 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     // пока большое фото грузится — лёгкая копия из каталога (она уже в памяти телефона) сразу на своём месте, без белого экрана
     ims.forEach((im,i)=>{const th=p.imgs[i]&&p.imgs[i].thumb;if(i||!th||im.classList.contains("geo")||(im.complete&&im.naturalWidth))return;const t=new Image();t.onload=()=>{if(!im.classList.contains("geo")&&!(im.complete&&im.naturalWidth))placeFull(im,im.parentNode,t.naturalWidth,t.naturalHeight)};t.src=th});
     ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.addEventListener("load",go,{once:true});im.src=im.src}else if(!/[?&]tbr=1/.test(im.src)){im.addEventListener("load",go,{once:true});im.src=im.src+(im.src.includes("?")?"&":"?")+"tbr=1"}else im.classList.add("fit")}))});
+    // Van Cleef: первое фото — мелкая копия второго (те же пропорции, в 2+ раза меньше) — показываем крупное, повтор убираем
+    if(ims.length>1&&/vancleefarpels\.com/.test(ims[0].getAttribute("src")||"")&&/\.png(\?|$)/i.test(p.imgs[0].src)&&/\.png(\?|$)/i.test(p.imgs[1].src)){const pr=new Image();pr.onload=()=>{const a=ims[0],w0=a.naturalWidth,h0=a.naturalHeight,ck=()=>{if(!s.isConnected||!w0)return;const w1=pr.naturalWidth,h1=pr.naturalHeight;
+      if(!w1||Math.abs(w0/h0-w1/h1)>.02||w0*h0>w1*h1*.55)return;const sl1=ims[1].parentNode;a.dataset.zi="1";a.addEventListener("load",()=>{a.classList.remove("geo");fitShot(a,a.parentNode,p.imgs[1])},{once:true});a.src=p.imgs[1].src;sl1.remove();const ds=s.querySelectorAll(".pv-dots i");if(ds.length)ds[ds.length-1].remove();if(ds.length<=2){const d=s.querySelector(".pv-dots");d&&d.remove()}};
+      a.complete&&a.naturalWidth?ck():a.addEventListener("load",()=>{const w=a.naturalWidth,h=a.naturalHeight;if(w&&Math.abs(w/h-pr.naturalWidth/pr.naturalHeight)<=.02&&w*h<=pr.naturalWidth*pr.naturalHeight*.55){a.dataset.zi="1";const sl1=ims[1].parentNode;a.src=p.imgs[1].src;sl1.remove();const ds=s.querySelectorAll(".pv-dots i");if(ds.length)ds[ds.length-1].remove()}},{once:true})};pr.src=p.imgs[1].src}
     g.addEventListener("click",e=>{const im=e.target.closest("img[data-zi]");if(im)zoomView(p.imgs.slice(0,8),+im.dataset.zi,it.brand+" "+it.name)})}}
   // Hermès: ремень-конструктор — пряжка + ремень + размер; фото пары рисует сервер фото Hermès, цена = набор или пряжка + ремень
   const kImg=(b,st,w)=>`https://assets.hermes.com/is/image/hermesproduct/beltkits-${K.w}-f34?$leatherstrap=${st.slice(1)}_composite_103&$buckle=${b.slice(1)}_composite_103&wid=${w||1200}&extend=0,0,0,0&align=0,0`;
@@ -3232,8 +3236,8 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
    ${(()=>{const bs=all.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best).slice(0,16),nw2=all.filter(p=>p.isNew).sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,16);
      // отдельные блоки: бестселлеры бренда (в его порядке) и новинки — как разделы на сайте самого бренда
      return (bs.length>=3?`<div class="sec"><div class="sech"><h2>Бестселлеры</h2><span class="muted" style="font-size:13px">как у ${esc(bn)}</span></div><div class="hrail">${bs.map(pcHTML).join("")}</div></div>`:"")
-       +(nw2.length>=3?`<div class="sec" style="padding-bottom:4px"><div class="pad"><button class="nwban press" data-nwban aria-label="Новинки ${esc(bn)}"><div class="nwt"><div><span class="cap">${esc(bn)}</span><h3>Новинки<br>сезона</h3><span class="nwc num">${nwN} ${plural(nwN,["вещь","вещи","вещей"])}</span></div><span class="nwgo">Смотреть все</span></div><div class="nwst">${nwPics.map(u=>`<div class="nwph h"><img src="${esc(u)}" alt="" decoding="async"></div>`).join("")}</div><div class="nwdots">${nwPics.map(()=>"<i></i>").join("")}</div></button></div></div>`:"")})()}
-   <div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>В витрине сейчас</h2></div></div>
+       +(nw2.length>=3?`<div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>В витрине сейчас</h2></div></div><div class="sec" style="padding-bottom:4px;padding-top:6px"><div class="pad"><button class="nwban press" data-nwban aria-label="Новинки ${esc(bn)}"><div class="nwt"><div><span class="cap">${esc(bn)}</span><h3>Новинки<br>сезона</h3><span class="nwc num">${nwN} ${plural(nwN,["вещь","вещи","вещей"])}</span></div><span class="nwgo">Смотреть все</span></div><div class="nwst">${nwPics.map(u=>`<div class="nwph h"><img src="${esc(u)}" alt="" decoding="async"></div>`).join("")}</div><div class="nwdots">${nwPics.map(()=>"<i></i>").join("")}</div></button></div></div>`:"")})()}
+   ${all.filter(p=>p.isNew).length>=3?"":`<div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>В витрине сейчас</h2></div></div>`}
    <div class="bsticky"><div class="chips" id="bcats"></div><div class="chips bsubs" id="bsubs" hidden></div>${gs.length>1&&!JH?`<div class="toolrow"><div class="seg" role="group" aria-label="Для кого" id="bgs"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button>${gs.includes("k")?'<button data-g="k">Детское</button>':""}</div><select id="bsort" aria-label="Сортировка"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`:`<div class="toolrow"><select id="bsort" aria-label="Сортировка" style="margin-left:0"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`}</div>
    <div class="cntrow"><div class="count num" id="bcount"></div><div class="colsw" role="group" aria-label="Сколько товаров в ряд"><button data-cols="2" aria-label="2 в ряд"><i></i><i></i></button><button data-cols="3" aria-label="3 в ряд"><i></i><i></i><i></i></button><button data-cols="4" aria-label="4 в ряд"><i></i><i></i><i></i><i></i></button></div></div><div class="grid2 cgrid" id="bgrid"></div>
    ${nw.length?`<div class="sec"><div class="sech"><h2>Новости ${esc(bn)}</h2></div>${nw.map(n=>{const p=P.find(x=>x.id===n.pid);return `<button class="newsrow press" data-act="news" data-id="${n.id}" style="--c:${p.c}"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div><span class="cap">${n.tag} · ${n.when}</span><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div></button>`}).join("")}</div>`:""}
@@ -3286,28 +3290,32 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
     let D=0;const bsE=s.querySelector(".bsticky");
     const target=()=>{const B=ban.getBoundingClientRect();if(!B.height||!bsE)return cur;const top=sc.getBoundingClientRect().top+nbH();if(!D||sc.scrollTop<4){const d=bsE.getBoundingClientRect().top-B.top;if(d>B.height*.8&&B.top>=top-1)D=d}if(!D)return cur;return Math.max(0,Math.min(1,(top-B.top)/D))};
     const hide=()=>{gh.style.display="none";ban.style.visibility="visible"};
+    const sm0=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
     const paint=p=>{const pill=s.querySelector(".nwpill.morph"),rest=s.querySelector("#bcats .brest");if(!pill||!rest||!s.isConnected||s.classList.contains("behind")&&p>0&&p<1){if(rest)rest.style.transform="";if(pill)pill.classList.add("full");hide();return}
       const e=ease(p),PW=pill.offsetWidth,PH=pill.offsetHeight;
-      rest.style.transform=e>0?`translate3d(${((PW+8)*e).toFixed(2)}px,0,0)`:"";pill.classList.toggle("full",p>=1);ban.style.visibility=p>0?"hidden":"visible";
+      rest.style.transform=p>0?`translate3d(${((PW+8)*(1-Math.pow(1-p,2.2))).toFixed(2)}px,0,0)`:"";pill.classList.toggle("full",p>=1);ban.style.visibility=p>0?"hidden":"visible";
       if(p<=0||p>=1){gh.style.display="none";return}
-      // баннер уезжает под шапку (видна только его нижняя часть), сжимается и к концу садится на место кнопки; ниже своей видимой части не опускается — не наезжает на заголовок под ним
-      const S=s.getBoundingClientRect(),B=ban.getBoundingClientRect(),cr=pill.getBoundingClientRect(),navB=sc.getBoundingClientRect().top+nbH(),clip=Math.max(0,Math.min(B.height,navB-B.top)),vis=B.height-clip,
-        W=L(B.width,PW,e),H=Math.max(PH,Math.min(L(B.height,PH,e),vis)),gy=L(B.top+clip,cr.top,e*e),dy=-(L(B.height,PH,e)-H)*(1-e)*(1-e);
+      // геометрия привязана к прокрутке напрямую (без догоняния — оно и давало «плавание»): верхний край — под шапкой, нижний — едет вместе с контентом,
+      // как сворачивающийся заголовок iOS; обе границы линейно переходят в границы кнопки — призрак никогда не «висит» отдельно от страницы
+      const S=s.getBoundingClientRect(),B=ban.getBoundingClientRect(),cr=pill.getBoundingClientRect(),navB=sc.getBoundingClientRect().top+nbH(),
+        t0=Math.max(B.top,navB),pOff=cr.top-bsE.getBoundingClientRect().top,gTop=L(t0,Math.max(navB+pOff,Math.min(t0,cr.top)),p),gBot=Math.max(gTop+PH,L(B.bottom,cr.bottom,p)),H=gBot-gTop,oy=B.top-gTop,
+        // ширина, скругление и фото следуют за высотой: чем ниже видимая часть баннера, тем он уже — пропорции сжимаются вместе, без «пустой коробки»
+        q=1-Math.max(0,Math.min(1,(H-PH)/Math.max(1,B.height-PH))),qe=ease(q),ov=sm0((L(B.bottom,cr.bottom,p)-cr.top+16)/28),W=L(L(B.width,PW,q),PW,ov),gL=L(B.left,cr.left,Math.max(q,ov));
       if(gh.style.display!=="block"){gh.style.display="block";ghI.src=nwPics[nwK]}
-      gh.style.transform=`translate3d(${(L(B.left,cr.left,e)-S.left).toFixed(1)}px,${(gy-S.top).toFixed(1)}px,0)`;gh.style.width=W.toFixed(1)+"px";gh.style.height=H.toFixed(1)+"px";gh.style.borderRadius=L(24,PH/2,e).toFixed(1)+"px";
-      // фото — общий элемент: быстрее уменьшается и скругляется до кружка кнопки; рамка не обрезает его
-      const ei=ease(Math.min(1,e/0.75)),sx=B.width*.44+B.width*.56/2-66,sy=B.height/2-85,iw=L(132,26,ei),ih=L(170,26,ei),mx=(PH-26)/2;
-      if(H<ih+8){gh.style.height=(ih+8).toFixed(1)+"px"}
-      ghIB.style.cssText=`width:${iw.toFixed(1)}px;height:${ih.toFixed(1)}px;border-radius:${L(14,13,ei).toFixed(1)}px;transform:translate3d(${L(sx,4,e).toFixed(1)}px,${(L(sy,mx,ei)+dy*(1-ei)).toFixed(1)}px,0)`;
-      // тексты не пересекаются: подпись баннера тает и уходит вверх в первой половине, подпись кнопки проявляется во второй; фото — общий элемент, плавно садится в кружок кнопки
-      const sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t),out=1-sm(e/0.42),inn=sm((e-0.58)/0.42),lift=-14*sm(e/0.42);
-      gT.style.cssText=`opacity:${out.toFixed(3)};transform:translate3d(18px,${(46+dy+lift).toFixed(1)}px,0) scale(${(1-0.08*sm(e/0.42)).toFixed(4)})`;
-      gT2.style.cssText=`opacity:${out.toFixed(3)};transform:translate3d(18px,${(76+dy+lift).toFixed(1)}px,0) scale(${(1-0.08*sm(e/0.42)).toFixed(4)})`;
-      gE.style.cssText=`opacity:${out.toFixed(3)};transform:translate3d(18px,${(20+dy+lift).toFixed(1)}px,0)`;gS.style.cssText=`opacity:${out.toFixed(3)};transform:translate3d(18px,${(114+dy+lift).toFixed(1)}px,0)`;
-      gB.style.cssText=`opacity:${inn.toFixed(3)};transform:translate3d(${(36+8*(1-inn)).toFixed(1)}px,${((PH-19)/2).toFixed(1)}px,0)`;
-      gh.style.boxShadow=`0 ${(6+10*Math.sin(Math.PI*e)).toFixed(1)}px ${(18+22*Math.sin(Math.PI*e)).toFixed(1)}px rgba(38,40,44,${(.08+.1*Math.sin(Math.PI*e)).toFixed(3)})`};
-    // мягкое догоняние (без рывков, если палец дёрнул скролл)
-    const frame=()=>{raf=0;if(!s.isConnected)return;const w=target();cur+=(w-cur)*.14;if(Math.abs(w-cur)<.0015)cur=w;paint(cur);if(cur!==w)raf=requestAnimationFrame(frame)};
+      gh.style.transform=`translate3d(${(gL-S.left).toFixed(2)}px,${(gTop-S.top).toFixed(2)}px,0)`;gh.style.width=W.toFixed(2)+"px";gh.style.height=H.toFixed(2)+"px";gh.style.borderRadius=L(24,PH/2,q).toFixed(2)+"px";
+      // призрак подходит к строке фильтров уже шириной кнопки, а строка заранее уступает место — ничего не накрывается и не «качается»
+      rest.style.transform=`translate3d(${((PW+8)*Math.max(q,ov)).toFixed(2)}px,0,0)`;
+      // фото — общий элемент: по центру видимой части, уменьшается вместе с ней и садится в кружок кнопки
+      const sx=B.width*.44+B.width*.56/2-66,iw=Math.max(26,Math.min(L(132,26,qe),W-14)),ih=Math.max(26,Math.min(L(170,26,qe),H-10)),mx=(PH-26)/2,ix=Math.max(4,Math.min(L(sx*(W/B.width),4,qe),W-iw-7)),iy=L(Math.max(5,(H-ih)/2),mx,Math.max(0,(q-.7)/.3));
+      ghIB.style.cssText=`width:${iw.toFixed(2)}px;height:${ih.toFixed(2)}px;border-radius:${L(14,13,qe).toFixed(2)}px;transform:translate3d(${ix.toFixed(2)}px,${iy.toFixed(2)}px,0)`;
+      // тексты баннера едут вместе с ним и тают в первой трети; подпись кнопки проявляется в последней трети — без пересечений
+      const sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t),out=1-sm(q/0.38),inn=sm((q-0.62)/0.38),sc2=(1-0.06*sm(q/0.38)).toFixed(4),bl=(3*sm(q/0.38)).toFixed(2);
+      const tx=(el,y,extra)=>{el.style.cssText=`opacity:${out.toFixed(3)};filter:blur(${bl}px);transform:translate3d(18px,${(oy+y).toFixed(2)}px,0)${extra||""}`};
+      tx(gE,20);tx(gT,46,` scale(${sc2})`);tx(gT2,76,` scale(${sc2})`);tx(gS,114);
+      gB.style.cssText=`opacity:${inn.toFixed(3)};filter:blur(${(2*(1-inn)).toFixed(2)}px);transform:translate3d(${(36+6*(1-inn)).toFixed(2)}px,${((H-19)/2).toFixed(2)}px,0)`;
+      gh.style.boxShadow=`0 ${(4+6*Math.sin(Math.PI*q)).toFixed(1)}px ${(14+14*Math.sin(Math.PI*q)).toFixed(1)}px rgba(38,40,44,${(.06+.06*Math.sin(Math.PI*q)).toFixed(3)})`};
+    // кадр на каждое событие прокрутки — точно по пальцу, без инерции сверху
+    const frame=()=>{raf=0;if(!s.isConnected)return;cur=target();paint(cur)};
     nwMorph=now=>{if(now){cur=target();paint(cur)}else if(!raf)raf=requestAnimationFrame(frame)};
     sc.addEventListener("scroll",()=>nwMorph(false),{passive:true});
     // экран бренда ушёл назад (открыли товар) и вернулся — перерисовать положение баннера и кнопки
@@ -3389,15 +3397,17 @@ let HSEC=store.get("tb_hsec",0),HCT=null;
 const hRail=(t,l,more)=>`<div class="sec"><div class="sech"><h2>${t}</h2>${more||""}</div><div class="hrail">${l.map(pcHTML).join("")}</div></div>`;
 function hCover(){const box=$("#hCover");if(!box)return;clearInterval(HCT);
   const bn=(CMS&&CMS.banners?CMS.banners:[]).filter(b=>(b.places&&b.places.length?b.places:["feed"]).includes("feed")&&(!b.aud||b.aud==="all"||b.aud===CV.g));
-  const co=COLL.filter(collG);
+  // один баннер на бренд: у Van Cleef не три подборки подряд, а одна (самая новая/закреплённая)
+  const co=(()=>{const seen=new Set();return COLL.filter(collG).filter(c=>{const k=String(c.brand||"").toLowerCase();if(!k)return true;if(seen.has(k))return false;seen.add(k);return true})})();
   const S=bn.map(b=>({k:"b",id:b.id,img:b.image,kick:b.subtitle||"",t:b.title||"",go:b.button||(hasAct(b.action)?"Смотреть":""),light:b.theme==="light"}))
     .concat(co.map(c=>({k:"c",id:c.id,img:c.cover,kick:c.brand+" · "+(collSeen(c.id)?"коллекция":"новая коллекция"),t:c.title,sub:c.n+" "+plural(c.n,["вещь","вещи","вещей"])+(collFrom(c)?" · от "+eur(collFrom(c)):""),go:"Смотреть коллекцию"}))).slice(0,5);
   if(!S.length){box.innerHTML="";box.dataset.k="";return}
   const key=S.map(x=>x.k+x.id).join(",");if(box.dataset.k===key&&box.firstChild)return;box.dataset.k=key;
-  box.innerHTML=`<div class="hcv"><div class="hcv-tr">${S.map((x,i)=>`<button class="hcv-s ${x.light?"light":""}" ${x.k==="b"?`data-act="cbanner" data-bid="${esc(x.id)}" data-bn="${esc(x.id)}"`:`data-coll="${esc(x.id)}"`}>${x.img?`<img src="${esc(szU(x.img,1000))}" alt="" ${i?'loading="lazy"':""} decoding="async">`:""}<span class="sh"></span><span class="tx">${x.kick?`<span class="k">${esc(x.kick)}</span>`:""}${x.t?`<b>${esc(x.t)}</b>`:""}${x.sub?`<span class="s num">${esc(x.sub)}</span>`:""}${x.go?`<span class="go">${esc(x.go)}</span>`:""}</span></button>`).join("")}</div>${S.length>1?`<div class="hcv-bars">${S.map((_,i)=>`<i class="${i?"":"on"}"><b></b></i>`).join("")}</div>`:""}</div>${co.length>1?`<button class="hcv-all press" data-act="hcolls">Все коллекции<i class="chev"></i></button>`:""}`;
+  box.innerHTML=`<div class="hcv"><div class="hcv-tr">${S.map((x,i)=>`<button class="hcv-s ${x.light?"light":""}" ${x.k==="b"?`data-act="cbanner" data-bid="${esc(x.id)}" data-bn="${esc(x.id)}"`:`data-coll="${esc(x.id)}"`}>${x.img?`<img src="${esc(szU(x.img,1000))}" alt="" ${i?'loading="lazy"':""} decoding="async" onload="this.classList.add('ld')" onerror="this.classList.add('ld')">`:""}<span class="sh"></span><span class="tx">${x.kick?`<span class="k">${esc(x.kick)}</span>`:""}${x.t?`<b>${esc(x.t)}</b>`:""}${x.sub?`<span class="s num">${esc(x.sub)}</span>`:""}${x.go?`<span class="go">${esc(x.go)}</span>`:""}</span></button>`).join("")}</div>${S.length>1?`<div class="hcv-bars">${S.map((_,i)=>`<i class="${i?"":"on"}"><b></b></i>`).join("")}</div>`:""}</div>${COLL.filter(collG).length>1?`<button class="hcv-all press" data-act="hcolls">Все коллекции<i class="chev"></i></button>`:""}`;
   if(S.length<2)return;
   const tr=box.querySelector(".hcv-tr"),bars=[...box.querySelectorAll(".hcv-bars i")];let hold=0;
   const step=()=>tr.clientWidth+10,cur=()=>Math.max(0,Math.min(S.length-1,Math.round(tr.scrollLeft/step()))),mark=()=>{const k=cur();bars.forEach((d,j)=>{d.classList.toggle("on",j===k);d.classList.toggle("past",j<k)})};
+  hold=Date.now()+(document.getElementById("splash")?4000:1000); // первое перелистывание — не раньше ~9 с после показа главной: без ощущения «началось слайд-шоу»
   tr.addEventListener("scroll",mark,{passive:true});["touchstart","touchmove","pointerdown","wheel"].forEach(ev=>tr.addEventListener(ev,()=>{hold=Date.now()},{passive:true}));
   // листаем сами раз в 6 с, только когда лента видна и её не трогали 8 с; к началу — без «перемотки» через все слайды
   HCT=setInterval(()=>{if(document.hidden||Date.now()-hold<8000||!tr.isConnected||!tr.offsetParent)return;const r=tr.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;const k=cur(),n=k+1>=S.length?0:k+1;tr.scrollTo({left:n*step(),behavior:n?"smooth":"instant"})},6000)}
