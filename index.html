@@ -4632,6 +4632,8 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
     let n=null;try{const b=authBody(),r=await fetch(b?CATK+"&a=1":CATK,b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});n={st:r.status,ok:r.ok,t:await r.text()}}catch(e){}
     if(n&&n.st===403){CLOSED=true;try{window.caches&&caches.delete(CATSTO)}catch(e){}catApply({products:[]},false);catRefreshUI();try{authGate(true)}catch(e){}}
     else if(n&&n.ok&&catCore(n.t)!==catCore(local.t)){const t=n.t;window.requestIdleCallback?requestIdleCallback(()=>catSave(t),{timeout:4000}):setTimeout(()=>catSave(t),1500);
+      // баннеры коллекций (маленькая часть каталога) — обновляем сразу и только их: главная не перерисовывается, меняется один блок
+      try{const cut=x=>{const i=x.lastIndexOf(',"collections":'),k=x.lastIndexOf(',"generatedAt"');return i>0&&k>i?x.slice(i+15,k):""},c1=cut(t),c0=cut(local.t);if(c1&&c1!==c0){const C=JSON.parse(c1);if(Array.isArray(C)){COLL=C;const hb=document.getElementById("hCover");if(hb&&typeof hCover==="function"){hb.style.transition="opacity .35s";hb.style.opacity=0;setTimeout(()=>{try{hCover()}catch(e){}hb.style.opacity=1},360)}}}}catch(e){}
       window.CATPEND=t;const vh=()=>{if(document.hidden&&window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(catPend(j),true);catRefreshUI()}catch(e){}}};document.addEventListener("visibilitychange",vh)}}
   // заранее разобрать фото для «Это или это» (в фоне, когда приложение уже открыто)
   setTimeout(()=>{try{const d=AUTO.find(r=>r.k==="duel");d&&d.warm&&d.warm()}catch(e){}},2500);
