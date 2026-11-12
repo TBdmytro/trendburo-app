@@ -404,7 +404,9 @@ export default async function handler(req, res) {
         const stockAt = {}; for (const p of all) if (p._id.startsWith(px)) { const t = Date.parse(p.stAt || ""); if (t) stockAt[p._id.slice(px.length).toUpperCase()] = t; }
         // Hermès: прочитано до кнопки v127 (10.11 12:20 UTC) — размеры/фото по старым правилам: кнопка отметит «обновить» на странице раздела
         const old = {}; if (px === "product.manual.hermes-") { const cut = Date.parse("2026-11-10T12:20:00Z"); for (const p of all) if (p._id.startsWith(px)) { const ck = Date.parse(p.chk || p.offers?.[0]?.checkedAt || ""); if (!ck || ck < cut) old[p._id.slice(px.length).toUpperCase()] = 1; } }
-        return send(res, 200, { status, fresh, stockAt, old });
+        // Hermès: одежда, у которой раздел не показал размеры — кнопка пометит «📏 размеры — нажмите» (размеры есть только на странице модели)
+        const nosz = {}; if (px === "product.manual.hermes-") for (const p of all) if (p._id.startsWith(px) && (p.overrides?.category || p.category) === "clothing" && !p.nSz) nosz[p._id.slice(px.length).toUpperCase()] = 1;
+        return send(res, 200, { status, fresh, stockAt, old, nosz });
       }
       case "brandBoard": {
         // бренды, которые у нас есть: сколько товаров, что на витрине, разбивка по категориям, 4 обложки («Новые с сайтов» — отдельно)
