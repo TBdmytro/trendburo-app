@@ -2305,10 +2305,12 @@ window.addEventListener("message", async e => {
   if (!me) return;
   if (e.data.type === "tb-hello") { // кнопка спрашивает, что уже есть: такие товары она пропустит
     clearInterval(mtPing.t);
-    let status = {}, fresh = {}; try { const kr = await api("knownProducts", { query: { prefix: mtPrefix(e.data.host) }, silent: true }); status = kr.status || {}; fresh = kr.fresh || {}; } catch {}
+    let status = {}, fresh = {}, extra = {}; try { const kr = await api("knownProducts", { query: { prefix: mtPrefix(e.data.host) }, silent: true }); status = kr.status || {}; fresh = kr.fresh || {}; extra = { old: kr.old || {}, nosz: kr.nosz || {}, stockAt: kr.stockAt || {} }; } catch {}
+    // последняя версия кнопки — с её страницы: если закладка старая, кнопка попросит перетащить новую
+    try { if (!window.__mtVer) { const t = await fetch("/mt.html", { cache: "no-store" }).then(r => r.text()); window.__mtVer = (t.match(/ver: "(v\d+)"/) || [])[1] || ""; } extra.ver = window.__mtVer; } catch {}
     // карточки, которые уже пришли и ждут проверки здесь, тоже считаем «уже есть»
     for (const x of mtTodo) { const k = String(x.it.sku || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); if (k && !status[k]) status[k] = "draft"; } // ещё в очереди на сохранение
-    try { e.source.postMessage({ type: "tb-known", status, fresh }, e.origin); } catch {}
+    try { e.source.postMessage({ type: "tb-known", status, fresh, ...extra }, e.origin); } catch {}
     return;
   }
   if (e.data.type === "tb-progress") { api("webProgress", { method: "POST", silent: true, body: { p: e.data } }).catch(() => {}); return; }
