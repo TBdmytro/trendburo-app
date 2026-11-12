@@ -1060,6 +1060,24 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .in2 .k{font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.6;font-weight:700}
 .sv2 .in2 h2{font-size:34px;margin:6px 0;letter-spacing:-.02em}
 .sv2 .in2 p{opacity:.7;margin:0;font-size:15px}
+/* Истории по стандарту: фото — в своей скруглённой рамке (светлый фон, без чёрного), текст — отдельно под фото, шрифты Onest / Prata */
+.sv2 .st{inset:calc(72px + var(--st)) 12px calc(108px + var(--sb)) 12px;padding:0;border-radius:24px;background-color:#f2f3f4!important}
+.sv2 .st img{background:transparent}
+.sv2 .st img.nf{display:none}
+.sv2 .st .nfm{position:absolute;inset:0;display:grid;place-items:center;font:400 22px/1.2 Prata,serif;color:#9a9da3;text-align:center;padding:24px}
+.sv2 .pn{left:12px;right:12px;bottom:calc(12px + var(--sb));background:#26282c;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;text-shadow:none;font-family:Onest,system-ui,sans-serif}
+.sv2 .bg{top:calc(84px + var(--st));right:24px;background:rgba(31,33,37,.86)}
+.sv2 .dt{left:24px;bottom:calc(120px + var(--sb));background:rgba(255,255,255,.7)}
+.sv2 .pd{bottom:calc(118px + var(--sb))}.sv2 .pd i{background:rgba(31,33,37,.25)}.sv2 .pd i.on{background:#1f2125}
+.sv2 .cin{display:flex;flex-direction:column;background:#1d1f22;padding:calc(72px + var(--st)) 12px calc(14px + var(--sb));box-sizing:border-box}
+.sv2 .cin .cfr{flex:1;min-height:0;border-radius:24px;background:#f2f3f4 center/cover no-repeat}
+.sv2 .cin .tx{position:static;padding:16px 8px 0}
+.sv2 .cin .k{font:600 10px Onest,sans-serif;letter-spacing:.18em;opacity:.6}
+.sv2 .cin h2{font:400 30px/1.08 Prata,serif;margin:8px 0 0}
+.sv2 .cin p{font:400 13.5px/1.45 Onest,sans-serif;opacity:.72;margin:8px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sv2 .cin .cta{margin-top:14px}
+.sv2 .in2 h2{font-family:Prata,serif;font-weight:400}
+.sv2 .dc .im{background:#f2f3f4!important;border-radius:20px 20px 0 0}
 @media (prefers-reduced-motion:reduce){.sv2 *,.sv2{animation:none!important;transition:none!important}}
 
 /* чат с менеджером: слева над меню; в Telegram открывает чат, приложение остаётся свёрнутым */
@@ -3516,12 +3534,12 @@ function openAuto(ri){
   // заранее: загрузка следующего слайда и разбор фото его товаров (чтобы кадр и раскладка были готовы к показу)
   const pre=s=>{if(!s)return;[s.p,s.a,s.b].filter(Boolean).forEach(p=>shpProduct(p,3));const u=srcOf(s);if(u){const m=new Image();m.crossOrigin="anonymous";m.src=u;if(s.t==="du"){const m2=new Image();m2.crossOrigin="anonymous";m2.src=svImg(s.b,bestIdx(s.b)).src}}};
   const slideH=(R,s)=>{
-    if(s.t==="cin"){const c=R.coll;collMark(c.id);return `<div class="cin"${c.cover?` style="background-image:url('${esc(szU(c.cover,1000))}')"`:""}><div class="sh"></div><div class="tx"><span class="k">Новая коллекция · ${esc(c.brand)}</span><h2>${esc(c.title)}</h2>${c.desc?`<p>${esc(c.desc)}</p>`:""}<button class="cta" data-collgo="${esc(c.id)}">Смотреть ${c.n} ${plural(c.n,["вещь","вещи","вещей"])} ›</button></div></div>`}
+    if(s.t==="cin"){const c=R.coll;collMark(c.id);return `<div class="cin"><div class="cfr"${c.cover?` style="background-image:url('${esc(szU(c.cover,1000))}')"`:""}></div><div class="tx"><span class="k">Новая коллекция · ${esc(c.brand)}</span><h2>${esc(c.title)}</h2>${c.desc?`<p>${esc(c.desc)}</p>`:""}<button class="cta" data-collgo="${esc(c.id)}">Смотреть ${c.n} ${plural(c.n,["вещь","вещи","вещей"])} ›</button></div></div>`}
     if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
     if(s.t==="du")return `<div class="du ${duLay(s.a,s.b)}">${[s.a,s.b].map((p,j)=>duCardH(p,j)).join("")}<span class="vs">VS</span></div><div class="duh">смахните неинтересное · тап по карточке — открыть</div>`;
     const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
     const nph=0,b0=s.t==="p"?Math.min(bestIdx(p),5):0;
-    return `<div class="st"><img crossorigin="anonymous" src="${esc(srcOf(s))}" alt="${esc(p.brand+" "+p.name)}" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j===b0?"on":""}"></i>`).join("")}</div>`:""}
+    return `<div class="st"${(()=>{const t=s.t==="p"?(svImg(p,bestIdx(p))||{}).thumb:null;return t?` style="background:#f2f3f4 url('${esc(t)}') center/contain no-repeat"`:""})()}><img crossorigin="anonymous" src="${esc(srcOf(s))}" alt="" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j===b0?"on":""}"></i>`).join("")}</div>`:""}
       ${p.sale?`<span class="bg s">−${p.sale}%</span>`:p.isNew?`<span class="bg">Новинка</span>`:""}
       ${cs?`<div class="dt">${cs.map((c,j)=>`<button data-c="${j}" class="${j?"":"on"}" aria-label="${esc(c.name)}" style="background-image:url('${esc(c.idx>=0&&svImg(p,c.idx)?svImg(p,c.idx).thumb:c.image)}')"></button>`).join("")}</div>`:""}
       <div class="pn"><div class="t"><div class="br">${esc(p.brand)}</div><div class="nm">${esc(p.name)}</div><div class="pr num">${priceH(p)}</div></div>
@@ -3546,9 +3564,15 @@ function openAuto(ri){
     f.appendChild(slideNode(R,L[k]));return f};
   const slideNode=(R,s)=>{const n=document.createElement("div");n.className="sl";n.innerHTML=slideH(R,s);
     const im=n.querySelector(".st img");if(im){const box=n.querySelector(".st");
-      const go=()=>{const pn=n.querySelector(".pn");box.dataset.res=pn&&pn.offsetHeight?pn.offsetHeight+24:110;box.dataset.whole=1;fitShot(im,box)};
-      im.addEventListener("load",()=>{im._si=undefined;n.isConnected?go():requestAnimationFrame(go)});
-      im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.src=im.src}else im.classList.add("fit")})}
+      const go=()=>{box.dataset.res=0;box.dataset.whole=1;fitShot(im,box)};
+      // лёгкая копия из каталога видна сразу (без паузы на чёрном); когда большое фото встало на место — копию убираем (у фото на прозрачном фоне она бы просвечивала)
+      const clr=(k=0)=>{if(im.classList.contains("fit")||k>40){if(/img|url\(/.test(box.style.backgroundImage)&&!/gradient/.test(box.style.backgroundImage))box.style.backgroundImage="none"}else requestAnimationFrame(()=>clr(k+1))};
+      im.addEventListener("load",()=>{im._si=undefined;n.isConnected?go():requestAnimationFrame(go);clr()});
+      // фото не открылось: без «разрешения» → следующее фото этой вещи → аккуратная подпись вместо значка битой картинки
+      let alt=s.p?(s.p.imgs||[]).map(x=>x&&x.src).filter(u=>u&&u!==im.getAttribute("src")):[];
+      im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.src=im.src;return}
+        const u=alt.shift();if(u){im.setAttribute("crossorigin","anonymous");im.src=u;return}
+        im.classList.add("nf");if(!box.querySelector(".nfm")){const m=document.createElement("div");m.className="nfm";m.textContent=s.p?s.p.brand:"";box.append(m)}})}
     return n};
   const mark=s=>{if(s.p)svMark(s.p.id);if(s.t==="du"){svMark(s.a.id);svMark(s.b.id)}};
   // одна вещь — одно главное фото: тап справа — сразу следующая вещь, все фото — в карточке по «Смотреть»
@@ -3560,7 +3584,7 @@ function openAuto(ri){
   const tapL=()=>{const L=phs();if(L&&pj>0){pj--;showPh()}else prev()};
   const enter=()=>{const s=list[i];mark(s);el=0;pj=s&&s.t==="p"?Math.min(bestIdx(s.p),5):0;{const L=phs();if(L&&L[pj+1]){const m=new Image();m.crossOrigin="anonymous";m.src=L[pj+1].src}}cb.querySelector(".hz small").textContent="сегодня";
     cb.querySelector(".tp.l").hidden=cb.querySelector(".tp.r").hidden=s.t==="du";
-    cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1]);if(s.t==="du")duPre()};
+    cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1]);pre(list[i+2]);if(s.t==="du")duPre()};
   // смена слайда внутри рубрики: как в Instagram — сразу, без мигания (новое фото уже загружено заранее)
   // листание внутри рубрики: новая картинка въезжает сбоку, старая уходит — видно, как листается; быстрые тапы не ломают анимацию
   const goSlide=k=>{const dir=k>i?1:-1,s=list[k];i=k;
