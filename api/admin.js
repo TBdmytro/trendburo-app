@@ -108,7 +108,7 @@ async function allProducts(store) {
 }
 // ключ кнопки «В Trend Büro»: даёт только загрузку товаров с сайтов брендов (скрытыми), без доступа к остальной админке.
 // Хранится на сервере только отпечаток (sha256); сам ключ — внутри закладки пользователя
-const KEY_ACTIONS = new Set(["me", "knownProducts", "webImport", "webUpdate", "sectionKnown", "sectionSync", "markNew", "imageUpload", "subcats", "snapSave"]);
+const KEY_ACTIONS = new Set(["me", "knownProducts", "webImport", "webUpdate", "sectionKnown", "sectionSync", "markNew", "imageUpload", "subcats", "snapSave", "webProgress"]);
 const keyHash = k => createHash("sha256").update(String(k)).digest("hex");
 async function keySession(req, a, store) {
   const k = String(req.headers["x-tb-key"] || ""); if (!/^[a-f0-9]{48}$/.test(k) || !KEY_ACTIONS.has(a)) return null;
