@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   if (req.method === "GET" && /[?&]probe=db\b/.test(String(req.url || ""))) return probeDb(res);
   // баннеры главной, как их видит витрина: порядок, число вещей, обложка
   if (req.method === "GET" && /[?&]probe=acoll\b/.test(String(req.url || ""))) return (async () => { const st = getStore(), { activeCollections } = await import("../lib/collections.js");
-    const L = await st.list("product", { status: "published" }, { limit: 30000, fields: "_id, status, webSections, images[0...2]{url}, category, overrides" });
+    const L = await st.list("product", { status: "published" }, { limit: 30000, fields: "_id, status, webSections, images[0...2]{url}, category, subcategory, title, overrides" });
     const A = activeCollections(await st.list("collection", {}, { limit: 500 }), L);
     res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(A.map(c => ({ id: c.id, b: c.brand, t: c.title, pin: c.pinned, n: c.n, g: c.g, cover: c.cover })), null, 1)); })();
   // коллекции (баннеры главной): что включено, закреплено и какая обложка
