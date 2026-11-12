@@ -1544,7 +1544,7 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 .nwpill.morph{position:absolute;left:18px;top:0;z-index:2}
 /* «Новинки сезона» → плашка: баннер липнет у шапки и сжимается по прокрутке (ключевые кадры ниже) */
 .nwsc{scroll-timeline:--nws block}
-.nwsec{position:sticky;z-index:4;pointer-events:none}.nwsec .nwban{pointer-events:auto;background:transparent;overflow:visible}
+.nwsec{position:sticky;z-index:4;pointer-events:none}.nwsec .nwban{pointer-events:auto;background:transparent;overflow:hidden}
 .nwban .nwbg{position:absolute;inset:0;border-radius:24px;background:#efe8de;transform-origin:0 0}
 .nwban .nwpbg{position:absolute;left:0;top:0;background:#efe8de;border:1px solid #e2d6c3;box-sizing:border-box;opacity:0;transform-origin:0 0}
 .nwban .nwlb{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;padding:4px 13px 4px 4px;box-sizing:border-box;font-size:13.5px;font-weight:500;color:var(--fg);white-space:nowrap;opacity:0;z-index:3}
@@ -1558,8 +1558,8 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 .nwjs #bcats:has(.nwpill.morph) .brest{animation-timeline:auto;animation-duration:1s;animation-play-state:paused;animation-delay:calc(var(--np,0) * -1s)}
 #bcats .nwpill.morph{animation:nwPl 1ms linear both;animation-timeline:--nws;animation-range:var(--nr0,0px) var(--nr1,1px)}
 .nwjs #bcats .nwpill.morph{animation-timeline:auto;animation-duration:1s;animation-play-state:paused;animation-delay:calc(var(--np,0) * -1s)}
-@keyframes nwBg{0%{transform:none;opacity:1}82%{opacity:1}100%{transform:scale(var(--nsx),var(--nsy));opacity:0}}
-@keyframes nwPb{0%,74%{opacity:0;transform:scale(1.25,1.6)}100%{opacity:1;transform:none}}
+@keyframes nwBg{0%{clip-path:inset(0 0 0 0 round 24px)}100%{clip-path:inset(0 var(--ncr) var(--ncb) 0 round var(--nrr))}} /* обрезка, а не масштаб: скругления остаются ровными до самой плашки */
+@keyframes nwPb{0%,90%{opacity:0}100%{opacity:1}}
 @keyframes nwT{0%{opacity:1;transform:none;filter:blur(0)}48%{opacity:0;transform:scale(.8);filter:blur(7px)}100%{opacity:0;transform:scale(.7);filter:blur(7px)}}
 @keyframes nwSt{0%{transform:none;filter:blur(0);opacity:1}45%{filter:blur(4px);opacity:.85}75%{opacity:0;transform:translate(var(--nstx),0) scale(.35);filter:blur(6px)}100%{opacity:0;transform:translate(var(--nstx),0) scale(.3)}}
 @keyframes nwD{0%{opacity:1}15%{opacity:0}100%{opacity:0}}
@@ -3333,7 +3333,7 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
       const B=ban.getBoundingClientRect(),scT=sc.getBoundingClientRect().top,r0=Math.max(0,sc.scrollTop+(bsec.getBoundingClientRect().top-scT)-top),W=ban.offsetWidth,H=ban.offsetHeight,PW=pill.offsetWidth,PH=pill.offsetHeight;NR=Math.max(160,Math.round(sc.scrollTop+(bsE.getBoundingClientRect().top-scT)-nbH()-r0));
       const lb=ban.querySelector(".nwlb");lb.innerHTML=pill.innerHTML;lb.style.width=PW+"px";lb.style.height=PH+"px";const pb=ban.querySelector(".nwpbg");pb.style.width=PW+"px";pb.style.height=PH+"px";pb.style.borderRadius=PH/2+"px";
       const st0=ban.querySelector(".nwst").getBoundingClientRect();
-      const v={"--nr0":r0+"px","--nr1":(r0+NR)+"px","--nsx":(PW/W).toFixed(4),"--nsy":(PH/H).toFixed(4),"--npw":(PW+8)+"px","--nstx":(-(st0.left-B.left)+4)+"px","--nsty":(-(st0.top-B.top)-(st0.height-PH)/2)+"px"};
+      const v={"--nr0":r0+"px","--nr1":(r0+NR)+"px","--nsx":(PW/W).toFixed(4),"--nsy":(PH/H).toFixed(4),"--npw":(PW+8)+"px","--ncr":(W-PW)+"px","--ncb":(H-PH)+"px","--nrr":(PH/2)+"px","--nstx":(-(st0.left-B.left)+4)+"px","--nsty":(-(st0.top-B.top)-(st0.height-PH)/2)+"px"};
       for(const k in v)s.style.setProperty(k,v[k])};
     requestAnimationFrame(nwSetup);setTimeout(nwSetup,450);addEventListener("resize",nwSetup);s._nwSetup=nwSetup;
     // браузер без анимаций по прокрутке (iOS до 26): те же ключевые кадры, положение задаёт один расчёт за кадр
