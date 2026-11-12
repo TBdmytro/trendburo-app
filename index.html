@@ -2679,6 +2679,10 @@ function openProduct(id){popTrack("v",id);
   let d=prefs.dest||"ua",size="",ci=0;
   const st=p&&p.st;if(st&&st.loc==="ua")d="ua";
   const cws=st?[{name:"",c:it.c,ok:true}]:colorways(it);
+  // Hermès, одежда: размеры в наличии читаются по фильтру раздела; остальные размеры обычной сетки Hermès показываем тоже — «распродан онлайн, уточним в бутике»
+  if(!st&&p&&p.live&&p.cat==="clothing"&&/herm/i.test(p.brand||"")&&p.sizes&&p.sizes.length&&!p._hmFull){const have=new Set(p.sizes.map(z=>String(z.size))),w=p.g==="w",num=[...have].every(z=>/^\d+$/.test(z)),
+    grid=num?(w?["34","36","38","40","42","44","46"]:["44","46","48","50","52","54","56","58","60"]):["XS","S","M","L","XL","XXL","XXXL"],ord=z=>{const i=grid.indexOf(String(z));return i<0?99:i};
+    for(const z of grid)if(!have.has(z))p.sizes.push({size:z,status:"ask"});p.sizes.sort((a,b)=>ord(a.size)-ord(b.size));p._hmFull=1}
   let sizes=st?null:(p&&p.live?(p.sizes&&p.sizes.length?[...new Set(p.sizes.map(z=>z.size))]:null):(p&&SIZES[p.cat]?SIZES[p.cat][p.g]:null));
   // Hermès: в разделе сайта у перчаток, шапок, футболок виден только один размер — даём выбрать из обычной сетки Hermès, наличие размера уточнит менеджер
   const hmGrid=(()=>{if(st||!p||!p.live||sizes||!/herm/i.test(p.brand||""))return null;const t=String(p.name||it.name||""),w=p.g==="w";
