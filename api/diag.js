@@ -2,6 +2,15 @@
  *  Без личных данных: только техника устройства и замеры. Включается вводом «#diag» в поиске каталога. */
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+  // свежий код кнопки «В Trend Büro»: закладка сначала грузит его отсюда — новые версии работают без перетаскивания закладки заново
+  if (req.query && req.query.probe === "bm") {
+    try { const host = req.headers["x-forwarded-host"] || req.headers.host; const t = await fetch(`https://${host}/mt.html`, { cache: "no-store" }).then(r => r.text());
+      const i = t.indexOf("async function tbCollect() {"), j = t.indexOf("\nvar setBm =", i); if (i < 0 || j < 0) throw new Error("no code");
+      const code = t.slice(i, j).replace('KEY = "__TBKEY__"', 'KEY = window.__tbKey || ""');
+      res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+      return res.status(200).send(`(function(){ var f = ${code.replace(/^async function tbCollect\(\)/, "async function ()")}; window.__tbFromNet = 1; f().finally(function () { window.__tbFromNet = 0; }); })();`);
+    } catch (e) { res.setHeader("Content-Type", "application/javascript"); return res.status(500).send("/* " + String(e.message).slice(0, 80) + " */"); }
+  }
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
   // переезд в Postgres (Neon): шаги копирования документов из Sanity — только количество, без содержимого
