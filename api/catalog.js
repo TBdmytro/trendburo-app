@@ -12,19 +12,20 @@ import { allow, tooMany } from "../lib/ratelimit.js";
 /* Каталог собирается не чаще раза в 20 с на экземпляр сервера; одновременные запросы ждут одну сборку (база не получает толпу одинаковых запросов) */
 const MEMO = [null, null];
 const TTL = 3 * 60e3; // 3 минуты: правки видны чуть позже, зато база не собирает каталог по каждому заходу
-export function _resetCatalogMemo() { MEMO[0] = MEMO[1] = null; CUST.clear(); }
+let FRESH = false; // каталог сбросили после правки в админке — собираем заново, а не отдаём сохранённый
+export function _resetCatalogMemo() { MEMO[0] = MEMO[1] = null; CUST.clear(); FRESH = true; }
 // доступ клиента — из памяти на 2 минуты (без запроса к базе при каждом открытии приложения)
 const CUST = new Map();
 async function custCached(store, id) { const m = CUST.get(id); if (m && Date.now() - m.at < 120e3) return m.c; const c = await store.get(customerId(id)); if (CUST.size > 5000) CUST.clear(); if (c?.access === "ok") CUST.set(id, { c, at: Date.now() }); return c; } // помним только «пускаем» — одобренный только что попадает сразу
 // готовый каталог хранится и в базе (сжатым): новый экземпляр сервера (после выкладки или простоя) отдаёт его сразу,
 // а не собирает 23 000 товаров 10–15 с — раньше в это время сайт «висел» на заставке
-let SAVED_AT = 0;
+let SAVED_AT = 0; const LOADP = [null, null];
 async function savedCatalog(store, k) { try { const d = await store.get("settings.catcache" + k); if (!d || !d.gz || Date.now() - Date.parse(d.at) > 12 * 3600e3) return null; const { gunzipSync } = await import("node:zlib"); return { body: gunzipSync(Buffer.from(d.gz, "base64")).toString("utf8"), at: Date.parse(d.at) }; } catch { return null; } }
 async function saveCatalog(store, k, body) { if (Date.now() - SAVED_AT < 5 * 60e3) return; SAVED_AT = Date.now(); try { const { gzipSync } = await import("node:zlib"); await store.put({ _id: "settings.catcache" + k, _type: "settings", at: new Date().toISOString(), gz: gzipSync(Buffer.from(body)).toString("base64") }); } catch {} }
 async function catalogBody(compact) {
   const k = compact ? 1 : 0; let m = MEMO[k];
   if (m && m.body && Date.now() - m.at < TTL) return m.body;
-  if (!m) { const sv = await savedCatalog(getStore(), k); if (sv) { MEMO[k] = m = { body: sv.body, at: 0 }; } }
+  if (!m && !FRESH) { const L = LOADP[k] = LOADP[k] || savedCatalog(getStore(), k); const sv = await L; m = MEMO[k]; if (!m && sv) MEMO[k] = m = { body: sv.body, at: 0 }; }
   if (m && m.wait) return m.body || m.wait; // сборка уже идёт — отдаём прежний каталог, не ждём
   const wait = (async () => {
     const store = getStore();
@@ -42,7 +43,8 @@ async function catalogBody(compact) {
   })();
   MEMO[k] = { ...(m || {}), wait };
   const done = wait.then(body => { MEMO[k] = { body, at: Date.now() }; saveCatalog(getStore(), k, body); return body; }, e => { MEMO[k] = m && m.body ? { body: m.body, at: m.at } : null; throw e; });
-  if (m && m.body) { done.catch(() => {}); return m.body; } // есть прежний каталог — отдаём сразу, свежий соберётся в фоне
+  if (m && m.body && !FRESH) { done.catch(() => {}); return m.body; } // есть прежний каталог — отдаём сразу, свежий соберётся в фоне
+  done.then(() => { FRESH = false; }, () => {});
   try { const body = await done; return body; }
   catch (e) { MEMO[k] = m && m.body ? { body: m.body, at: m.at } : null; throw e; }
 }
