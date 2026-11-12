@@ -2613,6 +2613,8 @@ function fullScale(im,w,h,W,H){const u=im.currentSrc||im.src||"",r=(w/h)/(W/H),c
 function placeFull(im,box,w,h){const c0=getComputedStyle(box),p0=parseFloat(c0.paddingTop)||0,W0=box.clientWidth,H0=box.clientHeight-p0-(parseFloat(c0.paddingBottom)||0);
   if(W0>10&&H0>10&&w&&h){const k=fullScale(im,w,h,W0,H0),fill=k>Math.min(W0/w,H0/h)+1e-6,dw=fill?W0:w*k,dh=fill?H0:h*k;Object.assign(im.style,{position:"absolute",left:(W0-dw)/2+"px",top:(p0+(H0-dh)/2)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:fill?"cover":"fill",objectPosition:"50% 50%"});im.classList.add("geo")}}
 function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!box)return;
+  // фото загружено — заглушку под ним убираем: у снимков на прозрачном фоне (Van Cleef, LV) она просвечивала вторым, меньшим товаром
+  if(im.style.backgroundImage&&im.style.backgroundImage!=="none")im.style.backgroundImage="none";
   // карточка товара: размер и место снимка — сразу при загрузке (разбор цветов догонит позже); до этого снимок не виден — без острых углов
   if(box.dataset.full&&!im.classList.contains("geo"))placeFull(im,box,w,h);
   if(im._si===undefined){const m0=SIMEM.get(siKey(im.currentSrc||im.src));if(m0)im._si=m0}
