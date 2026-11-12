@@ -2307,7 +2307,10 @@ function renderCatalog(){if(F.lockBrand&&!F.brands.has(F.lockBrand))F.brands.add
 const CAT_TURN=["bags","shoes","clothing","accessories","jewelry","eyewear","watches","fragrance"];
 const DH={d:"",m:new Map()};
 const dayHash=id=>{const d=new Date().toISOString().slice(0,10);if(DH.d!==d){DH.d=d;DH.m.clear()}let h=DH.m.get(id);if(h===undefined){h=+d.replace(/-/g,"");for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;DH.m.set(id,h)}return h};
-function popOrder(list){const best=list.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best),rest=list.filter(p=>p.best==null);
+const hotIds=()=>new Set((typeof COLL!=="undefined"?COLL:[]).filter(c=>c.pinned).flatMap(c=>c.ids||[])); // ходовая коллекция (закреплённая: сейчас Van Cleef Alhambra)
+function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best);
+  // ходовая коллекция — в самом начале «Популярного»: первые 12 её вещей открывают каталог, остальные — первыми у своего бренда
+  const hot0=list.filter(p=>p.best==null&&H0.has(p.id)).sort((a,b)=>(!!b.st-!!a.st)||((b.pop||0)-(a.pop||0))||(dayHash(a.id)-dayHash(b.id))).slice(0,12),h0=new Set(hot0),rest=list.filter(p=>p.best==null&&!h0.has(p));
   // популярное у наших покупателей (смотрят, кладут в избранное и корзину) — сразу после хитов продаж
   const grp=c=>c==="bags"||c==="shoes"?0:c==="clothing"?1:2;
   const hot=rest.filter(p=>(p.pop||0)>=3).sort((a,b)=>b.pop-a.pop).slice(0,48).sort((a,b)=>grp(a.cat)-grp(b.cat)),hs=new Set(hot),rem=rest.filter(p=>!hs.has(p));
@@ -2315,14 +2318,14 @@ function popOrder(list){const best=list.filter(p=>p.best!=null).sort((a,b)=>a.be
   // внутри категории бренды идут по очереди — один большой бренд (Alo Yoga) не забивает ленту
   Object.keys(G).forEach(c=>{const B={};G[c].forEach(p=>(B[p.bk]=B[p.bk]||[]).push(p));const bs=Object.values(B);
     // ходовые коллекции (закреплённая на главной, например Van Cleef Alhambra) — первыми у своего бренда; остальное — для ассортимента
-    const HOT=new Set((typeof COLL!=="undefined"?COLL:[]).filter(c=>c.pinned).flatMap(c=>c.ids||[]));
+    const HOT=H0;
     bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)]));b.sort((x,y)=>(HOT.has(y.id)-HOT.has(x.id))||(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)))});
-    bs.sort((a,b)=>dayHash(a[0].bk)-dayHash(b[0].bk));const o=[];for(let i=0;o.length<G[c].length;i++)for(const b of bs)if(i<b.length)o.push(b[i]);G[c]=o});
+    bs.sort((a,b)=>(HOT.has(b[0].id)-HOT.has(a[0].id))||(dayHash(a[0].bk)-dayHash(b[0].bk)));const o=[];for(let i=0;o.length<G[c].length;i++)for(const b of bs)if(i<b.length)o.push(b[i]);G[c]=o});
   // порядок ленты: сначала сумки и обувь (по очереди), потом одежда, потом всё остальное (по очереди; «Другое» — реже)
   const turn=[...CAT_TURN.filter(c=>G[c]),...Object.keys(G).filter(c=>!CAT_TURN.includes(c))],at={},out=[];
   for(const ph of [0,1,2]){const T=turn.filter(c=>grp(c)===ph),n0=T.reduce((s,c)=>s+G[c].length,0),st=out.length;
     for(let k=0;out.length-st<n0;k++)for(const c of T){if(c==="other"&&k%3&&T.some(x=>x!=="other"&&(at[x]||0)<G[x].length))continue;const g=G[c],j=at[c]||0;if(j<g.length){out.push(g[j]);at[c]=j+1}}}
-  return [...best,...hot,...out]}
+  return [...best,...hot0,...hot,...out]}
 function sorted(list){const s=F.sort;if(s==="pop")return popOrder(list);return list.sort((a,b)=>s==="asc"?a.price-b.price:s==="desc"?b.price-a.price:(!!b.st-!!a.st)||(b.isNew-a.isNew)||(a.price-b.price))}
 // Van Cleef: версии одной модели (металл, малая/большая модель, ряды) — в сетке одна плитка с числом версий; выбор версии — в карточке
 function vcaOne(list){const cnt=new Map(),seen=new Set();list.forEach(p=>{if(p.fam&&/van cleef/i.test(p.brand||""))cnt.set(p.fam,(cnt.get(p.fam)||0)+1)});return list.filter(p=>{if(!cnt.has(p.fam)){p._nv=0;return true}if(seen.has(p.fam))return false;seen.add(p.fam);p._nv=cnt.get(p.fam);return true})}
@@ -3137,7 +3140,7 @@ function runSearch(raw){const q=norm(raw.trim());const box=$("#sres"),body=$("#h
   box.hidden=false;body.hidden=true;
   const QX=qMatcher(raw),uq=uaN(raw.trim());
   const brands=BRANDS.map(b=>b[0]).filter(bk=>uaN(bname(bk)).includes(uq)||uaN(RU[bk]||"").includes(uq)||(QX.toks.length===1&&QX.toks[0].bk.includes(bk)));
-  const items=P.filter(p=>QX.toks.length||QX.g?QX.test(p):norm(p.brand+" "+p.name).includes(q)).slice(0,8);
+  const HS=hotIds(),items=P.filter(p=>QX.toks.length||QX.g?QX.test(p):norm(p.brand+" "+p.name).includes(q)).sort((a,b)=>HS.has(b.id)-HS.has(a.id)).slice(0,8); // в поиске ходовая коллекция — первой
   const icons=ICONS.filter(ic=>norm(bname(ic.bk)+" "+ic.name).includes(q)||ic.ru.includes(q)||(RU[ic.bk]||"").includes(q)).slice(0,8);
   const resale=RESALE.filter(r=>norm(r.brand+" "+r.name).includes(q)||ICONS.some(ic=>ic.ru.includes(q)&&norm(r.name).includes(norm(ic.name.split(" ")[0])))).slice(0,4);
   let h="";
