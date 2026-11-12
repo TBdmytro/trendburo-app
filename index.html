@@ -140,6 +140,11 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .collc b{font:400 28px/1.02 Prata,serif;margin-top:6px}.collc .ft{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font:600 12.5px Onest,sans-serif;opacity:.92}.collc .go{width:36px;height:36px;border-radius:50%;background:#fff;color:#26282c;display:grid;place-items:center;font:600 18px Onest,sans-serif}
 .collmr{display:flex;gap:10px;overflow-x:auto;padding:2px 18px 4px;margin:0;scrollbar-width:none}.collmr::-webkit-scrollbar{display:none}
 .collm{flex:none;width:118px;height:150px;border:0;border-radius:16px;position:relative;overflow:hidden;background:#2a2b2e center top/cover no-repeat;color:#fff;text-align:left;padding:0}.collm .tx{position:absolute;left:9px;right:8px;bottom:8px;display:flex;flex-direction:column}.collm b{font:400 15px/1.05 Prata,serif;margin-top:2px}.collm .dot{position:absolute;right:8px;top:8px;width:8px;height:8px;border-radius:50%;background:#e8452c;box-shadow:0 0 0 2px #fff;z-index:1}
+/* плитка коллекции/типа: фото сверху чистое, подпись — на плашке под ним (как на карточке товара) */
+.collm{width:132px;height:auto;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);border:1px solid var(--line);box-shadow:none}
+.collm .ci{display:block;width:100%;aspect-ratio:1/1;background:var(--soft) center/contain no-repeat;background-origin:content-box;padding:10px;box-sizing:border-box}
+.collm .tx{position:static;padding:9px 10px 10px;gap:3px}.collm b{font:500 14px/1.15 Onest,sans-serif;margin:0;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.collm .k{font:500 11.5px Onest,sans-serif;letter-spacing:0;text-transform:none;opacity:1;color:var(--muted)}.collm .sh{display:none}.collm .dot{z-index:2}
 .collhd2{border-radius:22px;overflow:hidden;background:#f2f3f4}.collhd2 .im{height:260px;background:#fff center/contain no-repeat;background-origin:content-box;padding:14px}.collhd2 .tx{padding:14px 18px 16px;display:flex;flex-direction:column;color:var(--fg,#1d2027)}.collhd2 .k{font:600 10px Onest,sans-serif;letter-spacing:.18em;text-transform:uppercase;opacity:.6}.collhd2 b{font:400 30px/1.05 Prata,serif;margin-top:6px}.collhd2 .n{font:600 12px Onest,sans-serif;opacity:.6;margin-top:8px}
 .collhd{position:relative;border-radius:22px;overflow:hidden;min-height:220px;background:#2a2b2e center 20%/cover no-repeat;color:#fff;display:flex;align-items:flex-end}.collhd .tx{position:relative;padding:16px 18px;display:flex;flex-direction:column}.collhd b{font:400 30px/1.02 Prata,serif;margin-top:6px}.collhd p{font:400 13px/1.4 Onest,sans-serif;opacity:.88;margin:8px 0 0}.collhd .n{font:600 12px Onest,sans-serif;opacity:.8;margin-top:10px}
 .sv2 .cin{position:absolute;inset:0;background:#17181b center top/cover no-repeat;color:#fff}.sv2 .cin .tx{position:absolute;left:20px;right:20px;bottom:calc(40px + var(--sb,0px));display:flex;flex-direction:column}.sv2 .cin h2{font:400 40px/1 Prata,serif;margin:8px 0 0}.sv2 .cin p{font:400 14px/1.45 Onest,sans-serif;opacity:.88;margin:10px 0 0}
@@ -3210,14 +3215,16 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
   const nwAll=all.filter(p=>p.isNew),nwN=nwAll.length,nwPic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.src||i.thumb))||String(p.shape).replace(/^img:/,"")},nwPics=showOnly(nwAll,3).slice().sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,6).map(nwPic).filter(u=>/^https?:/.test(u));st.nw=false;
   const s=push(bn,`<div class="bhero" style="--c:${lead.c}">
      <span class="cap">${BRAND_META[bk]||""}</span><h1>${esc(bn)}</h1>
-     <div class="meta num"><span>${all.length} ${plural(all.length,["товар","товара","товаров"])}</span><span>от ${eur(Math.min(...all.map(p=>p.price)))}</span>${all.some(p=>p.isNew)?`<span>${all.filter(p=>p.isNew).length} новинки</span>`:""}${ICONS.some(ic=>ic.bk===bk)?`<span>${ICONS.filter(ic=>ic.bk===bk).length} моделей под заказ</span>`:""}</div>
-     <div class="acts"><button class="btn sm follow" data-follow aria-pressed="${follows.has(bk)}">${follows.has(bk)?"Вы следите":"Следить"}</button><button class="btn sm soft" data-req aria-label="Заказать модель, которой нет в витрине">Заказать модель</button></div></div>
-   ${(()=>{const L=COLL.filter(c=>c.ids.some(id=>all.some(p=>p.id===id)));return L.length?`<div class="sec"><div class="sech"><h2>Коллекции</h2><span class="muted" style="font-size:13px">${L.length}</span></div><div class="collmr">${L.map(c=>collCardHTML(c,false)).join("")}</div></div>`:""})()}
+     <div class="meta num"><span>${all.length} ${plural(all.length,["товар","товара","товаров"])}</span>${ICONS.some(ic=>ic.bk===bk)?`<span>${ICONS.filter(ic=>ic.bk===bk).length} моделей под заказ</span>`:""}</div>
+     <div class="acts"><button class="btn sm follow" data-follow aria-pressed="${follows.has(bk)}" style="flex:1">${follows.has(bk)?"Вы следите":"Следить"}</button></div></div>
+   ${(()=>{const L=COLL.filter(c=>c.ids.some(id=>all.some(p=>p.id===id)));if(JH)return "";return L.length?`<div class="sec"><div class="sech"><h2>Коллекции</h2><span class="muted" style="font-size:13px">${L.length}</span></div><div class="collmr">${L.map(c=>collCardHTML(c,false)).join("")}</div></div>`:""})()}
    ${JH?(()=>{const pic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.thumb||i.src))||String(p.shape).replace(/^img:/,"")};
      const cg={};all.forEach(p=>{const c=jColl(p);if(c)(cg[c]=cg[c]||[]).push(p)});const CL=Object.entries(cg).filter(([,l])=>l.length>=2).sort((a,b)=>b[1].length-a[1].length);
      const tg={};all.forEach(p=>{const sc=(SUBCATS[p.cat]||[]).length?subOf(p):"";const k=p.cat+"|"+(sc&&sc!=="other"?sc:"");(tg[k]=tg[k]||[]).push(p)});const TL=Object.entries(tg).sort((a,b)=>b[1].length-a[1].length);
-     const tile=(attr,name,l)=>`<button class="collm press" ${attr} style="background-image:url('${esc(szU(pic(l.find(p=>p.best!=null)||l[0]),400))}')"><span class="sh"></span><span class="tx"><span class="k num">${l.length}</span><b>${esc(name)}</b></span></button>`;
-     return (CL.length>=2?`<div class="sec"><div class="sech"><h2>Коллекции</h2><span class="muted" style="font-size:13px">${CL.length}</span></div><div class="collmr">${CL.map(([n,l])=>tile(`data-jcoll="${esc(n)}"`,n,l)).join("")}</div></div>`:"")
+     const tile=(attr,name,l)=>`<button class="collm press" ${attr}><span class="ci" style="background-image:url('${esc(szU(pic(l.find(p=>p.best!=null)||l[0]),400))}')"></span><span class="tx"><b>${esc(name)}</b><span class="k num">${l.length} ${plural(l.length,["вещь","вещи","вещей"])}</span></span></button>`;
+     // один блок «Коллекции»: подборки из админки + коллекции бренда; одинаковые по названию (Lucky Spring, Perlée) — один раз
+     const AL=COLL.filter(c=>c.ids.some(id=>all.some(p=>p.id===id))),nk=t=>String(t||"").toLowerCase().replace(/van cleef\s*&\s*arpels|®|[^a-zа-яё0-9]+/gi,""),aN=new Set(AL.map(c=>nk(c.title))),CL2=CL.filter(([n])=>!aN.has(nk(n))&&![...aN].some(k=>k&&(k.includes(nk(n))||nk(n).includes(k)))),NC=AL.length+CL2.length;
+     return (NC>=2||AL.length?`<div class="sec"><div class="sech"><h2>Коллекции</h2><span class="muted" style="font-size:13px">${NC}</span></div><div class="collmr">${AL.map(c=>collCardHTML(c,false)).join("")}${CL2.map(([n,l])=>tile(`data-jcoll="${esc(n)}"`,n,l)).join("")}</div></div>`:"")
        +(TL.length>=2?`<div class="sec"><div class="sech"><h2>Украшения и часы</h2></div><div class="collmr">${TL.map(([k,l])=>{const [c,sc]=k.split("|");return tile(`data-jtype="${esc(k)}"`,sc?subName(c,sc):(CATS[c]||c),l)}).join("")}</div></div>`:"")})():""}
    ${ICONS.some(ic=>ic.bk===bk)?`<div class="sec"><div class="sech"><h2>Культовые модели</h2><span class="muted" style="font-size:13px">под заказ</span></div><div class="hrail">${ICONS.filter(ic=>ic.bk===bk).map(icHTML).join("")}</div></div>`:""}
    ${(()=>{const bs=all.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best).slice(0,16),nw2=all.filter(p=>p.isNew).sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,16);
@@ -3271,7 +3278,7 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
     const gh=document.createElement("div");gh.className="nwgh";gh.setAttribute("aria-hidden","true");
     gh.innerHTML=`<div class="gi"><img alt=""></div><div class="gx cap">${esc(bn)}</div><div class="gt">Новинки</div><div class="gt">сезона</div><div class="gx num" style="font-size:12.5px">${nwN} ${plural(nwN,["вещь","вещи","вещей"])}</div><div class="gb">Новинки<span class="num">${nwN}</span></div>`;s.appendChild(gh);
     const ghI=gh.querySelector(".gi img"),ghIB=gh.querySelector(".gi"),[,gE,gT,gT2,gS,gB]=gh.children;
-    const sc=s.querySelector(".scroll"),L=(a,b,t)=>a+(b-a)*t,ease=t=>t*t*(3-2*t);
+    const sc=s.querySelector(".scroll"),L=(a,b,t)=>a+(b-a)*t,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
     let cur=0,raf=0;
     // прогресс 0…1: 0 — баннер дошёл до шапки, 1 — строка фильтров прилипла под шапкой; между ними баннер плавно уходит в кнопку
     let D=0;const bsE=s.querySelector(".bsticky");
@@ -3286,14 +3293,19 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
         W=L(B.width,PW,e),H=Math.max(PH,Math.min(L(B.height,PH,e),vis)),gy=L(B.top+clip,cr.top,e*e),dy=-(L(B.height,PH,e)-H)*(1-e)*(1-e);
       if(gh.style.display!=="block"){gh.style.display="block";ghI.src=nwPics[nwK]}
       gh.style.transform=`translate3d(${(L(B.left,cr.left,e)-S.left).toFixed(1)}px,${(gy-S.top).toFixed(1)}px,0)`;gh.style.width=W.toFixed(1)+"px";gh.style.height=H.toFixed(1)+"px";gh.style.borderRadius=L(24,PH/2,e).toFixed(1)+"px";
-      const sx=B.width*.44+B.width*.56/2-66,sy=B.height/2-85,iw=L(132,26,e),ih=L(170,26,e),mx=(PH-26)/2;
-      ghIB.style.cssText=`width:${iw.toFixed(1)}px;height:${ih.toFixed(1)}px;border-radius:${L(14,13,e).toFixed(1)}px;transform:translate3d(${L(sx,4,e).toFixed(1)}px,${(L(sy,mx,e)+dy).toFixed(1)}px,0)`;
-      const f=Math.max(0,1-p*2.2);
-      gT.style.cssText=`opacity:${Math.max(0,1-Math.max(0,p-.55)/.3).toFixed(3)};transform:translate3d(${L(18,36,e).toFixed(1)}px,${(L(46,(PH-18)/2,e)+dy).toFixed(1)}px,0) scale(${L(1,13.5/27,e).toFixed(4)})`;
-      gT2.style.cssText=`opacity:${f.toFixed(3)};transform:translate3d(18px,${(76+dy).toFixed(1)}px,0)`;gE.style.cssText=`opacity:${f.toFixed(3)};transform:translate3d(18px,${(20+dy).toFixed(1)}px,0)`;gS.style.cssText=`opacity:${f.toFixed(3)};transform:translate3d(18px,${(114+dy).toFixed(1)}px,0)`;
-      gB.style.cssText=`opacity:${Math.max(0,(p-.6)/.35).toFixed(3)};transform:translate3d(36px,${((PH-19)/2).toFixed(1)}px,0)`};
+      // фото — общий элемент: быстрее уменьшается и скругляется до кружка кнопки; рамка не обрезает его
+      const ei=ease(Math.min(1,e/0.75)),sx=B.width*.44+B.width*.56/2-66,sy=B.height/2-85,iw=L(132,26,ei),ih=L(170,26,ei),mx=(PH-26)/2;
+      if(H<ih+8){gh.style.height=(ih+8).toFixed(1)+"px"}
+      ghIB.style.cssText=`width:${iw.toFixed(1)}px;height:${ih.toFixed(1)}px;border-radius:${L(14,13,ei).toFixed(1)}px;transform:translate3d(${L(sx,4,e).toFixed(1)}px,${(L(sy,mx,ei)+dy*(1-ei)).toFixed(1)}px,0)`;
+      // тексты не пересекаются: подпись баннера тает и уходит вверх в первой половине, подпись кнопки проявляется во второй; фото — общий элемент, плавно садится в кружок кнопки
+      const sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t),out=1-sm(e/0.42),inn=sm((e-0.58)/0.42),lift=-14*sm(e/0.42);
+      gT.style.cssText=`opacity:${out.toFixed(3)};transform:translate3d(18px,${(46+dy+lift).toFixed(1)}px,0) scale(${(1-0.08*sm(e/0.42)).toFixed(4)})`;
+      gT2.style.cssText=`opacity:${out.toFixed(3)};transform:translate3d(18px,${(76+dy+lift).toFixed(1)}px,0) scale(${(1-0.08*sm(e/0.42)).toFixed(4)})`;
+      gE.style.cssText=`opacity:${out.toFixed(3)};transform:translate3d(18px,${(20+dy+lift).toFixed(1)}px,0)`;gS.style.cssText=`opacity:${out.toFixed(3)};transform:translate3d(18px,${(114+dy+lift).toFixed(1)}px,0)`;
+      gB.style.cssText=`opacity:${inn.toFixed(3)};transform:translate3d(${(36+8*(1-inn)).toFixed(1)}px,${((PH-19)/2).toFixed(1)}px,0)`;
+      gh.style.boxShadow=`0 ${(6+10*Math.sin(Math.PI*e)).toFixed(1)}px ${(18+22*Math.sin(Math.PI*e)).toFixed(1)}px rgba(38,40,44,${(.08+.1*Math.sin(Math.PI*e)).toFixed(3)})`};
     // мягкое догоняние (без рывков, если палец дёрнул скролл)
-    const frame=()=>{raf=0;if(!s.isConnected)return;const w=target();cur+=(w-cur)*.2;if(Math.abs(w-cur)<.002)cur=w;paint(cur);if(cur!==w)raf=requestAnimationFrame(frame)};
+    const frame=()=>{raf=0;if(!s.isConnected)return;const w=target();cur+=(w-cur)*.14;if(Math.abs(w-cur)<.0015)cur=w;paint(cur);if(cur!==w)raf=requestAnimationFrame(frame)};
     nwMorph=now=>{if(now){cur=target();paint(cur)}else if(!raf)raf=requestAnimationFrame(frame)};
     sc.addEventListener("scroll",()=>nwMorph(false),{passive:true});
     // экран бренда ушёл назад (открыли товар) и вернулся — перерисовать положение баннера и кнопки
@@ -3301,7 +3313,7 @@ function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bnam
   }
   const fb=s.querySelector("[data-follow]");fb.onclick=()=>{toggleFollow(bk);fb.setAttribute("aria-pressed",follows.has(bk));fb.textContent=follows.has(bk)?"Вы следите":"Следить"};
   const req=()=>orderSheet("Запрос по "+bn,`Здравствуйте! Ищу ${bn}.\nМодель: \nЦвет / размер: \nБюджет: \nДоставка: Украина`);
-  s.querySelector("[data-req]").onclick=req;s.querySelector("[data-req2]").onclick=req;
+  s.querySelectorAll("[data-req],[data-req2]").forEach(b=>b.onclick=req);
   draw();
 }
 
@@ -3343,8 +3355,8 @@ function openColl(id){const c=COLL.find(x=>x.id===id);if(!c)return;collMark(id);
   const cL=P.filter(p=>c.ids.includes(p.id));{const gsg=$("#gSeg");if(gsg)gsg.hidden=cL.length>0&&isJHouse(c.brand||"",cL)} // ювелирный дом — без «Женское / Мужское / Детское»
   const bx=$("#catItemsBn");if(bx){bx.hidden=false;bx.innerHTML=`<div class="collhd2">${c.cover?`<div class="im" style="background-image:url('${esc(szU(c.cover,1000))}')"></div>`:""}<div class="tx"><span class="k">Коллекция · ${esc(c.brand)}</span><b>${esc(cT)}</b><span class="n num">${c.n} ${plural(c.n,["вещь","вещи","вещей"])}</span></div></div>`}
   try{renderFeedColl()}catch(e){}}
-const collCardHTML=(c,big)=>big?`<button class="collc press" data-coll="${esc(c.id)}"${c.cover?` style="background-image:url('${esc(szU(c.cover,900))}')"`:""}><span class="sh"></span><span class="bars"><i class="on"></i><i></i><i></i><i></i></span><span class="tx"><span class="k">${esc(c.brand)} · ${collSeen(c.id)?"коллекция":"новая коллекция"}</span><b>${esc(c.title)}</b><span class="ft"><span class="num">${c.n} ${plural(c.n,["вещь","вещи","вещей"])}${collFrom(c)?" · от "+eur(collFrom(c)):""}</span><span class="go" aria-hidden="true">›</span></span></span></button>`
-  :`<button class="collm press" data-coll="${esc(c.id)}"${c.cover?` style="background-image:url('${esc(szU(c.cover,500))}')"`:""}>${collSeen(c.id)?"":'<i class="dot"></i>'}<span class="sh"></span><span class="tx"><span class="k">${esc(c.brand)}</span><b>${esc(c.title)}</b></span></button>`;
+const collCardHTML=(c,big)=>big?`<button class="collc press" data-coll="${esc(c.id)}"${c.cover?` style="background-image:url('${esc(szU(c.cover,900))}')"`:""}><span class="sh"></span><span class="bars"><i class="on"></i><i></i><i></i><i></i></span><span class="tx"><span class="k">${esc(c.brand)} · ${collSeen(c.id)?"коллекция":"новая коллекция"}</span><b>${esc(c.title)}</b><span class="ft"><span class="num">${c.n} ${plural(c.n,["вещь","вещи","вещей"])}</span><span class="go" aria-hidden="true">›</span></span></span></button>`
+  :`<button class="collm press" data-coll="${esc(c.id)}"><span class="ci"${c.cover?` style="background-image:url('${esc(szU(c.cover,500))}')"`:""}></span>${collSeen(c.id)?"":'<i class="dot"></i>'}<span class="tx"><b>${esc(String(c.title).replace(/^Van Cleef\s*&\s*Arpels\s*/i,"").replace(/®/g,""))}</b><span class="k num">${c.n} ${plural(c.n,["вещь","вещи","вещей"])}</span></span></button>`;
 function renderFeedColl(){const box=$("#collRail");if(!box)return;if(LIVE){box.hidden=true;box.innerHTML="";return}const L=COLL.filter(collG);box.hidden=!L.length;if(!L.length){box.innerHTML="";return}
   box.innerHTML=`<div class="sech"><h2>Новые коллекции</h2><div class="cseg" role="group" aria-label="Для кого"><button data-cg="w" aria-pressed="${CV.g==="w"}">Для неё</button><button data-cg="m" aria-pressed="${CV.g==="m"}">Для него</button></div></div><div class="collrail">${L.map(c=>collCardHTML(c,true)).join("")}</div>`}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-coll]");if(b&&!b.closest(".sv2")){e.preventDefault();openColl(b.dataset.coll);return}
