@@ -28,6 +28,9 @@ export default async function handler(req, res) {
   if (req.method === "GET" && /[?&]probe=mockimgs\b/.test(String(req.url || ""))) return probeMockImgs(res);
   if (req.method === "GET" && /[?&]probe=photo\b/.test(String(req.url || ""))) return probePhoto(res);
   if (req.method === "GET" && /[?&]probe=db\b/.test(String(req.url || ""))) return probeDb(res);
+  // коллекции (баннеры главной): что включено, закреплено и какая обложка
+  if (req.method === "GET" && /[?&]probe=colls\b/.test(String(req.url || ""))) return (async () => { const L = await getStore().list("collection", {}, { limit: 500 });
+    res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(L.map(c => ({ id: c._id, b: c.brand, t: c.title, on: c.on, pin: c.pinned, until: c.until, g: c.g, kind: c.kind, cover: c.cover, sec: c.section, at: c.createdAt })).sort((a, b) => String(b.at).localeCompare(String(a.at))), null, 1)); })();
   // Van Cleef: первое фото — мелкая копия второго? (размеры и попиксельная разница уменьшенных копий)
   if (req.method === "GET" && /[?&]probe=vcadup\b/.test(String(req.url || ""))) return (async () => { const id = (String(req.url).match(/[?&]id=(product\.manual\.[a-z0-9-]+)/) || [])[1]; const p = id ? await getStore().get(id) : null; const { pngSmall, smallDiff } = await import("../lib/pngsmall.js");
     const ims = (p?.images || []).slice(0, 4), sm = await Promise.all(ims.map(async i => { if (!/\.png(\?|$)/i.test(i.url)) return null; try { const r = await fetch(i.url); const b = Buffer.from(await r.arrayBuffer()); const s = pngSmall(b); return s ? { ...s, bytes: b.length, st: r.status } : { st: r.status, bytes: b.length }; } catch (e) { return { err: String(e.message).slice(0, 60) }; } }));

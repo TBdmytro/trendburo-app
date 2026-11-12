@@ -2681,7 +2681,7 @@ const PREF=new Set();document.addEventListener("pointerdown",e=>{const t=e.targe
   setTimeout(()=>get().then(t=>{tag=t}),4000);
   document.addEventListener("visibilitychange",()=>{if(document.hidden||!tag||Date.now()-last<120000)return;last=Date.now();
     get().then(t=>{if(t&&t!==tag){const busy=(typeof stack!=="undefined"&&stack.length)||document.querySelector(".sheet.open,.gate,[role=dialog]");if(busy)return;location.reload()}})})})();
-function openProduct(id){popTrack("v",id);
+function openProduct(id){if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}popTrack("v",id);
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;
   let d=prefs.dest||"ua",size="",ci=0;
   const st=p&&p.st;if(st&&st.loc==="ua")d="ua";
@@ -4595,7 +4595,10 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
   // свежий каталог после быстрого старта: применяем, только если он отличается и экран свободен (не мешаем листать)
   if(local){let touched=false;const mark=()=>{touched=true};["touchstart","pointerdown","wheel","keydown"].forEach(ev=>addEventListener(ev,mark,{once:true,passive:true,capture:true}));
     const n=await net;if(n&&n.closed){catApply({products:[]},false);catRefreshUI();try{authGate(true)}catch(e){}}
-    else if(n&&n.ok&&catSig(n.j.products)!==catSig(local.products)){if(!touched){catApply(n.j,true);catRefreshUI()}else window.CATPEND=n.j}}
+    else if(n&&n.ok&&catSig(n.j.products)!==catSig(local.products)){const sp=document.getElementById("splash");
+      // пока заставка закрывает экран — обновляем сразу; после — главную не перерисовываем на глазах (это и был «глюк» входа через пару секунд):
+      // свежие данные ждут первого перехода (вкладка, карточка товара) или момента, когда приложение свёрнуто
+      if(!touched&&sp&&!sp.classList.contains("out")){catApply(n.j,true);catRefreshUI()}else{window.CATPEND=n.j;const vh=()=>{if(document.hidden&&window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}};document.addEventListener("visibilitychange",vh)}}}
   // заранее разобрать фото для «Это или это» (в фоне, когда приложение уже открыто)
   setTimeout(()=>{try{const d=AUTO.find(r=>r.k==="duel");d&&d.warm&&d.warm()}catch(e){}},2500);
 })();
