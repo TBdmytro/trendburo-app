@@ -1541,16 +1541,35 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 #bcats{position:relative}
 .brest{display:flex;gap:8px;flex:none;will-change:transform}
 .nwpill{display:inline-flex;align-items:center;gap:6px;padding:4px 13px 4px 4px;background:#efe8de;border-color:#e2d6c3}
-.nwpill.morph{position:absolute;left:18px;top:0;opacity:0;transition:opacity .18s ease;z-index:2}
-.nwpill.morph.full{opacity:1}
+.nwpill.morph{position:absolute;left:18px;top:0;z-index:2}
+/* «Новинки сезона» → плашка: баннер липнет у шапки и сжимается по прокрутке (ключевые кадры ниже) */
+.nwsc{scroll-timeline:--nws block}
+.nwsec{position:sticky;z-index:4;pointer-events:none}.nwsec .nwban{pointer-events:auto;background:transparent;overflow:visible}
+.nwban .nwbg{position:absolute;inset:0;border-radius:24px;background:#efe8de;transform-origin:0 0}
+.nwban .nwpbg{position:absolute;left:0;top:0;background:#efe8de;border:1px solid #e2d6c3;box-sizing:border-box;opacity:0;transform-origin:0 0}
+.nwban .nwlb{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;padding:4px 13px 4px 4px;box-sizing:border-box;font-size:13.5px;font-weight:500;color:var(--fg);white-space:nowrap;opacity:0;z-index:3}
+.nwban .nwlb .nwmini img{transition:none}
+.nwban .nwt,.nwban .nwst{position:relative;z-index:2;transform-origin:0 0}
+.nA{animation-timing-function:cubic-bezier(.45,0,.25,1);animation-fill-mode:both;animation-duration:1ms;animation-timeline:--nws;animation-range:var(--nr0,0px) var(--nr1,1px)}
+.nwjs .nA{animation-timeline:auto;animation-duration:1s;animation-play-state:paused;animation-delay:calc(var(--np,0) * -1s)}
+.nwban .nwbg{animation-name:nwBg}.nwban .nwpbg{animation-name:nwPb}.nwban .nwt{animation-name:nwT}.nwban .nwst{animation-name:nwSt}.nwban .nwdots{animation-name:nwD}.nwban .nwlb{animation-name:nwLb}
+.nwsec .nwban{animation:nwHide linear both;animation-timeline:--nws;animation-range:var(--nr0,0px) var(--nr1,1px)}.nwjs .nwsec .nwban{animation-timeline:auto;animation-duration:1s;animation-play-state:paused;animation-delay:calc(var(--np,0) * -1s)}
+#bcats:has(.nwpill.morph) .brest{animation:nwCh 1ms cubic-bezier(.45,0,.25,1) both;animation-timeline:--nws;animation-range:var(--nr0,0px) var(--nr1,1px)}
+.nwjs #bcats:has(.nwpill.morph) .brest{animation-timeline:auto;animation-duration:1s;animation-play-state:paused;animation-delay:calc(var(--np,0) * -1s)}
+#bcats .nwpill.morph{animation:nwPl 1ms linear both;animation-timeline:--nws;animation-range:var(--nr0,0px) var(--nr1,1px)}
+.nwjs #bcats .nwpill.morph{animation-timeline:auto;animation-duration:1s;animation-play-state:paused;animation-delay:calc(var(--np,0) * -1s)}
+@keyframes nwBg{0%{transform:none;opacity:1}82%{opacity:1}100%{transform:scale(var(--nsx),var(--nsy));opacity:0}}
+@keyframes nwPb{0%,74%{opacity:0;transform:scale(1.25,1.6)}100%{opacity:1;transform:none}}
+@keyframes nwT{0%{opacity:1;transform:none;filter:blur(0)}48%{opacity:0;transform:scale(.8);filter:blur(7px)}100%{opacity:0;transform:scale(.7);filter:blur(7px)}}
+@keyframes nwSt{0%{transform:none;filter:blur(0);opacity:1}45%{filter:blur(4px);opacity:.85}75%{opacity:0;transform:translate(var(--nstx),0) scale(.35);filter:blur(6px)}100%{opacity:0;transform:translate(var(--nstx),0) scale(.3)}}
+@keyframes nwD{0%{opacity:1}15%{opacity:0}100%{opacity:0}}
+@keyframes nwLb{0%,72%{opacity:0;filter:blur(6px);transform:translateX(-6px)}100%{opacity:1;filter:blur(0);transform:none}}
+@keyframes nwHide{0%,99.5%{visibility:visible}100%{visibility:hidden}}
+@keyframes nwPl{0%,99.5%{opacity:0}100%{opacity:1}}
+@keyframes nwCh{0%{opacity:1;transform:none}8%{opacity:0;transform:none}80%{opacity:0;transform:translateX(calc(var(--npw) + 28px))}100%{opacity:1;transform:translateX(var(--npw))}}
+@media (prefers-reduced-motion:reduce){.nA{animation-timing-function:linear}}
 .nwmini{position:relative;width:26px;height:26px;border-radius:99px;overflow:hidden;background:#e7dfd2;flex:none}
 .nwmini img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 62%;opacity:0;transition:opacity .6s}.nwmini img.on{opacity:1}
-.nwgh{position:absolute;left:0;top:0;z-index:4;pointer-events:none;background:#efe8de;overflow:hidden;display:none;box-shadow:0 6px 18px rgba(38,40,44,.08);will-change:transform,width,height}
-.nwgh > *{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform,opacity;white-space:nowrap}
-.nwgh .gi{overflow:hidden;background:#ece6dc}.nwgh .gi img{width:100%;height:100%;object-fit:cover;object-position:50% 62%;display:block}
-.nwgh .gt{font:400 27px/1.12 "Prata",Georgia,serif;color:var(--fg)}
-.nwgh .gx{color:#8d7f6b}
-.nwgh .gb{font-size:13.5px;color:var(--fg)}.nwgh .gb span{color:var(--faint);margin-left:4px}
 @media (prefers-reduced-motion:reduce){.nwph,.nwmini img{transition:none!important}}
 .bsticky select{width:auto;padding:8px 12px;font-size:13.5px;border-radius:10px;margin-left:auto}
 
@@ -3273,7 +3292,7 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
   const draw=()=>{const f=all.filter(gOk);
     const nf=f.filter(p=>p.isNew).length,hasBan=!!s.querySelector("[data-nwban]");
     s.querySelector("#bcats").innerHTML=(nf?`<button class="chip nwpill${hasBan?" morph":""}" data-nw aria-pressed="${!!st.nw}"><span class="nwmini">${nwPics.map((u,i)=>`<img src="${esc(u)}" alt=""${i===nwK?' class="on"':""}>`).join("")}</span>Новинки<span class="c num">${nf}</span></button>`:"")
-      +`<span class="brest"><button class="chip" data-bc="" aria-pressed="${!st.cats.size&&!st.nw}">Все<span class="c num">${f.length}</span></button>`+cats.map(c=>{const n=f.filter(p=>p.cat===c).length;return n?`<button class="chip" data-bc="${c}" aria-pressed="${st.cats.has(c)}">${CATS[c]||c}<span class="c num">${n}</span></button>`:""}).join("")+"</span>";nwMorph&&nwMorph(true);
+      +`<span class="brest"><button class="chip" data-bc="" aria-pressed="${!st.cats.size&&!st.nw}">Все<span class="c num">${f.length}</span></button>`+cats.map(c=>{const n=f.filter(p=>p.cat===c).length;return n?`<button class="chip" data-bc="${c}" aria-pressed="${st.cats.has(c)}">${CATS[c]||c}<span class="c num">${n}</span></button>`:""}).join("")+"</span>";s._nwSetup&&requestAnimationFrame(s._nwSetup);
     // вторая строка: виды вещей выбранных категорий (Одежда: Верхняя · Трикотаж | Сумки: Тоуты · Мини)
     const groups=cats.filter(c=>st.cats.has(c)).map(c=>{const cnt={};f.forEach(p=>{if(p.cat===c){const k=subOf(p);cnt[k]=(cnt[k]||0)+1}});
       const ggI=k=>{const n=GG_ORDER.findIndex(x=>"m:gg-"+x.toLowerCase().replace(/[^a-zа-я0-9]+/g,"")===k);return n<0?99:n};const keys=(Object.keys(cnt).some(k=>k.startsWith("m:gg-"))?Object.keys(cnt).filter(k=>k!=="other").sort((a,b)=>ggI(a)-ggI(b)):c==="bags"?Object.keys(cnt).filter(k=>k!=="other").sort((a,b)=>cnt[b]-cnt[a]).slice(0,16):(SUBCATS[c]||[]).map(x=>x[0]).filter(k=>cnt[k])).concat(cnt.other?["other"]:[]);return {c,cnt,keys}}).filter(g=>g.keys.length>1);
@@ -3297,53 +3316,30 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
   const bg=s.querySelector("#bgs");if(bg)bg.addEventListener("click",e=>{const b=e.target.closest("button");if(b){st.g=b.dataset.g;[...st.cats].forEach(c=>{if(!all.some(p=>p.cat===c&&gOk(p))){st.cats.delete(c);delete st.subs[c]}});draw()}});
   s.querySelector("#bsort").onchange=e=>{st.sort=e.target.value;draw()};
   // ===== Новинки: смена фото в баннере и сжатие в плашку при прокрутке =====
-  let nwK=0,nwMorph=null;
+  let nwK=0;
   const ban=s.querySelector("[data-nwban]");
   if(ban){const phs=[...ban.querySelectorAll(".nwph")],dots=[...ban.querySelectorAll(".nwdots i")],n=phs.length;
     const lay=()=>{phs.forEach((e,i)=>{const o=(i-nwK+n)%n;e.className="nwph "+(o===0?"c":o===1?"r":o===n-1?"l":"h")});dots.forEach((d,i)=>d.className=i===nwK?"on":"");s.querySelectorAll(".nwmini img").forEach((im,i)=>im.className=i===nwK?"on":"")};
-    lay();const tm=setInterval(()=>{if(!s.isConnected){clearInterval(tm);return}if(!document.hidden&&n>1){nwK=(nwK+1)%n;lay();if(gh.style.display==="block")ghI.src=nwPics[nwK]}},2800);
+    lay();const tm=setInterval(()=>{if(!s.isConnected){clearInterval(tm);return}if(!document.hidden&&n>1){nwK=(nwK+1)%n;lay()}},2800);
     ban.onclick=()=>{st.nw=true;draw();const sc=s.querySelector(".scroll"),bs=s.querySelector(".bsticky");sc.scrollTo({top:sc.scrollTop+bs.getBoundingClientRect().top-sc.getBoundingClientRect().top-nbH(),behavior:"smooth"})};
-    /* баннер «Новинки сезона» при прокрутке плавно сжимается в кнопку «Новинки». Копия-«призрак» живёт внутри экрана бренда
-       (а не поверх всего приложения): уезжает вместе с экраном, не остаётся над другими экранами, прячется под шапкой */
-    const gh=document.createElement("div");gh.className="nwgh";gh.setAttribute("aria-hidden","true");
-    gh.innerHTML=`<div class="gi"><img alt=""></div><div class="gx cap">${esc(bn)}</div><div class="gt">Новинки</div><div class="gt">сезона</div><div class="gx num" style="font-size:12.5px">${nwN} ${plural(nwN,["вещь","вещи","вещей"])}</div><div class="gb">Новинки<span class="num">${nwN}</span></div>`;s.appendChild(gh);
-    const ghI=gh.querySelector(".gi img"),ghIB=gh.querySelector(".gi"),[,gE,gT,gT2,gS,gB]=gh.children;
-    const sc=s.querySelector(".scroll"),L=(a,b,t)=>a+(b-a)*t,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-    let cur=0,raf=0;
-    // прогресс 0…1: 0 — баннер дошёл до шапки, 1 — строка фильтров прилипла под шапкой; между ними баннер плавно уходит в кнопку
-    let D=0;const bsE=s.querySelector(".bsticky");
-    const target=()=>{const B=ban.getBoundingClientRect();if(!B.height||!bsE)return cur;const top=sc.getBoundingClientRect().top+nbH();if(!D||sc.scrollTop<4){const d=bsE.getBoundingClientRect().top-B.top;if(d>B.height*.8&&B.top>=top-1)D=d}if(!D)return cur;return Math.max(0,Math.min(1,(top-B.top)/D))};
-    const hide=()=>{gh.style.display="none";ban.style.visibility="visible"};
-    const sm0=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
-    const paint=p=>{const pill=s.querySelector(".nwpill.morph"),rest=s.querySelector("#bcats .brest");if(!pill||!rest||!s.isConnected||s.classList.contains("behind")&&p>0&&p<1){if(rest)rest.style.transform="";if(pill)pill.classList.add("full");hide();return}
-      const e=ease(p),PW=pill.offsetWidth,PH=pill.offsetHeight;
-      rest.style.transform=p>0?`translate3d(${((PW+8)*(1-Math.pow(1-p,2.2))).toFixed(2)}px,0,0)`:"";pill.classList.toggle("full",p>=1);ban.style.visibility=p>0?"hidden":"visible";
-      if(p<=0||p>=1){gh.style.display="none";return}
-      // геометрия привязана к прокрутке напрямую (без догоняния — оно и давало «плавание»): верхний край — под шапкой, нижний — едет вместе с контентом,
-      // как сворачивающийся заголовок iOS; обе границы линейно переходят в границы кнопки — призрак никогда не «висит» отдельно от страницы
-      const S=s.getBoundingClientRect(),B=ban.getBoundingClientRect(),cr=pill.getBoundingClientRect(),navB=sc.getBoundingClientRect().top+nbH(),
-        t0=Math.max(B.top,navB),pOff=cr.top-bsE.getBoundingClientRect().top,gTop=L(t0,Math.max(navB+pOff,Math.min(t0,cr.top)),p),gBot=Math.max(gTop+PH,L(B.bottom,cr.bottom,p)),H=gBot-gTop,oy=B.top-gTop,
-        // ширина, скругление и фото следуют за высотой: чем ниже видимая часть баннера, тем он уже — пропорции сжимаются вместе, без «пустой коробки»
-        q=1-Math.max(0,Math.min(1,(H-PH)/Math.max(1,B.height-PH))),qe=ease(q),ov=sm0((L(B.bottom,cr.bottom,p)-cr.top+16)/28),W=L(L(B.width,PW,q),PW,ov),gL=L(B.left,cr.left,Math.max(q,ov));
-      if(gh.style.display!=="block"){gh.style.display="block";ghI.src=nwPics[nwK]}
-      gh.style.transform=`translate3d(${(gL-S.left).toFixed(2)}px,${(gTop-S.top).toFixed(2)}px,0)`;gh.style.width=W.toFixed(2)+"px";gh.style.height=H.toFixed(2)+"px";gh.style.borderRadius=L(24,PH/2,q).toFixed(2)+"px";
-      // призрак подходит к строке фильтров уже шириной кнопки, а строка заранее уступает место — ничего не накрывается и не «качается»
-      rest.style.transform=`translate3d(${((PW+8)*Math.max(q,ov)).toFixed(2)}px,0,0)`;
-      // фото — общий элемент: по центру видимой части, уменьшается вместе с ней и садится в кружок кнопки
-      const sx=B.width*.44+B.width*.56/2-66,iw=Math.max(26,Math.min(L(132,26,qe),W-14)),ih=Math.max(26,Math.min(L(170,26,qe),H-10)),mx=(PH-26)/2,ix=Math.max(4,Math.min(L(sx*(W/B.width),4,qe),W-iw-7)),iy=L(Math.max(5,(H-ih)/2),mx,Math.max(0,(q-.7)/.3));
-      ghIB.style.cssText=`width:${iw.toFixed(2)}px;height:${ih.toFixed(2)}px;border-radius:${L(14,13,qe).toFixed(2)}px;transform:translate3d(${ix.toFixed(2)}px,${iy.toFixed(2)}px,0)`;
-      // тексты баннера едут вместе с ним и тают в первой трети; подпись кнопки проявляется в последней трети — без пересечений
-      const sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t),out=1-sm(q/0.38),inn=sm((q-0.62)/0.38),sc2=(1-0.06*sm(q/0.38)).toFixed(4),bl=(3*sm(q/0.38)).toFixed(2);
-      const tx=(el,y,extra)=>{el.style.cssText=`opacity:${out.toFixed(3)};filter:blur(${bl}px);transform:translate3d(18px,${(oy+y).toFixed(2)}px,0)${extra||""}`};
-      tx(gE,20);tx(gT,46,` scale(${sc2})`);tx(gT2,76,` scale(${sc2})`);tx(gS,114);
-      gB.style.cssText=`opacity:${inn.toFixed(3)};filter:blur(${(2*(1-inn)).toFixed(2)}px);transform:translate3d(${(36+6*(1-inn)).toFixed(2)}px,${((H-19)/2).toFixed(2)}px,0)`;
-      gh.style.boxShadow=`0 ${(4+6*Math.sin(Math.PI*q)).toFixed(1)}px ${(14+14*Math.sin(Math.PI*q)).toFixed(1)}px rgba(38,40,44,${(.06+.06*Math.sin(Math.PI*q)).toFixed(3)})`};
-    // кадр на каждое событие прокрутки — точно по пальцу, без инерции сверху
-    const frame=()=>{raf=0;if(!s.isConnected)return;cur=target();paint(cur)};
-    nwMorph=now=>{if(now){cur=target();paint(cur)}else if(!raf)raf=requestAnimationFrame(frame)};
-    sc.addEventListener("scroll",()=>nwMorph(false),{passive:true});
-    // экран бренда ушёл назад (открыли товар) и вернулся — перерисовать положение баннера и кнопки
-    new MutationObserver(()=>{if(!s.classList.contains("behind"))setTimeout(()=>nwMorph&&nwMorph(true),60)}).observe(s,{attributes:true,attributeFilter:["class"]});
+    /* «Новинки сезона» → плашка «Новинки» (как в утверждённом примере): баннер доезжает до шапки, останавливается и, пока листаете,
+       медленно сжимается до плашки в строке фильтров; на середине мягко замыливается. Анимацию ведёт сам браузер по прокрутке
+       (CSS scroll-timeline) — только transform / opacity / blur, без пересчёта страницы; JS лишь один раз меряет участок и размеры */
+    const sc=s.querySelector(".scroll"),bsE=s.querySelector(".bsticky"),bsec=ban.closest(".sec");let NR=300;sc.classList.add("nwsc");
+    bsec.classList.add("nwsec");ban.insertAdjacentHTML("afterbegin",'<i class="nwbg nA" aria-hidden="true"></i><i class="nwpbg nA" aria-hidden="true"></i><span class="nwlb nA" aria-hidden="true"></span>');
+    ban.querySelector(".nwt").classList.add("nA");ban.querySelector(".nwst").classList.add("nA");ban.querySelector(".nwdots").classList.add("nA");
+    const nwSetup=()=>{const pill=s.querySelector(".nwpill.morph");if(!pill||!s.isConnected||!ban.offsetWidth)return;
+      const top=nbH()+(parseFloat(getComputedStyle(bsE).paddingTop)||12);bsec.style.top=top+"px";
+      const B=ban.getBoundingClientRect(),scT=sc.getBoundingClientRect().top,r0=Math.max(0,sc.scrollTop+(bsec.getBoundingClientRect().top-scT)-top),W=ban.offsetWidth,H=ban.offsetHeight,PW=pill.offsetWidth,PH=pill.offsetHeight;NR=Math.max(160,Math.round(sc.scrollTop+(bsE.getBoundingClientRect().top-scT)-nbH()-r0));
+      const lb=ban.querySelector(".nwlb");lb.innerHTML=pill.innerHTML;lb.style.width=PW+"px";lb.style.height=PH+"px";const pb=ban.querySelector(".nwpbg");pb.style.width=PW+"px";pb.style.height=PH+"px";pb.style.borderRadius=PH/2+"px";
+      const st0=ban.querySelector(".nwst").getBoundingClientRect();
+      const v={"--nr0":r0+"px","--nr1":(r0+NR)+"px","--nsx":(PW/W).toFixed(4),"--nsy":(PH/H).toFixed(4),"--npw":(PW+8)+"px","--nstx":(-(st0.left-B.left)+4)+"px","--nsty":(-(st0.top-B.top)-(st0.height-PH)/2)+"px"};
+      for(const k in v)s.style.setProperty(k,v[k])};
+    requestAnimationFrame(nwSetup);setTimeout(nwSetup,450);addEventListener("resize",nwSetup);s._nwSetup=nwSetup;
+    // браузер без анимаций по прокрутке (iOS до 26): те же ключевые кадры, положение задаёт один расчёт за кадр
+    if(!(window.CSS&&CSS.supports&&CSS.supports("animation-timeline: scroll()"))){s.classList.add("nwjs");let raf=0;
+      const upd=()=>{raf=0;const a=parseFloat(s.style.getPropertyValue("--nr0"))||0;s.style.setProperty("--np",Math.max(0,Math.min(1,(sc.scrollTop-a)/NR)).toFixed(4))};
+      sc.addEventListener("scroll",()=>{if(!raf)raf=requestAnimationFrame(upd)},{passive:true});upd()}
   }
   const fb=s.querySelector("[data-follow]");fb.onclick=()=>{toggleFollow(bk);fb.setAttribute("aria-pressed",follows.has(bk));fb.textContent=follows.has(bk)?"Вы следите":"Следить"};
   const req=()=>orderSheet("Запрос по "+bn,`Здравствуйте! Ищу ${bn}.\nМодель: \nЦвет / размер: \nБюджет: \nДоставка: Украина`);
