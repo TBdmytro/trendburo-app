@@ -2314,7 +2314,9 @@ function popOrder(list){const best=list.filter(p=>p.best!=null).sort((a,b)=>a.be
   const G={};rem.forEach(p=>(G[p.cat]=G[p.cat]||[]).push(p));
   // внутри категории бренды идут по очереди — один большой бренд (Alo Yoga) не забивает ленту
   Object.keys(G).forEach(c=>{const B={};G[c].forEach(p=>(B[p.bk]=B[p.bk]||[]).push(p));const bs=Object.values(B);
-    bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)]));b.sort((x,y)=>(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)))});
+    // ходовые коллекции (закреплённая на главной, например Van Cleef Alhambra) — первыми у своего бренда; остальное — для ассортимента
+    const HOT=new Set((typeof COLL!=="undefined"?COLL:[]).filter(c=>c.pinned).flatMap(c=>c.ids||[]));
+    bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)]));b.sort((x,y)=>(HOT.has(y.id)-HOT.has(x.id))||(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)))});
     bs.sort((a,b)=>dayHash(a[0].bk)-dayHash(b[0].bk));const o=[];for(let i=0;o.length<G[c].length;i++)for(const b of bs)if(i<b.length)o.push(b[i]);G[c]=o});
   // порядок ленты: сначала сумки и обувь (по очереди), потом одежда, потом всё остальное (по очереди; «Другое» — реже)
   const turn=[...CAT_TURN.filter(c=>G[c]),...Object.keys(G).filter(c=>!CAT_TURN.includes(c))],at={},out=[];
@@ -3430,7 +3432,7 @@ function hCover(){const box=$("#hCover");if(!box)return;clearInterval(HCT);
   // один баннер на бренд: у Van Cleef не три подборки подряд, а одна (самая новая/закреплённая)
   const co=(()=>{const seen=new Set();return COLL.filter(collG).filter(c=>{const k=String(c.brand||"").toLowerCase();if(!k)return true;if(seen.has(k))return false;seen.add(k);return true})})();
   const S=bn.map(b=>({k:"b",id:b.id,img:b.image,kick:b.subtitle||"",t:b.title||"",go:b.button||(hasAct(b.action)?"Смотреть":""),light:b.theme==="light"}))
-    .concat(co.map(c=>({k:"c",id:c.id,img:c.cover,kick:c.brand+" · "+(collSeen(c.id)?"коллекция":"новая коллекция"),t:c.title,sub:c.n+" "+plural(c.n,["вещь","вещи","вещей"])+(collFrom(c)?" · от "+eur(collFrom(c)):""),go:"Смотреть коллекцию"}))).slice(0,5);
+    .concat(co.map(c=>({k:"c",id:c.id,img:c.cover,kick:c.brand+" · "+(collSeen(c.id)?"коллекция":"новая коллекция"),t:c.title,sub:c.n+" "+plural(c.n,["вещь","вещи","вещей"]),go:"Смотреть коллекцию"}))).slice(0,5);
   if(!S.length){box.innerHTML="";box.dataset.k="";return}
   const key=S.map(x=>x.k+x.id).join(",");if(box.dataset.k===key&&box.firstChild)return;box.dataset.k=key;
   box.innerHTML=`<div class="hcv"><div class="hcv-tr">${S.map((x,i)=>`<button class="hcv-s ${x.light?"light":""}" ${x.k==="b"?`data-act="cbanner" data-bid="${esc(x.id)}" data-bn="${esc(x.id)}"`:`data-coll="${esc(x.id)}"`}>${x.img?`<img src="${esc(szU(x.img,1000))}" alt="" ${i?'loading="lazy"':""} decoding="async" onload="this.classList.add('ld')" onerror="this.classList.add('ld')">`:""}<span class="sh"></span><span class="tx">${x.kick?`<span class="k">${esc(x.kick)}</span>`:""}${x.t?`<b>${esc(x.t)}</b>`:""}${x.sub?`<span class="s num">${esc(x.sub)}</span>`:""}${x.go?`<span class="go">${esc(x.go)}</span>`:""}</span></button>`).join("")}</div>${S.length>1?`<div class="hcv-bars">${S.map((_,i)=>`<i class="${i?"":"on"}"><b></b></i>`).join("")}</div>`:""}</div>${COLL.filter(collG).length>1?`<button class="hcv-all press" data-act="hcolls">Все коллекции<i class="chev"></i></button>`:""}`;
@@ -4553,7 +4555,9 @@ setTimeout(()=>{selOpenFromLink();selBar()},1500);
   document.addEventListener("copy",e=>{if(!ed(e.target)&&!ed(document.activeElement))e.preventDefault()});
   document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&/^[sp]$/i.test(e.key))e.preventDefault()})})();
 // адрес фото нужной ширины (как lib/images.js sized): CDN сам отдаёт уменьшенную копию
-const szU=(u,w)=>!u?u:/^https:\/\/assets\.hermes\.com\/is\/image\/.*[?&]wid=\d+/.test(u)?(W=>u.replace(/([?&])wid=\d+/,"$1wid="+W).replace(/([?&])hei=\d+/,"$1hei="+Math.round(W*4/3)))(w<=500?600:w<=1300?1200:2000):/^https:\/\/media\.gucci\.com\/style\/[^/]+\//.test(u)?u.replace(/(\/style\/)[^/]+\//,"$1DarkGray_Center_0_0_"+(W=>W+"x"+W)(w<=500?490:w<=1300?1200:2400)+"/"):/louisvuitton\.com\/images\/.*[?&]wid=\d+/.test(u)?(W=>u.replace(/([?&])wid=\d+/,"$1wid="+W).replace(/([?&])hei=\d+/,"$1hei="+W))(w<=500?490:w<=1300?1300:2400):/cdn\.sanity\.io\/images\//.test(u)?`${u}${u.includes("?")?"&":"?"}w=${w}&fit=max&auto=format&q=82`:/cdn\.shopify\.com\/|\/cdn\/shop\//.test(u)?(w>=1600?u.replace(/[?&]width=\d+/,""):`${u.replace(/[?&]width=\d+/,"")}${u.includes("?")&&!/\?width=\d+$/.test(u)?"&":"?"}width=${w}`):u;
+// Van Cleef: у сайта есть готовые размеры фото; маленькая копия «-w350» (её отдаёт плитка раздела) на большом баннере выглядела мыльной
+const vcaU=(u,w)=>{const b=u.replace(/\.transform\.vca-w\d+-\dx\.png$/,"");return w<=500?b+".transform.vca-w350-2x.png":w<=1100?b+".transform.vca-w820-2x.png":b};
+const szU=(u,w)=>!u?u:/^https:\/\/www\.vancleefarpels\.com\/content\/dam\/.+\.png/.test(u)?vcaU(u,w):/^https:\/\/assets\.hermes\.com\/is\/image\/.*[?&]wid=\d+/.test(u)?(W=>u.replace(/([?&])wid=\d+/,"$1wid="+W).replace(/([?&])hei=\d+/,"$1hei="+Math.round(W*4/3)))(w<=500?600:w<=1300?1200:2000):/^https:\/\/media\.gucci\.com\/style\/[^/]+\//.test(u)?u.replace(/(\/style\/)[^/]+\//,"$1DarkGray_Center_0_0_"+(W=>W+"x"+W)(w<=500?490:w<=1300?1200:2400)+"/"):/louisvuitton\.com\/images\/.*[?&]wid=\d+/.test(u)?(W=>u.replace(/([?&])wid=\d+/,"$1wid="+W).replace(/([?&])hei=\d+/,"$1hei="+W))(w<=500?490:w<=1300?1300:2400):/cdn\.sanity\.io\/images\//.test(u)?`${u}${u.includes("?")?"&":"?"}w=${w}&fit=max&auto=format&q=82`:/cdn\.shopify\.com\/|\/cdn\/shop\//.test(u)?(w>=1600?u.replace(/[?&]width=\d+/,""):`${u.replace(/[?&]width=\d+/,"")}${u.includes("?")&&!/\?width=\d+$/.test(u)?"&":"?"}width=${w}`):u;
 const XU=u=>typeof u==="string"&&u[0]==="~"?"https://cdn.shopify.com/s/files/"+u.slice(1):u;
 const imgsOf=x=>x.im?x.im.map(u=>{u=XU(u);return {src:szU(u,1000),thumb:szU(u,400),big:szU(u,1600)}}):(x.images||[]);
 function applyLive(list,fresh){PV++;CMXV++;
