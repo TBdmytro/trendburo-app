@@ -38,19 +38,13 @@ async function catalogBody(compact) {
     try { const pop = (await store.get("stats.pop"))?.scores || {}; for (const x of products) { const v = pop[popKey(x.id)]; if (v > 0) x.pop = v; } } catch {}
     let content = null; try { content = await publicContent(store, new Date(now)); } catch { content = null; }
     // коллекции брендов (включённые в админке): товары — по разделу сайта бренда, где их брала кнопка
-    // один раз (по просьбе владельца): первый баннер главной — Van Cleef Alhambra, обложка — синий Vintage Alhambra (белое золото, халцедон)
-    try { const AID = "collection.vancleefarpels_com_fr_en_collections_jewelry_alhambra_html"; if (!(await store.get("settings.fixAlhCov1"))) { const at = new Date().toISOString(), prev = await store.get(AID);
-      const others = (await store.list("collection", { pinned: true }, { limit: 50, fields: "_id" })).map(x => x._id).filter(x => x !== AID); if (others.length) await store.patchMany(others, { pinned: false });
-      const doc = { _id: AID, _type: "collection", section: "vancleefarpels.com/fr/en/collections/jewelry/alhambra.html", url: "https://www.vancleefarpels.com/fr/en/collections/jewelry/alhambra.html", brand: "Van Cleef & Arpels", title: "Alhambra", desc: "", g: "u", kind: "coll", on: true, pinned: true, edited: true, until: "2027-03-01", createdAt: prev?.createdAt || at, lastRun: at, found: prev?.found || 0,
-        cover: "https://www.vancleefarpels.com/content/dam/rcq/vca/wf/Ey/TP/yK/Tn/-Q/Px/t4/1c/oI/uw/wfEyTPyKTn-QPxt41coIuw.png" };
-      if (prev) await store.patchMany([AID], { on: true, pinned: true, cover: doc.cover, title: "Alhambra", edited: true, until: doc.until }); else await store.put(doc);
-      await store.put({ _id: "settings.fixAlhCov1", _type: "settings", at }); } } catch (e) { console.log("ALHCOV " + String(e.message).slice(0, 80)); }
+    try { const { ensureAlhambra } = await import("../lib/alhambra.js"); await ensureAlhambra(store); } catch {}
     let collections = []; try { const { activeCollections } = await import("../lib/collections.js"); const shown = new Set(products.map(x => x.id)); collections = activeCollections(await store.list("collection", {}, { limit: 500 }), list, { now: new Date(now) }).map(c => ({ ...c, ids: c.ids.filter(i => shown.has(i)) })).filter(c => c.ids.length).map(c => ({ ...c, n: c.ids.length })); } catch { collections = []; }
     return JSON.stringify({ products, content, collections, generatedAt: new Date(now).toISOString(), demo: !!store.demo });
   })();
   MEMO[k] = { ...(m || {}), wait };
   const done = wait.then(body => { MEMO[k] = { body, at: Date.now() }; saveCatalog(getStore(), k, body); return body; }, e => { MEMO[k] = m && m.body ? { body: m.body, at: m.at } : null; throw e; });
-  if (m && m.body && !FRESH) { done.catch(() => {}); return m.body; } // есть прежний каталог — отдаём сразу, свежий соберётся в фоне
+  if (m && m.body && !FRESH) { done.catch(() => {}); try { globalThis[Symbol.for("@vercel/request-context")]?.get?.()?.waitUntil?.(done.catch(() => {})); } catch {} return m.body; } // Vercel: дособрать свежий каталог после ответа, а не «заморозить» сборку // есть прежний каталог — отдаём сразу, свежий соберётся в фоне
   done.then(() => { FRESH = false; }, () => {});
   try { const body = await done; return body; }
   catch (e) { MEMO[k] = m && m.body ? { body: m.body, at: m.at } : null; throw e; }

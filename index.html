@@ -18,6 +18,8 @@ img{-webkit-user-drag:none}
 :root{--st:max(env(safe-area-inset-top,0px),var(--tgst,0px));--sb:max(env(safe-area-inset-bottom,0px),var(--tgsb,0px))}
 .tglogo{display:none;position:fixed;z-index:400;left:50%;top:var(--tgs,0px);height:var(--tgc,0px);transform:translateX(-50%);align-items:center;justify-content:center;pointer-events:none}
 html.fs .tglogo{display:flex}
+.tgbeta{position:absolute;right:calc(100% + 12px);top:50%;transform:translateY(-50%);padding:3px 9px;border-radius:999px;background:#eceef0;color:#6b6f76;font:600 10.5px/1.4 Onest,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+html.fs .betab{display:none} /* в полноэкранном Telegram «Beta» — в верхней строке, между «Закрыть» и логотипом */
 .tglogo i{pointer-events:auto;cursor:pointer}
 /* над фото карточки товара: логотип — прозрачное стекло, сверху мягкое затемнение снимка */
 .tglogo i{transition:background .25s,border-color .25s}
@@ -1696,7 +1698,7 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 })();</script>
 
 <div id="splash" class="splash" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 172 172"><circle class="r0" cx="86" cy="86" r="80"/><circle class="r1" cx="86" cy="86" r="70"/></svg><svg class="sp-rot sp-r3" viewBox="0 0 172 172"><circle class="r3" cx="86" cy="86" r="84"/></svg><svg class="sp-rot sp-r2" viewBox="0 0 172 172"><circle class="r2" cx="86" cy="86" r="70"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-est"><span class="y l">20</span><span class="t">Personal shopper</span><span class="y r">23</span></div><div class="sp-bar"><i></i></div></div>
-<div class="tglogo" aria-hidden="true"><i>TB</i></div>
+<div class="tglogo" aria-hidden="true"><b class="tgbeta">Beta</b><i>TB</i></div>
 <script>document.documentElement.classList.add("nologo")</script>
 <script>window.__spKey="tb_sp";
 /* Telegram: полный экран на телефоне и отступы под кнопки Telegram (закрыть, меню) */
