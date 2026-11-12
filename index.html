@@ -691,6 +691,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .tab:not(.on){content-visibility:hidden}
 /* отправка в шапке ленты (вариант A) */
 #t-feed .bigtitle{align-items:center}
+.betab{position:absolute;left:16px;top:calc(10px + var(--st));z-index:3;padding:3px 9px;border-radius:999px;background:#eceef0;color:#6b6f76;font:600 10.5px/1.4 Onest,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;pointer-events:none}
 .shippill{display:inline-flex;align-items:center;gap:7px;background:var(--soft,#f2f3f4);border-radius:99px;padding:8px 12px;font-size:13px;font-weight:500;color:var(--fg);white-space:nowrap}
 .shippill svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;flex:none}
 .shippill b{color:#2f8a5b;font-weight:600}
@@ -1727,7 +1728,8 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
   <div class="screen tab" id="t-feed">
     <div class="bar"><b>Лента</b></div>
     <div class="scroll">
-      <div class="bigtitle">
+      <div class="bigtitle" style="position:relative">
+        <span class="betab" aria-label="Бета-версия сайта">Beta</span>
         <div class="feedhead"><div class="sub" id="dateLine" hidden></div><span class="shippill" id="shipPill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17" r="1.6"/><circle cx="17" cy="17" r="1.6"/></svg><span id="shipPillT">Отправка в сб</span> · <b>бесплатно</b></span></div>
         <div class="topicons"></div>
       </div>
@@ -3806,7 +3808,7 @@ function authGate(force){if(!LIVE)return;const b=authBody();
   if(b&&store.get("tb_signed",0)&&!force){loadMe().then(r=>{if(!r&&ME_ERR&&ME_ERR.code==="no_account"){store.set("tb_signed",0);ME=null;renderTopIcons();return authGate(true)}if(r&&r.access&&r.access!=="ok")authGate(true);else if(r&&CLOSED)catReload()});return}
   document.querySelectorAll(".gate").forEach(x=>x.remove());
   const g=document.createElement("div");g.className="gate";g.setAttribute("role","dialog");g.setAttribute("aria-label","Вход");
-  g.innerHTML=`<div class="gt-top"><span class="gt-logo">TB</span><h1>Trend Büro</h1><p class="gt-est"><span>20</span>Personal shopper<span>23</span></p></div><div class="gt-card" id="gtc"></div>`;
+  g.innerHTML=`<span class="betab" style="position:fixed;top:calc(12px + var(--st,0px))">Beta</span><div class="gt-top"><span class="gt-logo">TB</span><h1>Trend Büro</h1><p class="gt-est"><span>20</span>Personal shopper<span>23</span></p></div><div class="gt-card" id="gtc"></div>`;
   $("#app").append(g);requestAnimationFrame(()=>requestAnimationFrame(()=>g.classList.add("in")));
   const card=g.querySelector("#gtc"),close=()=>{g.classList.add("out");setTimeout(()=>g.remove(),520)};
   const skip=CLOSED?"":`<button type="button" class="gt-skip" data-skip>Смотреть без входа</button>`;
@@ -4122,7 +4124,7 @@ const jHas=(p,z)=>!!(z&&p.sizes&&p.sizes.some(x=>String(x.size)===String(z)&&(x.
 const jMine=p=>subOf(p)==="ring"&&jHas(p,jRing);
 function jFilter(){return jList().filter(p=>(!JF.type||subOf(p)===JF.type)&&(!JF.coll||jColl(p)===JF.coll)&&(!JF.brand||p.bk===JF.brand)&&(!JF.mine||jMine(p)))}
 function renderJewel(){const L=jList();
-  const ent=$("#jEntry");if(ent){ent.hidden=!L.length;const b=[...new Set(L.map(p=>p.brand))].slice(0,4).join(" · ");$("#jEntryBr").textContent=b||"Van Cleef & Arpels"}
+  const ent=$("#jEntry");if(ent){ent.hidden=true; /* вход в ÉCRIN с главной убран по просьбе владельца */const b=[...new Set(L.map(p=>p.brand))].slice(0,4).join(" · ");$("#jEntryBr").textContent=b||"Van Cleef & Arpels"}
   if(!$("#t-jewel"))return;
   $("#jEmpty").hidden=!!L.length;
   $("#jTypes").innerHTML=JTYPES.filter(([k])=>k!=="brooch"||L.some(p=>subOf(p)==="brooch")).map(([k,v,ic])=>{const n=L.filter(p=>subOf(p)===k).length;return `<button class="j-type press" data-act="jtype" data-k="${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg>${v}<small class="num">${n||"—"}</small></button>`}).join("");
