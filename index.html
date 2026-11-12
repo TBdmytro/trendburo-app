@@ -3349,7 +3349,10 @@ const collG=c=>!c.g||c.g==="u"||c.g===CV.g||(CV.g==="w"&&c.g==="k"&&false);
 const collSeen=id=>{try{return (JSON.parse(localStorage.getItem("tb_cseen")||"[]")).includes(id)}catch(e){return false}};
 const collMark=id=>{try{const a=JSON.parse(localStorage.getItem("tb_cseen")||"[]");if(!a.includes(id)){a.push(id);localStorage.setItem("tb_cseen",JSON.stringify(a.slice(-200)))}}catch(e){}};
 const collFrom=c=>{const L=P.filter(p=>c._ids?c._ids.has(p.id):(c._ids=new Set(c.ids)).has(p.id));return L.length?Math.min(...L.map(p=>p.price)):0};
-function openColl(id){const c=COLL.find(x=>x.id===id);if(!c)return;collMark(id);clearFilters();F.ids=new Set(c.ids);tab("catalog");showItems(c.brand+" · "+c.title);
+function openColl(id){const c=COLL.find(x=>x.id===id);if(!c)return;collMark(id);clearFilters();F.ids=new Set(c.ids);
+  // в коллекции — только этот бренд: даже если вещей коллекции в витрине уже нет, чужие товары не показываем
+  {const bk=typeof brandKey==="function"?brandKey(c.brand):"";if(bk){F.brands.add(bk);F.lockBrand=bk}if(!P.some(p=>F.ids.has(p.id)))F.ids=null}
+  tab("catalog");showItems(c.brand+" · "+c.title);
   // шапка коллекции: фото изделия целиком по центру на светлом фоне, под ним — бренд, название коллекции и число вещей (без длинного описания)
   const cT=String(c.title||"").replace(new RegExp("^"+String(c.brand||"").replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\s*","i"),"").replace(/[®™]/g,"").trim()||c.title;
   const cL=P.filter(p=>c.ids.includes(p.id));{const gsg=$("#gSeg");if(gsg)gsg.hidden=cL.length>0&&isJHouse(c.brand||"",cL)} // ювелирный дом — без «Женское / Мужское / Детское»
