@@ -288,7 +288,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 @media (prefers-reduced-motion:reduce){.gt-logo::after,.sp-logo .sp-r3{animation:none;opacity:1}}
 </style>
 <title>Trend Büro</title>
-<link rel="preload" href="/api/catalog?v=2" as="fetch" crossorigin>
+<script>/* каталог заранее — только при первом входе; дальше он уже есть на телефоне, и качать его вместе с фото главной не нужно */try{if(!localStorage.getItem("tb_catc")){var l=document.createElement("link");l.rel="preload";l.href="/api/catalog?v=2";l.as="fetch";l.crossOrigin="anonymous";document.head.appendChild(l)}}catch(e){}</script>
 <link rel="preconnect" href="https://cdn.shopify.com">
 <link rel="preconnect" href="https://cdn.sanity.io" crossorigin>
 <link rel="preconnect" href="https://cdn.sanity.io">
@@ -2705,7 +2705,7 @@ const PREF=new Set();document.addEventListener("pointerdown",e=>{const t=e.targe
   setTimeout(()=>get().then(t=>{tag=t}),4000);
   document.addEventListener("visibilitychange",()=>{if(document.hidden||!tag||Date.now()-last<120000)return;last=Date.now();
     get().then(t=>{if(t&&t!==tag){const busy=(typeof stack!=="undefined"&&stack.length)||document.querySelector(".sheet.open,.gate,[role=dialog]");if(busy)return;location.reload()}})})})();
-function openProduct(id){if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}popTrack("v",id);
+function openProduct(id){if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(catPend(j),true);catRefreshUI()}catch(e){}}popTrack("v",id);
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;
   let d=prefs.dest||"ua",size="",ci=0;
   const st=p&&p.st;if(st&&st.loc==="ua")d="ua";
@@ -4281,7 +4281,7 @@ let stylistRemote=false;
 
 /* ===== Навигация ===== */
 const TABS=["feed","catalog","optix","jewel","services","stylist"];
-function tab(t){if(!TABS.includes(t))t="feed";if(t==="optix"&&!/[?&]demo=1/.test(location.search)&&!optixOpen())setTimeout(()=>{if($("#app").classList.contains("in-optix"))optixGate()},350);if(window.CATLAZY&&t!=="feed")window.CATLAZY();if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
+function tab(t){if(!TABS.includes(t))t="feed";if(t==="optix"&&!/[?&]demo=1/.test(location.search)&&!optixOpen())setTimeout(()=>{if($("#app").classList.contains("in-optix"))optixGate()},350);if(window.CATLAZY&&t!=="feed")window.CATLAZY();if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(catPend(j),true);catRefreshUI()}catch(e){}}if(t==="catalog"&&NW.need)setTimeout(()=>{try{renderNew()}catch(e){}},0);popAll();closeSheet(true);if(t!=="optix")lastMain=t;
   $$(".tab").forEach(s=>s.classList.toggle("on",s.id==="t-"+t));
   const hl=t;
   $$("#tabbar button").forEach(b=>b.dataset.tab===hl?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
@@ -4602,8 +4602,10 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act=watch-
 /* Быстрый старт: последний каталог хранится на телефоне (Cache Storage) — витрина открывается сразу,
    свежий каталог догружается в фоне и подменяет старый, когда покупатель не смотрит товар/сторис */
 const CATK="/api/catalog?v=2",CATSTO="tb-cat-1";
-async function catLocal(){try{if(!window.caches)return null;const c=await caches.open(CATSTO),r=await c.match(CATK);return r?await r.json():null}catch(e){return null}}
-async function catSave(txt){try{if(!window.caches)return;const c=await caches.open(CATSTO);await c.put(CATK,new Response(txt,{headers:{"content-type":"application/json"}}))}catch(e){}}
+async function catLocal(){try{if(!window.caches)return null;const c=await caches.open(CATSTO),r=await c.match(CATK);if(!r)return null;const t=await r.text();return {j:JSON.parse(t),t}}catch(e){return null}}
+const catCore=t=>{const i=String(t||"").lastIndexOf('"generatedAt"');return i>0?t.slice(0,i):String(t||"")}; // каталог без времени сборки — сравниваем «то же ли самое», не разбирая 20+ МБ
+const catPend=x=>typeof x==="string"?JSON.parse(x):x;
+async function catSave(txt){try{if(!window.caches)return;const c=await caches.open(CATSTO);await c.put(CATK,new Response(txt,{headers:{"content-type":"application/json"}}));try{localStorage.setItem("tb_catc","1")}catch(e){}}catch(e){}}
 let CLOSED=false;
 async function catNet(){const b=authBody(),r=await fetch(b?CATK+"&a=1":CATK,b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});
   // закрытый сайт: каталог только с открытым доступом; сохранённый на телефоне каталог стираем
@@ -4616,19 +4618,21 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
 (async()=>{
   loadWatch();
   let net=null,local=null;
-  if(LIVE){net=catNet().catch(()=>null);local=await catLocal();
-    if(local&&Array.isArray(local.products)&&local.products.length)catApply(local,false);
-    else{const n=await net;if(n)catApply(n.j,n.ok);else applyLive([],false);local=null}}
+  if(LIVE){local=await catLocal();
+    if(local&&local.j&&Array.isArray(local.j.products)&&local.j.products.length)catApply(local.j,false);
+    else{local=null;const n=await catNet().catch(()=>null);if(n)catApply(n.j,n.ok);else applyLive([],false)}}
   try{authGate()}catch(e){}
   init();
   window.hideSplash&&hideSplash();
   // свежий каталог после быстрого старта: применяем, только если он отличается и экран свободен (не мешаем листать)
   if(local){let touched=false;const mark=()=>{touched=true};["touchstart","pointerdown","wheel","keydown"].forEach(ev=>addEventListener(ev,mark,{once:true,passive:true,capture:true}));
-    const n=await net;if(n&&n.closed){catApply({products:[]},false);catRefreshUI();try{authGate(true)}catch(e){}}
-    else if(n&&n.ok&&catSig(n.j.products)!==catSig(local.products)){const sp=document.getElementById("splash");
-      // пока заставка закрывает экран — обновляем сразу; после — главную не перерисовываем на глазах (это и был «глюк» входа через пару секунд):
-      // свежие данные ждут первого перехода (вкладка, карточка товара) или момента, когда приложение свёрнуто
-      if(!touched&&sp&&!sp.classList.contains("out")){catApply(n.j,true);catRefreshUI()}else{window.CATPEND=n.j;const vh=()=>{if(document.hidden&&window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(j,true);catRefreshUI()}catch(e){}}};document.addEventListener("visibilitychange",vh)}}}
+    // вход плавный: большой каталог (несколько МБ) качаем не вместе с фото главной, а через ~3 с после показа, в свободную минуту;
+    // тот же самый — ничего не делаем (без разбора на телефоне); другой — разберём при первом переходе или когда приложение свёрнуто
+    await new Promise(r=>setTimeout(()=>window.requestIdleCallback?requestIdleCallback(r,{timeout:2500}):r(),3200));
+    let n=null;try{const b=authBody(),r=await fetch(b?CATK+"&a=1":CATK,b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});n={st:r.status,ok:r.ok,t:await r.text()}}catch(e){}
+    if(n&&n.st===403){CLOSED=true;try{window.caches&&caches.delete(CATSTO)}catch(e){}catApply({products:[]},false);catRefreshUI();try{authGate(true)}catch(e){}}
+    else if(n&&n.ok&&catCore(n.t)!==catCore(local.t)){const t=n.t;window.requestIdleCallback?requestIdleCallback(()=>catSave(t),{timeout:4000}):setTimeout(()=>catSave(t),1500);
+      window.CATPEND=t;const vh=()=>{if(document.hidden&&window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(catPend(j),true);catRefreshUI()}catch(e){}}};document.addEventListener("visibilitychange",vh)}}
   // заранее разобрать фото для «Это или это» (в фоне, когда приложение уже открыто)
   setTimeout(()=>{try{const d=AUTO.find(r=>r.k==="duel");d&&d.warm&&d.warm()}catch(e){}},2500);
 })();
