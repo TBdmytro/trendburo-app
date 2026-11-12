@@ -294,7 +294,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 <link rel="preconnect" href="https://cdn.sanity.io">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Prata&family=Cinzel:wght@400;500&family=IBM+Plex+Mono:wght@600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Prata&family=Cinzel:wght@400;500&display=swap">
 <style>
 /* Layout: native-feeling app shell — tab screens with large titles that collapse on scroll, a push stack for detail screens, bottom sheets, full-screen stories. White + graphite; each service owns its own accent. */
 :root{
@@ -818,7 +818,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 @keyframes tktear{35%{transform:translate(6px,4px) rotate(5deg)}100%{transform:none}}
 .tk-stub .tk-k{margin:0}.tk-stub small{font-size:11.5px;color:#6b6f76;white-space:nowrap}
 .tk-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.tk-from{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:27px;line-height:38px}
+.tk-from{font-family:Onest,system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.04em;font-weight:600;font-size:27px;line-height:38px}
 .tk-row+.tk-row{margin-top:9px}
 .tk-sh{position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.9) 50%,transparent 62%);transform:translateX(-130%);mix-blend-mode:soft-light}
 .tk-sh.go{animation:tksh .9s ease-out}
@@ -827,7 +827,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .tk-pt{display:flex;flex-direction:column;min-width:0}.tk-pt.end{align-items:flex-end}
 .tk-pt small{font-size:11.5px;color:#6b6f76;margin-top:4px;white-space:nowrap}
 .tk-logo{width:38px;height:38px;border-radius:50%;background:#1f2125;color:#fff;display:grid;place-items:center;font-family:Prata,Georgia,serif;font-size:14px}
-.tk-code{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:27px;line-height:38px;display:flex}
+.tk-code{font-family:Onest,system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.04em;font-weight:600;font-size:27px;line-height:38px;display:flex}
 .tk-code span{display:inline-block;min-width:.62em;text-align:center}
 .tk-code span.f{animation:tkf .09s linear}
 @keyframes tkf{from{transform:rotateX(80deg);opacity:.4}to{transform:none;opacity:1}}
@@ -1064,6 +1064,7 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .st{inset:calc(72px + var(--st)) 12px calc(108px + var(--sb)) 12px;padding:0;border-radius:24px;background-color:#f2f3f4!important}
 .sv2 .st img{background:transparent}
 .sv2 .st img.nf{display:none}
+img.imgx{opacity:0!important}
 .sv2 .st .nfm{position:absolute;inset:0;display:grid;place-items:center;font:400 22px/1.2 Prata,serif;color:#9a9da3;text-align:center;padding:24px}
 .sv2 .pn{left:12px;right:12px;bottom:calc(12px + var(--sb));background:#26282c;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;text-shadow:none;font-family:Onest,system-ui,sans-serif}
 .sv2 .bg{top:calc(84px + var(--st));right:24px;background:rgba(31,33,37,.86)}
@@ -2766,7 +2767,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     s._fitAll=fitAll;
     // пока большое фото грузится — лёгкая копия из каталога (она уже в памяти телефона) сразу на своём месте, без белого экрана
     ims.forEach((im,i)=>{const th=p.imgs[i]&&p.imgs[i].thumb;if(i||!th||im.classList.contains("geo")||(im.complete&&im.naturalWidth))return;const t=new Image();t.onload=()=>{if(!im.classList.contains("geo")&&!(im.complete&&im.naturalWidth))placeFull(im,im.parentNode,t.naturalWidth,t.naturalHeight)};t.src=th});
-    ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.addEventListener("load",go,{once:true});im.src=im.src}else if(!/[?&]tbr=1/.test(im.src)){im.addEventListener("load",go,{once:true});im.src=im.src+(im.src.includes("?")?"&":"?")+"tbr=1"}else im.classList.add("fit")}))});
+    ims.forEach((im,i)=>{const go=()=>{fitShot(im,im.parentNode,p.imgs[i]);const si=im._si;if(i===0&&si&&si.bg)hero.style.setProperty("--phbg",si.bg)};im.complete&&im.naturalWidth?go():(im.addEventListener("load",go,{once:true}),im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.addEventListener("load",go,{once:true});im.src=im.src}else if(!/[?&]tbr=1/.test(im.src)){im.addEventListener("load",go,{once:true});im.src=im.src+(im.src.includes("?")?"&":"?")+"tbr=1"}else{im.classList.add("fit");/* фото так и не открылось — этот кадр убираем из листания (а не пустой белый экран); если это была обложка — первой становится следующая */const sl=im.closest(".sl"),all=g.querySelectorAll(".sl");if(sl&&all.length>1){sl.remove();const ds=s.querySelectorAll(".pv-dots i");if(ds.length)ds[ds.length-1].remove();if(g.querySelectorAll(".sl").length<2){const d=s.querySelector(".pv-dots");d&&d.remove()}const f=g.querySelector(".sl img");if(f&&f.dataset.src&&!f.getAttribute("src"))f.src=f.dataset.src;requestAnimationFrame(()=>g.scrollTo({left:0,behavior:"instant"}))}}}))});
     // Van Cleef: первое фото — мелкая копия второго (те же пропорции, в 2+ раза меньше) — показываем крупное, повтор убираем
     if(ims.length>1&&/vancleefarpels\.com/.test(ims[0].getAttribute("src")||"")&&/\.png(\?|$)/i.test(p.imgs[0].src)&&/\.png(\?|$)/i.test(p.imgs[1].src)){const pr=new Image();pr.onload=()=>{const a=ims[0],w0=a.naturalWidth,h0=a.naturalHeight,ck=()=>{if(!s.isConnected||!w0)return;const w1=pr.naturalWidth,h1=pr.naturalHeight;
       if(!w1||Math.abs(w0/h0-w1/h1)>.02||w0*h0>w1*h1*.55)return;const sl1=ims[1].parentNode;a.dataset.zi="1";a.addEventListener("load",()=>{a.classList.remove("geo");fitShot(a,a.parentNode,p.imgs[1])},{once:true});a.src=p.imgs[1].src;sl1.remove();const ds=s.querySelectorAll(".pv-dots i");if(ds.length)ds[ds.length-1].remove();if(ds.length<=2){const d=s.querySelector(".pv-dots");d&&d.remove()}};
@@ -3237,7 +3238,7 @@ function renderFeedFollow(){const box=$("#followRail");if(!box)return;// «Ва�
 const JHOUSE=/van ?cleef|cartier|tiffany|bulgari|bvlgari|chaumet|boucheron|graff|harry ?winston|messika|pomellato|chopard|piaget|de ?beers|repossi|buccellati|mikimoto|qeelin|dinh ?van|vhernier|david ?yurman/i;
 const isJHouse=(bn,all)=>JHOUSE.test(bn)||(all.length>=12&&all.filter(p=>p.cat==="jewelry"||p.cat==="watches").length/all.length>=.8);
 // коллекция ювелирного дома — по названию: «Vintage Alhambra …», «Sweet Alhambra …» → Alhambra; «Perlee Clovers …» → Perlée
-function openBrand(bk){const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bname(bk),JH=isJHouse(bn,all);
+function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещей на витрине (скрыли/распродано) — не открываем пустую страницу */const all=bItems(bk),nw=NEWS.filter(n=>n.bk===bk),bn=bname(bk),JH=isJHouse(bn,all);
   const st={cats:new Set(),subs:{},g:"all",sort:"pop"};{const bg=all.filter(p=>p.cat==="bags"&&p._sub===undefined);if(bg.length)bagModels(all.filter(p=>p.cat==="bags"));const gs=all.filter(p=>p.cat==="shoes"&&/golden ?goose/i.test(p.brand||"")&&p._sub===undefined);if(gs.length)ggLines(gs)}const lead=all.slice().sort((a,b)=>b.isNew-a.isNew)[0];
   const cats=[...new Set(all.map(p=>p.cat))],gs=[...new Set(all.map(p=>p.g))];
   if(!JH&&gs.length>1&&(CV.g==="w"||CV.g==="m")&&all.some(p=>p.g===CV.g))st.g=CV.g; // зашли из «Для неё»/«Для него» — сразу эта половина бренда
@@ -4559,7 +4560,7 @@ function applyLive(list,fresh){PV++;CMXV++;
   const endOf=d=>Date.parse(String(d).length===10?d+"T23:59:59":d);
   list.forEach(x=>{if(!CATS[x.cat])CATS[x.cat]="Другое";
     // скидка закончилась, а каталог ещё из кэша — показываем обычную цену
-    const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn?x.oldPrice:x.price;
+    const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn&&x.oldPrice?x.oldPrice:x.price;if(!pr)return; /* без цены — не роняем весь каталог из-за одной вещи */
     P.push({id:x.id,kit:x.kit||null,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,por:Math.max(+pr.ua||0,+pr.eu||0,+pr.dxb||0)>POR_EUR,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
       shape:(()=>{const u=x.im?x.im[0]&&szU(XU(x.im[0]),400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),get imgs(){return this._im||(this._im=imgsOf(x))},colors:(x.colors||[]).map(c=>c.image&&c.image[0]==="~"?{...c,image:XU(c.image)}:c),sizes:x.sizes||[],
       orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0,na:x.na?Date.parse(x.na):0,fam:x.fam||null,col:x.col||""})});FAMS=null;
@@ -4636,6 +4637,10 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
 /* фото, которое не открылось «с разрешением» (crossorigin): показываем как обычное — лучше без подбора фона, чем пустая карточка */
 /* Gucci готовит фото нужного размера по первому запросу и иногда в первый раз отвечает ошибкой: пробуем ещё раз, затем берём размер, который точно есть */
 document.addEventListener("error",function(e){var im=e.target;if(!im||im.tagName!=="IMG"||im.hasAttribute("crossorigin"))return;var u=im.getAttribute("src")||"";if(!/^https:\/\/media\.gucci\.com\/style\//.test(u))return;var n=+(im.dataset.gr||0);if(n>=2)return;im.dataset.gr=n+1;setTimeout(function(){im.src=n===0?u.split("?")[0]+"?r=1":u.split("?")[0].replace(/(\/style\/)[^/]+\//,"$1DarkGray_Center_0_0_"+(/_490x490\//.test(u)?"1200x1200":"490x490")+"/")},n===0?1200:0)},true);
+/* фото так и не открылось: никакого значка битой картинки и подписи поверх — пустое место цвета рамки (если загрузится другое фото — снова видно) */
+document.addEventListener("error",function(e){var im=e.target;if(!im||im.tagName!=="IMG"||im.hasAttribute("crossorigin"))return;var u=im.getAttribute("src")||"";if(/^https:\/\/media\.gucci\.com\/style\//.test(u)&&+(im.dataset.gr||0)<2)return;var c=im.closest&&im.closest("[data-id]"),pp=c&&typeof P!=="undefined"&&P.find(function(x){return x.id===c.dataset.id});if(pp&&!im.closest(".sv2,.pv-gal")){var L=(pp.imgs||[]).map(function(x){return x&&(x.thumb||x.src)}).filter(Boolean),k=+(im.dataset.ai||0)+1;if(L[k]&&L[k]!==u){im.dataset.ai=k;im.src=L[k];return}}
+  im.classList.add("imgx");im.alt=""},true); /* карточка вещи: первое фото не открылось — показываем следующее фото этой же вещи */
+document.addEventListener("load",function(e){var im=e.target;if(im&&im.tagName==="IMG"&&im.classList.contains("imgx"))im.classList.remove("imgx")},true);
 document.addEventListener("error",function(e){var im=e.target;if(!im||im.tagName!=="IMG"||!im.hasAttribute("crossorigin"))return;im.removeAttribute("crossorigin");var u=im.getAttribute("src");if(u&&!/[?&]tbr=1/.test(u)){im.src=u+(u.indexOf("?")>=0?"&":"?")+"tbr=1"}},true);
 </script>
 <script>
