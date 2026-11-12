@@ -1071,7 +1071,6 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .st img{background:transparent}
 .sv2 .st img.nf{display:none}
 img.imgx{opacity:0!important}
-.sv2 .st .nfm{position:absolute;inset:0;display:grid;place-items:center;font:400 22px/1.2 Prata,serif;color:#9a9da3;text-align:center;padding:24px}
 .sv2 .pn{left:12px;right:12px;bottom:calc(12px + var(--sb));background:#26282c;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;text-shadow:none;font-family:Onest,system-ui,sans-serif}
 .sv2 .bg{top:calc(84px + var(--st));right:24px;background:rgba(31,33,37,.86)}
 .sv2 .dt{left:24px;bottom:calc(120px + var(--sb));background:rgba(255,255,255,.7)}
@@ -2307,23 +2306,29 @@ function renderCatalog(){if(F.lockBrand&&!F.brands.has(F.lockBrand))F.brands.add
 const CAT_TURN=["bags","shoes","clothing","accessories","jewelry","eyewear","watches","fragrance"];
 const DH={d:"",m:new Map()};
 const dayHash=id=>{const d=new Date().toISOString().slice(0,10);if(DH.d!==d){DH.d=d;DH.m.clear()}let h=DH.m.get(id);if(h===undefined){h=+d.replace(/-/g,"");for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;DH.m.set(id,h)}return h};
+/* украшения (правило владельца): сначала главные коллекции дома (Van Cleef — Alhambra; Cartier — Love, Clash, Juste un Clou),
+   внутри — браслеты, кольца, серьги, потом колье, подвески и остальное; часы — после украшений */
+const JPRIO={"van cleef":["Alhambra"],cartier:["Love","Clash","Juste un Clou"]},JTYPE={brac:0,ring:1,earr:2,neck:3,brooch:4};
+function jRank(p){const b=String(p.brand||"").toLowerCase(),pr=Object.keys(JPRIO).find(k=>b.includes(k)),L=pr?JPRIO[pr]:[],c=typeof jColl==="function"?jColl(p):"",ci=L.indexOf(c),st=subOf(p);
+  return (ci<0?L.length:ci)*10+(st in JTYPE?JTYPE[st]:5)}
 const hotIds=()=>new Set((typeof COLL!=="undefined"?COLL:[]).filter(c=>c.pinned).flatMap(c=>c.ids||[])); // ходовая коллекция (закреплённая: сейчас Van Cleef Alhambra)
 function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best);
   // ходовая коллекция — в самом начале «Популярного»: первые 12 её вещей открывают каталог, остальные — первыми у своего бренда
   const hot0=list.filter(p=>p.best==null&&H0.has(p.id)).sort((a,b)=>(!!b.st-!!a.st)||((b.pop||0)-(a.pop||0))||(dayHash(a.id)-dayHash(b.id))).slice(0,12),h0=new Set(hot0),rest=list.filter(p=>p.best==null&&!h0.has(p));
   // популярное у наших покупателей (смотрят, кладут в избранное и корзину) — сразу после хитов продаж
-  const grp=c=>c==="bags"||c==="shoes"?0:c==="clothing"?1:2;
+  const grp=c=>c==="bags"||c==="shoes"?0:c==="clothing"?1:c==="watches"?3:2; // часы — после украшений
   const hot=rest.filter(p=>(p.pop||0)>=3).sort((a,b)=>b.pop-a.pop).slice(0,48).sort((a,b)=>grp(a.cat)-grp(b.cat)),hs=new Set(hot),rem=rest.filter(p=>!hs.has(p));
   const G={};rem.forEach(p=>(G[p.cat]=G[p.cat]||[]).push(p));
   // внутри категории бренды идут по очереди — один большой бренд (Alo Yoga) не забивает ленту
   Object.keys(G).forEach(c=>{const B={};G[c].forEach(p=>(B[p.bk]=B[p.bk]||[]).push(p));const bs=Object.values(B);
     // ходовые коллекции (закреплённая на главной, например Van Cleef Alhambra) — первыми у своего бренда; остальное — для ассортимента
     const HOT=H0;
-    bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)]));b.sort((x,y)=>(HOT.has(y.id)-HOT.has(x.id))||(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)))});
+    const JR=c==="jewelry"?jRank:null;
+    bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)]));b.sort((x,y)=>(HOT.has(y.id)-HOT.has(x.id))||(JR?JR(x)-JR(y):0)||(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)))});
     bs.sort((a,b)=>(HOT.has(b[0].id)-HOT.has(a[0].id))||(dayHash(a[0].bk)-dayHash(b[0].bk)));const o=[];for(let i=0;o.length<G[c].length;i++)for(const b of bs)if(i<b.length)o.push(b[i]);G[c]=o});
   // порядок ленты: сначала сумки и обувь (по очереди), потом одежда, потом всё остальное (по очереди; «Другое» — реже)
   const turn=[...CAT_TURN.filter(c=>G[c]),...Object.keys(G).filter(c=>!CAT_TURN.includes(c))],at={},out=[];
-  for(const ph of [0,1,2]){const T=turn.filter(c=>grp(c)===ph),n0=T.reduce((s,c)=>s+G[c].length,0),st=out.length;
+  for(const ph of [0,1,2,3]){const T=turn.filter(c=>grp(c)===ph),n0=T.reduce((s,c)=>s+G[c].length,0),st=out.length;
     for(let k=0;out.length-st<n0;k++)for(const c of T){if(c==="other"&&k%3&&T.some(x=>x!=="other"&&(at[x]||0)<G[x].length))continue;const g=G[c],j=at[c]||0;if(j<g.length){out.push(g[j]);at[c]=j+1}}}
   return [...best,...hot0,...hot,...out]}
 function sorted(list){const s=F.sort;if(s==="pop")return popOrder(list);return list.sort((a,b)=>s==="asc"?a.price-b.price:s==="desc"?b.price-a.price:(!!b.st-!!a.st)||(b.isNew-a.isNew)||(a.price-b.price))}
@@ -2612,8 +2617,10 @@ function bestIdx(p){const L=(p.imgs||[]).slice(0,5);let bi=0,bs=-1;L.forEach((im
   const free=(v[0]>.01)+(v[1]>.01)+(v[2]<.99)+(v[3]<.99),sc=free*1+(v[4]?2:0)-i*.15;if(sc>bs){bs=sc;bi=i}});return bi}
 const prodClass=p=>{const im=p.imgs&&p.imgs[bestIdx(p)];return shpClass(im&&shpGet(im.src))};
 // фоновый разбор: очередь, не больше 3 загрузок одновременно; маленькие копии 400px
+// сайты без «разрешения» на чтение фото (CORS): Van Cleef. Им не ставим crossorigin — иначе каждое фото качалось дважды (отказ → повтор) и долго грузилось
+const NOCORS=u=>/^https:\/\/(www\.)?vancleefarpels\.com\//.test(String(u||""));const XO=u=>NOCORS(u)?"":' crossorigin="anonymous"';
 const SHQ=[],SHW=new Map();let shpRun=0;
-function shpAnalyze(src,thumb){const k=src.replace(/[?&]width=\d+/,"");if(SHP[k])return Promise.resolve(SHP[k]);if(SHW.has(k))return SHW.get(k);
+function shpAnalyze(src,thumb){if(NOCORS(src))return Promise.resolve(null);const k=src.replace(/[?&]width=\d+/,"");if(SHP[k])return Promise.resolve(SHP[k]);if(SHW.has(k))return SHW.get(k);
   const pr=new Promise(res=>SHQ.push(()=>new Promise(done=>{const m=new Image();m.crossOrigin="anonymous";m.decoding="async";
     // разбор — когда браузер свободен, картинка заранее раскодирована вне основного потока (без подлагиваний)
     const fin=()=>{done();res(SHP[k]||null)},idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:800}):setTimeout(f,30);
@@ -2657,7 +2664,7 @@ async function shotInfoAsync(im){if(im._si!==undefined)return im._si;const [w,h]
   if(im._si!==undefined||(im.currentSrc||im.src)!==u){bm&&bm.close&&bm.close();return im._si}
   const r=shotCalc(src,w,h);bm&&bm.close&&bm.close();return shotKeep(im,r)}
 // цвета краёв по лёгкой копии снимка (раскодировать 400 px быстро); результат в общей памяти по адресу снимка без размера
-const THSI=new Map();function thumbSI(u){const k=siKey(u),m=SIMEM.get(k);if(m)return Promise.resolve(m);if(THSI.has(k))return THSI.get(k);
+const THSI=new Map();function thumbSI(u){if(NOCORS(u))return Promise.resolve(null);const k=siKey(u),m=SIMEM.get(k);if(m)return Promise.resolve(m);if(THSI.has(k))return THSI.get(k);
   const pr=new Promise(res=>{const m=new Image();m.crossOrigin="anonymous";m.decoding="async";m.onload=()=>{shotInfoAsync(m).then(si=>{if(si)SIMEM.set(k,si);res(si||null)}).catch(()=>res(null))};m.onerror=()=>res(null);m.src=u});THSI.set(k,pr);return pr}
 /* Кадр в рамке: товар целиком и как можно крупнее; если снимок закрывает рамку — без полей, иначе края заливаются фоном снимка */
 // правило рамки: снимок заполняет рамку без белых полей. Если фон снимка прочитать нельзя (сайт бренда не даёт), а пропорции близки к рамке —
@@ -3544,21 +3551,21 @@ function openAuto(ri){
   const priceH=p=>isPor(p)?"Цена по запросу":`${eur(priceFor(p,d))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[d]??p.oldPrices.ua)}</s>`:""}`;
   const srcOf=s=>s.t==="p"||s.t==="c"?(()=>{const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;return cs?(cs[0].idx>=0&&svImg(p,cs[0].idx)?svImg(p,cs[0].idx).src:cs[0].image):svImg(p,bestIdx(p)).src})():s.t==="du"?svImg(s.a,bestIdx(s.a)).src:null;
   // заранее: загрузка следующего слайда и разбор фото его товаров (чтобы кадр и раскладка были готовы к показу)
-  const pre=s=>{if(!s)return;[s.p,s.a,s.b].filter(Boolean).forEach(p=>shpProduct(p,3));const u=srcOf(s);if(u){const m=new Image();m.crossOrigin="anonymous";m.src=u;if(s.t==="du"){const m2=new Image();m2.crossOrigin="anonymous";m2.src=svImg(s.b,bestIdx(s.b)).src}}};
+  const pre=s=>{if(!s)return;[s.p,s.a,s.b].filter(Boolean).forEach(p=>shpProduct(p,3));const u=srcOf(s);if(u){const m=new Image();if(!NOCORS(u))m.crossOrigin="anonymous";m.src=u;if(s.t==="du"){const m2=new Image();m2.crossOrigin="anonymous";m2.src=svImg(s.b,bestIdx(s.b)).src}}};
   const slideH=(R,s)=>{
     if(s.t==="cin"){const c=R.coll;collMark(c.id);return `<div class="cin"><div class="cfr"${c.cover?` style="background-image:url('${esc(szU(c.cover,1000))}')"`:""}></div><div class="tx"><span class="k">Новая коллекция · ${esc(c.brand)}</span><h2>${esc(c.title)}</h2>${c.desc?`<p>${esc(c.desc)}</p>`:""}<button class="cta" data-collgo="${esc(c.id)}">Смотреть ${c.n} ${plural(c.n,["вещь","вещи","вещей"])} ›</button></div></div>`}
     if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
     if(s.t==="du")return `<div class="du ${duLay(s.a,s.b)}">${[s.a,s.b].map((p,j)=>duCardH(p,j)).join("")}<span class="vs">VS</span></div><div class="duh">смахните неинтересное · тап по карточке — открыть</div>`;
     const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
     const nph=0,b0=s.t==="p"?Math.min(bestIdx(p),5):0;
-    return `<div class="st"${(()=>{const t=s.t==="p"?(svImg(p,bestIdx(p))||{}).thumb:null;return t?` style="background:#f2f3f4 url('${esc(t)}') center/contain no-repeat"`:""})()}><img crossorigin="anonymous" src="${esc(srcOf(s))}" alt="" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j===b0?"on":""}"></i>`).join("")}</div>`:""}
+    return `<div class="st"${(()=>{const t=s.t==="p"?(svImg(p,bestIdx(p))||{}).thumb:null;return t?` style="background:#f2f3f4 url('${esc(t)}') center/contain no-repeat"`:""})()}><img${XO(srcOf(s))} src="${esc(srcOf(s))}" alt="" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j===b0?"on":""}"></i>`).join("")}</div>`:""}
       ${p.sale?`<span class="bg s">−${p.sale}%</span>`:p.isNew?`<span class="bg">Новинка</span>`:""}
       ${cs?`<div class="dt">${cs.map((c,j)=>`<button data-c="${j}" class="${j?"":"on"}" aria-label="${esc(c.name)}" style="background-image:url('${esc(c.idx>=0&&svImg(p,c.idx)?svImg(p,c.idx).thumb:c.image)}')"></button>`).join("")}</div>`:""}
       <div class="pn"><div class="t"><div class="br">${esc(p.brand)}</div><div class="nm">${esc(p.name)}</div><div class="pr num">${priceH(p)}</div></div>
         <button class="fv ${favs.has(p.id)?"on":""}" data-f aria-label="В избранное">${favs.has(p.id)?"♥":"♡"}</button><button class="go" data-go>Смотреть ›</button></div>`};
   // раскладка пары: обе вещи горизонтальные — карточки друг под другом; иначе — рядом (высокие карточки под вертикальные фото)
   const duLay=(a,b)=>prodClass(a)==="w"&&prodClass(b)==="w"?"col":"row";
-  const duCardH=(p,j)=>`<button class="dc" data-v="${j}" data-id="${esc(p.id)}" aria-label="${esc(p.brand+" "+p.name)}"><span class="im"><img crossorigin="anonymous" src="${esc(svImg(p,bestIdx(p)).src)}" alt="" decoding="async"></span><span class="no">НЕ МОЁ</span><span class="lb"><span class="t"><small>${esc(p.brand)}</small><b>${esc(p.name)}</b></span><span class="p num">${isPor(p)?"Цена по запросу":eur(priceFor(p,d))}</span></span></button>`;
+  const duCardH=(p,j)=>`<button class="dc" data-v="${j}" data-id="${esc(p.id)}" aria-label="${esc(p.brand+" "+p.name)}"><span class="im"><img${XO(svImg(p,bestIdx(p)).src)} src="${esc(svImg(p,bestIdx(p)).src)}" alt="" decoding="async"></span><span class="no">НЕ МОЁ</span><span class="lb"><span class="t"><small>${esc(p.brand)}</small><b>${esc(p.name)}</b></span><span class="p num">${isPor(p)?"Цена по запросу":eur(priceFor(p,d))}</span></span></button>`;
   // фото в карточке: товар целиком (см. fitShot); после разбора обоих снимков раскладка уточняется
   const duFit=du=>{if(!du)return;du.querySelectorAll(".dc").forEach(b=>{const im=b.querySelector(".im img"),box=b.querySelector(".im");if(!im||!box)return;
       box.dataset.res=du.classList.contains("col")?62:0;
@@ -3583,18 +3590,18 @@ function openAuto(ri){
       // фото не открылось: без «разрешения» → следующее фото этой вещи → аккуратная подпись вместо значка битой картинки
       let alt=s.p?(s.p.imgs||[]).map(x=>x&&x.src).filter(u=>u&&u!==im.getAttribute("src")):[];
       im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.src=im.src;return}
-        const u=alt.shift();if(u){im.setAttribute("crossorigin","anonymous");im.src=u;return}
-        im.classList.add("nf");if(!box.querySelector(".nfm")){const m=document.createElement("div");m.className="nfm";m.textContent=s.p?s.p.brand:"";box.append(m)}})}
+        const u=alt.shift();if(u){if(!NOCORS(u))im.setAttribute("crossorigin","anonymous");im.src=u;return}
+        im.classList.add("nf")});im.addEventListener("load",()=>im.classList.remove("nf"))} // только фото: никаких подписей в рамке
     return n};
   const mark=s=>{if(s.p)svMark(s.p.id);if(s.t==="du"){svMark(s.a.id);svMark(s.b.id)}};
   // одна вещь — одно главное фото: тап справа — сразу следующая вещь, все фото — в карточке по «Смотреть»
   let pj=0;const phs=()=>null;
   const showPh=()=>{const L=phs();if(!L)return;const n=[...cb.querySelectorAll(".sl")].filter(x=>!x.classList.contains("out")).pop();if(!n)return;const im=n.querySelector(".st img");if(!im)return;
     im.removeAttribute("style");im.classList.remove("fit");im.src=L[pj].src;im.classList.remove("sw");void im.offsetWidth;im.classList.add("sw");n.querySelectorAll(".pd i").forEach((d,k)=>d.classList.toggle("on",k===pj));
-    if(L[pj+1]){const m=new Image();m.crossOrigin="anonymous";m.src=L[pj+1].src}el=0;hap("light")};
+    if(L[pj+1]){const m=new Image();if(!NOCORS(L[pj+1].src))m.crossOrigin="anonymous";m.src=L[pj+1].src}el=0;hap("light")};
   const tapR=()=>{const L=phs();if(L&&pj<L.length-1){pj++;showPh()}else next()};
   const tapL=()=>{const L=phs();if(L&&pj>0){pj--;showPh()}else prev()};
-  const enter=()=>{const s=list[i];mark(s);el=0;pj=s&&s.t==="p"?Math.min(bestIdx(s.p),5):0;{const L=phs();if(L&&L[pj+1]){const m=new Image();m.crossOrigin="anonymous";m.src=L[pj+1].src}}cb.querySelector(".hz small").textContent="сегодня";
+  const enter=()=>{const s=list[i];mark(s);el=0;pj=s&&s.t==="p"?Math.min(bestIdx(s.p),5):0;{const L=phs();if(L&&L[pj+1]){const m=new Image();if(!NOCORS(L[pj+1].src))m.crossOrigin="anonymous";m.src=L[pj+1].src}}cb.querySelector(".hz small").textContent="сегодня";
     cb.querySelector(".tp.l").hidden=cb.querySelector(".tp.r").hidden=s.t==="du";
     cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1]);pre(list[i+2]);if(s.t==="du")duPre()};
   // смена слайда внутри рубрики: как в Instagram — сразу, без мигания (новое фото уже загружено заранее)
