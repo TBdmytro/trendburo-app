@@ -32,8 +32,8 @@ export default async function handler(req, res) {
     if (z) await new Promise(r => setTimeout(r, 20000)); // упёрлись в минутный лимит перевода — пауза перед следующей попыткой
     const r = await translatePending(store, { budgetMs: z ? 15000 : 32000 }); // с запасом до 60 с лимита функции (список товаров + ответ перевода)
     const z2 = r.done ? 0 : z + 1; // шагов подряд без перевода: 12 — значит дневной лимит, продолжит ночной запуск
-    if (r.left > 0 && n < 400 && z2 < 12) try { await fetch(`${publicUrl(req)}/api/cron?tr=1&n=${n + 1}&z=${r.limited || !r.done ? z2 || 1 : 0}`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET}` }, signal: AbortSignal.timeout(2500) }); } catch {}
     try { const d = (await store.get("settings.trRun")) || { _id: "settings.trRun", _type: "settings" }; await store.put({ ...d, at: new Date().toISOString(), n, done: (n === 1 ? 0 : d.done || 0) + r.done, left: r.left, err: r.err || null }); } catch {}
+    if (r.left > 0 && n < 400 && z2 < 12) try { await fetch(`${publicUrl(req)}/api/cron?tr=1&n=${n + 1}&z=${r.limited || !r.done ? z2 || 1 : 0}`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET}` }, signal: AbortSignal.timeout(2500) }); } catch {}
     res.setHeader("Content-Type", "application/json"); res.statusCode = 200; return res.end(JSON.stringify({ n, ...r }));
   }
   // ночной запуск: загрузки каталога, у которых оборвалась цепочка, продолжаем
