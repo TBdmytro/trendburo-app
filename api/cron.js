@@ -28,9 +28,11 @@ export default async function handler(req, res) {
   }
   // перевод на английский цепочкой: шаг ≈50 с, следующий запускаем сами, пока не переведём всё или не упрёмся в дневной лимит
   if (qp.get("tr")) {
-    const n = Number(qp.get("n")) || 1; const { translatePending } = await import("../lib/translate.js");
-    const r = await translatePending(store, { budgetMs: 48000 });
-    if (r.left > 0 && !r.limited && n < 300 && (r.done > 0 || n < 3)) try { await fetch(`${publicUrl(req)}/api/cron?tr=1&n=${n + 1}`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET}` }, signal: AbortSignal.timeout(2500) }); } catch {}
+    const n = Number(qp.get("n")) || 1, z = Number(qp.get("z")) || 0; const { translatePending } = await import("../lib/translate.js");
+    if (z) await new Promise(r => setTimeout(r, 35000)); // упёрлись в минутный лимит перевода — пауза перед следующей попыткой
+    const r = await translatePending(store, { budgetMs: z ? 20000 : 48000 });
+    const z2 = r.done ? 0 : z + 1; // шагов подряд без перевода: 12 — значит дневной лимит, продолжит ночной запуск
+    if (r.left > 0 && n < 400 && z2 < 12) try { await fetch(`${publicUrl(req)}/api/cron?tr=1&n=${n + 1}&z=${r.limited || !r.done ? z2 || 1 : 0}`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET}` }, signal: AbortSignal.timeout(2500) }); } catch {}
     try { const d = (await store.get("settings.trRun")) || { _id: "settings.trRun", _type: "settings" }; await store.put({ ...d, at: new Date().toISOString(), n, done: (n === 1 ? 0 : d.done || 0) + r.done, left: r.left, err: r.err || null }); } catch {}
     res.setHeader("Content-Type", "application/json"); res.statusCode = 200; return res.end(JSON.stringify({ n, ...r }));
   }
