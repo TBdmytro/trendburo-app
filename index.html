@@ -1534,7 +1534,7 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 .nwban .nwt{padding:18px 4px 16px 18px;display:flex;flex-direction:column;justify-content:space-between;z-index:2;min-width:0}
 .nwban .cap{color:#8d7f6b;letter-spacing:.12em}
 .nwban h3{font:400 27px/1.12 "Prata",Georgia,serif;letter-spacing:0;margin:8px 0 6px}
-.nwban .nwc{color:#8d7f6b;font-size:12.5px}
+.nwban .nwc{color:#8d7f6b;font-size:12.5px}.nwban .nww{display:block;color:var(--fg);font-size:13px;font-weight:500;margin-bottom:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .nwban .nwgo{align-self:flex-start;background:var(--ink-grad);color:#fff;border-radius:99px;padding:10px 16px;font-weight:600;font-size:13px}
 .nwst{position:relative}
 .nwph{position:absolute;top:50%;left:50%;width:132px;height:170px;border-radius:14px;overflow:hidden;background:#ece6dc;box-shadow:0 10px 26px rgba(38,40,44,.16);transition:transform .9s var(--ease),opacity .9s ease,filter .9s ease;will-change:transform}
@@ -3303,7 +3303,7 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
    ${(()=>{const bs=all.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best).slice(0,16),nw2=all.filter(p=>p.isNew).sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,16);
      // отдельные блоки: бестселлеры бренда (в его порядке) и новинки — как разделы на сайте самого бренда
      return (bs.length>=3?`<div class="sec"><div class="sech"><h2>Бестселлеры</h2><span class="muted" style="font-size:13px">как у ${esc(bn)}</span></div><div class="hrail">${bs.map(pcHTML).join("")}</div></div>`:"")
-       +(nw2.length>=3?`<div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>В витрине сейчас</h2></div></div><div class="sec" style="padding-bottom:4px;padding-top:6px"><div class="pad"><button class="nwban press" data-nwban aria-label="Новинки ${esc(bn)}"><div class="nwt"><div><span class="cap">${esc(bn)}</span><h3>Новинки<br>сезона</h3><span class="nwc num">${nwN} ${plural(nwN,["вещь","вещи","вещей"])}</span></div><span class="nwgo">Смотреть все</span></div><div class="nwst">${nwPics.map(u=>`<div class="nwph h"><img src="${esc(u)}" alt="" decoding="async"></div>`).join("")}</div><div class="nwdots">${nwPics.map(()=>"<i></i>").join("")}</div></button></div></div>`:"")})()}
+       +(nw2.length>=3?`<div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>В витрине сейчас</h2></div></div><div class="sec" style="padding-bottom:4px;padding-top:6px"><div class="pad"><button class="nwban press" data-nwban aria-label="Новинки ${esc(bn)}"><div class="nwt"><div><span class="cap">${esc(bn)}</span><h3>Новинки<br>сезона</h3><span class="nwc nww">${esc((()=>{const cnt={};nwAll.forEach(p=>{const k=(jColl(p)?jColl(p)+" · ":"")+(CATS[p.cat]||"").toLowerCase();cnt[k]=(cnt[k]||0)+1});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]).join(", ")})())}</span><span class="nwc num">${nwN} ${plural(nwN,["вещь","вещи","вещей"])}</span></div><span class="nwgo">Смотреть все</span></div><div class="nwst">${nwPics.map(u=>`<div class="nwph h"><img src="${esc(u)}" alt="" decoding="async"></div>`).join("")}</div><div class="nwdots">${nwPics.map(()=>"<i></i>").join("")}</div></button></div></div>`:"")})()}
    ${all.filter(p=>p.isNew).length>=3?"":`<div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>В витрине сейчас</h2></div></div>`}
    <div class="bsticky"><div class="chips" id="bcats"></div><div class="chips bsubs" id="bsubs" hidden></div>${gs.length>1&&!JH?`<div class="toolrow"><div class="seg" role="group" aria-label="Для кого" id="bgs"><button data-g="all">Все</button><button data-g="w">Женское</button><button data-g="m">Мужское</button>${gs.includes("k")?'<button data-g="k">Детское</button>':""}</div><select id="bsort" aria-label="Сортировка"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`:`<div class="toolrow"><select id="bsort" aria-label="Сортировка" style="margin-left:0"><option value="pop">Популярное</option><option value="new">Новинки</option><option value="asc">Дешевле</option><option value="desc">Дороже</option></select></div>`}</div>
    <div class="cntrow"><div class="count num" id="bcount"></div><div class="colsw" role="group" aria-label="Сколько товаров в ряд"><button data-cols="2" aria-label="2 в ряд"><i></i><i></i></button><button data-cols="3" aria-label="3 в ряд"><i></i><i></i><i></i></button><button data-cols="4" aria-label="4 в ряд"><i></i><i></i><i></i><i></i></button></div></div><div class="grid2 cgrid" id="bgrid"></div>
@@ -3314,7 +3314,7 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
   const fixSticky=()=>{const bs=s.querySelector(".bsticky");if(bs)bs.style.top=nbH()+"px"};requestAnimationFrame(fixSticky);setTimeout(fixSticky,400);addEventListener("resize",fixSticky);
   const gOk=p=>st.g==="all"||p.g===st.g||(p.g==="u"&&st.g!=="k");
   const draw=()=>{const f=all.filter(gOk);
-    const nf=f.filter(p=>p.isNew).length,hasBan=!!s.querySelector("[data-nwban]");
+    const nf=f.filter(p=>p.isNew).length,hasBan=false; /* сжатие баннера в плашку отключено: на телефоне плашка наезжала на фильтры и оставляла пустой баннер */
     s.querySelector("#bcats").innerHTML=(nf?`<button class="chip nwpill${hasBan?" morph":""}" data-nw aria-pressed="${!!st.nw}"><span class="nwmini">${nwPics.map((u,i)=>`<img src="${esc(u)}" alt=""${i===nwK?' class="on"':""}>`).join("")}</span>Новинки<span class="c num">${nf}</span></button>`:"")
       +`<span class="brest"><button class="chip" data-bc="" aria-pressed="${!st.cats.size&&!st.nw}">Все<span class="c num">${f.length}</span></button>`+cats.map(c=>{const n=f.filter(p=>p.cat===c).length;return n?`<button class="chip" data-bc="${c}" aria-pressed="${st.cats.has(c)}">${CATS[c]||c}<span class="c num">${n}</span></button>`:""}).join("")+"</span>";s._nwSetup&&requestAnimationFrame(s._nwSetup);
     // вторая строка: виды вещей выбранных категорий (Одежда: Верхняя · Трикотаж | Сумки: Тоуты · Мини)
@@ -3349,10 +3349,10 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
     /* «Новинки сезона» → плашка «Новинки» (как в утверждённом примере): баннер доезжает до шапки, останавливается и, пока листаете,
        медленно сжимается до плашки в строке фильтров; на середине мягко замыливается. Анимацию ведёт сам браузер по прокрутке
        (CSS scroll-timeline) — только transform / opacity / blur, без пересчёта страницы; JS лишь один раз меряет участок и размеры */
-    const sc=s.querySelector(".scroll"),bsE=s.querySelector(".bsticky"),bsec=ban.closest(".sec");let NR=300;sc.classList.add("nwsc");
-    bsec.classList.add("nwsec");ban.insertAdjacentHTML("afterbegin",'<i class="nwbg nA" aria-hidden="true"></i><i class="nwpbg nA" aria-hidden="true"></i><span class="nwlb nA" aria-hidden="true"></span>');
-    ban.querySelector(".nwt").classList.add("nA");ban.querySelector(".nwst").classList.add("nA");ban.querySelector(".nwdots").classList.add("nA");
-    const nwSetup=()=>{const pill=s.querySelector(".nwpill.morph");if(!pill||!s.isConnected||!ban.offsetWidth)return;
+    const sc=s.querySelector(".scroll"),bsE=s.querySelector(".bsticky"),bsec=ban.closest(".sec");let NR=300;const NOMORPH=true;if(!NOMORPH)sc.classList.add("nwsc");
+    if(!NOMORPH){bsec.classList.add("nwsec");ban.insertAdjacentHTML("afterbegin",'<i class="nwbg nA" aria-hidden="true"></i><i class="nwpbg nA" aria-hidden="true"></i><span class="nwlb nA" aria-hidden="true"></span>');
+    ban.querySelector(".nwt").classList.add("nA");ban.querySelector(".nwst").classList.add("nA");ban.querySelector(".nwdots").classList.add("nA");}
+    const nwSetup=()=>{if(NOMORPH)return;const pill=s.querySelector(".nwpill.morph");if(!pill||!s.isConnected||!ban.offsetWidth)return;
       const top=nbH()+(parseFloat(getComputedStyle(bsE).paddingTop)||12);bsec.style.top=top+"px";
       const B=ban.getBoundingClientRect(),scT=sc.getBoundingClientRect().top,r0=Math.max(0,sc.scrollTop+(bsec.getBoundingClientRect().top-scT)-top),W=ban.offsetWidth,H=ban.offsetHeight,PW=pill.offsetWidth,PH=pill.offsetHeight;NR=Math.max(160,Math.round(sc.scrollTop+(bsE.getBoundingClientRect().top-scT)-nbH()-r0));
       const lb=ban.querySelector(".nwlb");lb.innerHTML=pill.innerHTML;lb.style.width=PW+"px";lb.style.height=PH+"px";const pb=ban.querySelector(".nwpbg");pb.style.width=PW+"px";pb.style.height=PH+"px";pb.style.borderRadius=PH/2+"px";
@@ -3361,7 +3361,7 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
       for(const k in v)s.style.setProperty(k,v[k])};
     requestAnimationFrame(nwSetup);setTimeout(nwSetup,450);addEventListener("resize",nwSetup);s._nwSetup=nwSetup;
     // браузер без анимаций по прокрутке (iOS до 26): те же ключевые кадры, положение задаёт один расчёт за кадр
-    if(!(window.CSS&&CSS.supports&&CSS.supports("animation-timeline: scroll()"))){s.classList.add("nwjs");let raf=0;
+    if(!NOMORPH&&!(window.CSS&&CSS.supports&&CSS.supports("animation-timeline: scroll()"))){s.classList.add("nwjs");let raf=0;
       const upd=()=>{raf=0;const a=parseFloat(s.style.getPropertyValue("--nr0"))||0;s.style.setProperty("--np",Math.max(0,Math.min(1,(sc.scrollTop-a)/NR)).toFixed(4))};
       sc.addEventListener("scroll",()=>{if(!raf)raf=requestAnimationFrame(upd)},{passive:true});upd()}
   }
