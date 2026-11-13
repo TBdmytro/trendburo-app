@@ -239,7 +239,7 @@ test("новая коллекция: раздел пройден целиком 
     const realNow = Date.now; Date.now = () => realNow() + 60e3; // кэш разделов 30 с
     try { r = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "product.manual.dior-b3", item: item(3) }, headers: H }); } finally { Date.now = realNow; }
     assert.equal(r.body.novelty, true); assert.equal(r.body.status, "published");
-    p = await store.get("product.manual.dior-b3"); assert.equal(p.overrides.isNew, "on"); assert.ok(Date.parse(p.overrides.newUntil) > Date.now() + 55 * 864e5, "новинка живёт 2 месяца"); assert.deepEqual(p.sizes, ["90", "95"]);
+    p = await store.get("product.manual.dior-b3"); assert.notEqual(p.overrides?.isNew, "on", "новинка — только по отметке бренда, не «впервые у нас»"); assert.deepEqual(p.sizes, ["90", "95"]);
     // выбрано «сначала мне» — новинка в «Новые с сайтов», но с отметкой
     await call(handler, { method: "POST", query: { a: "arrivalsSet" }, body: { mode: "incoming" }, headers: H });
     r = await call(handler, { method: "POST", query: { a: "webImport" }, body: { id: "product.manual.dior-b4", item: item(4) }, headers: H });
