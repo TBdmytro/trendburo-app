@@ -37,8 +37,8 @@ html.nologo .tglogo{opacity:0}
 .splash{position:fixed;inset:0;z-index:500;background:radial-gradient(120% 90% at 30% 15%,#45484e 0%,#26282c 52%,#141517 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;overflow:hidden;color:#fff}
 .splash::before{content:"";position:absolute;width:140vmax;height:140vmax;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.07) 0,rgba(255,255,255,0) 40%);animation:spglow 2.8s ease-out both}
 .sp-logo{position:relative;width:132px;height:132px;display:grid;place-items:center;will-change:transform,opacity;animation:sppop 1s cubic-bezier(.22,1,.36,1) both}
-.sp-logo b{font:400 52px/1 "Prata",Georgia,serif;letter-spacing:.02em;display:block;opacity:0;transform:scale(1.9);filter:blur(8px);will-change:transform,opacity,filter;animation:spfocus 1.05s .35s cubic-bezier(.22,1,.36,1) forwards} /* буквы «наплывают» в кольцо и встают в фокус */
-@keyframes spfocus{to{opacity:1;transform:none;filter:blur(0)}}
+.sp-logo b{font:400 52px/1 "Prata",Georgia,serif;letter-spacing:.02em;display:block;opacity:0;transform:scale(1.6);will-change:transform,opacity;animation:spfocus 1.05s .35s cubic-bezier(.22,1,.36,1) forwards} /* буквы «наплывают» в кольцо и встают в фокус */
+@keyframes spfocus{to{opacity:1;transform:none}} /* без размытия: blur на iPhone тормозит */
 .sp-logo svg{position:absolute;inset:-20px;width:172px;height:172px;transform:rotate(-90deg);overflow:visible}
 .sp-logo .r1{fill:none;stroke:rgba(255,255,255,.55);stroke-width:1;opacity:0;transform-origin:86px 86px;transform:scale(.92);animation:spring 1s .2s cubic-bezier(.22,1,.36,1) forwards}
 .sp-logo .r0{fill:none;stroke:rgba(255,255,255,.12);stroke-width:1;opacity:0;animation:spf .8s .9s forwards}
@@ -58,9 +58,13 @@ html.nologo .tglogo{opacity:0}
 .splash.fw *,.splash.fw::before{animation-play-state:paused!important}
 .splash.out{animation:spout .95s cubic-bezier(.7,0,.2,1) forwards}
 .splash.out .sp-logo{animation:none;opacity:1;transform:none}
-.splash.out .sp-logo b{filter:none;animation:spdive .8s cubic-bezier(.7,0,.3,1) forwards;transform-origin:23% 50%} /* точка внутри ножки «T» — экран заливается белым */
+.splash.out .sp-logo b{animation:spdive .5s cubic-bezier(.7,0,.3,1) forwards}
+/* влёт в букву: белый круг из центра знака раскрывается на весь экран — один простой слой, только transform (плавно и на iPhone) */
+.sp-dive{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:#fff;transform:scale(0);will-change:transform;pointer-events:none;z-index:3}
+.splash.out .sp-dive{animation:spwhite .55s .12s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes spwhite{to{transform:scale(60)}}
 .splash.out .sp-logo svg{animation:spring0 .45s ease-out forwards!important}
-@keyframes spdive{from{opacity:1;transform:none}75%{opacity:1;transform:scale(90)}to{opacity:0;transform:scale(100)}}
+@keyframes spdive{from{opacity:1;transform:none}to{opacity:0;transform:scale(4)}}
 @keyframes spring0{to{opacity:0;transform:rotate(-90deg) scale(2.6)}}
 .splash.out .sp-word,.splash.out .sp-sub,.splash.out .sp-bar{transition:opacity .3s,transform .45s;opacity:0;transform:translateY(-10px)}
 html.appin #app{animation:appin .7s cubic-bezier(.22,1,.36,1) both}
@@ -1756,7 +1760,7 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
   var last=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-last<300&&!ok(e.target)&&!(e.target.closest&&e.target.closest("input,textarea,select,button,a,[role=button],label")))e.preventDefault();last=n},{passive:false});
 })();</script>
 
-<div id="splash" class="splash fw" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 172 172"><circle class="r0" cx="86" cy="86" r="80"/><circle class="r1" cx="86" cy="86" r="70"/></svg><svg class="sp-rot sp-r3" viewBox="0 0 172 172"><circle class="r3" cx="86" cy="86" r="84"/></svg><svg class="sp-rot sp-r2" viewBox="0 0 172 172"><circle class="r2" cx="86" cy="86" r="70"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-est"><span class="y l">20</span><span class="t">Personal shopping</span><span class="y r">23</span></div><div class="sp-bar"><i></i></div></div>
+<div id="splash" class="splash fw" aria-hidden="true"><div class="sp-logo"><i class="sp-dive"></i><b>TB</b><svg viewBox="0 0 172 172"><circle class="r0" cx="86" cy="86" r="80"/><circle class="r1" cx="86" cy="86" r="70"/></svg><svg class="sp-rot sp-r3" viewBox="0 0 172 172"><circle class="r3" cx="86" cy="86" r="84"/></svg><svg class="sp-rot sp-r2" viewBox="0 0 172 172"><circle class="r2" cx="86" cy="86" r="70"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-est"><span class="y l">20</span><span class="t">Personal shopping</span><span class="y r">23</span></div><div class="sp-bar"><i></i></div></div>
 <div class="tglogo" aria-hidden="true"><b class="tgbeta">Beta</b><i>TB</i></div>
 <script>document.documentElement.classList.add("nologo")</script>
 <script>window.__spKey="tb_sp";
