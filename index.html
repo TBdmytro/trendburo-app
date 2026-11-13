@@ -42,6 +42,7 @@ html.nologo .tglogo{opacity:0}
 .sp-logo svg{position:absolute;inset:-20px;width:172px;height:172px;transform:rotate(-90deg);overflow:visible}
 .sp-logo .r1{fill:none;stroke:rgba(255,255,255,.55);stroke-width:1;opacity:0;transform-origin:86px 86px;transform:scale(.92);animation:spring 1s .2s cubic-bezier(.22,1,.36,1) forwards}
 .sp-logo .r0{fill:none;stroke:rgba(255,255,255,.12);stroke-width:1;opacity:0;animation:spf .8s .9s forwards}
+.sp-logo .r0,.sp-logo .sp-r3{display:none} /* одно кольцо с бегущей дугой: внешние кольца появлялись позже и выглядели как «ещё один кружок» */
 .sp-logo .r2{fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:60 380}
 /* вращение — у целых слоёв (видеокарта), а не у линий внутри SVG: не дёргается, пока грузится приложение */
 .sp-logo svg.sp-rot{will-change:transform,opacity;transform:rotate(-90deg)}
