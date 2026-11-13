@@ -55,8 +55,12 @@ html.nologo .tglogo{opacity:0}
 .splash.quick .sp-logo .r1{animation:spring .6s cubic-bezier(.65,0,.35,1) forwards}
 .splash.quick .sp-logo .sp-r2{animation:spin2 1.4s linear infinite,spin2in .3s .3s forwards}
 .splash.fw *,.splash.fw::before{animation-play-state:paused!important}
-.splash.out{animation:spout .7s cubic-bezier(.7,0,.2,1) forwards}
-.splash.out .sp-logo{animation:spshrink .7s cubic-bezier(.7,0,.2,1) forwards}
+.splash.out{animation:spout .95s cubic-bezier(.7,0,.2,1) forwards}
+.splash.out .sp-logo{animation:none;opacity:1;transform:none}
+.splash.out .sp-logo b{animation:spdive .8s cubic-bezier(.7,0,.3,1) forwards;transform-origin:23% 50%} /* точка внутри ножки «T» — экран заливается белым */
+.splash.out .sp-logo svg{animation:spring0 .45s ease-out forwards!important}
+@keyframes spdive{from{opacity:1;transform:none}75%{opacity:1;transform:scale(90)}to{opacity:0;transform:scale(100)}}
+@keyframes spring0{to{opacity:0;transform:rotate(-90deg) scale(1.4)}}
 .splash.out .sp-word,.splash.out .sp-sub,.splash.out .sp-bar{transition:opacity .3s,transform .45s;opacity:0;transform:translateY(-10px)}
 html.appin #app{animation:appin .7s cubic-bezier(.22,1,.36,1) both}
 @keyframes sppop{from{transform:scale3d(.6,.6,1);opacity:0}to{transform:scale3d(1,1,1);opacity:1}}
@@ -270,7 +274,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 
 .dlv-face.dlv-front{position:relative}
 
-/* вход: наш знак TB с вращающимся кольцом, подпись «20 · Personal shopper · 23» — годы съезжаются к надписи */
+/* вход: наш знак TB с вращающимся кольцом, подпись «20 · Personal shopping · 23» — годы съезжаются к надписи */
 /* вариант B (ноябрь 2026): графит, мятные кольца как пакет Trend Büro, белые буквы с засечками (Cinzel), без золота */
 .sp-logo b{font:400 48px/1 "Cinzel","Prata",Georgia,serif;letter-spacing:.02em;color:#fff}
 .sp-word{font:400 24px/1 "Cinzel","Prata",Georgia,serif;letter-spacing:.1em;text-transform:uppercase;margin-top:36px}
@@ -1743,7 +1747,7 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
   var last=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-last<300&&!ok(e.target)&&!(e.target.closest&&e.target.closest("input,textarea,select,button,a,[role=button],label")))e.preventDefault();last=n},{passive:false});
 })();</script>
 
-<div id="splash" class="splash fw" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 172 172"><circle class="r0" cx="86" cy="86" r="80"/><circle class="r1" cx="86" cy="86" r="70"/></svg><svg class="sp-rot sp-r3" viewBox="0 0 172 172"><circle class="r3" cx="86" cy="86" r="84"/></svg><svg class="sp-rot sp-r2" viewBox="0 0 172 172"><circle class="r2" cx="86" cy="86" r="70"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-est"><span class="y l">20</span><span class="t">Personal shopper</span><span class="y r">23</span></div><div class="sp-bar"><i></i></div></div>
+<div id="splash" class="splash fw" aria-hidden="true"><div class="sp-logo"><b>TB</b><svg viewBox="0 0 172 172"><circle class="r0" cx="86" cy="86" r="80"/><circle class="r1" cx="86" cy="86" r="70"/></svg><svg class="sp-rot sp-r3" viewBox="0 0 172 172"><circle class="r3" cx="86" cy="86" r="84"/></svg><svg class="sp-rot sp-r2" viewBox="0 0 172 172"><circle class="r2" cx="86" cy="86" r="70"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-est"><span class="y l">20</span><span class="t">Personal shopping</span><span class="y r">23</span></div><div class="sp-bar"><i></i></div></div>
 <div class="tglogo" aria-hidden="true"><b class="tgbeta">Beta</b><i>TB</i></div>
 <script>document.documentElement.classList.add("nologo")</script>
 <script>window.__spKey="tb_sp";
@@ -1764,7 +1768,7 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s.dataset.h)return;s.dataset.h=1;
   var w=Math.max(0,(min==null?(window.__spMin||1600):min)-(performance.now()-(window.__sp0||0)));
   setTimeout(function(){s.classList.add("out");try{var T=window.Telegram&&Telegram.WebApp;T&&T.setHeaderColor&&T.setHeaderColor("#ffffff")}catch(x){}var R=document.documentElement;setTimeout(function(){R.classList.add("appin")},180);
-    setTimeout(function(){s.remove();setTimeout(function(){R.classList.remove("appin")},700)},620)},w)};
+    setTimeout(function(){s.remove();setTimeout(function(){R.classList.remove("appin")},700)},960)},w)};
 (function(){var s=document.getElementById("splash");if(!s)return;
   /* буквы заставки — сразу нашим шрифтом (Cinzel / Prata): анимация стоит, пока шрифт не готов (не дольше 0,7 с) — без «перескока» букв */
   var go=function(){if(s.classList.contains("fw")){s.classList.remove("fw");window.__sp0=performance.now()}};
@@ -3856,7 +3860,7 @@ function authGate(force){if(!LIVE)return;const b=authBody();
   if(b&&store.get("tb_signed",0)&&!force){loadMe().then(r=>{if(!r&&ME_ERR&&ME_ERR.code==="no_account"){store.set("tb_signed",0);ME=null;renderTopIcons();return authGate(true)}if(r&&r.access&&r.access!=="ok")authGate(true);else if(r&&CLOSED)catReload()});return}
   document.querySelectorAll(".gate").forEach(x=>x.remove());
   const g=document.createElement("div");g.className="gate";g.setAttribute("role","dialog");g.setAttribute("aria-label","Вход");
-  g.innerHTML=`<span class="betab" style="position:fixed;top:calc(12px + var(--st,0px))">Beta</span><div class="gt-top"><span class="gt-logo">TB</span><h1>Trend Büro</h1><p class="gt-est"><span>20</span>Personal shopper<span>23</span></p></div><div class="gt-card" id="gtc"></div>`;
+  g.innerHTML=`<span class="betab" style="position:fixed;top:calc(12px + var(--st,0px))">Beta</span><div class="gt-top"><span class="gt-logo">TB</span><h1>Trend Büro</h1><p class="gt-est"><span>20</span>Personal shopping<span>23</span></p></div><div class="gt-card" id="gtc"></div>`;
   $("#app").append(g);requestAnimationFrame(()=>requestAnimationFrame(()=>g.classList.add("in")));
   const card=g.querySelector("#gtc"),close=()=>{g.classList.add("out");setTimeout(()=>g.remove(),520)};
   const skip=CLOSED?"":`<button type="button" class="gt-skip" data-skip>Смотреть без входа</button>`;
