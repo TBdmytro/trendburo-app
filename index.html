@@ -42,7 +42,15 @@ html.nologo .tglogo{opacity:0}
 .sp-logo svg{position:absolute;inset:-20px;width:172px;height:172px;transform:rotate(-90deg);overflow:visible}
 .sp-logo .r1{fill:none;stroke:rgba(255,255,255,.55);stroke-width:1;opacity:0;transform-origin:86px 86px;transform:scale(.92);animation:spring 1s .2s cubic-bezier(.22,1,.36,1) forwards}
 .sp-logo .r0{fill:none;stroke:rgba(255,255,255,.12);stroke-width:1;opacity:0;animation:spf .8s .9s forwards}
-.sp-logo .r0,.sp-logo .sp-r3{display:none} /* одно кольцо с бегущей дугой: внешние кольца появлялись позже и выглядели как «ещё один кружок» */
+.sp-logo .r0,.sp-logo .sp-r3{display:none}
+/* знак как в шапке сайта: графитовый круг с TB и две белые дуги, которые крутятся вокруг — с первой секунды */
+.sp-logo svg{display:none!important}
+.sp-disc{position:absolute;inset:8px;border-radius:50%;background:#1f2125;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 18px 44px rgba(0,0,0,.35)}
+.sp-disc::before{content:"";position:absolute;inset:-10px;border-radius:50%;background:conic-gradient(from 0deg,#fff 0 18%,transparent 18% 50%,#fff 50% 68%,transparent 68%);-webkit-mask:radial-gradient(circle,transparent 66px,#000 66.5px);mask:radial-gradient(circle,transparent 66px,#000 66.5px);will-change:transform;animation:tgspin 1.8s linear infinite}
+.sp-logo b{position:relative;z-index:1}
+.splash.out .sp-disc{animation:spdisc .5s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes spdisc{to{transform:scale(1.5);opacity:0}}
+/* одно кольцо с бегущей дугой: внешние кольца появлялись позже и выглядели как «ещё один кружок» */
 .sp-logo .r2{fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:60 380}
 /* вращение — у целых слоёв (видеокарта), а не у линий внутри SVG: не дёргается, пока грузится приложение */
 .sp-logo svg.sp-rot{will-change:transform,opacity;transform:rotate(-90deg)}
@@ -1761,7 +1769,7 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
   var last=0;document.addEventListener("touchend",function(e){var n=Date.now();if(n-last<300&&!ok(e.target)&&!(e.target.closest&&e.target.closest("input,textarea,select,button,a,[role=button],label")))e.preventDefault();last=n},{passive:false});
 })();</script>
 
-<div id="splash" class="splash fw" aria-hidden="true"><div class="sp-logo"><i class="sp-dive"></i><b>TB</b><svg viewBox="0 0 172 172"><circle class="r0" cx="86" cy="86" r="80"/><circle class="r1" cx="86" cy="86" r="70"/></svg><svg class="sp-rot sp-r3" viewBox="0 0 172 172"><circle class="r3" cx="86" cy="86" r="84"/></svg><svg class="sp-rot sp-r2" viewBox="0 0 172 172"><circle class="r2" cx="86" cy="86" r="70"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-est"><span class="y l">20</span><span class="t">Personal shopping</span><span class="y r">23</span></div><div class="sp-bar"><i></i></div></div>
+<div id="splash" class="splash fw" aria-hidden="true"><div class="sp-logo"><i class="sp-disc"></i><i class="sp-dive"></i><b>TB</b><svg viewBox="0 0 172 172"><circle class="r0" cx="86" cy="86" r="80"/><circle class="r1" cx="86" cy="86" r="70"/></svg><svg class="sp-rot sp-r3" viewBox="0 0 172 172"><circle class="r3" cx="86" cy="86" r="84"/></svg><svg class="sp-rot sp-r2" viewBox="0 0 172 172"><circle class="r2" cx="86" cy="86" r="70"/></svg></div><div class="sp-word"><i style="--k:0">T</i><i style="--k:1">r</i><i style="--k:2">e</i><i style="--k:3">n</i><i style="--k:4">d</i><i style="--k:5">&nbsp;</i><i style="--k:6">B</i><i style="--k:7">ü</i><i style="--k:8">r</i><i style="--k:9">o</i></div><div class="sp-est"><span class="y l">20</span><span class="t">Personal shopping</span><span class="y r">23</span></div><div class="sp-bar"><i></i></div></div>
 <div class="tglogo" aria-hidden="true"><b class="tgbeta">Beta</b><i>TB</i></div>
 <script>document.documentElement.classList.add("nologo")</script>
 <script>window.__spKey="tb_sp";
