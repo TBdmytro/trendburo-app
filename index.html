@@ -37,7 +37,8 @@ html.nologo .tglogo{opacity:0}
 .splash{position:fixed;inset:0;z-index:500;background:radial-gradient(120% 90% at 30% 15%,#45484e 0%,#26282c 52%,#141517 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;overflow:hidden;color:#fff}
 .splash::before{content:"";position:absolute;width:140vmax;height:140vmax;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.07) 0,rgba(255,255,255,0) 40%);animation:spglow 2.8s ease-out both}
 .sp-logo{position:relative;width:132px;height:132px;display:grid;place-items:center;will-change:transform,opacity;animation:sppop 1s cubic-bezier(.22,1,.36,1) both}
-.sp-logo b{font:400 52px/1 "Prata",Georgia,serif;letter-spacing:.02em;display:block;opacity:0;transform:translate3d(0,10px,0);will-change:transform,opacity;animation:spup .9s .45s cubic-bezier(.22,1,.36,1) forwards}
+.sp-logo b{font:400 52px/1 "Prata",Georgia,serif;letter-spacing:.02em;display:block;opacity:0;transform:scale(1.9);filter:blur(8px);will-change:transform,opacity,filter;animation:spfocus 1.05s .35s cubic-bezier(.22,1,.36,1) forwards} /* буквы «наплывают» в кольцо и встают в фокус */
+@keyframes spfocus{to{opacity:1;transform:none;filter:blur(0)}}
 .sp-logo svg{position:absolute;inset:-20px;width:172px;height:172px;transform:rotate(-90deg);overflow:visible}
 .sp-logo .r1{fill:none;stroke:rgba(255,255,255,.55);stroke-width:1;opacity:0;transform-origin:86px 86px;transform:scale(.92);animation:spring 1s .2s cubic-bezier(.22,1,.36,1) forwards}
 .sp-logo .r0{fill:none;stroke:rgba(255,255,255,.12);stroke-width:1;opacity:0;animation:spf .8s .9s forwards}
@@ -57,10 +58,10 @@ html.nologo .tglogo{opacity:0}
 .splash.fw *,.splash.fw::before{animation-play-state:paused!important}
 .splash.out{animation:spout .95s cubic-bezier(.7,0,.2,1) forwards}
 .splash.out .sp-logo{animation:none;opacity:1;transform:none}
-.splash.out .sp-logo b{animation:spdive .8s cubic-bezier(.7,0,.3,1) forwards;transform-origin:23% 50%} /* точка внутри ножки «T» — экран заливается белым */
+.splash.out .sp-logo b{filter:none;animation:spdive .8s cubic-bezier(.7,0,.3,1) forwards;transform-origin:23% 50%} /* точка внутри ножки «T» — экран заливается белым */
 .splash.out .sp-logo svg{animation:spring0 .45s ease-out forwards!important}
 @keyframes spdive{from{opacity:1;transform:none}75%{opacity:1;transform:scale(90)}to{opacity:0;transform:scale(100)}}
-@keyframes spring0{to{opacity:0;transform:rotate(-90deg) scale(1.4)}}
+@keyframes spring0{to{opacity:0;transform:rotate(-90deg) scale(2.6)}}
 .splash.out .sp-word,.splash.out .sp-sub,.splash.out .sp-bar{transition:opacity .3s,transform .45s;opacity:0;transform:translateY(-10px)}
 html.appin #app{animation:appin .7s cubic-bezier(.22,1,.36,1) both}
 @keyframes sppop{from{transform:scale3d(.6,.6,1);opacity:0}to{transform:scale3d(1,1,1);opacity:1}}
