@@ -77,6 +77,13 @@ export default async function handler(req, res) {
     }
   } catch (e) { console.error("catalog access:", e.message); res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Недоступно" })); }
   const compact = /[?&]v=2\b/.test(String(req.url || ""));
+  // только коллекции (баннеры главной) — маленький ответ: телефон со старым сохранённым каталогом сразу видит новые обложки
+  if (/[?&]colls=1\b/.test(String(req.url || ""))) {
+    try { const body = await catalogBody(compact), i = body.lastIndexOf(',"collections":'), k = body.lastIndexOf(',"generatedAt"');
+      res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "private, no-store"); res.statusCode = 200;
+      return res.end('{"collections":' + (i > 0 && k > i ? body.slice(i + 15, k) : "[]") + "}"); }
+    catch (e) { res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end('{"collections":null}'); }
+  }
   try {
     const body = await catalogBody(compact);
     res.setHeader("Content-Type", "application/json; charset=utf-8");

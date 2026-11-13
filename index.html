@@ -4650,6 +4650,8 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
   if(local){let touched=false;const mark=()=>{touched=true};["touchstart","pointerdown","wheel","keydown"].forEach(ev=>addEventListener(ev,mark,{once:true,passive:true,capture:true}));
     // вход плавный: большой каталог (несколько МБ) качаем не вместе с фото главной, а через ~3 с после показа, в свободную минуту;
     // тот же самый — ничего не делаем (без разбора на телефоне); другой — разберём при первом переходе или когда приложение свёрнуто
+    // обложки коллекций — сразу маленьким запросом (раньше ждали весь каталог: на телефоне могла долго оставаться старая фотография баннера)
+    (async()=>{try{const b=authBody(),r=await fetch(CATK+"&colls=1"+(b?"&a=1":""),b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});if(!r.ok)return;const j=await r.json();const C=j&&j.collections;if(Array.isArray(C)&&C.length&&JSON.stringify(C)!==JSON.stringify(COLL)){COLL=C;const hb=document.getElementById("hCover");if(hb&&typeof hCover==="function"){hb.style.transition="opacity .35s";hb.style.opacity=0;setTimeout(()=>{try{hCover()}catch(e){}hb.style.opacity=1},360)}}}catch(e){}})();
     await new Promise(r=>setTimeout(()=>window.requestIdleCallback?requestIdleCallback(r,{timeout:2500}):r(),3200));
     let n=null;try{const b=authBody(),r=await fetch(b?CATK+"&a=1":CATK,b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});n={st:r.status,ok:r.ok,t:await r.text()}}catch(e){}
     if(n&&n.st===403){CLOSED=true;try{window.caches&&caches.delete(CATSTO)}catch(e){}catApply({products:[]},false);catRefreshUI();try{authGate(true)}catch(e){}}
