@@ -18,7 +18,7 @@ img{-webkit-user-drag:none}
 :root{--st:max(env(safe-area-inset-top,0px),var(--tgst,0px));--sb:max(env(safe-area-inset-bottom,0px),var(--tgsb,0px))}
 .tglogo{display:none;position:fixed;z-index:400;left:50%;top:var(--tgs,0px);height:var(--tgc,0px);transform:translateX(-50%);align-items:center;justify-content:center;pointer-events:none}
 html.fs .tglogo{display:flex}
-.tgbeta{position:absolute;right:calc(100% + 12px);top:50%;transform:translateY(-50%);padding:3px 9px;border-radius:999px;background:#eceef0;color:#6b6f76;font:600 10.5px/1.4 Onest,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.tgbeta{position:absolute;right:calc(100% + 12px);top:50%;transform:translateY(-50%);padding:3px 9px;border-radius:999px;background:#2563eb;color:#ffffff;box-shadow:0 2px 8px rgba(37,99,235,.35);font:600 10.5px/1.4 Onest,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
 html.fs .betab{display:none} /* в полноэкранном Telegram «Beta» — в верхней строке, между «Закрыть» и логотипом */
 .tglogo i{pointer-events:auto;cursor:pointer}
 /* над фото карточки товара: логотип — прозрачное стекло, сверху мягкое затемнение снимка */
@@ -747,7 +747,7 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .tab:not(.on){content-visibility:hidden}
 /* отправка в шапке ленты (вариант A) */
 #t-feed .bigtitle{align-items:center}
-.betab{position:absolute;left:16px;top:calc(10px + var(--st));z-index:3;padding:3px 9px;border-radius:999px;background:#eceef0;color:#6b6f76;font:600 10.5px/1.4 Onest,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;pointer-events:none}
+.betab{position:absolute;left:16px;top:calc(10px + var(--st));z-index:3;padding:3px 9px;border-radius:999px;background:#2563eb;color:#ffffff;box-shadow:0 2px 8px rgba(37,99,235,.35);font:600 10.5px/1.4 Onest,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;pointer-events:none}
 .shippill{display:inline-flex;align-items:center;gap:7px;background:var(--soft,#f2f3f4);border-radius:99px;padding:8px 12px;font-size:13px;font-weight:500;color:var(--fg);white-space:nowrap}
 .shippill svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;flex:none}
 .shippill b{color:#2f8a5b;font-weight:600}
