@@ -41,6 +41,10 @@ export default async function handler(req, res) {
     const ch = L.filter(p => Object.values(p.offers[0].availability || {}).some(a => a && a.status === "online")); const apply = /[?&]apply=1\b/.test(String(req.url));
     if (apply && ch.length) await st.patchEach(ch.map(p => { const o = p.offers[0]; return { id: p._id, set: { offers: [{ ...o, availability: Object.fromEntries(Object.entries(o.availability || {}).map(([k, a]) => [k, { ...a, status: a && a.status === "online" ? "ask" : a?.status }])) }, ...p.offers.slice(1)], hasPre: true } }; }));
     res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ apply, found: L.length, changed: ch.length, sample: ch.slice(0, 30).map(p => [p._id.slice(15), p.title]) })); })();
+  if (req.method === "GET" && /[?&]probe=secdiff\b/.test(String(req.url || ""))) return (async () => { const q = String(req.url), px = "product.manual." + ((q.match(/[?&]p=([a-z0-9]+)/) || [])[1] || "") + "-", codes = decodeURIComponent((q.match(/[?&]c=([^&]+)/) || [])[1] || "").split(",").filter(Boolean);
+    const ids = new Set((await getStore().list("product", {}, { limit: 60000, fields: "_id" })).filter(p => p._id.startsWith(px)).map(p => p._id.slice(px.length).toUpperCase())), arr = [...ids];
+    const out = { n: codes.length, exact: 0, prefix: [], none: [] }; for (const c of codes) { if (ids.has(c)) out.exact++; else { const m = arr.filter(i => i.slice(0, 6) === c.slice(0, 6)); if (m.length) out.prefix.push(c + "→" + m.join("/")); else out.none.push(c); } }
+    res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(out)); })();
   if (req.method === "GET" && /[?&]probe=secids\b/.test(String(req.url || ""))) return (async () => { const sec = decodeURIComponent((String(req.url).match(/[?&]s=([^&]+)/) || [])[1] || ""), px = "product.manual." + ((String(req.url).match(/[?&]p=([a-z0-9]+)/) || [])[1] || "") + "-";
     const L = (await getStore().list("product", {}, { limit: 60000, fields: "_id, webSections, status, title" })).filter(p => p._id.startsWith(px));
     const inS = L.filter(p => (p.webSections || []).some(x => String(x).includes(sec)));
