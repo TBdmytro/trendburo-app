@@ -3702,7 +3702,7 @@ const svIco=r=>{const k=r.k.startsWith("day:")?"day":SVIC[r.k]?r.k:null;return k
 function autoRingsHTML(){AUTO=buildAuto();return AUTO.map((r,i)=>{const ic=svIco(r);return `<button class="story press ${r.seen?"seen":""}" data-act="astory" data-i="${i}"><span class="ring au">${ic?`<span class="ic">${ic}</span>`:`<img src="${esc(r.cover)}" alt="" loading="lazy" decoding="async">`}</span><small>${esc(r.name)}</small></button>`}).join("")}
 const RAT=new Map();
 function svFit(im,box,ar){const W=box.clientWidth,H=box.clientHeight;if(W<10||H<10)return false;let w=W,h=W/ar;if(h>H){h=H;w=H*ar}
-  Object.assign(im.style,{position:"absolute",left:Math.round((W-w)/2)+"px",top:Math.round((H-h)/2)+"px",width:Math.round(w)+"px",height:Math.round(h)+"px",maxWidth:"none",maxHeight:"none",objectFit:"cover"});im.classList.add("fit");return true}
+  Object.assign(im.style,{position:"absolute",left:Math.round((W-w)/2)+"px",top:Math.round((H-h)/2)+"px",width:Math.round(w)+"px",height:Math.round(h)+"px",maxWidth:"none",maxHeight:"none",objectFit:"cover"});if(im.complete&&im.naturalWidth)im.classList.add("fit");return true}
 function openAuto(ri){
   if(!AUTO[ri])return;document.querySelectorAll(".sv2,.sv").forEach(e=>e.remove());
   const host=document.createElement("div");host.className="sv2 first";host.setAttribute("role","dialog");host.setAttribute("aria-label","Истории");$("#app").append(host);
@@ -3761,7 +3761,7 @@ function openAuto(ri){
   const tapL=()=>{const L=phs();if(L&&pj>0){pj--;showPh()}else prev()};
   const enter=()=>{const s=list[i];mark(s);el=0;pj=s&&s.t==="p"?Math.min(0,5):0;{const L=phs();if(L&&L[pj+1]){const m=new Image();if(!NOCORS(L[pj+1].src))m.crossOrigin="anonymous";m.src=L[pj+1].src}}cb.querySelector(".hz small").textContent="сегодня";
     cb.querySelector(".tp.l").hidden=cb.querySelector(".tp.r").hidden=s.t==="du";
-    cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1]);pre(list[i+2]);if(s.t==="du")duPre()};
+    cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1]);pre(list[i+2]);if(s.t==="du")duPre();if(i>=list.length-2)setTimeout(()=>{try{if(!dead&&!busy)neighbor(1)}catch(x){}},400)};
   // смена слайда внутри рубрики: как в Instagram — сразу, без мигания (новое фото уже загружено заранее)
   // листание внутри рубрики: новая картинка въезжает сбоку, старая уходит — видно, как листается; быстрые тапы не ломают анимацию
   const goSlide=k=>{const dir=k>i?1:-1,s=list[k];i=k;
