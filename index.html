@@ -1338,46 +1338,45 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .cft-o svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
 .cft-o[hidden]{display:none}
 .cft-n{margin:-6px 0 14px;text-align:center;font:300 12.5px/1.4 Onest,sans-serif;color:#a9acb2}
-/* ===== Установка на iPhone: своя страница в Safari (иконка сверху, инструкция-картинка снизу) ===== */
-.ins{position:fixed;inset:0;z-index:900;background:#fff;overflow-y:auto;font-family:Onest,sans-serif;color:#25272b;padding:calc(var(--st,0px) + 10px) max(16px,env(safe-area-inset-left,0px)) calc(env(safe-area-inset-bottom,0px) + 120px) max(16px,env(safe-area-inset-right,0px))}
+/* ===== Установка на iPhone: своя страница в Safari (иконка сверху, инструкция-картинка снизу), в стиле Apple ===== */
+.ins{position:fixed;inset:0;z-index:900;background:#f5f5f7;overflow-y:auto;font-family:Onest,-apple-system,sans-serif;color:#1d1d1f;-webkit-font-smoothing:antialiased;padding:calc(var(--st,0px) + 12px) max(20px,env(safe-area-inset-left,0px)) calc(env(safe-area-inset-bottom,0px) + 128px) max(20px,env(safe-area-inset-right,0px))}
 .ins[hidden]{display:none}
-.ins svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
-.ins-x{position:absolute;top:calc(var(--st,0px) + 10px);right:12px;width:38px;height:38px;border-radius:50%;border:0;background:#f2f3f4;color:#50545b;font:300 22px/1 Onest;display:grid;place-items:center}
-.ins-ph{width:min(200px,54vw);aspect-ratio:1/.8;margin:8px auto 0;border:7px solid #ececec;border-bottom:0;border-radius:34px 34px 0 0;position:relative;padding:26px 11px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-content:start;overflow:hidden}
-.ins-ph:before{content:"";position:absolute;top:7px;left:50%;width:30%;height:12px;border-radius:9px;background:#ececec;transform:translateX(-50%)}
-.ins-ph i{aspect-ratio:1;border-radius:22%;background:#ececec}
-.ins-ph img{position:absolute;left:50%;top:50%;width:44%;aspect-ratio:1;border-radius:22%;transform:translate(-50%,-38%);box-shadow:0 8px 22px rgba(0,0,0,.18)}
-.ins h2{margin:16px 0 4px;text-align:center;font:500 20px/1.25 Onest;text-wrap:balance}
-.ins-l{margin:0 0 14px;text-align:center;font:300 14px/1.4 Onest;color:#6b6e74}
-.ins-p{background:#f2f3f4;border-radius:18px;padding:16px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;pointer-events:none;user-select:none}
-.ins-tag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #e4e5e8;border-radius:999px;padding:2px 10px;font:400 11px Onest;color:#8a8d93;white-space:nowrap}
-.ins-c{display:flex;flex-direction:column;gap:7px;min-width:0}
-.ins-cap{display:flex;gap:7px;align-items:flex-start;font:400 12.5px/1.3 Onest}
-.ins-cap b{flex:none;width:20px;height:20px;border-radius:50%;background:#25272b;color:#fff;display:grid;place-items:center;font:500 11px Onest}
-.ins-m{height:108px;border-radius:14px;background:#fff;border:1px solid #e4e5e8;position:relative;overflow:hidden}
-.ins-pg{position:absolute;inset:8px 8px auto;height:34px;border-radius:8px;background:#f2f3f4}
-.ins-bar{position:absolute;left:6px;right:6px;bottom:8px;height:28px;display:flex;gap:4px;align-items:center}
-.ins-bb{width:28px;height:28px;border-radius:50%;background:#f2f3f4;display:grid;place-items:center;font:600 10px Onest;flex:none}
+.ins svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+.ins-x{position:absolute;top:calc(var(--st,0px) + 12px);right:14px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(120,120,128,.14);color:#6e6e73;font:500 18px/1 Onest;display:grid;place-items:center}
+.ins-hero{display:flex;flex-direction:column;align-items:center;padding-top:6px}
+.ins-ic{width:80px;height:80px;border-radius:19px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 12px 32px rgba(0,0,0,.18)}
+.ins-ey{margin-top:12px;font:600 12px Onest;letter-spacing:.08em;text-transform:uppercase;color:#86868b}
+.ins h2{margin:4px 0 0;text-align:center;font:600 24px/1.15 Onest;letter-spacing:-.02em;text-wrap:balance}
+.ins-l{margin:6px auto 16px;max-width:300px;text-align:center;font:400 15px/1.4 Onest;color:#6e6e73}
+.ins-p{display:grid;grid-template-columns:1fr 1fr;gap:12px;pointer-events:none;user-select:none}
+.ins-c{background:#fff;border-radius:20px;padding:9px 9px 11px;display:flex;flex-direction:column;gap:9px;min-width:0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.ins-cap{display:flex;gap:8px;align-items:flex-start;font:500 13px/1.3 Onest;padding:0 2px}
+.ins-cap b{flex:none;width:20px;height:20px;border-radius:50%;background:#0071e3;color:#fff;display:grid;place-items:center;font:600 11px Onest}
+.ins-m{order:-1;height:96px;border-radius:13px;background:#f5f5f7;position:relative;overflow:hidden}
+.ins-pg{position:absolute;inset:8px 8px auto;height:30px;border-radius:7px;background:#e8e8ed}
+.ins-bar{position:absolute;left:6px;right:6px;bottom:7px;height:28px;display:flex;gap:4px;align-items:center}
+.ins-bb{width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1);display:grid;place-items:center;font:700 9px Onest;color:#1d1d1f;flex:none}
 .ins-bb svg{width:14px;height:14px}
-.ins-url{flex:1;height:28px;border-radius:999px;background:#f2f3f4;display:grid;place-items:center;font:500 10px Onest}
-.ins-hl{box-shadow:0 0 0 2.5px #2563eb,0 0 0 7px rgba(37,99,235,.2);background:#fff;color:#2563eb}
-.ins-menu{position:absolute;right:6px;bottom:8px;width:112px;background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.16);padding:4px 0;font:400 10px Onest}
-.ins-menu div{display:flex;align-items:center;justify-content:space-between;padding:6px 9px}
+.ins-url{flex:1;height:28px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1);display:grid;place-items:center;font:500 10px Onest;color:#1d1d1f}
+.ins-hl{color:#0071e3;box-shadow:0 0 0 2px #0071e3,0 0 0 6px rgba(0,113,227,.18)}
+.ins-menu{position:absolute;right:6px;bottom:7px;width:108px;background:rgba(255,255,255,.96);border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.14);padding:3px 0;font:500 9.5px Onest}
+.ins-menu div{display:flex;align-items:center;justify-content:space-between;padding:5px 9px;color:#1d1d1f}
 .ins-menu svg,.ins-sh svg{width:12px;height:12px}
-.ins-hi{color:#2563eb!important;font-weight:500;box-shadow:inset 0 0 0 2px #2563eb;border-radius:8px;background:rgba(37,99,235,.08)!important}
+.ins-hi{color:#0071e3!important;background:rgba(0,113,227,.1)!important;box-shadow:inset 0 0 0 1.5px #0071e3;border-radius:8px}
 .ins-menu .ins-hi{margin:0 3px}
-.ins-sh{position:absolute;left:0;right:0;bottom:0;height:84px;background:#f6f6f7;border-radius:12px 12px 0 0;padding:8px 6px;font:400 10px Onest}
-.ins-sh .ap{display:flex;gap:6px;margin-bottom:5px}.ins-sh .ap i{width:20px;height:20px;border-radius:7px;background:#e4e5e8}
-.ins-sh .rw{background:#fff;border-radius:8px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.ins-ad{position:absolute;inset:0;background:#f6f6f7}
-.ins-ad .tp{display:flex;justify-content:space-between;padding:8px 9px;font:400 10px Onest;color:#2563eb}
-.ins-ad .tp .ins-hi{padding:1px 5px;margin:-1px -5px}
-.ins-ad .cd{margin:6px 9px;background:#fff;border-radius:10px;padding:8px;display:flex;gap:8px;align-items:center;font:400 10.5px Onest}
-.ins-ad img{width:32px;height:32px;border-radius:8px}
-.ins-go{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 70px);background:#2563eb;color:#fff;border-radius:999px;padding:10px 14px;font:500 14px Onest;display:flex;gap:8px;align-items:center;box-shadow:0 6px 18px rgba(37,99,235,.35);animation:insb 1.4s ease-in-out infinite;pointer-events:none}
-.ins-go:after{content:"";position:absolute;bottom:-6px;right:22px;width:12px;height:12px;background:#2563eb;transform:rotate(45deg);border-radius:2px}
-@keyframes insb{50%{transform:translateY(-6px)}}
-.ins-n{margin:14px 4px 0;text-align:center;font:300 12.5px/1.45 Onest;color:#8a8d93}
+.ins-sh{position:absolute;left:0;right:0;bottom:0;height:78px;background:#fff;border-radius:12px 12px 0 0;box-shadow:0 -4px 14px rgba(0,0,0,.06);padding:7px 6px;font:500 9.5px Onest}
+.ins-sh .ap{display:flex;gap:6px;margin-bottom:5px}.ins-sh .ap i{width:19px;height:19px;border-radius:6px;background:#e8e8ed}
+.ins-sh .rw{background:#f5f5f7;border-radius:8px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;color:#1d1d1f}
+.ins-ad{position:absolute;inset:0;background:#f5f5f7}
+.ins-ad .tp{display:flex;justify-content:space-between;align-items:center;padding:8px 9px;font:500 9.5px Onest;color:#0071e3}
+.ins-ad .tp .ins-hi{padding:2px 6px;margin:-2px -6px;font-weight:600}
+.ins-ad .cd{margin:4px 9px;background:#fff;border-radius:10px;padding:8px;display:flex;gap:8px;align-items:center;font:500 10.5px Onest;color:#1d1d1f}
+.ins-ad img{width:30px;height:30px;border-radius:7px}
+.ins-go{transition:opacity .25s;position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 72px);background:#0071e3;color:#fff;border-radius:999px;padding:9px 14px;font:600 14px Onest;display:flex;gap:7px;align-items:center;box-shadow:0 8px 20px rgba(0,113,227,.32);animation:insb 1.4s ease-in-out infinite;pointer-events:none}
+.ins-go.off{opacity:0}
+.ins-go:after{content:"";position:absolute;bottom:-5px;right:20px;width:11px;height:11px;background:#0071e3;transform:rotate(45deg);border-radius:2px}
+@keyframes insb{50%{transform:translateY(-5px)}}
+.ins-n{margin:18px 8px 0;text-align:center;font:400 13px/1.45 Onest;color:#86868b}
 .cft-c{margin-top:20px;text-align:center;font:300 11px Onest,sans-serif;color:#7d8086;letter-spacing:.04em}
 
 /* OPTIX — eyewear, misty blue */
@@ -2348,17 +2347,17 @@ function instGuide(){if(instStandalone())return;let el=$("#ins");if(!el){el=docu
   const v=+((navigator.userAgent.match(/Version\/(\d+)/)||[])[1]||0),dots=v>=26; /* Safari 26: «Поделиться» спрятано в «•••» */
   const bar=h=>`<div class="ins-bar"><span class="ins-bb">‹</span><span class="ins-url">trendburo</span><span class="ins-bb${h?" ins-hl":""}">${dots?"•••":INS_SH}</span></div>`;
   const st=[];
-  st.push(dots?["Три точки «•••» справа внизу",`<div class="ins-pg"></div>${bar(1)}`]:["Кнопка «Поделиться» внизу",`<div class="ins-pg"></div>${bar(1)}`]);
+  st.push(dots?["«•••» справа внизу",`<div class="ins-pg"></div>${bar(1)}`]:["Кнопка «Поделиться» внизу",`<div class="ins-pg"></div>${bar(1)}`]);
   if(dots)st.push(["«Поделиться»",`<div class="ins-pg"></div><div class="ins-menu"><div>Новая вкладка</div><div>Закладки</div><div class="ins-hi">Поделиться ${INS_SH}</div></div>`]);
   st.push(["«На экран „Домой“»",`<div class="ins-pg" style="height:28px"></div><div class="ins-sh"><div class="ap"><i></i><i></i><i></i><i></i></div><div class="rw">Скопировать</div><div class="rw ins-hi">На экран «Домой» ${INS_PL}</div></div>`]);
-  st.push(["«Добавить» вверху справа",`<div class="ins-ad"><div class="tp"><span>Отменить</span><span class="ins-hi">Добавить</span></div><div class="cd"><img src="/icons/icon-192.png" alt="">Trend Büro</div></div>`]);
+  st.push(["«Добавить»",`<div class="ins-ad"><div class="tp"><span>Отменить</span><span class="ins-hi">Добавить</span></div><div class="cd"><img src="/icons/icon-192.png" alt="">Trend Büro</div></div>`]);
   el.innerHTML=`<button class="ins-x" aria-label="Закрыть">×</button>
-  <div class="ins-ph" aria-hidden="true">${"<i></i>".repeat(12)}<img src="/icons/icon-512.png" alt=""></div>
-  <h2>Добавьте Trend Büro на экран «Домой»</h2><p class="ins-l">Нажимайте по очереди внизу Safari — как на картинке</p>
-  <div class="ins-p" aria-label="Подсказка"><span class="ins-tag">это подсказка, на неё нажимать не нужно</span>${st.map((x,i)=>`<div class="ins-c"><div class="ins-cap"><b>${i+1}</b>${x[0]}</div><div class="ins-m">${x[1]}</div></div>`).join("")}</div>
-  <p class="ins-n">Готово — Trend Büro откроется с иконки, без адресной строки</p>
+  <div class="ins-hero"><img class="ins-ic" src="/icons/icon-512.png" alt="Trend Büro"><div class="ins-ey">Trend Büro</div><h2>Добавьте на экран «Домой»</h2></div>
+  <p class="ins-l">Четыре касания внизу Safari — и приложение всегда под рукой</p>
+  <div class="ins-p" aria-label="Подсказка">${st.map((x,i)=>`<div class="ins-c"><div class="ins-cap"><b>${i+1}</b>${x[0]}</div><div class="ins-m">${x[1]}</div></div>`).join("")}</div>
+  <p class="ins-n">Это подсказка — нажимайте не на неё, а на кнопки Safari внизу экрана</p>
   <div class="ins-go">Начните здесь ${dots?"•••":INS_SH}</div>`;
-  el.hidden=false;el.querySelector(".ins-x").onclick=()=>{el.hidden=true}}
+  el.hidden=false;el.querySelector(".ins-x").onclick=()=>{el.hidden=true};const g=el.querySelector(".ins-go");el.onscroll=()=>g.classList.toggle("off",el.scrollTop>24)}
 /* «Установить на телефон»: в Telegram — системное окно «На экран Домой», на Android — окно «Установить», в Safari — переход в Telegram */
 let INST_EV=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();INST_EV=e;try{instUpd()}catch(x){}});
 window.addEventListener("appinstalled",()=>{INST_EV=null;try{instUpd()}catch(x){}});
