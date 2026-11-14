@@ -961,6 +961,8 @@ export default async function handler(req, res) {
           else if (!hc && itEn.category === "clothing") { const tc = detectCategory(itEn.title) || detectCategory(it.title); if (tc === "shoes" || tc === "bags") itEn = { ...itEn, category: tc, subcategory: null }; } }
           // предмет в названии решает окончательно (ремень из денима — аксессуар, «Koffer» — сумка, «Uhrenetui» — аксессуар)
           { const { objCategory } = await import("../lib/normalize.js"); const oc = objCategory(it.title) || objCategory(itEn.title); if (oc && oc !== itEn.category && !["jewelry", "eyewear"].includes(itEn.category)) itEn = { ...itEn, category: oc, subcategory: null }; }
+          // раздел сумок: сумка — всегда сумка; ремни для сумок и косметички из этого раздела — в аксессуары
+          { const { bagSectionCategory } = await import("../lib/normalize.js"); const bc = bagSectionCategory([it.title, itEn.title].join(" "), it.section); if (bc && (bc.category !== itEn.category || bc.subcategory)) itEn = { ...itEn, ...bc }; }
         // новинка бренда: раздел уже был пройден целиком, а этого товара в нём не было — значит, вышел новым.
         // Такие товары сразу на витрине с отметкой «Новинка» (или в «Новых с сайтов», если так выбрано в админке). Первый прогон раздела — всё в «Новые с сайтов» на ваш отбор
         const novelty = await isNovelty(store, it.section);
