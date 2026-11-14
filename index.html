@@ -2471,7 +2471,7 @@ const JPRIO={"van cleef":["Alhambra"],cartier:["Love","Clash","Juste un Clou"]},
 function jRank(p){const b=String(p.brand||"").toLowerCase(),pr=Object.keys(JPRIO).find(k=>b.includes(k)),L=pr?JPRIO[pr]:[],c=typeof jColl==="function"?jColl(p):"",ci=L.indexOf(c),st=subOf(p);
   return (ci<0?L.length:ci)*10+(st in JTYPE?JTYPE[st]:5)}
 /* свежие поступления (правило владельца): вещи, добавленные за последние 4 дня из новинок или коллекции бренда (Dior Cruise 2027) — первыми в каталоге, в «Новинках» бренда и на баннере */
-let FRESH_C=null;const freshIds=()=>{if(FRESH_C&&FRESH_C.n===P.length)return FRESH_C.s;const cut=Date.now()-4*864e5,inC=new Set((typeof COLL!=="undefined"?COLL:[]).flatMap(c=>c.ids||[]));const st=new Set(P.filter(p=>p.na&&+p.na>=cut&&(p.isNew||inC.has(p.id))).map(p=>p.id));FRESH_C={n:P.length,s:st};return st};
+let FRESH_C=null;const freshIds=()=>{if(FRESH_C&&FRESH_C.n===P.length)return FRESH_C.s;const cut=Date.now()-4*864e5,inC=new Set((typeof COLL!=="undefined"?COLL:[]).flatMap(c=>c.ids||[]));const st=new Set(P.filter(p=>p.na&&+p.na>=cut&&(p.isNew||inC.has(p.id))&&!/cartier|van cleef|bulgari|bvlgari|tiffany|chaumet|boucheron|graff|chopard|messika|piaget|pomellato|rolex|patek|audemars/i.test(p.brand||"")).map(p=>p.id)); /* ювелирные дома (Cartier, Van Cleef) — без этого: их загружают сотнями разом */FRESH_C={n:P.length,s:st};return st};
 let NA_C=null;const collFresh=c=>{if(!NA_C||NA_C.n!==P.length)NA_C={n:P.length,m:new Map(P.map(p=>[p.id,+p.na||0]))};let m=0;for(const id of c.ids||[]){const v=NA_C.m.get(id)||0;if(v>m)m=v}return m};
 const hotIds=()=>new Set((typeof COLL!=="undefined"?COLL:[]).filter(c=>c.pinned).flatMap(c=>c.ids||[])); // ходовая коллекция (закреплённая: сейчас Van Cleef Alhambra)
 function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best);
@@ -2495,7 +2495,7 @@ function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort
   const turn=[...CAT_TURN.filter(c=>G[c]),...Object.keys(G).filter(c=>!CAT_TURN.includes(c))],at={},out=[];
   for(const ph of [0,1,2,3]){const T=turn.filter(c=>grp(c)===ph),n0=T.reduce((s,c)=>s+G[c].length,0),st=out.length;
     for(let k=0;out.length-st<n0;k++)for(const c of T){if(c==="other"&&k%3&&T.some(x=>x!=="other"&&(at[x]||0)<G[x].length))continue;const g=G[c],j=at[c]||0;if(j<g.length){out.push(g[j]);at[c]=j+1}}}
-  return [...best.filter(p=>!h0.has(p)),...hot0,...fr0,...hot,...out]}
+  return [...fr0,...best.filter(p=>!h0.has(p)),...hot0,...hot,...out]}
 function sorted(list){const s=F.sort;if(s==="pop")return popOrder(list);return list.sort((a,b)=>s==="asc"?a.price-b.price:s==="desc"?b.price-a.price:(!!b.st-!!a.st)||(b.isNew-a.isNew)||(a.price-b.price))}
 // Van Cleef: версии одной модели (металл, малая/большая модель, ряды) — в сетке одна плитка с числом версий; выбор версии — в карточке
 function vcaOne(list){const cnt=new Map(),seen=new Set();list.forEach(p=>{if(p.fam&&/van cleef/i.test(p.brand||""))cnt.set(p.fam,(cnt.get(p.fam)||0)+1)});return list.filter(p=>{if(!cnt.has(p.fam)){p._nv=0;return true}if(seen.has(p.fam))return false;seen.add(p.fam);p._nv=cnt.get(p.fam);return true})}
