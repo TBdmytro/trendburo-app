@@ -2470,10 +2470,16 @@ const dayHash=id=>{const d=new Date().toISOString().slice(0,10);if(DH.d!==d){DH.
 const JPRIO={"van cleef":["Alhambra"],cartier:["Love","Clash","Juste un Clou"]},JTYPE={brac:0,ring:1,earr:2,neck:3,brooch:4};
 function jRank(p){const b=String(p.brand||"").toLowerCase(),pr=Object.keys(JPRIO).find(k=>b.includes(k)),L=pr?JPRIO[pr]:[],c=typeof jColl==="function"?jColl(p):"",ci=L.indexOf(c),st=subOf(p);
   return (ci<0?L.length:ci)*10+(st in JTYPE?JTYPE[st]:5)}
+/* свежие поступления (правило владельца): вещи, добавленные за последние 4 дня из новинок или коллекции бренда (Dior Cruise 2027) — первыми в каталоге, в «Новинках» бренда и на баннере */
+let FRESH_C=null;const freshIds=()=>{if(FRESH_C&&FRESH_C.n===P.length)return FRESH_C.s;const cut=Date.now()-4*864e5,inC=new Set((typeof COLL!=="undefined"?COLL:[]).flatMap(c=>c.ids||[]));const st=new Set(P.filter(p=>p.na&&+p.na>=cut&&(p.isNew||inC.has(p.id))).map(p=>p.id));FRESH_C={n:P.length,s:st};return st};
+let NA_C=null;const collFresh=c=>{if(!NA_C||NA_C.n!==P.length)NA_C={n:P.length,m:new Map(P.map(p=>[p.id,+p.na||0]))};let m=0;for(const id of c.ids||[]){const v=NA_C.m.get(id)||0;if(v>m)m=v}return m};
 const hotIds=()=>new Set((typeof COLL!=="undefined"?COLL:[]).filter(c=>c.pinned).flatMap(c=>c.ids||[])); // ходовая коллекция (закреплённая: сейчас Van Cleef Alhambra)
 function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best);
   // ходовая коллекция — в самом начале «Популярного»: первые 12 её вещей открывают каталог, остальные — первыми у своего бренда
-  const hot0=list.filter(p=>p.best==null&&H0.has(p.id)).sort((a,b)=>(!!b.st-!!a.st)||((b.pop||0)-(a.pop||0))||(dayHash(a.id)-dayHash(b.id))).slice(0,12),h0=new Set(hot0),rest=list.filter(p=>p.best==null&&!h0.has(p));
+  const FR=freshIds(),fg=c=>c==="bags"?0:c==="shoes"?1:c==="clothing"?2:3;
+  const hot0=list.filter(p=>p.best==null&&H0.has(p.id)).sort((a,b)=>(!!b.st-!!a.st)||((b.pop||0)-(a.pop||0))||(dayHash(a.id)-dayHash(b.id))).slice(0,12),h00=new Set(hot0),
+    fr0=list.filter(p=>!h00.has(p)&&FR.has(p.id)&&p.availability!=="ask").sort((a,b)=>(!!b.isNew-!!a.isNew)||(fg(a.cat)-fg(b.cat))||(dayHash(a.id)-dayHash(b.id))).slice(0,12),
+    h0=new Set([...hot0,...fr0]),rest=list.filter(p=>p.best==null&&!h0.has(p));
   // популярное у наших покупателей (смотрят, кладут в избранное и корзину) — сразу после хитов продаж
   const grp=c=>c==="bags"||c==="shoes"?0:c==="clothing"?1:c==="watches"?3:2; // часы — после украшений
   const hot=rest.filter(p=>(p.pop||0)>=3).sort((a,b)=>b.pop-a.pop).slice(0,48).sort((a,b)=>grp(a.cat)-grp(b.cat)),hs=new Set(hot),rem=rest.filter(p=>!hs.has(p));
@@ -2481,7 +2487,7 @@ function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort
   // внутри категории бренды идут по очереди — один большой бренд (Alo Yoga) не забивает ленту
   Object.keys(G).forEach(c=>{const B={};G[c].forEach(p=>(B[p.bk]=B[p.bk]||[]).push(p));const bs=Object.values(B);
     // ходовые коллекции (закреплённая на главной, например Van Cleef Alhambra) — первыми у своего бренда; остальное — для ассортимента
-    const HOT=H0;
+    const HOT=new Set([...H0,...FR]);
     const JR=c==="jewelry"?jRank:null;
     bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)]));b.sort((x,y)=>(HOT.has(y.id)-HOT.has(x.id))||(JR?JR(x)-JR(y):0)||(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)))});
     bs.sort((a,b)=>(HOT.has(b[0].id)-HOT.has(a[0].id))||(dayHash(a[0].bk)-dayHash(b[0].bk)));const o=[];for(let i=0;o.length<G[c].length;i++)for(const b of bs)if(i<b.length)o.push(b[i]);G[c]=o});
@@ -2489,7 +2495,7 @@ function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort
   const turn=[...CAT_TURN.filter(c=>G[c]),...Object.keys(G).filter(c=>!CAT_TURN.includes(c))],at={},out=[];
   for(const ph of [0,1,2,3]){const T=turn.filter(c=>grp(c)===ph),n0=T.reduce((s,c)=>s+G[c].length,0),st=out.length;
     for(let k=0;out.length-st<n0;k++)for(const c of T){if(c==="other"&&k%3&&T.some(x=>x!=="other"&&(at[x]||0)<G[x].length))continue;const g=G[c],j=at[c]||0;if(j<g.length){out.push(g[j]);at[c]=j+1}}}
-  return [...best,...hot0,...hot,...out]}
+  return [...best.filter(p=>!h0.has(p)),...hot0,...fr0,...hot,...out]}
 function sorted(list){const s=F.sort;if(s==="pop")return popOrder(list);return list.sort((a,b)=>s==="asc"?a.price-b.price:s==="desc"?b.price-a.price:(!!b.st-!!a.st)||(b.isNew-a.isNew)||(a.price-b.price))}
 // Van Cleef: версии одной модели (металл, малая/большая модель, ряды) — в сетке одна плитка с числом версий; выбор версии — в карточке
 function vcaOne(list){const cnt=new Map(),seen=new Set();list.forEach(p=>{if(p.fam&&/van cleef/i.test(p.brand||""))cnt.set(p.fam,(cnt.get(p.fam)||0)+1)});return list.filter(p=>{if(!cnt.has(p.fam)){p._nv=0;return true}if(seen.has(p.fam))return false;seen.add(p.fam);p._nv=cnt.get(p.fam);return true})}
@@ -3443,7 +3449,7 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
   const st={cats:new Set(),subs:{},g:"all",sort:"pop"};{const bg=all.filter(p=>p.cat==="bags"&&p._sub===undefined);if(bg.length)bagModels(all.filter(p=>p.cat==="bags"));const gs=all.filter(p=>p.cat==="shoes"&&/golden ?goose/i.test(p.brand||"")&&p._sub===undefined);if(gs.length)ggLines(gs)}const lead=all.slice().sort((a,b)=>b.isNew-a.isNew)[0];
   const cats=[...new Set(all.map(p=>p.cat))],gs=[...new Set(all.map(p=>p.g))];
   if(!JH&&gs.length>1&&(CV.g==="w"||CV.g==="m")&&all.some(p=>p.g===CV.g))st.g=CV.g; // зашли из «Для неё»/«Для него» — сразу эта половина бренда
-  const nwAll=all.filter(p=>p.isNew),nwN=nwAll.length,nwPic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.src||i.thumb))||String(p.shape).replace(/^img:/,"")},nwPics=showOnly(nwAll,3).slice().sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,6).map(nwPic).filter(u=>/^https?:/.test(u));st.nw=false;
+  const FRB=freshIds(),nwAll=all.filter(p=>p.isNew||FRB.has(p.id)).sort((a,b)=>(FRB.has(b.id)-FRB.has(a.id))||((b.na||0)-(a.na||0))),nwN=nwAll.length,nwPic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.src||i.thumb))||String(p.shape).replace(/^img:/,"")},nwPics=showOnly(nwAll,3).slice().sort((a,b)=>(FRB.has(b.id)-FRB.has(a.id))||((a.best??1e9)-(b.best??1e9))).slice(0,6).map(nwPic).filter(u=>/^https?:/.test(u));st.nw=false;
   const s=push(bn,`<div class="bhero" style="--c:${lead.c}">
      <span class="cap">${BRAND_META[bk]||""}</span><h1>${esc(bn)}</h1>
      <div class="meta num"><span>${all.length} ${plural(all.length,["товар","товари","товарів"])}</span>${ICONS.some(ic=>ic.bk===bk)?`<span>${ICONS.filter(ic=>ic.bk===bk).length} моделей під замовлення</span>`:""}</div>
@@ -3458,7 +3464,7 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
      return (NC>=2||AL.length?`<div class="sec"><div class="sech"><h2>Колекції</h2><span class="muted" style="font-size:13px">${NC}</span></div><div class="collmr">${AL.map(c=>collCardHTML(c,false)).join("")}${CL2.map(([n,l])=>tile(`data-jcoll="${esc(n)}"`,n,l)).join("")}</div></div>`:"")
        +(TL.length>=2?`<div class="sec"><div class="sech"><h2>Прикраси та годинники</h2></div><div class="collmr">${TL.map(([k,l])=>{const [c,sc]=k.split("|");return tile(`data-jtype="${esc(k)}"`,sc?subName(c,sc):(CATS[c]||c),l)}).join("")}</div></div>`:"")})():""}
    ${ICONS.some(ic=>ic.bk===bk)?`<div class="sec"><div class="sech"><h2>Культові моделі</h2><span class="muted" style="font-size:13px">під замовлення</span></div><div class="hrail">${ICONS.filter(ic=>ic.bk===bk).map(icHTML).join("")}</div></div>`:""}
-   ${(()=>{const bs=all.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best).slice(0,16),nw2=all.filter(p=>p.isNew).sort((a,b)=>(a.best??1e9)-(b.best??1e9)).slice(0,16);
+   ${(()=>{const bs=all.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best).slice(0,16),nw2=all.filter(p=>p.isNew||freshIds().has(p.id)).sort((a,b)=>(freshIds().has(b.id)-freshIds().has(a.id))||((a.best??1e9)-(b.best??1e9))).slice(0,16);
      // отдельные блоки: бестселлеры бренда (в его порядке) и новинки — как разделы на сайте самого бренда
      return (bs.length>=3?`<div class="sec"><div class="sech"><h2>Бестселери</h2><span class="muted" style="font-size:13px">як у ${esc(bn)}</span></div><div class="hrail">${bs.map(pcHTML).join("")}</div></div>`:"")
        +(nw2.length>=3?`<div class="sec" style="padding-bottom:0"><div class="sech" style="margin-bottom:0"><h2>У вітрині зараз</h2></div></div><div class="sec" style="padding-bottom:4px;padding-top:6px"><div class="pad"><button class="nwban press" data-nwban aria-label="Новинки ${esc(bn)}"><div class="nwt"><div><span class="cap">${esc(bn)}</span><h3>Новинки<br>сезону</h3><span class="nwc nww">${esc((()=>{const cnt={};nwAll.forEach(p=>{const k=(jColl(p)?jColl(p)+" · ":"")+(CATS[p.cat]||"").toLowerCase();cnt[k]=(cnt[k]||0)+1});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]).join(", ")})())}</span><span class="nwc num">${nwN} ${plural(nwN,["річ","речі","речей"])}</span></div><span class="nwgo">Дивитися всі</span></div><div class="nwst">${nwPics.map(u=>`<div class="nwph h"><img src="${esc(u)}" alt="" decoding="async"></div>`).join("")}</div><div class="nwdots">${nwPics.map(()=>"<i></i>").join("")}</div></button></div></div>`:"")})()}
@@ -3604,7 +3610,7 @@ const hRail=(t,l,more)=>`<div class="sec"><div class="sech"><h2>${t}</h2>${more|
 function hCover(){const box=$("#hCover");if(!box)return;clearInterval(HCT);
   const bn=(CMS&&CMS.banners?CMS.banners:[]).filter(b=>(b.places&&b.places.length?b.places:["feed"]).includes("feed")&&(!b.aud||b.aud==="all"||b.aud===CV.g)&&!(CV.g==="m"&&/van cleef|alhambra/i.test([b.title,b.subtitle,b.action].join(" ")))); // «Для него» — без баннеров Van Cleef
   // один баннер на бренд: у Van Cleef не три подборки подряд, а одна (самая новая/закреплённая)
-  const co=(()=>{const seen=new Set();return COLL.filter(collG).filter(c=>{const k=String(c.brand||"").toLowerCase();if(!k)return true;if(seen.has(k))return false;seen.add(k);return true})})();
+  const co=(()=>{const seen=new Set();return COLL.filter(collG).map((c,i)=>[c,c.pinned?9e15:collFresh(c),i]).sort((a,b)=>(b[1]-a[1])||(a[2]-b[2])).map(x=>x[0]).filter(c=>{const k=String(c.brand||"").toLowerCase();if(!k)return true;if(seen.has(k))return false;seen.add(k);return true})})();
   const S=bn.map(b=>({k:"b",id:b.id,img:b.image,kick:b.subtitle||"",t:b.title||"",go:b.button||(hasAct(b.action)?"Дивитися":""),light:b.theme==="light"}))
     .concat(co.map(c=>({k:"c",id:c.id,img:c.cover,kick:c.brand+" · "+(/watches/.test(c.id||"")?"годинники":collSeen(c.id)?"колекція":"нова колекція"),t:collT(c),sub:c.n+" "+plural(c.n,["річ","речі","речей"]),go:"Дивитися колекцію"}))).slice(0,5);
   if(!S.length){box.innerHTML="";box.dataset.k="";return}
