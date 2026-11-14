@@ -41,6 +41,10 @@ export default async function handler(req, res) {
     const ch = L.filter(p => Object.values(p.offers[0].availability || {}).some(a => a && a.status === "online")); const apply = /[?&]apply=1\b/.test(String(req.url));
     if (apply && ch.length) await st.patchEach(ch.map(p => { const o = p.offers[0]; return { id: p._id, set: { offers: [{ ...o, availability: Object.fromEntries(Object.entries(o.availability || {}).map(([k, a]) => [k, { ...a, status: a && a.status === "online" ? "ask" : a?.status }])) }, ...p.offers.slice(1)], hasPre: true } }; }));
     res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ apply, found: L.length, changed: ch.length, sample: ch.slice(0, 30).map(p => [p._id.slice(15), p.title]) })); })();
+  if (req.method === "GET" && /[?&]probe=secids\b/.test(String(req.url || ""))) return (async () => { const sec = decodeURIComponent((String(req.url).match(/[?&]s=([^&]+)/) || [])[1] || ""), px = "product.manual." + ((String(req.url).match(/[?&]p=([a-z0-9]+)/) || [])[1] || "") + "-";
+    const L = (await getStore().list("product", {}, { limit: 60000, fields: "_id, webSections, status, title" })).filter(p => p._id.startsWith(px));
+    const inS = L.filter(p => (p.webSections || []).some(x => String(x).includes(sec)));
+    res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify({ all: L.length, inSec: inS.length, byStatus: inS.reduce((a, p) => (a[p.status] = (a[p.status] || 0) + 1, a), {}), ids: L.map(p => p._id.slice(px.length).toUpperCase()) })); })();
   if (req.method === "GET" && /[?&]probe=cartfix\b/.test(String(req.url || ""))) return (async () => { const apply = /[?&]apply=1/.test(String(req.url)); const st = getStore();
     // Cartier: кнопка до v204 сравнивала «CRB6048617» с нашим «B6048617» и отмечала вещи раздела «продано» — возвращаем «в наличии» (следующий прогон уточнит)
     const L = (await st.list("product", {}, { limit: 60000, fields: "_id, history, variants, offers, status, title" })).filter(p => p._id.startsWith("product.manual.cartier-") && (p.history || []).slice(-1)[0]?.action === "web-gone");
