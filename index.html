@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="trendburo-build" content="2026-10-14-live-v61">
 <meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Trend Büro">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>/* Как в iOS-приложении: страница не приближается (ни щипком, ни двойным тапом), не тянется резинкой; приближается только фото в просмотре */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:pan-x pan-y}
@@ -1328,6 +1334,10 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .cft-t small{display:block;font:300 11.5px Onest,sans-serif;color:#a9acb2}
 .cft-i{flex:none;width:34px;height:34px;border-radius:50%;background:#45484e;display:grid;place-items:center}
 .cft-i svg{width:17px;height:17px}
+.cft-o{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:50px;border-radius:999px;border:1px solid #4a4d53;background:transparent;color:#fff;font:500 14.5px Onest,sans-serif;margin:-4px 0 14px;cursor:pointer}
+.cft-o svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.cft-o[hidden]{display:none}
+.cft-n{margin:-6px 0 14px;text-align:center;font:300 12.5px/1.4 Onest,sans-serif;color:#a9acb2}
 .cft-c{margin-top:20px;text-align:center;font:300 11px Onest,sans-serif;color:#7d8086;letter-spacing:.04em}
 
 /* OPTIX — eyewear, misty blue */
@@ -2289,8 +2299,29 @@ function renderFooter(){const el=$("#cft");if(!el)return;const ok=c=>/^https:\/\
   const mg=CONTACTS.find(c=>/менеджер/i.test(c.label)&&ok(c)),rest=CONTACTS.filter(c=>c!==mg&&ok(c)&&/t\.me\/|instagram\.com\//.test(c.url));
   const nm=c=>String(c.label||"").replace(/\s*·?\s*(telegram|instagram)\s*·?\s*/ig," ").trim().replace(/^\p{Ll}/u,x=>x.toUpperCase())||c.handle;
   el.innerHTML=`<h4>Мы на связи</h4>${mg?`<a class="cft-m press" href="${esc(mg.url)}" target="_blank" rel="noopener">${CFT_TG}Написать менеджеру</a>`:""}
+  <button class="cft-o press" id="cftInst" hidden><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M12 7v7M9.5 11.5 12 14l2.5-2.5"/></svg><span>Установить на телефон</span></button><div class="cft-n" id="cftNote" hidden></div>
   <div class="cft-g">${rest.map(c=>{const ig=/instagram/.test(c.url);return `<a class="cft-t press" href="${esc(c.url)}" target="_blank" rel="noopener"><span class="cft-i">${ig?CFT_IG:CFT_TG}</span><span>${esc(nm(c))}<small>${ig?"Instagram":"Telegram"}</small></span></a>`}).join("")}</div>
-  <div class="cft-c">TREND BÜRO · PERSONAL SHOPPING · 2023</div>`}
+  <div class="cft-c">TREND BÜRO · PERSONAL SHOPPING · 2023</div>`;try{instInit()}catch(x){}}
+/* «Установить на телефон»: в Telegram — системное окно «На экран Домой», на Android — окно «Установить», в Safari — переход в Telegram */
+let INST_EV=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();INST_EV=e;try{instUpd()}catch(x){}});
+window.addEventListener("appinstalled",()=>{INST_EV=null;try{instUpd()}catch(x){}});
+if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
+const instTG=()=>{const w=window.Telegram&&Telegram.WebApp;return w&&w.initData&&typeof w.addToHomeScreen==="function"&&w.isVersionAtLeast&&w.isVersionAtLeast("8.0")&&/^(ios|android)/.test(w.platform||"")?w:null};
+const instIOS=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const instStandalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+let INST_ADDED=false,INST_BOT=null;
+function instUpd(){const b=$("#cftInst"),n=$("#cftNote");if(!b)return;n.hidden=true;const w=instTG();
+  if(INST_ADDED||(!w&&instStandalone())){b.hidden=true;return}
+  b.hidden=!(w||INST_EV||instIOS())}
+function instInit(){const w=instTG();if(w&&w.checkHomeScreenStatus){try{w.checkHomeScreenStatus(st=>{INST_ADDED=st==="added";instUpd()})}catch(x){}
+  try{w.onEvent("homeScreenAdded",()=>{INST_ADDED=true;instUpd()})}catch(x){}}
+  if(!w&&instIOS()&&!INST_BOT)fetch("/api/me").then(r=>r.json()).then(j=>{INST_BOT=j&&j.bot||null}).catch(()=>{});instUpd()}
+async function instGo(){const w=instTG(),n=$("#cftNote");
+  if(w){try{w.addToHomeScreen()}catch(x){}return}
+  if(INST_EV){INST_EV.prompt();try{await INST_EV.userChoice}catch(x){}INST_EV=null;instUpd();return}
+  if(instIOS()){if(INST_BOT){location.href="https://t.me/"+encodeURIComponent(INST_BOT)+"?startapp=home";return}
+    n.textContent="Откройте Trend Büro через нашего бота в Telegram — там установка в одно касание";n.hidden=false}}
+document.addEventListener("click",e=>{if(e.target.closest("#cftInst")){e.preventDefault();instGo()}});
 const contactsHTML=()=>CONTACTS.map(c=>`<a class="crow" href="${c.url}" target="_blank" rel="noopener"><span>${esc(c.label)}</span><b>${esc(c.handle)}</b></a>`).join("");
 const plural=(n,a)=>n%10===1&&n%100!==11?a[0]:[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?a[1]:a[2];
 
