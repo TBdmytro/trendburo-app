@@ -1120,7 +1120,9 @@ textarea{min-height:88px;resize:vertical}
 .sv2 .in2 h2{font-size:34px;margin:6px 0;letter-spacing:-.02em}
 .sv2 .in2 p{opacity:.7;margin:0;font-size:15px}
 /* Истории по стандарту: фото — в своей скруглённой рамке (светлый фон, без чёрного), текст — отдельно под фото, шрифты Onest / Prata */
-.sv2 .st{inset:calc(72px + var(--st)) 12px calc(108px + var(--sb)) 12px;padding:0;border-radius:24px;background-color:#f2f3f4!important}
+.sv2 .st{inset:calc(72px + var(--st)) 12px calc(108px + var(--sb)) 12px;padding:0;border-radius:0;background:none!important;overflow:visible}
+.sv2 .st img,.sv2 .cfr img{border-radius:22px;background:#f2f3f4!important;transition:opacity .18s ease}
+.sv2 .cfr img:not(.fit){opacity:0}
 .sv2 .st img{background:transparent}
 .sv2 .st img.nf{display:none}
 img.imgx{opacity:0!important}
@@ -1129,7 +1131,7 @@ img.imgx{opacity:0!important}
 .sv2 .dt{left:24px;bottom:calc(120px + var(--sb));background:rgba(255,255,255,.7)}
 .sv2 .pd{bottom:calc(118px + var(--sb))}.sv2 .pd i{background:rgba(31,33,37,.25)}.sv2 .pd i.on{background:#1f2125}
 .sv2 .cin{display:flex;flex-direction:column;background:#1d1f22;padding:calc(72px + var(--st)) 12px calc(14px + var(--sb));box-sizing:border-box}
-.sv2 .cin .cfr{flex:1;min-height:0;border-radius:24px;background:#f2f3f4 center/cover no-repeat}
+.sv2 .cin .cfr{flex:1;min-height:0;position:relative}
 .sv2 .cin .tx{position:static;padding:16px 8px 0}
 .sv2 .cin .k{font:600 10px Onest,sans-serif;letter-spacing:.18em;opacity:.6}
 .sv2 .cin h2{font:400 30px/1.08 Prata,serif;margin:8px 0 0}
@@ -3698,6 +3700,9 @@ const SVIC={new:'<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1-5.1-1.
   day:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/><path class="f" d="M12 12.4l.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1-1.5-1.5 2.1-.3z"/>'};
 const svIco=r=>{const k=r.k.startsWith("day:")?"day":SVIC[r.k]?r.k:null;return k?`<svg viewBox="0 0 24 24" aria-hidden="true">${SVIC[k]}</svg>`:null};
 function autoRingsHTML(){AUTO=buildAuto();return AUTO.map((r,i)=>{const ic=svIco(r);return `<button class="story press ${r.seen?"seen":""}" data-act="astory" data-i="${i}"><span class="ring au">${ic?`<span class="ic">${ic}</span>`:`<img src="${esc(r.cover)}" alt="" loading="lazy" decoding="async">`}</span><small>${esc(r.name)}</small></button>`}).join("")}
+const RAT=new Map();
+function svFit(im,box,ar){const W=box.clientWidth,H=box.clientHeight;if(W<10||H<10)return false;let w=W,h=W/ar;if(h>H){h=H;w=H*ar}
+  Object.assign(im.style,{position:"absolute",left:Math.round((W-w)/2)+"px",top:Math.round((H-h)/2)+"px",width:Math.round(w)+"px",height:Math.round(h)+"px",maxWidth:"none",maxHeight:"none",objectFit:"cover"});im.classList.add("fit");return true}
 function openAuto(ri){
   if(!AUTO[ri])return;document.querySelectorAll(".sv2,.sv").forEach(e=>e.remove());
   const host=document.createElement("div");host.className="sv2 first";host.setAttribute("role","dialog");host.setAttribute("aria-label","Истории");$("#app").append(host);
@@ -3705,23 +3710,23 @@ function openAuto(ri){
   const setW=()=>host.style.setProperty("--w",host.offsetWidth+"px");setW();
   const d=prefs.dest||"ua",DUR=5500;let r=ri,list=AUTO[r].build(),i=0,t0=performance.now(),el=0,raf=0,paused=false,cb=null,busy=false,dead=false,nb=null;
   const priceH=p=>isPor(p)?"Цена по запросу":`${eur(priceFor(p,d))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[d]??p.oldPrices.ua)}</s>`:""}`;
-  const srcOf=s=>s.t==="p"||s.t==="c"?(()=>{const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;return cs?(cs[0].idx>=0&&svImg(p,cs[0].idx)?svImg(p,cs[0].idx).src:cs[0].image):svImg(p,bestIdx(p)).src})():s.t==="du"?svImg(s.a,bestIdx(s.a)).src:null;
+  const srcOf=s=>s.t==="p"||s.t==="c"?(()=>{const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;return cs?(cs[0].idx>=0&&svImg(p,cs[0].idx)?svImg(p,cs[0].idx).src:cs[0].image):svImg(p,0).src})():s.t==="du"?svImg(s.a,0).src:null;
   // заранее: загрузка следующего слайда и разбор фото его товаров (чтобы кадр и раскладка были готовы к показу)
-  const pre=s=>{if(!s)return;[s.p,s.a,s.b].filter(Boolean).forEach(p=>shpProduct(p,3));const u=srcOf(s);if(u){const m=new Image();if(!NOCORS(u))m.crossOrigin="anonymous";m.src=u;if(s.t==="du"){const m2=new Image();m2.crossOrigin="anonymous";m2.src=svImg(s.b,bestIdx(s.b)).src}}};
+  const pre=s=>{if(!s)return;[s.p,s.a,s.b].filter(Boolean).forEach(p=>shpProduct(p,3));const u=s.t==="cin"&&s.R?null:srcOf(s);if(u){const m=new Image();if(!NOCORS(u))m.crossOrigin="anonymous";m.onload=()=>RAT.set(u,m.naturalWidth/m.naturalHeight);m.src=u;if(s.t==="du"){const m2=new Image();m2.crossOrigin="anonymous";m2.src=svImg(s.b,0).src}}};
   const slideH=(R,s)=>{
-    if(s.t==="cin"){const c=R.coll;collMark(c.id);return `<div class="cin"><div class="cfr"${c.cover?` style="background-image:url('${esc(szU(c.cover,1000))}')"`:""}></div><div class="tx"><span class="k">Новая коллекция · ${esc(c.brand)}</span><h2>${esc(c.title)}</h2>${c.desc?`<p>${esc(c.desc)}</p>`:""}<button class="cta" data-collgo="${esc(c.id)}">Смотреть ${c.n} ${plural(c.n,["вещь","вещи","вещей"])} ›</button></div></div>`}
+    if(s.t==="cin"){const c=R.coll;collMark(c.id);return `<div class="cin"><div class="cfr">${c.cover?`<img${XO(szU(c.cover,1000))} src="${esc(szU(c.cover,1000))}" alt="" decoding="async">`:""}</div><div class="tx"><span class="k">Новая коллекция · ${esc(c.brand)}</span><h2>${esc(c.title)}</h2>${c.desc?`<p>${esc(c.desc)}</p>`:""}<button class="cta" data-collgo="${esc(c.id)}">Смотреть ${c.n} ${plural(c.n,["вещь","вещи","вещей"])} ›</button></div></div>`}
     if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
     if(s.t==="du")return `<div class="du ${duLay(s.a,s.b)}">${[s.a,s.b].map((p,j)=>duCardH(p,j)).join("")}<span class="vs">VS</span></div><div class="duh">смахните неинтересное · тап по карточке — открыть</div>`;
     const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
-    const nph=0,b0=s.t==="p"?Math.min(bestIdx(p),5):0;
-    return `<div class="st"${(()=>{const t=s.t==="p"?(svImg(p,bestIdx(p))||{}).thumb:null;return t?` style="background:#f2f3f4 url('${esc(t)}') center/contain no-repeat"`:""})()}><img${XO(srcOf(s))} src="${esc(srcOf(s))}" alt="" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j===b0?"on":""}"></i>`).join("")}</div>`:""}
+    const nph=0,b0=s.t==="p"?Math.min(0,5):0;
+    return `<div class="st"><img${XO(srcOf(s))} src="${esc(srcOf(s))}" alt="" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j===b0?"on":""}"></i>`).join("")}</div>`:""}
       ${p.sale?`<span class="bg s">−${p.sale}%</span>`:p.isNew?`<span class="bg">Новинка</span>`:""}
       ${cs?`<div class="dt">${cs.map((c,j)=>`<button data-c="${j}" class="${j?"":"on"}" aria-label="${esc(c.name)}" style="background-image:url('${esc(c.idx>=0&&svImg(p,c.idx)?svImg(p,c.idx).thumb:c.image)}')"></button>`).join("")}</div>`:""}
       <div class="pn"><div class="t"><div class="br">${esc(p.brand)}</div><div class="nm">${esc(p.name)}</div><div class="pr num">${priceH(p)}</div></div>
         <button class="fv ${favs.has(p.id)?"on":""}" data-f aria-label="В избранное">${favs.has(p.id)?"♥":"♡"}</button><button class="go" data-go>Смотреть ›</button></div>`};
   // раскладка пары: обе вещи горизонтальные — карточки друг под другом; иначе — рядом (высокие карточки под вертикальные фото)
   const duLay=(a,b)=>prodClass(a)==="w"&&prodClass(b)==="w"?"col":"row";
-  const duCardH=(p,j)=>`<button class="dc" data-v="${j}" data-id="${esc(p.id)}" aria-label="${esc(p.brand+" "+p.name)}"><span class="im"><img${XO(svImg(p,bestIdx(p)).src)} src="${esc(svImg(p,bestIdx(p)).src)}" alt="" decoding="async"></span><span class="no">НЕ МОЁ</span><span class="lb"><span class="t"><small>${esc(p.brand)}</small><b>${esc(p.name)}</b></span><span class="p num">${isPor(p)?"Цена по запросу":eur(priceFor(p,d))}</span></span></button>`;
+  const duCardH=(p,j)=>`<button class="dc" data-v="${j}" data-id="${esc(p.id)}" aria-label="${esc(p.brand+" "+p.name)}"><span class="im"><img${XO(svImg(p,0).src)} src="${esc(svImg(p,0).src)}" alt="" decoding="async"></span><span class="no">НЕ МОЁ</span><span class="lb"><span class="t"><small>${esc(p.brand)}</small><b>${esc(p.name)}</b></span><span class="p num">${isPor(p)?"Цена по запросу":eur(priceFor(p,d))}</span></span></button>`;
   // фото в карточке: товар целиком (см. fitShot); после разбора обоих снимков раскладка уточняется
   const duFit=du=>{if(!du)return;du.querySelectorAll(".dc").forEach(b=>{const im=b.querySelector(".im img"),box=b.querySelector(".im");if(!im||!box)return;
       box.dataset.res=du.classList.contains("col")?62:0;
@@ -3738,16 +3743,13 @@ function openAuto(ri){
       <button class="tp l" aria-label="Назад"></button><button class="tp r" aria-label="Далее"></button>`;
     f.appendChild(slideNode(R,L[k]));return f};
   const slideNode=(R,s)=>{const n=document.createElement("div");n.className="sl";n.innerHTML=slideH(R,s);
-    const im=n.querySelector(".st img");if(im){const box=n.querySelector(".st");
-      const go=()=>{box.dataset.res=0;box.dataset.whole=1;fitShot(im,box)};
-      // лёгкая копия из каталога видна сразу (без паузы на чёрном); когда большое фото встало на место — копию убираем (у фото на прозрачном фоне она бы просвечивала)
-      const clr=(k=0)=>{if(im.classList.contains("fit")||k>40){if(/img|url\(/.test(box.style.backgroundImage)&&!/gradient/.test(box.style.backgroundImage))box.style.backgroundImage="none"}else requestAnimationFrame(()=>clr(k+1))};
-      im.addEventListener("load",()=>{im._si=undefined;n.isConnected?go():requestAnimationFrame(go);clr()});
-      // фото не открылось: без «разрешения» → следующее фото этой вещи → аккуратная подпись вместо значка битой картинки
-      let alt=s.p?(s.p.imgs||[]).map(x=>x&&x.src).filter(u=>u&&u!==im.getAttribute("src")):[];
-      im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.src=im.src;return}
-        const u=alt.shift();if(u){if(!NOCORS(u))im.setAttribute("crossorigin","anonymous");im.src=u;return}
-        im.classList.add("nf")});im.addEventListener("load",()=>im.classList.remove("nf"))} // только фото: никаких подписей в рамке
+    // кадр = фото: рамка принимает пропорции снимка, фото заполняет её целиком (без полей и обрезки), по центру свободного места
+    const im=n.querySelector(".st img,.cfr img");if(im){const box=im.parentNode,u=im.getAttribute("src");
+      const place=(k=0)=>{const ar=im.naturalWidth?im.naturalWidth/im.naturalHeight:RAT.get(u);if(!ar)return;if(!svFit(im,box,ar)&&k<30)requestAnimationFrame(()=>place(k+1))};
+      if(RAT.get(u))place();
+      im.addEventListener("load",()=>{RAT.set(u,im.naturalWidth/im.naturalHeight);place()});
+      im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.src=im.src;return}im.classList.add("nf")});
+      if(im.complete&&im.naturalWidth){RAT.set(u,im.naturalWidth/im.naturalHeight);place()}}
     return n};
   const mark=s=>{if(s.p)svMark(s.p.id);if(s.t==="du"){svMark(s.a.id);svMark(s.b.id)}};
   // одна вещь — одно главное фото: тап справа — сразу следующая вещь, все фото — в карточке по «Смотреть»
@@ -3757,7 +3759,7 @@ function openAuto(ri){
     if(L[pj+1]){const m=new Image();if(!NOCORS(L[pj+1].src))m.crossOrigin="anonymous";m.src=L[pj+1].src}el=0;hap("light")};
   const tapR=()=>{const L=phs();if(L&&pj<L.length-1){pj++;showPh()}else next()};
   const tapL=()=>{const L=phs();if(L&&pj>0){pj--;showPh()}else prev()};
-  const enter=()=>{const s=list[i];mark(s);el=0;pj=s&&s.t==="p"?Math.min(bestIdx(s.p),5):0;{const L=phs();if(L&&L[pj+1]){const m=new Image();if(!NOCORS(L[pj+1].src))m.crossOrigin="anonymous";m.src=L[pj+1].src}}cb.querySelector(".hz small").textContent="сегодня";
+  const enter=()=>{const s=list[i];mark(s);el=0;pj=s&&s.t==="p"?Math.min(0,5):0;{const L=phs();if(L&&L[pj+1]){const m=new Image();if(!NOCORS(L[pj+1].src))m.crossOrigin="anonymous";m.src=L[pj+1].src}}cb.querySelector(".hz small").textContent="сегодня";
     cb.querySelector(".tp.l").hidden=cb.querySelector(".tp.r").hidden=s.t==="du";
     cb.querySelectorAll(".bz b").forEach((b,j)=>b.style.width=(j<i?100:0)+"%");wire(s);pre(list[i+1]);pre(list[i+2]);if(s.t==="du")duPre()};
   // смена слайда внутри рубрики: как в Instagram — сразу, без мигания (новое фото уже загружено заранее)
@@ -3765,9 +3767,8 @@ function openAuto(ri){
   const goSlide=k=>{const dir=k>i?1:-1,s=list[k];i=k;
     cb.querySelectorAll(".sl.out").forEach(x=>x.remove());cb.querySelectorAll(".sl").forEach(x=>{x.classList.remove("mv");x.style.transform=""});
     const old=cb.querySelector(".sl"),n=slideNode(AUTO[r],s);n.style.transform=`translateX(${dir*100}%)`;old.after(n);
-    const run=()=>{if(RMo()){old.remove();n.style.transform="";return}void n.offsetWidth;n.classList.add("mv");old.classList.add("mv","out");n.style.transform="translateX(0)";old.style.transform=`translateX(${-dir*30}%) scale(.96)`;
-      setTimeout(()=>{if(old.isConnected)old.remove();n.classList.remove("mv")},360)};
-    const im=n.querySelector(".st img,.dc img");if(im&&!(im.complete&&im.naturalWidth)){let done=false;const go=()=>{if(!done){done=true;run()}};im.addEventListener("load",go,{once:true});im.addEventListener("error",go,{once:true});setTimeout(go,350)}else run();
+    n.style.visibility="hidden";const run=()=>{n.style.transform="";n.style.visibility="";if(old.isConnected)old.remove()};
+    const im=n.querySelector(".st img,.dc img");if(im&&!(im.complete&&im.naturalWidth)){let done=false;const go=()=>{if(!done){done=true;run()}};im.addEventListener("load",go,{once:true});im.addEventListener("error",go,{once:true});setTimeout(go,300)}else run();
     host.classList.remove("first");enter();hap()};
   const wire=s=>{
     // кнопки берём у нового слайда (старый ещё уезжает и стоит в разметке первым)
@@ -3785,7 +3786,7 @@ function openAuto(ri){
     const L=svShuffle(R.pool,977).filter(p=>!duSeen.has(p.id)&&!busyIds.has(p.id)&&svImg(p));
     const keep=cb&&cb.querySelector(".sl:last-child .du"),want=keep?(keep.classList.contains("col")?"w":"t"):"t";
     return L.slice(0,24).find(p=>{const c=prodClass(p);return want==="w"?c==="w":c!=="w"&&c!=="?"})||L[0]||null};
-  const duPre=()=>{const R=AUTO[r];if(R&&R.pool)svShuffle(R.pool,977).filter(p=>!duSeen.has(p.id)).slice(0,6).forEach(p=>shpProduct(p,3));const p=duNext();if(p){const m=new Image();m.crossOrigin="anonymous";m.src=svImg(p,bestIdx(p)).src}};
+  const duPre=()=>{const R=AUTO[r];if(R&&R.pool)svShuffle(R.pool,977).filter(p=>!duSeen.has(p.id)).slice(0,6).forEach(p=>shpProduct(p,3));const p=duNext();if(p){const m=new Image();m.crossOrigin="anonymous";m.src=svImg(p,0).src}};
   const duWire=(b,s)=>{let x0=0,y0=0,t0=0,on=false,drag=false,pid=0;const Wd=()=>host.offsetWidth||360;
     [s.a,s.b].forEach(p=>duSeen.add(p.id));
     b.onclick=e=>e.preventDefault();
