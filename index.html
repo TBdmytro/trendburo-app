@@ -1318,6 +1318,17 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .toast{position:absolute;left:50%;bottom:calc(100px + var(--sb));transform:translate(-50%,10px);background:var(--ink-grad);color:var(--ink-fg);padding:10px 16px;border-radius:99px;font-size:13.5px;z-index:80;opacity:0;pointer-events:none;transition:opacity .25s,transform .35s var(--ease);white-space:nowrap}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .foot-note{padding:18px;font-size:12px;color:var(--faint);text-align:center}
+.cft{margin:26px 0 0;background:var(--ink);color:#fff;padding:24px 16px 30px}
+.cft h4{margin:0 0 16px;font:300 20px/1.2 Onest,sans-serif;text-align:center;color:#fff}
+.cft-m{display:flex;align-items:center;justify-content:center;gap:10px;height:50px;border-radius:999px;background:#fff;color:var(--ink);font:500 14.5px Onest,sans-serif;text-decoration:none;margin-bottom:14px}
+.cft-m svg,.cft-i svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}
+.cft-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cft-t{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:#33363b;color:#fff;text-decoration:none;font:400 13.5px/1.25 Onest,sans-serif;min-width:0}
+.cft-t span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cft-t small{display:block;font:300 11.5px Onest,sans-serif;color:#a9acb2}
+.cft-i{flex:none;width:34px;height:34px;border-radius:50%;background:#45484e;display:grid;place-items:center}
+.cft-i svg{width:17px;height:17px}
+.cft-c{margin-top:20px;text-align:center;font:300 11px Onest,sans-serif;color:#7d8086;letter-spacing:.04em}
 
 /* OPTIX — eyewear, misty blue */
 :root{--acc:#3f6480;--o-fg:#12293e;--o-raise:#f1efeb;--o-tile:#fbfaf8}
@@ -1868,6 +1879,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
         <div class="hrail" id="menRail"></div></div>
       </div>
       <p class="foot-note" id="feedNote">Новости и товары в прототипе — демонстрационное наполнение</p>
+      <footer class="cft" id="cft" aria-label="Контакты"></footer>
     </div>
   </div>
 
@@ -2270,6 +2282,15 @@ const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v)
 function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("on"),2000)}
 async function copy(text,el){try{await navigator.clipboard.writeText(text);toast("Скопировано")}catch(e){if(el){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r)}toast("Текст выделен — скопируйте")}}
 function nextFriday(){const d=new Date();const k=(SHIP_WD-d.getDay()+7)%7;d.setDate(d.getDate()+k);return (k===0?"сегодня, ":["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"][SHIP_WD]+", ")+d.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}
+/* подвал «Мы на связи»: кнопка менеджеру + плитки каналов (из CONTACTS — правятся в админке) */
+const CFT_TG='<svg viewBox="0 0 24 24"><path d="M21 4.5 2.8 11.6c-.9.4-.9 1.2 0 1.5l4.6 1.4 1.7 5.4c.2.6.9.8 1.4.3l2.5-2.3 4.7 3.5c.6.4 1.3.1 1.5-.6L22 5.7c.2-1-.4-1.5-1-1.2Z"/><path d="m7.4 14.5 10-6.6-7.6 7.6"/></svg>',
+ CFT_IG='<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".6"/></svg>';
+function renderFooter(){const el=$("#cft");if(!el)return;const ok=c=>/^https:\/\//.test(c.url||"");
+  const mg=CONTACTS.find(c=>/менеджер/i.test(c.label)&&ok(c)),rest=CONTACTS.filter(c=>c!==mg&&ok(c)&&/t\.me\/|instagram\.com\//.test(c.url));
+  const nm=c=>String(c.label||"").replace(/\s*·?\s*(telegram|instagram)\s*·?\s*/ig," ").trim().replace(/^\p{Ll}/u,x=>x.toUpperCase())||c.handle;
+  el.innerHTML=`<h4>Мы на связи</h4>${mg?`<a class="cft-m press" href="${esc(mg.url)}" target="_blank" rel="noopener">${CFT_TG}Написать менеджеру</a>`:""}
+  <div class="cft-g">${rest.map(c=>{const ig=/instagram/.test(c.url);return `<a class="cft-t press" href="${esc(c.url)}" target="_blank" rel="noopener"><span class="cft-i">${ig?CFT_IG:CFT_TG}</span><span>${esc(nm(c))}<small>${ig?"Instagram":"Telegram"}</small></span></a>`}).join("")}</div>
+  <div class="cft-c">TREND BÜRO · PERSONAL SHOPPING · 2023</div>`}
 const contactsHTML=()=>CONTACTS.map(c=>`<a class="crow" href="${c.url}" target="_blank" rel="noopener"><span>${esc(c.label)}</span><b>${esc(c.handle)}</b></a>`).join("");
 const plural=(n,a)=>n%10===1&&n%100!==11?a[0]:[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?a[1]:a[2];
 
@@ -2307,7 +2328,7 @@ function renderFeed(){
   $("#leadNews").innerHTML=`<button class="lead-news press" data-act="news" data-id="${L.id}" style="--c:${lp.c}"><div class="art">${lightShape(lp.shape,lp.c)}</div><div class="tx"><span class="cap">${esc(BRANDS.find(b=>b[0]===L.bk)[1])} · ${L.tag}</span><h3>${esc(L.title)}</h3><p>${esc(L.text)}</p></div></button>`;
   $("#newsList").innerHTML=NEWS.slice(1).map(n=>{const p=P.find(x=>x.id===n.pid);return `<button class="newsrow press" data-act="news" data-id="${n.id}" style="--c:${p.c}"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div><span class="cap">${esc(BRANDS.find(b=>b[0]===n.bk)[1])} · ${n.when}</span><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div></button>`}).join("");}
   try{renderFeedColl()}catch(e){}
-  try{renderHome()}catch(e){console.log(e)}
+  try{renderHome()}catch(e){console.log(e)}try{renderFooter()}catch(e){}
   $("#newRail").innerHTML=P.filter(p=>p.isNew).slice(0,10).map(pcHTML).join("");
   $("#bagRail").innerHTML=P.filter(p=>p.cat==="bags"&&p.price<=3000).slice(0,12).map(pcHTML).join("");
   $("#menRail").innerHTML=P.filter(p=>p.g==="m").slice(0,12).map(pcHTML).join("");
@@ -4460,7 +4481,7 @@ function applyTexts(s){const T=s.texts||{};TX=T;$$("[data-t]").forEach(e=>{const
   ["concierge","travel","resale"].forEach(k=>{if(!SVC[k])return;if(T["svc."+k+".cap"])SVC[k].cap=T["svc."+k+".cap"];if(T["svc."+k+".title"])SVC[k].title=T["svc."+k+".title"];if(T["svc."+k+".long"])SVC[k].text=T["svc."+k+".long"]});
   const hid=s.hiddenServices||[];$$("[data-svc]").forEach(e=>hid.includes(e.dataset.svc)?e.setAttribute("data-off",""):e.removeAttribute("data-off"))}
 function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);applyTheme(s.theme);
-  if(s.contacts&&s.contacts.length){CONTACTS.length=0;CONTACTS.push(...s.contacts);window.__updChat&&window.__updChat()}
+  if(s.contacts&&s.contacts.length){CONTACTS.length=0;CONTACTS.push(...s.contacts);window.__updChat&&window.__updChat()}try{renderFooter()}catch(e){}
   if([0,1,2,3,4,5,6].includes(s.shipWeekday))SHIP_WD=s.shipWeekday;
   if(s.optix&&s.optix.url)OPTIX_LINK=s.optix.url;
   $$("[data-wd],[data-wd2]").forEach(e=>e.textContent=SHIPF());
