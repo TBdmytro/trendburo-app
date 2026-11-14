@@ -3747,7 +3747,7 @@ function openAuto(ri){
     const im=n.querySelector(".st img,.cfr img");if(im){const box=im.parentNode,u=im.getAttribute("src");
       const place=(k=0)=>{const ar=im.naturalWidth?im.naturalWidth/im.naturalHeight:RAT.get(u);if(!ar)return;if(!svFit(im,box,ar)&&k<30)requestAnimationFrame(()=>place(k+1))};
       if(RAT.get(u))place();
-      im.addEventListener("load",()=>{RAT.set(u,im.naturalWidth/im.naturalHeight);place()});
+      im.addEventListener("load",()=>{im.classList.remove("nf");RAT.set(u,im.naturalWidth/im.naturalHeight);place()});
       im.addEventListener("error",()=>{if(im.crossOrigin){im.removeAttribute("crossorigin");im.src=im.src;return}im.classList.add("nf")});
       if(im.complete&&im.naturalWidth){RAT.set(u,im.naturalWidth/im.naturalHeight);place()}}
     return n};
