@@ -3693,7 +3693,7 @@ function buildAuto0(){
   const add=(o,pool)=>{if(pool.length>=(o.min||1)){salt++;const s=salt;R.push({...o,pool,build:o.build||(()=>{const l=svFresh(pool,s);return (o.intro&&pool.length>=4?[{t:"in",ps:svShuffle(pool,s+1).slice(0,4)}]:[]).concat(l.map(p=>({t:"p",p})))})})}};
   add({k:"new",name:"Новинки",tag:"NEW",intro:{k:"Щойно",h:"Новинки",d:"Нове в каталозі"}},W.filter(p=>p.isNew));
   add({k:"sale",name:"Знижки",tag:"−%"},W.filter(p=>p.sale));
-  {const pool=W;if(pool.length>=4){salt++;const s=salt;R.push({k:"duel",name:"Це чи це",pool,build:()=>{const a=svFresh(pool,s,16),used=new Set(),o=[],cl=p=>{const c=prodClass(p);return c==="w"?"w":"t"};
+  {const pool=W;if(false&&pool.length>=4){salt++;const s=salt;R.push({k:"duel",name:"Це чи це",pool,build:()=>{const a=svFresh(pool,s,16),used=new Set(),o=[],cl=p=>{const c=prodClass(p);return c==="w"?"w":"t"};
       // в пару — вещи одной формы (обе вертикальные или обе горизонтальные), чтобы раскладка подходила обоим
       for(const x of a){if(o.length>=4)break;if(used.has(x.id))continue;const y=a.find(z=>z!==x&&!used.has(z.id)&&cl(z)===cl(x))||a.find(z=>z!==x&&!used.has(z.id));if(!y)break;used.add(x.id);used.add(y.id);o.push({t:"du",a:x,b:y})}
       return o},warm:()=>svFresh(pool,s,16).forEach(p=>shpProduct(p,3))})}}
