@@ -4512,7 +4512,7 @@ function applyTexts(s){const T=s.texts||{};TX=T;$$("[data-t]").forEach(e=>{const
   ["concierge","travel","resale"].forEach(k=>{if(!SVC[k])return;if(T["svc."+k+".cap"])SVC[k].cap=T["svc."+k+".cap"];if(T["svc."+k+".title"])SVC[k].title=T["svc."+k+".title"];if(T["svc."+k+".long"])SVC[k].text=T["svc."+k+".long"]});
   const hid=s.hiddenServices||[];$$("[data-svc]").forEach(e=>hid.includes(e.dataset.svc)?e.setAttribute("data-off",""):e.removeAttribute("data-off"))}
 function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);applyTheme(s.theme);
-  if(s.contacts&&s.contacts.length){CONTACTS.length=0;CONTACTS.push(...s.contacts);window.__updChat&&window.__updChat()}try{renderFooter()}catch(e){}
+  if(s.contacts&&s.contacts.length&&!s.contacts.some(c=>/instagram\.com\/trendburo\.(women|men)\b|t\.me\/trendburo\/?$/i.test(c.url||""))){CONTACTS.length=0;CONTACTS.push(...s.contacts);window.__updChat&&window.__updChat()}try{renderFooter()}catch(e){}
   if([0,1,2,3,4,5,6].includes(s.shipWeekday))SHIP_WD=s.shipWeekday;
   if(s.optix&&s.optix.url)OPTIX_LINK=s.optix.url;
   $$("[data-wd],[data-wd2]").forEach(e=>e.textContent=SHIPF());
