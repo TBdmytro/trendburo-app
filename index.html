@@ -2376,7 +2376,7 @@ function instInit(){const w=instTG();if(w&&w.checkHomeScreenStatus){try{w.checkH
   try{w.onEvent("homeScreenAdded",()=>{INST_ADDED=true;instUpd()})}catch(x){}}
   instUpd()}
 async function instGo(){const w=instTG();
-  if(w&&/^ios/.test(w.platform||"")){const u=location.origin+"/?install=1";try{w.openLink(u,{try_browser:"safari"})}catch(x){try{w.openLink(u)}catch(y){}}return}
+  if(w&&/^ios/.test(w.platform||"")){const u="https://trendburo.com.ua/?install=1";try{w.openLink(u,{try_browser:"safari"})}catch(x){try{w.openLink(u)}catch(y){}}return}
   if(w){try{w.addToHomeScreen()}catch(x){}return}
   if(INST_EV){INST_EV.prompt();try{await INST_EV.userChoice}catch(x){}INST_EV=null;instUpd();return}
   if(instIOS()){instGuide();return}}
