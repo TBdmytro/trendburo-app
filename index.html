@@ -3710,14 +3710,14 @@ function openAuto(ri){
   const setW=()=>host.style.setProperty("--w",host.offsetWidth+"px");setW();
   const d=prefs.dest||"ua",DUR=5500;let r=ri,list=AUTO[r].build(),i=0,t0=performance.now(),el=0,raf=0,paused=false,cb=null,busy=false,dead=false,nb=null;
   const priceH=p=>isPor(p)?"Цена по запросу":`${eur(priceFor(p,d))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[d]??p.oldPrices.ua)}</s>`:""}`;
-  const srcOf=s=>s.t==="p"||s.t==="c"?(()=>{const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;return cs?(cs[0].idx>=0&&svImg(p,cs[0].idx)?svImg(p,cs[0].idx).src:cs[0].image):svImg(p,0).src})():s.t==="du"?svImg(s.a,0).src:null;
+  const srcOf=s=>s.t==="p"||s.t==="c"?(svImg(s.p,0)||{}).src:s.t==="du"?svImg(s.a,0).src:null;
   // заранее: загрузка следующего слайда и разбор фото его товаров (чтобы кадр и раскладка были готовы к показу)
   const pre=s=>{if(!s)return;[s.p,s.a,s.b].filter(Boolean).forEach(p=>shpProduct(p,3));const u=s.t==="cin"&&s.R?null:srcOf(s);if(u){const m=new Image();if(!NOCORS(u))m.crossOrigin="anonymous";m.onload=()=>RAT.set(u,m.naturalWidth/m.naturalHeight);m.src=u;if(s.t==="du"){const m2=new Image();m2.crossOrigin="anonymous";m2.src=svImg(s.b,0).src}}};
   const slideH=(R,s)=>{
     if(s.t==="cin"){const c=R.coll;collMark(c.id);return `<div class="cin"><div class="cfr">${c.cover?`<img${XO(szU(c.cover,1000))} src="${esc(szU(c.cover,1000))}" alt="" decoding="async">`:""}</div><div class="tx"><span class="k">Новая коллекция · ${esc(c.brand)}</span><h2>${esc(c.title)}</h2>${c.desc?`<p>${esc(c.desc)}</p>`:""}<button class="cta" data-collgo="${esc(c.id)}">Смотреть ${c.n} ${plural(c.n,["вещь","вещи","вещей"])} ›</button></div></div>`}
     if(s.t==="in"){const I=R.intro||{k:"Подборка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(svImg(p).thumb)}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиция","позиции","позиций"])}</p></div>`}
     if(s.t==="du")return `<div class="du ${duLay(s.a,s.b)}">${[s.a,s.b].map((p,j)=>duCardH(p,j)).join("")}<span class="vs">VS</span></div><div class="duh">смахните неинтересное · тап по карточке — открыть</div>`;
-    const p=s.p,cs=s.t==="c"?p.colors.filter(c=>c.idx>=0||c.image):null;
+    const p=s.p,cs=null; // в истории — только обложка товара, без смены цветов
     const nph=0,b0=s.t==="p"?Math.min(0,5):0;
     return `<div class="st"><img${XO(srcOf(s))} src="${esc(srcOf(s))}" alt="" decoding="async"></div>${nph>1?`<div class="pd">${Array.from({length:nph},(_,j)=>`<i class="${j===b0?"on":""}"></i>`).join("")}</div>`:""}
       ${p.sale?`<span class="bg s">−${p.sale}%</span>`:p.isNew?`<span class="bg">Новинка</span>`:""}
