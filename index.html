@@ -1376,6 +1376,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .ins-ad img{width:30px;height:30px;border-radius:7px}
 .ins-go{transition:opacity .25s;position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 72px);background:#0071e3;color:#fff;border-radius:999px;padding:9px 14px;font:600 14px Onest;display:flex;gap:7px;align-items:center;box-shadow:0 8px 20px rgba(0,113,227,.32);animation:insb 1.4s ease-in-out infinite;pointer-events:none}
 .ins-go.off{opacity:0}
+.ins-dn{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;animation:insd 1.1s ease-in-out infinite}@keyframes insd{50%{transform:translateY(3px)}}
 .ins-go:after{content:"";position:absolute;bottom:-5px;right:20px;width:11px;height:11px;background:#0071e3;transform:rotate(45deg);border-radius:2px}
 @keyframes insb{50%{transform:translateY(-5px)}}
 .ins-n{margin:18px 8px 0;text-align:center;font:400 13px/1.45 Onest;color:#86868b}
@@ -2336,13 +2337,15 @@ function nextFriday(){const d=new Date();const k=(SHIP_WD-d.getDay()+7)%7;d.setD
 /* подвал «Мы на связи»: кнопка менеджеру + плитки каналов (из CONTACTS — правятся в админке) */
 const CFT_TG='<svg viewBox="0 0 24 24"><path d="M21 4.5 2.8 11.6c-.9.4-.9 1.2 0 1.5l4.6 1.4 1.7 5.4c.2.6.9.8 1.4.3l2.5-2.3 4.7 3.5c.6.4 1.3.1 1.5-.6L22 5.7c.2-1-.4-1.5-1-1.2Z"/><path d="m7.4 14.5 10-6.6-7.6 7.6"/></svg>',
  CFT_IG='<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".6"/></svg>';
-function renderFooter(){const el=$("#cft");if(!el)return;const ok=c=>/^https:\/\//.test(c.url||"");
+/* блок «Ми на звʼязку» — внизу каждого раздела (вкладки и открытые страницы без нижней кнопки) */
+function cftSlots(){$$(".screen.tab").forEach(t=>{const sc=t.querySelector(".scroll");if(sc&&!sc.querySelector("footer.cft"))sc.insertAdjacentHTML("beforeend",'<footer class="cft" aria-label="Контакти"></footer>')})}
+function renderFooter(){try{cftSlots()}catch(x){}const L=$$("footer.cft");if(!L.length)return;const ok=c=>/^https:\/\//.test(c.url||"");
   const mg=CONTACTS.find(c=>/менеджер/i.test(c.label)&&ok(c)),rest=CONTACTS.filter(c=>c!==mg&&ok(c)&&/t\.me\/|instagram\.com\//.test(c.url));
   const nm=c=>String(c.label||"").replace(/\s*·?\s*(telegram|instagram)\s*·?\s*/ig," ").trim().replace(/^\p{Ll}/u,x=>x.toUpperCase())||c.handle;
-  el.innerHTML=`<h4>Ми на звʼязку</h4>${mg?`<a class="cft-m press" href="${esc(mg.url)}" target="_blank" rel="noopener">${CFT_TG}Написати менеджеру</a>`:""}
-  <button class="cft-o press" id="cftInst" hidden><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M12 7v7M9.5 11.5 12 14l2.5-2.5"/></svg><span>Встановити на телефон</span></button><div class="cft-n" id="cftNote" hidden></div>
+  const html=`<h4>Ми на звʼязку</h4>${mg?`<a class="cft-m press" href="${esc(mg.url)}" target="_blank" rel="noopener">${CFT_TG}Написати менеджеру</a>`:""}
+  <button class="cft-o press cft-inst" hidden><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M12 7v7M9.5 11.5 12 14l2.5-2.5"/></svg><span>Встановити на телефон</span></button><div class="cft-n cft-note" hidden></div>
   <div class="cft-g">${rest.map(c=>{const ig=/instagram/.test(c.url);return `<a class="cft-t press" href="${esc(c.url)}" target="_blank" rel="noopener"><span class="cft-i">${ig?CFT_IG:CFT_TG}</span><span>${esc(nm(c))}<small>${ig?"Instagram":"Telegram"}</small></span></a>`}).join("")}</div>
-  <div class="cft-c">TREND BÜRO · PERSONAL SHOPPING · 2023</div>`;try{instInit()}catch(x){}}
+  <div class="cft-c">TREND BÜRO · PERSONAL SHOPPING · 2023</div>`;L.forEach(f=>{if(f.dataset.k!==html){f.innerHTML=html;f.dataset.k=html}});window.__cftHTML=html;try{instInit()}catch(x){}}
 /* своя страница установки для iPhone в Safari: ?install=1 (сюда ведёт кнопка из Telegram) */
 const INS_SH='<svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M6 11H5v9h14v-9h-1"/></svg>',INS_PL='<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
 function instGuide(){if(instStandalone())return;let el=$("#ins");if(!el){el=document.createElement("div");el.id="ins";el.className="ins";document.body.appendChild(el)}
@@ -2358,7 +2361,7 @@ function instGuide(){if(instStandalone())return;let el=$("#ins");if(!el){el=docu
   <p class="ins-l">Чотири дотики внизу Safari — і застосунок завжди під рукою</p>
   <div class="ins-p" aria-label="Підказка">${st.map((x,i)=>`<div class="ins-c"><div class="ins-cap"><b>${i+1}</b>${x[0]}</div><div class="ins-m">${x[1]}</div></div>`).join("")}</div>
   <p class="ins-n">Це підказка — натискайте не на неї, а на кнопки Safari внизу екрана</p>
-  <div class="ins-go">Почніть тут ${dots?"•••":INS_SH}</div>`;
+  <div class="ins-go">Натисніть на ${dots?"«•••»":INS_SH}<svg class="ins-dn" viewBox="0 0 24 24"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></div>`;
   el.hidden=false;el.querySelector(".ins-x").onclick=()=>{el.hidden=true};const g=el.querySelector(".ins-go");el.onscroll=()=>g.classList.toggle("off",el.scrollTop>24)}
 /* «Установить на телефон»: в Telegram — системное окно «На экран Домой», на Android — окно «Установить», в Safari — переход в Telegram */
 let INST_EV=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();INST_EV=e;try{instUpd()}catch(x){}});
@@ -2368,18 +2371,16 @@ const instTG=()=>{const w=window.Telegram&&Telegram.WebApp;return w&&w.initData&
 const instIOS=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 const instStandalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 let INST_ADDED=false,INST_BOT=null;
-function instUpd(){const b=$("#cftInst"),n=$("#cftNote");if(!b)return;n.hidden=true;const w=instTG();
-  if(INST_ADDED||(!w&&instStandalone())){b.hidden=true;return}
-  b.hidden=!(w||INST_EV||instIOS())}
+function instUpd(){const w=instTG(),show=!(INST_ADDED||(!w&&instStandalone()))&&!!(w||INST_EV||instIOS());$$(".cft-note").forEach(n=>n.hidden=true);$$(".cft-inst").forEach(b=>b.hidden=!show)}
 function instInit(){const w=instTG();if(w&&w.checkHomeScreenStatus){try{w.checkHomeScreenStatus(st=>{INST_ADDED=st==="added";instUpd()})}catch(x){}
   try{w.onEvent("homeScreenAdded",()=>{INST_ADDED=true;instUpd()})}catch(x){}}
   instUpd()}
-async function instGo(){const w=instTG(),n=$("#cftNote");
+async function instGo(){const w=instTG();
   if(w&&/^ios/.test(w.platform||"")){const u=location.origin+"/?install=1";try{w.openLink(u,{try_browser:"safari"})}catch(x){try{w.openLink(u)}catch(y){}}return}
   if(w){try{w.addToHomeScreen()}catch(x){}return}
   if(INST_EV){INST_EV.prompt();try{await INST_EV.userChoice}catch(x){}INST_EV=null;instUpd();return}
   if(instIOS()){instGuide();return}}
-document.addEventListener("click",e=>{if(e.target.closest("#cftInst")){e.preventDefault();instGo()}});
+document.addEventListener("click",e=>{if(e.target.closest(".cft-inst")){e.preventDefault();instGo()}});
 try{if(/[?&]install=1\b/.test(location.search)&&!instStandalone())(document.readyState==="loading"?addEventListener("DOMContentLoaded",()=>setTimeout(instGuide,300)):setTimeout(instGuide,300))}catch(x){}
 const contactsHTML=()=>CONTACTS.map(c=>`<a class="crow" href="${c.url}" target="_blank" rel="noopener"><span>${esc(c.label)}</span><b>${esc(c.handle)}</b></a>`).join("");
 const plural=(n,a)=>n%10===1&&n%100!==11?a[0]:[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?a[1]:a[2];
@@ -2633,13 +2634,14 @@ const stack=[];
 function currentTabEl(){return $(".tab.on")}
 function push(title,content,{clear=false,foot="",accent="",right=""}={}){
   const s=document.createElement("div");s.className="screen pushed"+(accent?" accent":"");if(accent)s.style.setProperty("--sc",accent);
-  s.innerHTML=`<div class="navbar ${clear?"clear":""}"><button class="round" data-back aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><div class="t">${esc(title)}</div>${right||'<span style="width:38px"></span>'}</div><div class="scroll ${clear?"under":""}">${content}</div>${foot}`;
+  s.innerHTML=`<div class="navbar ${clear?"clear":""}"><button class="round" data-back aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><div class="t">${esc(title)}</div>${right||'<span style="width:38px"></span>'}</div><div class="scroll ${clear?"under":""}">${content}${foot?"":`<footer class="cft" aria-label="Контакти">${window.__cftHTML||""}</footer>`}</div>${foot}`;
   const under=stack.length?stack[stack.length-1]:currentTabEl(); under.classList.add("behind");
   $("#app").append(s);stack.push(s);$("#tabbar").classList.add("hide");updTop();
   s.querySelector("[data-back]").onclick=pop;
   const sc=s.querySelector(".scroll"),nb=s.querySelector(".navbar");
   sc.addEventListener("scroll",()=>{nb.classList.toggle("solid",sc.scrollTop>(clear?220:30));{const was=nb.classList.contains("moved");nb.classList.toggle("moved",sc.scrollTop>4);if(was!==nb.classList.contains("moved"))updTop()}const art=s.querySelector(".hero-art svg");if(art){const y=sc.scrollTop;art.style.transform=`translateY(${y*.25}px) scale(${1+Math.min(y,300)/1500})`}},{passive:true});
   if(!clear)nb.classList.add("solid");
+  if(!foot)try{instUpd()}catch(x){}
   requestAnimationFrame(()=>requestAnimationFrame(()=>s.classList.add("in")));
   let sx=null;s.addEventListener("touchstart",e=>{const x=e.touches[0].clientX-s.getBoundingClientRect().left;sx=x<24?e.touches[0].clientX:null},{passive:true});
   s.addEventListener("touchend",e=>{if(sx!==null&&e.changedTouches[0].clientX-sx>80)pop();sx=null});
