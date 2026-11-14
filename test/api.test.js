@@ -413,11 +413,11 @@ test("заявка на вход: клиенту «заявка принята»
     let p = await call(handler, { query: { a: "accessPending" }, headers: { cookie: ck } });
     const n0 = p.body.n;
     await call(me, { method: "POST", body: { sess: signSess({ id: 77, name: "Марта" }, T), a: "register", name: "Марта" } });
-    assert.ok(sent.some(x => x.b.chat_id === 77 && /Заявка принята/.test(x.b.text)), "клиенту — заявка принята");
+    assert.ok(sent.some(x => x.b.chat_id === 77 && /Заявку прийнято/.test(x.b.text)), "клиенту — заявка принята");
     p = await call(handler, { query: { a: "accessPending" }, headers: { cookie: ck } });
     assert.equal(p.body.n, n0 + 1); assert.equal(p.body.latest[0].name, "Марта");
     await call(handler, { method: "POST", query: { a: "accessSet" }, body: { customer: "customer.77", access: "ok" }, headers: H });
-    assert.ok(sent.some(x => x.b.chat_id === 77 && /Доступ к приложению Trend Büro открыт/.test(x.b.text)));
+    assert.ok(sent.some(x => x.b.chat_id === 77 && /Доступ до застосунку Trend Büro відкрито/.test(x.b.text)));
     assert.equal((await call(handler, { query: { a: "accessPending" }, headers: { cookie: ck } })).body.n, n0);
   } finally { await call(handler, { method: "POST", query: { a: "accessMode" }, body: { closed: false }, headers: H }); globalThis.fetch = f0; delete process.env.TELEGRAM_BOT_TOKEN; resetAccessMemo(); }
 });

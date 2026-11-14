@@ -23,18 +23,18 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       // подборка от менеджера: по ссылке клиент видит выбранные вещи
       const selId = new URL(req.url, "http://x").searchParams.get("sel");
-      if (selId) { if (!/^[a-z0-9]{10}$/.test(selId)) return send(res, 404, { error: "Подборка не найдена" }); const d = await getStore().get("selection." + selId); return d ? send(res, 200, { ids: d.ids || [], note: d.note || "", by: d.byName || "Trend Büro", at: d.at }) : send(res, 404, { error: "Подборка не найдена" }); }
+      if (selId) { if (!/^[a-z0-9]{10}$/.test(selId)) return send(res, 404, { error: "Добірку не знайдено" }); const d = await getStore().get("selection." + selId); return d ? send(res, 200, { ids: d.ids || [], note: d.note || "", by: d.byName || "Trend Büro", at: d.at }) : send(res, 404, { error: "Добірку не знайдено" }); }
       const ready = !!process.env.TELEGRAM_BOT_TOKEN || process.env.DEV_AUTH === "1";
       if (ready && !BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch { BOT = null; } }
       return send(res, 200, { ready, bot: BOT });
     }
     if (req.method !== "POST") return send(res, 405, { error: "Метод не поддерживается" });
     const body = readBody(req);
-    if (!process.env.TELEGRAM_BOT_TOKEN && process.env.DEV_AUTH !== "1") return send(res, 503, { error: "Вход через Telegram ещё не подключён", code: "no_token" });
+    if (!process.env.TELEGRAM_BOT_TOKEN && process.env.DEV_AUTH !== "1") return send(res, 503, { error: "Вхід через Telegram ще не підключено", code: "no_token" });
     if (body.a === "code") { const code = await newLoginCode(getStore()); if (!BOT) { try { BOT = (await tg("getMe", {})).username || null; } catch {} } return send(res, 200, { code, bot: BOT }); }
     if (body.a === "poll") return send(res, 200, await pollLoginCode(getStore(), body.code));
     const user = userFrom(body);
-    if (!user) return send(res, 401, { error: "Telegram не подтвердил вход — откройте приложение заново", code: "bad_sign" });
+    if (!user) return send(res, 401, { error: "Telegram не підтвердив вхід — відкрийте застосунок знову", code: "bad_sign" });
     const store = getStore();
     const pub = { id: user.id, username: user.username, name: user.name, photo: user.photo, dev: !!user.dev };
     if (body.a === "check") {
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     }
     let c;
     // аккаунт удалён (или его ещё нет) — только через регистрацию, сам он не создаётся
-    if (!body.a && !(await store.get(customerId(user.id)))) return send(res, 404, { error: "Аккаунт не найден — зарегистрируйтесь заново", code: "no_account" });
+    if (!body.a && !(await store.get(customerId(user.id)))) return send(res, 404, { error: "Акаунт не знайдено — зареєструйтеся знову", code: "no_account" });
     if (body.a === "register") {
       c = await touchCustomer(store, user);
       const name = String(body.name || "").replace(/\s+/g, " ").trim().slice(0, 80);
@@ -73,6 +73,6 @@ export default async function handler(req, res) {
     return send(res, 200, { closed: acc.closed, access, optix: c.staff ? "ok" : optixOf(c), staff: !!c.staff, user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null });
   } catch (e) {
     console.error("me:", e.message);
-    return send(res, 500, { error: "Не удалось загрузить кабинет" });
+    return send(res, 500, { error: "Не вдалося завантажити кабінет" });
   }
 }

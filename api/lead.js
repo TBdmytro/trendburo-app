@@ -86,13 +86,13 @@ export default async function handler(req, res) {
     }
     // защита от спама: не больше 20 заявок в час с одного устройства
     const recent = await store.list("lead", { client: lead.client }, { order: "createdAt desc", limit: 20, fields: "createdAt" });
-    if (recent.length >= 20 && Date.now() - Date.parse(recent[19].createdAt) < 3600e3) return send(res, 429, { error: "Слишком много заявок, попробуйте позже" });
+    if (recent.length >= 20 && Date.now() - Date.parse(recent[19].createdAt) < 3600e3) return send(res, 429, { error: "Забагато заявок, спробуйте пізніше" });
     const now = new Date().toISOString();
     const doc = { _id: "lead." + createHash("sha1").update(lead.client + now + Math.random()).digest("hex").slice(0, 14), _type: "lead", ...lead, status: "new", createdAt: now, history: [{ at: now, status: "new", by: "клиент" }] };
     doc.notified = await notify(doc);
     await store.put(doc);
     return send(res, 200, { ok: true, number: doc.number, notified: doc.notified });
   } catch (e) {
-    return send(res, 503, { error: "Не удалось отправить заявку" });
+    return send(res, 503, { error: "Не вдалося надіслати заявку" });
   }
 }

@@ -83,7 +83,7 @@ export default async function handler(req, res) {
   }
   if (lg) {
     // вход на сайт: просим подтвердить кнопкой (а не сразу по ссылке) — так чужую ссылку случайно не подтвердить
-    try { await tg("sendMessage", { chat_id: m.chat.id, text: "Вход на сайт Trend Büro\n\nНажмите кнопку, чтобы войти в свой кабинет на сайте. Если вы не входили — просто проигнорируйте сообщение.", reply_markup: { inline_keyboard: [[{ text: "Войти на сайт", callback_data: "lg:" + lg[1] }]] } }); } catch {}
+    try { await tg("sendMessage", { chat_id: m.chat.id, text: "Вхід на сайт Trend Büro\n\nНатисніть кнопку, щоб увійти до свого кабінету на сайті. Якщо ви не входили — просто проігноруйте повідомлення.", reply_markup: { inline_keyboard: [[{ text: "Увійти на сайт", callback_data: "lg:" + lg[1] }]] } }); } catch {}
   } else if (m?.chat?.id && typeof m.text === "string" && m.text.startsWith("/")) {
     try { await send(m.chat.id, replyFor(m.text, publicUrl(req), m.chat.id)); } catch {}
   } else if (cq?.id) {
@@ -105,8 +105,8 @@ export default async function handler(req, res) {
     }
     if (/^lg:[a-f0-9]{24}$/.test(cq.data || "")) {
       let ok = null; try { ok = await confirmLoginCode(getStore(), cq.data.slice(3), cq.from); } catch {}
-      try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: ok ? "Готово — вы вошли на сайте" : "Ссылка устарела. Нажмите «Войти» на сайте ещё раз." }); } catch {}
-      if (ok && cq.message?.chat?.id) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: "✓ Вы вошли на сайте Trend Büro. Вернитесь на вкладку сайта — кабинет уже открыт." }); } catch {} }
+      try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: ok ? "Готово — ви увійшли на сайті" : "Посилання застаріло. Натисніть «Увійти» на сайті ще раз." }); } catch {}
+      if (ok && cq.message?.chat?.id) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: "✓ Ви увійшли на сайті Trend Büro. Поверніться на вкладку сайту — кабінет уже відкрито." }); } catch {} }
       return done();
     }
     if (cq.data === "how" && cq.message?.chat?.id) { try { await send(cq.message.chat.id, replyFor("/how", publicUrl(req), cq.message.chat.id)); } catch {} }
