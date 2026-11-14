@@ -6,7 +6,7 @@
 <meta name="trendburo-build" content="2026-10-14-live-v61">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Trend Büro">
@@ -2350,9 +2350,9 @@ function instGuide(){if(instStandalone())return;let el=$("#ins");if(!el){el=docu
   st.push(dots?["«•••» справа внизу",`<div class="ins-pg"></div>${bar(1)}`]:["Кнопка «Поделиться» внизу",`<div class="ins-pg"></div>${bar(1)}`]);
   if(dots)st.push(["«Поделиться»",`<div class="ins-pg"></div><div class="ins-menu"><div>Новая вкладка</div><div>Закладки</div><div class="ins-hi">Поделиться ${INS_SH}</div></div>`]);
   st.push(["«На экран „Домой“»",`<div class="ins-pg" style="height:28px"></div><div class="ins-sh"><div class="ap"><i></i><i></i><i></i><i></i></div><div class="rw">Скопировать</div><div class="rw ins-hi">На экран «Домой» ${INS_PL}</div></div>`]);
-  st.push(["«Добавить»",`<div class="ins-ad"><div class="tp"><span>Отменить</span><span class="ins-hi">Добавить</span></div><div class="cd"><img src="/icons/icon-192.png" alt="">Trend Büro</div></div>`]);
+  st.push(["«Добавить»",`<div class="ins-ad"><div class="tp"><span>Отменить</span><span class="ins-hi">Добавить</span></div><div class="cd"><img src="/icons/icon-192.png?v=3" alt="">Trend Büro</div></div>`]);
   el.innerHTML=`<button class="ins-x" aria-label="Закрыть">×</button>
-  <div class="ins-hero"><img class="ins-ic" src="/icons/icon-512.png" alt="Trend Büro"><div class="ins-ey">Trend Büro</div><h2>Добавьте на экран «Домой»</h2></div>
+  <div class="ins-hero"><img class="ins-ic" src="/icons/icon-512.png?v=3" alt="Trend Büro"><div class="ins-ey">Trend Büro</div><h2>Добавьте на экран «Домой»</h2></div>
   <p class="ins-l">Четыре касания внизу Safari — и приложение всегда под рукой</p>
   <div class="ins-p" aria-label="Подсказка">${st.map((x,i)=>`<div class="ins-c"><div class="ins-cap"><b>${i+1}</b>${x[0]}</div><div class="ins-m">${x[1]}</div></div>`).join("")}</div>
   <p class="ins-n">Это подсказка — нажимайте не на неё, а на кнопки Safari внизу экрана</p>
