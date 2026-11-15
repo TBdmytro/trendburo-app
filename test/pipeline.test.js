@@ -694,3 +694,12 @@ test("фото поставщика без повторов: тот же фай�
   const out = uniqImages([b + "cover.jpg?v=1", b + "cover.jpg?v=2", b + "cover_3f2b1c4d-1111-2222-3333-444455556666.jpg", b + "cover_800x.jpg", b + "back.jpg", b + "side.jpg"]);
   assert.deepEqual(out, [b + "cover.jpg?v=1", b + "back.jpg", b + "side.jpg"]);
 });
+
+test("Louis Vuitton: сумки до 1500 € и прочее до 500 € — +12%, дороже — обычные +10%", async () => {
+  const { priceFor } = await import("../lib/pipeline.js");
+  const t = (b, c) => priceFor({ boutique: b, sourceKind: "official", flatMarkup: 0.10 }, null, 0, c, "Louis Vuitton").ua;
+  assert.equal(t(1450, "bags"), 1625); assert.equal(t(1500, "bags"), 1650); assert.equal(t(480, "accessories"), 540);
+  assert.equal(t(650, "accessories"), 715); assert.equal(t(120, "accessories"), 135);
+  assert.equal(priceFor({ boutique: 1450, sourceKind: "official", flatMarkup: 0.10 }, null, 0, "bags", "Dior").ua, 1595);
+  assert.equal(priceFor({ boutique: 1450, sourceKind: "official", flatMarkup: 0.10 }, null, 1700, "bags", "Louis Vuitton").ua, 1700); // закреплённая цена главнее
+});
