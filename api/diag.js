@@ -139,7 +139,7 @@ export default async function handler(req, res) {
     const before = v && av && av[v._key] ? av[v._key].status : null; if (apply && before === "online") { av[v._key].status = "ask"; delete d._rev; delete d._createdAt; delete d._updatedAt; await st.put(d); }
     res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify({ id, size, before, apply })); })();
   // Stone Island: вещи одного размера («UN») — размер не показываем (владелец, 15.11). Наличие не меняем. По ?apply=1
-  if (req.method === "GET" && /[?&]sione\b/.test(String(req.url || "")) && /probe=sione/.test(String(req.url))) return (async () => { const st = getStore(), apply = /[?&]apply=1\b/.test(String(req.url));
+  if (req.method === "GET" && /[?&]probe=sione\b/.test(String(req.url || ""))) return (async () => { const st = getStore(), apply = /[?&]apply=1\b/.test(String(req.url));
     const L = (await st.list("product", {}, { limit: 60000, fields: "_id, sizes" }).catch(() => [])).filter(p => /^product\.manual\.stoneisland-/.test(p._id) && (p.sizes || []).length === 1 && /^(UN|TU|OS|U|ONE ?SIZE|NO ?SIZE)$/i.test(p.sizes[0]));
     if (apply) for (const x of L) { const d = await st.get(x._id); d.sizes = []; d.variants = (d.variants || []).map(v => ({ ...v, size: null })); delete d._rev; delete d._createdAt; delete d._updatedAt; await st.put(d); }
     res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify({ apply, n: L.length, ids: L.map(x => x._id.slice(26)).slice(0, 60) })); })();
