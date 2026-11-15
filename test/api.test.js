@@ -541,3 +541,25 @@ test("защита от флуда: с одного адреса не больш
   let ok = 0; for (let i = 0; i < 15; i++) if (allow(a, "t", 10, 60000, 1000)) ok++;
   assert.equal(ok, 10); assert.ok(allow(b, "t", 10, 60000, 1000)); assert.ok(allow(a, "t", 10, 60000, 70000));
 });
+
+test("добірка: менеджер создаёт (24 часа), клиент видит и отправляет выбор; просроченная — 410", async () => {
+  process.env.DEV_AUTH = "1";
+  const me = (await import("../api/me.js")).default;
+  await call(me, { method: "POST", body: { initData: "dev:777:Олена", a: "register", name: "Олена" } });
+  let r = await call(me, { method: "POST", body: { initData: "dev:777:Олена", a: "sel", ids: ["product.a"], items: [{ id: "product.a", b: "Dior", n: "Lady Dior", p: "6 000 €", img: "https://x/1.jpg" }], title: "Добірка · Dior" } });
+  assert.equal(r.status, 403); // не сотрудник
+  await store.patchMany(["customer.777"], { staff: true });
+  const c = await store.get("customer.777"); if (!c?.staff) { const all = await store.list("customer"); const me7 = all.find(x => x.tg?.id === 777); await store.patchMany([me7._id], { staff: true }); }
+  r = await call(me, { method: "POST", body: { initData: "dev:777:Олена", a: "sel", ids: ["product.a", "product.b"], items: [{ id: "product.a", b: "Dior", n: "Lady Dior", p: "6 000 €", img: "https://x/1.jpg" }, { id: "product.b", b: "LV", n: "Speedy", p: "1 900 €", img: "javascript:x" }], title: "Добірка · Dior, LV", note: "Для вас" } });
+  assert.equal(r.status, 200); assert.match(r.body.web, /^https:\/\/trendburo\.com\.ua\/\?sel=[a-z0-9]{10}$/);
+  const id = r.body.id;
+  let g = await call(me, { method: "GET", query: { sel: id } });
+  assert.equal(g.status, 200); assert.equal(g.body.title, "Добірка · Dior, LV"); assert.equal(g.body.items[1].img, ""); assert.ok(g.body.exp > Date.now() + 23 * 36e5);
+  const p = await call(me, { method: "POST", body: { a: "selpick", id, picks: ["product.b", "product.zzz"] } });
+  assert.equal(p.status, 200);
+  assert.deepEqual((await store.get("selection." + id)).picks[0].ids, ["product.b"]);
+  await store.put({ ...(await store.get("selection." + id)), exp: Date.now() - 1000 });
+  g = await call(me, { method: "GET", query: { sel: id } });
+  assert.equal(g.status, 410);
+  delete process.env.DEV_AUTH;
+});
