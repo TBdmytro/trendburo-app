@@ -480,6 +480,21 @@ button{cursor:pointer}
 .pc .art.s-flat svg.sh,.pc .art.s-loafer svg.sh,.pc .art.s-sneaker svg.sh,.pc .art.s-sandal svg.sh,.pc .art.s-belt svg.sh{width:86%;height:86%}
 .pc:hover .art svg.sh{transform:scale(1.05) translateY(-2px)}
 .pc .newb{position:absolute;z-index:2;left:12px;top:12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg)}
+.selv .hd{padding:14px 18px 4px}.selv .k,.selx .k{font:500 11px Onest,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#9a8d78}
+.selv h1,.selx h1{font:400 30px/1.1 Prata,serif;margin:8px 0 6px;letter-spacing:-.01em;text-wrap:balance}.selv .by{font-size:13px;color:var(--muted,#6b6e74)}
+.selv .col{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:6px;height:min(64vw,280px);margin:14px 16px 0}.selv .col div{border-radius:16px;background:#f2f3f4 center/cover no-repeat}.selv .col div:first-child{grid-row:span 2}
+.selv .note{margin:14px 16px 0;padding:14px 16px;border-radius:16px;background:#f2f3f4;font-size:14.5px;line-height:1.45}.selv .who{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:#6b6e74;margin-bottom:6px}
+.selv .av{width:22px;height:22px;border-radius:50%;background:#26282c;color:#fff;display:grid;place-items:center;font:400 10px Prata,serif}
+.selv .hint{margin:16px 18px 0;font-size:13px;color:#6b6e74}
+.selv .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 10px;padding:12px 16px}.selv .c{position:relative;min-width:0}
+.selv .c .im{aspect-ratio:4/5;border-radius:16px;background:#f2f3f4 center/cover no-repeat;cursor:pointer}
+.selv .c b{display:block;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:8px}.selv .c span{display:block;font-size:12.5px;font-weight:300;color:#50545b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.selv .c i{font-style:normal;font-weight:600;font-size:13px}
+.selv .lk{position:absolute;top:8px;right:8px;width:38px;height:38px;border:0;border-radius:50%;background:rgba(255,255,255,.94);display:grid;place-items:center;box-shadow:0 2px 10px rgba(31,33,37,.1);color:#26282c}
+.selv .lk svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8}.selv .lk[aria-pressed="true"]{background:#26282c;color:#fff}.selv .lk[aria-pressed="true"] svg{fill:currentColor}
+.selx{padding:40px 22px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}.selx p{color:#6b6e74;margin:0 0 8px}
+.pc .selq{position:absolute;z-index:3;right:8px;bottom:8px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.94);color:#26282c;display:grid;place-items:center;box-shadow:0 2px 10px rgba(31,33,37,.12);transition:background .15s,color .15s}
+.pc .selq svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.pc .selq .ck{display:none}
+.pc .selq[aria-pressed="true"]{background:#26282c;color:#fff}.pc .selq[aria-pressed="true"] .pl{display:none}.pc .selq[aria-pressed="true"] .ck{display:block}
 .pc .fav{position:absolute;z-index:2;right:6px;top:10px;width:40px;height:40px;border:0;background:none;display:grid;place-items:center}
 .pc .fav svg{width:18px;height:18px;stroke:var(--fg);fill:none;stroke-width:1.5;transition:transform .35s var(--ease)}
 .pc .fav[aria-pressed="true"] svg{fill:var(--fg);transform:scale(1.12)}
@@ -2401,8 +2416,10 @@ function toggleFav(id){if(!(id[0]==="o"?ofavs:favs).has(id))popTrack("f",id);con
   if(isO){renderOFavs();return}
   updateCounts();renderFavs();if(F.onlyFav)renderGrid()}
 
+/* менеджер (роль «сотрудник» в админке): «+» прямо на карточках — отмечать вещи в добірку без захода в товар */
+function staffOn(){try{return isStaff()}catch(e){return false}}
 function pcHTML(p,i=0){const r=p.id[0]==="r";return `<button class="pc press" data-act="product" data-id="${p.id}" style="--c:${p.c};--i:${i}">
-  <div class="art s-${p.shape}${String(p.shape).startsWith("img:")?" hasimg":""}">${p.sale?`<span class="salb">−${p.sale}%</span>`:p.st?`<span class="stk"><span class="gdot"></span>В наявності</span>`:p.availability==="preorder"?'<span class="newb">Передзамовлення</span>':p.isNew?'<span class="newb">Новинка</span>':r?`<span class="newb">${esc(p.cond)}</span>`:""}<span class="fav" role="button" tabindex="0" data-fav="${p.id}" aria-label="В обране" aria-pressed="${favs.has(p.id)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span>${shapeSVG(p.shape,p.c)}</div>
+  <div class="art s-${p.shape}${String(p.shape).startsWith("img:")?" hasimg":""}">${p.sale?`<span class="salb">−${p.sale}%</span>`:p.st?`<span class="stk"><span class="gdot"></span>В наявності</span>`:p.availability==="preorder"?'<span class="newb">Передзамовлення</span>':p.isNew?'<span class="newb">Новинка</span>':r?`<span class="newb">${esc(p.cond)}</span>`:""}<span class="fav" role="button" tabindex="0" data-fav="${p.id}" aria-label="В обране" aria-pressed="${favs.has(p.id)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span>${staffOn()&&!r?`<span class="selq" role="button" tabindex="0" data-selq="${p.id}" aria-label="У добірку" aria-pressed="${SEL.has(p.id)}"><svg viewBox="0 0 24 24"><path class="pl" d="M12 6v12M6 12h12"/><path class="ck" d="m6.5 12.5 3.7 3.7 7.3-7.7"/></svg></span>`:""}${shapeSVG(p.shape,p.c)}</div>
   <div class="m"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span>${p._nv>1?`<span class="nv">${p._nv} ${plural(p._nv,["версія","версії","версій"])}</span>`:""}<span class="pr"><span class="p num">${!r&&isPor(p)?"Ціна за запитом":eur(r?p.price:priceFor(p,prefs.dest||"ua"))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[prefs.dest||"ua"]??p.oldPrices.ua)}</s>`:""}</span><span class="ct">${r?"перевірено":p.st?p.st.city:""}</span></span></div></button>`}
 
 /* ===== Лента ===== */
@@ -4018,7 +4035,7 @@ const DEV_AUTH=()=>/^(localhost|127\.0\.0\.1)$/.test(location.hostname)&&/[?&]de
 const authBody=()=>{const b={client:CLIENT};if(TGW&&TGW.initData)b.initData=TGW.initData;else if(DEV_AUTH())b.initData="dev:42:Дмитрий";else{const l=store.get("tb_login",null);if(l&&l.sess&&l.exp>Date.now())b.sess=l.sess;else if(l&&l.hash&&Date.now()/1000-l.auth_date<29*864e2)b.login=l;else return null}return b};
 async function meCall(extra){const b=authBody();if(!b||!LIVE)return{error:"Немає входу",code:"no_auth"};
   try{const r=await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...b,...(extra||{})})});const j=await r.json().catch(()=>({}));return r.ok?j:{error:j.error||"Помилка "+r.status,code:j.code||String(r.status)}}catch(e){return{error:"Немає звʼязку з сервером",code:"net"}}}
-async function loadMe(extra){const j=await meCall(extra);if(j.error){ME_ERR=j;return null}ME=j;ME_ERR=null;renderTopIcons();try{selBar()}catch(e){}return ME}
+async function loadMe(extra){const j=await meCall(extra);if(j.error){ME_ERR=j;return null}const wasStaff=staffOn();ME=j;ME_ERR=null;renderTopIcons();try{selBar()}catch(e){}if(!wasStaff&&staffOn())try{catRefreshUI()}catch(e){}return ME}
 const meInitials=n=>String(n||"TB").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
 const avatarHTML=(u,cls="")=>u&&u.photo?`<img class="${cls}" src="${esc(u.photo)}" alt="" referrerpolicy="no-referrer">`:`<span class="${cls} ini">${esc(meInitials(u&&u.name))}</span>`;
 const I_TG='<svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><path d="M9 13l8-6"/></svg>';
@@ -4516,6 +4533,7 @@ $("#tabbar").addEventListener("click",e=>{const b=e.target.closest("button");if(
 $("#gSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;F.g=b.dataset.g;renderCatalog();renderCatHome()});
 
 $("#app").addEventListener("click",e=>{
+  const sq=e.target.closest("[data-selq]");if(sq){e.stopPropagation();e.preventDefault();selToggle(sq.dataset.selq);const on=SEL.has(sq.dataset.selq);document.querySelectorAll(`[data-selq="${CSS.escape(sq.dataset.selq)}"]`).forEach(x=>x.setAttribute("aria-pressed",on));return}
   const fav=e.target.closest("[data-fav]");if(fav){e.stopPropagation();e.preventDefault();toggleFav(fav.dataset.fav);return}
   const t=e.target.closest("[data-act]");if(!t)return;const a=t.dataset.act;
   if(a==="product"){if(sv){sv.remove();sv=null}if(t.dataset.id[0]==="o")openOptix(t.dataset.id);else openProduct(t.dataset.id)}
@@ -4709,27 +4727,46 @@ function selToggle(id){SEL.has(id)?SEL.delete(id):SEL.add(id);selSave();try{TGW&
 function selBar(){let b=document.getElementById("selbar");if(!isStaff()||!SEL.size){if(b)b.remove();return}
   if(!b){b=document.createElement("button");b.id="selbar";b.className="selbar press";b.onclick=selSheet;document.body.append(b)}
   b.innerHTML=`<span>Добірка для клієнта</span><b class="num">${SEL.size}</b>`}
+function selDefTitle(items){const B=[...new Set(items.map(p=>p.brand).filter(Boolean))];return "Добірка"+(B.length?" · "+B.slice(0,3).join(", ")+(B.length>3?" та ще "+(B.length-3):""):"")}
 function selSheet(){const items=[...SEL].map(findItem).filter(Boolean);
-  openSheet("Добірка для клієнта",`<div class="selist">${items.map(p=>`<div class="cartrow"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div class="tx"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span><span class="p num">${eur(priceFor(p,"ua"))}</span></div><button class="rm" data-selrm="${esc(p.id)}" aria-label="Прибрати">×</button></div>`).join("")||'<p class="muted">Порожньо</p>'}</div>
-    <label class="gt-f" style="margin-top:12px"><span>Коментар клієнту <small>· за бажанням</small></span><textarea id="selNote" rows="2" maxlength="300" placeholder="Наприклад: підібрала сумки до 3000 €, як ви просили"></textarea></label>`,
+  openSheet("Добірка для клієнта",`<div class="selist">${items.map(p=>`<div class="cartrow"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div class="tx"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span><span class="p num">${isPor(p)?"Ціна за запитом":eur(priceFor(p,"ua"))}</span></div><button class="rm" data-selrm="${esc(p.id)}" aria-label="Прибрати">×</button></div>`).join("")||'<p class="muted">Порожньо</p>'}</div>
+    <label class="gt-f" style="margin-top:12px"><span>Назва добірки</span><input id="selTitle" maxlength="60" value="${esc(selDefTitle(items))}"></label>
+    <label class="gt-f" style="margin-top:10px"><span>Коментар клієнту <small>· за бажанням</small></span><textarea id="selNote" rows="2" maxlength="300" placeholder="Наприклад: підібрала сумки до 3000 €, як ви просили"></textarea></label>
+    <p class="muted" style="font-size:12.5px;margin:10px 2px 0">Посилання діє 24 години, потім добірка видаляється сама. Клієнт позначає, що сподобалось, — вам приходить повідомлення в Telegram.</p>`,
     `<button class="btn soft" data-selclr>Очистити</button><button class="btn" data-selgo style="flex:1">Надіслати клієнту</button>`);
-  const sh=sheetEl;sh.querySelectorAll("[data-selrm]").forEach(x=>x.onclick=()=>{SEL.delete(x.dataset.selrm);selSave();SEL.size?selSheet():closeSheet()});
-  sh.querySelector("[data-selclr]").onclick=()=>{SEL.clear();selSave();closeSheet()};
-  sh.querySelector("[data-selgo]").onclick=async e=>{const bt=e.currentTarget;bt.disabled=true;bt.textContent="Готуємо посилання…";const note=sh.querySelector("#selNote").value.trim();
-    const r=await meCall({a:"sel",ids:[...SEL],note});if(!r||!r.link){bt.disabled=false;bt.textContent="Надіслати клієнту";return toast(r&&r.error||"Не вийшло")}
-    const txt=(note?note+"\n\n":"")+"Добірка Trend Büro для вас — "+SEL.size+" "+plural(SEL.size,["річ","речі","речей"]);
+  const sh=sheetEl;sh.querySelectorAll("[data-selrm]").forEach(x=>x.onclick=()=>{SEL.delete(x.dataset.selrm);selSave();document.querySelectorAll(`[data-selq="${CSS.escape(x.dataset.selrm)}"]`).forEach(q=>q.setAttribute("aria-pressed",false));SEL.size?selSheet():closeSheet()});
+  sh.querySelector("[data-selclr]").onclick=()=>{SEL.clear();selSave();document.querySelectorAll("[data-selq]").forEach(q=>q.setAttribute("aria-pressed",false));closeSheet()};
+  sh.querySelector("[data-selgo]").onclick=async e=>{const bt=e.currentTarget;bt.disabled=true;bt.textContent="Готуємо посилання…";const note=sh.querySelector("#selNote").value.trim(),title=sh.querySelector("#selTitle").value.trim()||selDefTitle(items);
+    const snap=items.map(p=>{const im=p.imgs&&p.imgs[0];return{id:p.id,b:p.brand,n:p.name,p:isPor(p)?"Ціна за запитом":eur(priceFor(p,"ua")),img:im?(im.src||im.thumb||""):""}});
+    const r=await meCall({a:"sel",ids:[...SEL],items:snap,title,note});if(!r||!r.link){bt.disabled=false;bt.textContent="Надіслати клієнту";return toast(r&&r.error||"Не вийшло")}
+    const n=SEL.size,txt=title+" — "+n+" "+plural(n,["річ","речі","речей"])+(note?"\n"+note:"")+"\nПосилання діє 24 години";
     const share="https://t.me/share/url?url="+encodeURIComponent(r.link)+"&text="+encodeURIComponent(txt);
     try{navigator.clipboard&&navigator.clipboard.writeText(r.link)}catch(x){}
-    SEL.clear();selSave();closeSheet();toast("Посилання готове — оберіть чат клієнта");
+    SEL.clear();selSave();document.querySelectorAll("[data-selq]").forEach(q=>q.setAttribute("aria-pressed",false));closeSheet();toast("Посилання готове — оберіть чат клієнта");
     try{if(TGW&&TGW.openTelegramLink){TGW.openTelegramLink(share);return}}catch(x){}open(share,"_blank")}}
 /* клиент открыл ссылку подборки: t.me/<бот>?startapp=sel_… или сайт ?sel=… */
 async function selOpenFromLink(){let id="";try{const sp=(TGW&&TGW.initDataUnsafe&&TGW.initDataUnsafe.start_param)||new URLSearchParams(location.search).get("tgWebAppStartParam")||"";if(/^sel_[a-z0-9]{10}$/.test(sp))id=sp.slice(4)}catch(e){}
   if(!id){const q=new URLSearchParams(location.search).get("sel");if(/^[a-z0-9]{10}$/.test(q||""))id=q}
-  if(!id)return;let d=null;try{const r=await fetch("/api/me?sel="+id,{cache:"no-store"});if(r.ok)d=await r.json()}catch(e){}
-  if(!d)return toast("Добірку не знайдено");
-  for(let i=0;i<60&&!(typeof P!=="undefined"&&P.length);i++)await new Promise(r=>setTimeout(r,500));
-  const list=d.ids.map(findItem).filter(Boolean);if(!list.length)return toast("Речі з добірки вже недоступні");
-  push("Добірка",`<div class="bigtitle" style="padding-top:12px"><div><div class="sub">від ${esc(d.by)} · Trend Büro</div><h1>Добірка для вас</h1></div></div>${d.note?`<div class="pad"><div class="group" style="padding:14px 16px;font-size:15px;line-height:1.45">${esc(d.note)}</div></div>`:""}<div class="grid2 cgrid" style="margin-top:14px">${list.map(pcHTML).join("")}</div><div style="height:90px"></div>`)}
+  if(!id)return;let d=null,st=0;try{const r=await fetch("/api/me?sel="+id,{cache:"no-store"});st=r.status;d=await r.json().catch(()=>null)}catch(e){}
+  const mgr=`<a class="btn" style="text-decoration:none" href="https://t.me/trendburomanager" target="_blank" rel="noopener">Написати менеджеру</a>`;
+  if(st===410||(d&&d.expired))return push("Добірка",`<div class="selx"><div class="k">Добірка Trend Büro</div><h1>Термін дії добірки минув</h1><p>Посилання діє 24 години. Напишіть менеджеру — він надішле свіжу добірку.</p>${mgr}</div>`);
+  if(!d||st!==200)return toast("Добірку не знайдено");
+  const snap=new Map((d.items||[]).map(i=>[i.id,i]));
+  const list=d.ids.map(x=>{const p=typeof findItem==="function"?findItem(x):null,sn=snap.get(x)||{};const im=p&&p.imgs&&p.imgs[0];return{id:x,live:!!p,b:p?p.brand:sn.b,n:p?p.name:sn.n,p:p?(isPor(p)?"Ціна за запитом":eur(priceFor(p,prefs.dest||"ua"))):sn.p,img:im?szU(im.src||im.thumb,700):(sn.img?szU(sn.img,700):"")}}).filter(x=>x.b||x.n);
+  if(!list.length)return toast("Речі з добірки вже недоступні");
+  const PK=new Set(),till=d.exp?new Date(d.exp).toLocaleString("uk-UA",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}):"";
+  const col=list.slice(0,3).map(x=>`<div style="background-image:url('${esc(x.img)}')"></div>`).join("");
+  const html=`<div class="selv"><div class="hd"><div class="k">Добірка Trend Büro</div><h1>${esc(d.title||"Добірка для вас")}</h1><div class="by">Підібрав(ла) ${esc(d.by)} · ${list.length} ${plural(list.length,["річ","речі","речей"])}${till?" · діє до "+esc(till):""}</div></div>
+    ${list.length>=3?`<div class="col">${col}</div>`:""}
+    ${d.note?`<div class="note"><div class="who"><span class="av">TB</span>${esc(d.by)}, менеджер</div>${esc(d.note)}</div>`:""}
+    <p class="hint">Позначте ♡ те, що сподобалось, — менеджер одразу отримає ваш вибір</p>
+    <div class="grid">${list.map(x=>`<div class="c" data-sid="${esc(x.id)}"><div class="im" ${x.live?`data-act="product" data-id="${esc(x.id)}"`:""} style="background-image:url('${esc(x.img)}')"></div><button class="lk" data-pk="${esc(x.id)}" aria-pressed="false" aria-label="Подобається"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><b>${esc(x.b||"")}</b><span>${esc(x.n||"")}</span><i class="num">${esc(x.p||"")}</i></div>`).join("")}</div>
+    <div style="height:110px"></div></div>`;
+  push("Добірка",html,{foot:`<div class="foot glass"><button class="btn" data-pksend disabled style="flex:1">Оберіть, що сподобалось</button></div>`});
+  const sc=document.querySelector(".screen.pushed:last-of-type")||document;const upd=()=>{const b=document.querySelector("[data-pksend]");if(!b)return;b.disabled=!PK.size;b.textContent=PK.size?`Надіслати вибір менеджеру · ${PK.size}`:"Оберіть, що сподобалось"};
+  document.querySelectorAll("[data-pk]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.pk;PK.has(k)?PK.delete(k):PK.add(k);b.setAttribute("aria-pressed",PK.has(k));try{hap("light")}catch(x){}upd()});
+  const sb=document.querySelector("[data-pksend]");if(sb)sb.onclick=async()=>{sb.disabled=true;sb.textContent="Надсилаємо…";let ok=false,j=null;try{const r=await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...(authBody()||{}),a:"selpick",id,picks:[...PK]})});j=await r.json().catch(()=>null);ok=r.ok}catch(e){}
+    if(ok){sb.textContent="✓ Менеджер отримав ваш вибір";toast("Дякуємо! Менеджер напише вам у Telegram");try{hap("success")}catch(x){}}else{sb.disabled=false;upd();toast(j&&j.error||"Не вийшло — спробуйте ще раз")}}}
 setTimeout(()=>{selOpenFromLink();selBar()},1500);
 // защита витрины: без меню «сохранить фото», без перетаскивания и копирования (кроме полей ввода)
 (function(){const ed=t=>t&&t.closest&&t.closest("input,textarea,[contenteditable]");

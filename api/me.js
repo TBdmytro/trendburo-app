@@ -23,7 +23,10 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       // подборка от менеджера: по ссылке клиент видит выбранные вещи
       const selId = new URL(req.url, "http://x").searchParams.get("sel");
-      if (selId) { if (!/^[a-z0-9]{10}$/.test(selId)) return send(res, 404, { error: "Добірку не знайдено" }); const d = await getStore().get("selection." + selId); return d ? send(res, 200, { ids: d.ids || [], note: d.note || "", by: d.byName || "Trend Büro", at: d.at }) : send(res, 404, { error: "Добірку не знайдено" }); }
+      if (selId) { if (!/^[a-z0-9]{10}$/.test(selId)) return send(res, 404, { error: "Добірку не знайдено" }); const d = await getStore().get("selection." + selId);
+        if (!d) return send(res, 404, { error: "Добірку не знайдено" });
+        if (d.exp && d.exp < Date.now()) return send(res, 410, { error: "Термін дії добірки минув", expired: true, by: d.byName || "Trend Büro" });
+        return send(res, 200, { ids: d.ids || [], items: d.items || [], title: d.title || "", note: d.note || "", by: d.byName || "Trend Büro", at: d.at, exp: d.exp || null }); }
       const ready = !!process.env.TELEGRAM_BOT_TOKEN || process.env.DEV_AUTH === "1";
       if (ready && !BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch { BOT = null; } }
       return send(res, 200, { ready, bot: BOT });
@@ -33,6 +36,24 @@ export default async function handler(req, res) {
     if (!process.env.TELEGRAM_BOT_TOKEN && process.env.DEV_AUTH !== "1") return send(res, 503, { error: "Вхід через Telegram ще не підключено", code: "no_token" });
     if (body.a === "code") { const code = await newLoginCode(getStore()); if (!BOT) { try { BOT = (await tg("getMe", {})).username || null; } catch {} } return send(res, 200, { code, bot: BOT }); }
     if (body.a === "poll") return send(res, 200, await pollLoginCode(getStore(), body.code));
+    if (body.a === "selpick") { // клиент отметил понравившееся в добірці → сообщение менеджеру в Telegram (вход не обязателен)
+      if (!allow(req, "selpick", 6, 60000)) return tooMany(res);
+      const id = String(body.id || ""); if (!/^[a-z0-9]{10}$/.test(id)) return send(res, 404, { error: "Добірку не знайдено" });
+      const store = getStore(), d = await store.get("selection." + id);
+      if (!d) return send(res, 404, { error: "Добірку не знайдено" });
+      if (d.exp && d.exp < Date.now()) return send(res, 410, { error: "Термін дії добірки минув", expired: true });
+      const picks = [...new Set((Array.isArray(body.picks) ? body.picks : []).map(String))].filter(x => (d.ids || []).includes(x)).slice(0, 40);
+      if (!picks.length) return send(res, 400, { error: "Оберіть хоча б одну річ" });
+      const who = userFrom(body), cl = who ? await store.get(customerId(who.id)).catch(() => null) : null;
+      const esc = t => String(t || "").replace(/[<&>]/g, m => ({ "<": "&lt;", "&": "&amp;", ">": "&gt;" }[m]));
+      const items = picks.map(x => (d.items || []).find(i => i.id === x) || { id: x });
+      const client = who ? `${esc(cl?.profile?.name || who.name || "Клієнт")}${who.username ? " @" + esc(who.username) : ` (<a href="tg://user?id=${who.id}">написати</a>)`}` : "клієнт без входу — уточніть у чаті, кому надсилали";
+      const text = `❤️ <b>Вибір з добірки «${esc(d.title || "Добірка")}»</b>\n${items.map(i => `• ${esc(i.b || "")} — ${esc(i.n || i.id)}${i.p ? " — " + esc(i.p) : ""}`).join("\n")}\n\nКлієнт: ${client}${body.msg ? "\nКоментар: " + esc(String(body.msg).slice(0, 300)) : ""}`;
+      let sent = 0; try { await tg("sendMessage", { chat_id: Number(d.by), text, parse_mode: "HTML" }); sent++; } catch {}
+      try { const { toAdmins } = await import("../lib/access.js"); sent += await toAdmins(store, { text, parse_mode: "HTML" }); } catch {}
+      await store.put({ ...d, picks: [...(d.picks || []), { ids: picks, by: who ? String(who.id) : "", at: new Date().toISOString() }].slice(-20) }).catch(() => {});
+      return send(res, 200, { ok: true, sent });
+    }
     const user = userFrom(body);
     if (!user) return send(res, 401, { error: "Telegram не підтвердив вхід — відкрийте застосунок знову", code: "bad_sign" });
     const store = getStore();
@@ -60,9 +81,13 @@ export default async function handler(req, res) {
       const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String).filter(x => /^[\w.:-]{3,80}$/.test(x)))].slice(0, 40);
       if (!ids.length) return send(res, 400, { error: "Подборка пустая" });
       const { randomBytes } = await import("node:crypto"); const id = randomBytes(8).toString("hex").replace(/[^a-z0-9]/g, "").slice(0, 10).padEnd(10, "0");
-      await store.put({ _id: "selection." + id, _type: "selection", ids, note: String(body.note || "").replace(/\s+/g, " ").trim().slice(0, 300), by: String(user.id), byName: c.profile?.name || user.name || "Trend Büro", at: new Date().toISOString() });
+      const str = (v, n) => String(v || "").replace(/\s+/g, " ").trim().slice(0, n), now = Date.now();
+      const items = (Array.isArray(body.items) ? body.items : []).filter(i => i && ids.includes(String(i.id))).slice(0, 40).map(i => ({ id: String(i.id), b: str(i.b, 40), n: str(i.n, 120), p: str(i.p, 24), img: /^https:\/\//.test(String(i.img || "")) ? String(i.img).slice(0, 600) : "" }));
+      // добірка живёт 24 часа; просроченные удаляем при создании новой — в базе не копятся
+      try { const old = (await store.list("selection", {}, { limit: 500 })).filter(x => (x.exp || (Date.parse(x.at) + 864e5)) < now).map(x => x._id); if (old.length) await store.delMany(old); } catch {}
+      await store.put({ _id: "selection." + id, _type: "selection", ids, items, title: str(body.title, 60), note: str(body.note, 300), by: String(user.id), byName: c.profile?.name || user.name || "Trend Büro", at: new Date(now).toISOString(), exp: now + 864e5 });
       if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
-      const site = "https://" + (req.headers["x-forwarded-host"] || req.headers.host || "trendburo-app.vercel.app");
+      const site = "https://trendburo.com.ua";
       return send(res, 200, { id, link: BOT ? `https://t.me/${BOT}?startapp=sel_${id}` : `${site}/?sel=${id}`, web: `${site}/?sel=${id}` });
     }
     if (body.a === "optix") { const st = await optixRequest(store, c); return send(res, 200, { optix: st }); } // заявка на доступ к OPTIX
