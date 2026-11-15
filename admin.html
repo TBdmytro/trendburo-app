@@ -3164,6 +3164,14 @@ async function vCustomers(q) {
       <div class="tile"><span>Заказы</span><b class="num">${T.orders || 0}</b><span>через менеджера ${T.viaManager || 0}</span></div>
       <div class="tile"><span>Заходили за 30 дней</span><b class="num">${T.active30 || 0}</b><span>активные клиенты</span></div>
     </div>
+    ${(() => { const now = Date.now(), d = c => Date.parse(c.registeredAt || c.createdAt || "") || 0, ok = customers.filter(c => c.access === "ok").length, pn = customers.filter(c => c.access === "pending").length, rj = customers.filter(c => c.access === "rejected" || c.access === "blocked").length;
+      const w = customers.filter(c => now - d(c) < 7 * 864e5).length, t = customers.filter(c => now - d(c) < 864e5).length;
+      return `<div class="tiles" style="margin-bottom:10px">
+      <div class="tile dark"><span>Пользователей в приложении</span><b class="num">${customers.length}</b><span>зарегистрировались через Telegram</span></div>
+      <div class="tile"><span>С доступом</span><b class="num">${ok}</b><span>${rj ? "отклонено " + rj : "приняты в приложение"}</span></div>
+      <div class="tile"><span>Ждут ответа</span><b class="num">${pn}</b><span>заявки на вход</span></div>
+      <div class="tile"><span>Новые за 7 дней</span><b class="num">${w}</b><span>сегодня ${t}</span></div>
+    </div>`; })()}
     <div class="card pad" style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px">
       <label class="toggle"><input type="checkbox" id="cClosed" ${closed ? "checked" : ""}><b>Вход по заявкам</b></label>
       <div class="hint">${closed ? "Сайт закрыт: человек регистрируется через Telegram и оставляет заявку — вы принимаете или отклоняете. Пока заявка ждёт, каталог ему не виден. Можно принимать здесь или кнопкой в боте (в чате менеджера); принятому придёт сообщение." : "Сейчас каталог видят все. Включите — и новые люди после регистрации через Telegram будут ждать вашего решения. Все, кто уже есть в базе, получат доступ автоматически. Заблокировать человека можно и сейчас — в его карточке."}</div>
