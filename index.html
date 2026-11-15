@@ -4697,6 +4697,8 @@ function openCNews(i){const n=CMS.news[i];if(!n)return;const bk=brandKey(n.brand
   const g=s.querySelector("[data-go]");if(g)g.onclick=()=>runAction(n.action)}
 
 /* подборки (ленты товаров) */
+/* порядок «Для нього» — новый при каждом заходе на сайт, но не прыгает, пока человек листает */
+const RAIL_SEED=Math.floor(Math.random()*1e9);function railRnd(id){let h=RAIL_SEED;for(let i=0;i<id.length;i++)h=Math.imul(h^id.charCodeAt(i),16777619)>>>0;return h}
 function railItems(r){let l=P.slice();
   if(r.rule==="manual"){const m=new Map(P.map(p=>[p.id,p]));l=(r.ids||[]).map(id=>m.get(id)).filter(Boolean)}
   else if(r.rule==="new")l=l.filter(p=>p.isNew);
@@ -4706,7 +4708,9 @@ function railItems(r){let l=P.slice();
   // спорт (Alo, On, Skims…) — только в своих подборках: в общие ряды по правилу не попадает
   if(r.rule!=="brand"&&r.rule!=="manual")l=l.filter(p=>!cvSport(p.bk));
   // пол: из подборки, иначе — как выбрано вверху ленты
-  {const g=r.gender||(LIVE?CV.g:"");if(g)l=l.filter(p=>p.g===g||p.g==="u")}
+  {const g=r.gender||(LIVE?CV.g:"");if(g)l=l.filter(p=>p.g===g||p.g==="u");
+   /* «Для нього»: без украшений, из часов Cartier — только Santos; разные бренды (не больше 2 подряд от одного) и новый порядок при каждом заходе */
+   if(g==="m"&&r.rule!=="manual"&&r.rule!=="brand"){l=l.filter(p=>p.cat!=="jewelry"&&cvMenOk(p));const sh=l.map(p=>[p,railRnd(p.id)]).sort((a,b)=>a[1]-b[1]).map(x=>x[0]),out=[],rest=[],per={};for(const p of sh){if((per[p.bk]||0)>=2&&out.length<16){rest.push(p);continue}per[p.bk]=(per[p.bk]||0)+1;out.push(p)}l=out.concat(rest)}}
   // «до 3 000 €» — вещи рядом с этой ценой (от 60% суммы, мало — от 40%), самые близкие к сумме первыми; не кардхолдеры за 150 €
   if(r.maxPrice){const mx=r.maxPrice,inB=k=>l.filter(p=>p.price<=mx&&p.price>=(r.minPrice||Math.round(mx*k)));let c=inB(.6);if(c.length<4)c=inB(.4);
     l=c.sort((a,b)=>b.price-a.price);const out=[],per={},rest=[];for(const p of l){if((per[p.bk]||0)>=2&&out.length<10){rest.push(p);continue}per[p.bk]=(per[p.bk]||0)+1;out.push(p)}l=out.concat(rest)}
