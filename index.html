@@ -3239,7 +3239,9 @@ const CV={g:store.get("tb_g","w"),sel:new Set(),ni:0};
 const SPORT_RE=/^(alo|alo yoga|alo yoga set|skims|sporty ?(&|and) ?rich|on|on running|lululemon|nike|adidas|new balance|asics|hoka|salomon|vuori|varley|beyond yoga|gymshark)$/i;
 const cvName=bk=>{const b=BRANDS.find(x=>x[0]===bk);return b?b[1]:bk};
 const cvSport=bk=>SPORT_RE.test(cvName(bk).trim());
-const cvG=p=>p.g===CV.g||p.g==="u"||!p.g;
+/* «Для нього»: из часов Cartier — только Santos (правило владельца) */
+const cvMenOk=p=>!(/cartier/i.test(p.brand||"")&&p.cat==="watches"&&!/santos/i.test((p.name||"")+" "+(p.col||"")));
+const cvG=p=>(p.g===CV.g||p.g==="u"||!p.g)&&(CV.g!=="m"||cvMenOk(p));
 const cvPool=cat=>P.filter(p=>cvG(p)&&p.cat!=="eyewear"&&(!cat||p.cat===cat));
 const cvBrands=(L,sport)=>{const m=new Map();L.forEach(p=>{if(!p.bk||cvSport(p.bk)!==sport)return;m.set(p.bk,(m.get(p.bk)||0)+1+(p.pop||0)/5)});return [...m.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0])};
 const cvPic=p=>{const im=p&&p.imgs&&p.imgs[0];return im?`style="background-image:url(&quot;${esc(im.thumb||im.src)}&quot;)"`:""};
