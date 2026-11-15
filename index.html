@@ -2419,7 +2419,10 @@ function toggleFav(id){if(!(id[0]==="o"?ofavs:favs).has(id))popTrack("f",id);con
   updateCounts();renderFavs();if(F.onlyFav)renderGrid()}
 
 /* менеджер (роль «сотрудник» в админке): «+» прямо на карточках — отмечать вещи в добірку без захода в товар */
-function staffOn(){try{return isStaff()}catch(e){return false}}
+/* «Режим добірки» — менеджер включает в Кабінеті; только тогда на карточках «+» и внизу панель добірки */
+function selModeOn(){try{return !!store.get("tb_selmode",0)}catch(e){return false}}
+function staffOn(){try{return isStaff()&&selModeOn()}catch(e){return false}}
+function selModeSet(on){store.set("tb_selmode",on?1:0);try{catRefreshUI()}catch(e){}selBar();toast(on?"Режим добірки увімкнено — тисніть «+» на картках":"Режим добірки вимкнено")}
 function pcHTML(p,i=0){const r=p.id[0]==="r";return `<button class="pc press" data-act="product" data-id="${p.id}" style="--c:${p.c};--i:${i}">
   <div class="art s-${p.shape}${String(p.shape).startsWith("img:")?" hasimg":""}">${p.sale?`<span class="salb">−${p.sale}%</span>`:p.st?`<span class="stk"><span class="gdot"></span>В наявності</span>`:p.availability==="preorder"?'<span class="newb">Передзамовлення</span>':p.isNew?'<span class="newb">Новинка</span>':r?`<span class="newb">${esc(p.cond)}</span>`:""}<span class="fav" role="button" tabindex="0" data-fav="${p.id}" aria-label="В обране" aria-pressed="${favs.has(p.id)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span>${staffOn()&&!r?`<span class="selq" role="button" tabindex="0" data-selq="${p.id}" aria-label="У добірку" aria-pressed="${SEL.has(p.id)}"><svg viewBox="0 0 24 24"><path class="pl" d="M12 6v12M6 12h12"/><path class="ck" d="m6.5 12.5 3.7 3.7 7.3-7.7"/></svg></span>`:""}${shapeSVG(p.shape,p.c)}</div>
   <div class="m"><span class="b">${esc(p.brand)}</span><span class="n">${esc(p.name)}</span>${p._nv>1?`<span class="nv">${p._nv} ${plural(p._nv,["версія","версії","версій"])}</span>`:""}<span class="pr"><span class="p num">${!r&&isPor(p)?"Ціна за запитом":eur(r?p.price:priceFor(p,prefs.dest||"ua"))}${p.sale&&p.oldPrices?`<s>${eur(p.oldPrices[prefs.dest||"ua"]??p.oldPrices.ua)}</s>`:""}</span><span class="ct">${r?"перевірено":p.st?p.st.city:""}</span></span></div></button>`}
@@ -2974,7 +2977,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
    ${r?"":`<button class="pv-how press" type="button" data-how><span class="ic"><svg viewBox="0 0 24 24">${IC.shield}</svg></span><span><b>Як ми працюємо</b><small>Пошук, викуп, перевірка, відправка</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`}
    <div class="ondark" id="pvlike"></div>
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
-    foot:`<div class="foot dark glass">${isStaff()?`<button class="fv selp" data-selp aria-label="У добірку для клієнта" aria-pressed="${SEL.has(it.id)}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`:""}<button class="fv" data-favp aria-label="В обране" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
+    foot:`<div class="foot dark glass">${staffOn()?`<button class="fv selp" data-selp aria-label="У добірку для клієнта" aria-pressed="${SEL.has(it.id)}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`:""}<button class="fv" data-favp aria-label="В обране" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
   // остальные фото карточки грузим, когда она уже выехала: иначе iPhone раскодирует все снимки разом и анимация замирает
   setTimeout(()=>{if(!s.isConnected)return;s.querySelectorAll("#pvg img[data-src]").forEach(im=>{im.setAttribute("style",im.dataset.style||"");im.src=im.dataset.src;im.removeAttribute("data-src")})},620);
   // «Похожие» дорисовываем после того, как карточка выехала — открытие без пауз
@@ -4262,6 +4265,7 @@ function openAccount(){
       <div class="acl"><span>Обране</span>${FL.length?`<button data-act="favs">Усі · <span class="num">${FL.length}</span></button>`:""}</div>
       ${FL.length?`<div class="acx">${FL.slice(0,4).map(p=>{const r=p.id[0]==="r";return `<button class="li press" data-act="product" data-id="${p.id}">${th(p)}<div><b>${esc(p.brand)}</b><small>${esc(p.name)}</small></div><span class="pr num">${!r&&isPor(p)?"Ціна за запитом":eur(r?p.price:priceFor(p,prefs.dest||"ua"))}</span></button>`}).join("")}</div>`
         :`<p class="ace">Натисніть на сердечко на товарі — він зʼявиться тут.</p>`}
+      ${isStaff()?`<div class="acl"><span>Для менеджера</span></div><div class="acm">${row('data-selmode','<path d="M12 5v14M5 12h14"/>',"Режим добірки",selModeOn()?"увімкнено — «+» на картках, натисніть, щоб вимкнути":"увімкніть, щоб збирати добірку для клієнта")}</div>`:""}
       <div class="acl"><span>Мій профіль</span></div><div class="acm">
       ${row('data-go="sizes"','<path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/>',"Мої розміри",[prefs.shoe&&"обувь "+esc(prefs.shoe),prefs.cloth&&"одяг "+esc(prefs.cloth)].filter(Boolean).join(" · ")||"взуття та одяг — збережемо для замовлень")}
       ${row('data-go="deliv"',OST.np[2],"Доставка",esc([dv.city,(dv.npType==="courier"?dv.address&&"курʼєр":dv.npPoint&&(dv.npType==="locker"?"поштомат ":"відділення ")+dv.npPoint)].filter(Boolean).join(" · "))||"місто й відділення Нової пошти")}
@@ -4280,7 +4284,7 @@ function openAccount(){
     <div class="sec"><div class="sech"><h2>Звʼязок</h2></div><div class="cells" style="padding:0 16px"><div class="clist">${contactsHTML()}<a class="crow" href="#" data-priv><span>Конфіденційність</span><b>як ми зберігаємо дані ›</b></a></div></div></div>
     ${u?`<div class="pad" style="margin-top:14px"><button class="btn block soft" data-logout>Вийти з профілю</button></div>`:""}
     <div style="height:30px"></div>`;
-    {const lg=box.querySelector("[data-login]");if(lg)lg.onclick=()=>authGate(true);const lo=box.querySelector("[data-logout]");if(lo)lo.onclick=logout}
+    {const lg=box.querySelector("[data-login]");if(lg)lg.onclick=()=>authGate(true);const lo=box.querySelector("[data-logout]");if(lo)lo.onclick=logout;const sm=box.querySelector("[data-selmode]");if(sm)sm.onclick=()=>{const on=!selModeOn();selModeSet(on);const sb=sm.querySelector("small");if(sb)sb.textContent=on?"увімкнено — «+» на картках, натисніть, щоб вимкнути":"увімкніть, щоб збирати добірку для клієнта"}}
     wireDeliveryForm(box);box.querySelector("[data-priv]").onclick=e=>{e.preventDefault();openPrivacy()};
     box.querySelector("[data-dsave]").onclick=async e=>{const v=readDeliveryForm(box),b=e.currentTarget;b.disabled=true;await saveDelivery(v).catch(()=>{});b.disabled=false;toast("Дані доставки збережено")};
     box.querySelectorAll("[data-oi]").forEach(b=>b.onclick=()=>openOrder(ords[+b.dataset.oi]));box.querySelectorAll(".acc-live").forEach(w=>w.dataset.empty?accLiveDraw(w,ACC_EMPTY_O,true):accLiveDraw(w,ords[+w.querySelector("[data-oi]").dataset.oi]));
@@ -4728,9 +4732,9 @@ const isStaff=()=>{try{return !!(ME&&ME.staff)}catch(e){return false}};
 const SEL=new Set((()=>{try{return JSON.parse(localStorage.getItem("tb_sel")||"[]")}catch(e){return[]}})());
 function selSave(){try{localStorage.setItem("tb_sel",JSON.stringify([...SEL]))}catch(e){}selBar()}
 function selToggle(id){SEL.has(id)?SEL.delete(id):SEL.add(id);selSave();try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(e){}toast(SEL.has(id)?"Додано в добірку · "+SEL.size:"Прибрано з добірки")}
-function selBar(){let b=document.getElementById("selbar");if(!isStaff()||!SEL.size){if(b)b.remove();return}
-  if(!b){b=document.createElement("button");b.id="selbar";b.className="selbar press";b.onclick=selSheet;document.body.append(b)}
-  b.innerHTML=`<span>Добірка для клієнта</span><b class="num">${SEL.size}</b>`}
+function selBar(){let b=document.getElementById("selbar");if(!staffOn()){if(b)b.remove();return}
+  if(!b){b=document.createElement("button");b.id="selbar";b.className="selbar press";b.onclick=()=>{if(SEL.size)return selSheet();openSheet("Режим добірки",`<p class="muted" style="margin:0 2px 4px;font-size:14px">Тисніть «+» на картках у каталозі — речі збираються в добірку. Потім натисніть на цю панель і надішліть посилання клієнту.</p>`,`<button class="btn soft" data-selmoff style="flex:1">Вимкнути режим</button>`);const x=sheetEl.querySelector("[data-selmoff]");if(x)x.onclick=()=>{closeSheet();selModeSet(0)}};document.body.append(b)}
+  b.innerHTML=SEL.size?`<span>Добірка для клієнта</span><b class="num">${SEL.size}</b>`:`<span>Режим добірки · тисніть «+»</span><b>✓</b>`}
 function selKind(items){const C=[...new Set(items.map(p=>p.cat))];if(C.length!==1)return "";const L=SUBCATS[C[0]]||[],S=[...new Set(items.map(p=>{try{return subOf(p)}catch(e){return ""}}))];if(S.length===1){const r=L.find(x=>x[0]===S[0]);if(r&&S[0]!=="other")return r[1]}return CATS[C[0]]||""}
 function selDefTitle(items){const B=[...new Set(items.map(p=>p.brand).filter(Boolean))],k=selKind(items);return (k||"Добірка")+(B.length?" · "+B.slice(0,3).join(", ")+(B.length>3?" та ще "+(B.length-3):""):"")}
 function selSheet(){const items=[...SEL].map(findItem).filter(Boolean);
