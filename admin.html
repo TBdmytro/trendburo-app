@@ -2101,6 +2101,7 @@ async function vSite(tabs) {
       <label class="toggle"><input type="checkbox" id="sAnOn" ${site.announce.on ? "checked" : ""}>Показывать</label>
       <label class="f">Текст<input type="text" id="sAn" value="${esc(site.announce.text)}" maxlength="140" placeholder="Например: до 5 октября доставка в Украину бесплатно"></label>
       <h3 style="margin:10px 0 0">Блоки «Ленты»</h3>
+      <label class="toggle"><input type="checkbox" id="sOptixOpen" ${site.optix.open ? "checked" : ""}>OPTIX открыт для всех <span class="hint">выключено — закрыт у всех, кроме тех, кому вы открыли вручную в «Клиентах»</span></label>
       <label class="toggle"><input type="checkbox" id="sOptix" ${site.optix.on ? "checked" : ""}>Плитка OPTIX в каталоге</label>
       <label class="f">Ссылка OPTIX<input type="text" id="sOptixUrl" value="${esc(site.optix.url)}"></label>
       <label class="toggle"><input type="checkbox" id="sStock" ${site.stockBlock ? "checked" : ""}>Блок «В наличии»</label>
@@ -2131,7 +2132,7 @@ async function vSite(tabs) {
     if (t.id === "sCadd") { contacts = readC(); contacts.push({ label: "", handle: "", url: "" }); return draw(); }
     if (t.dataset.cdel) { contacts = readC(); contacts.splice(+t.dataset.cdel, 1); return draw(); }
     if (t.id === "sSave") {
-      const s = { shipWeekday: site.shipWeekday, announce: { on: $("#sAnOn").checked, text: $("#sAn").value }, optix: { on: $("#sOptix").checked, url: $("#sOptixUrl").value }, stockBlock: $("#sStock").checked, brandStories: $("#sBrandSt").checked, contacts: readC(), theme };
+      const s = { shipWeekday: site.shipWeekday, announce: { on: $("#sAnOn").checked, text: $("#sAn").value }, optix: { on: $("#sOptix").checked, url: $("#sOptixUrl").value, open: $("#sOptixOpen").checked }, stockBlock: $("#sStock").checked, brandStories: $("#sBrandSt").checked, contacts: readC(), theme };
       try { const r = await api("siteSave", { method: "POST", body: { site: { ...site, ...s, feed: (site.feed || []).map(b => b.id === "announce" ? { ...b, on: s.announce.on } : b.id === "optix" ? { ...b, on: s.optix.on } : b.id === "stock" ? { ...b, on: s.stockBlock } : b) } } }); Object.assign(site, r.site); contacts = r.site.contacts; toast("Сохранено"); draw(); } catch (err) { toast(err.message); }
     }
   };

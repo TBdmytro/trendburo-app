@@ -99,10 +99,13 @@ export default async function handler(req, res) {
     }
     if (body.a === "optix") { const st = await optixRequest(store, c); return send(res, 200, { optix: st }); } // заявка на доступ к OPTIX
     const acc = await accessSettings(store), access = accessOf(c, acc);
+    // OPTIX: общий переключатель в админке («OPTIX открыт для всех»). Выключен — закрыт у всех (и у сотрудников), кроме тех, кому вы открыли вручную
+    let oxAll = false; try { const { getSite } = await import("../lib/cms.js"); oxAll = !!(await getSite(store)).optix?.open; } catch {}
+    const ox = oxAll ? "ok" : optixOf(c);
     if (access === "pending") await notifyRequest(store, c).catch(() => {});
-    if (access !== "ok") return send(res, 200, { user: pub, profile: c.profile, orders: [], since: c.registeredAt || c.createdAt || null, closed: acc.closed, access, optix: optixOf(c), staff: !!c.staff });
+    if (access !== "ok") return send(res, 200, { user: pub, profile: c.profile, orders: [], since: c.registeredAt || c.createdAt || null, closed: acc.closed, access, optix: ox, staff: !!c.staff });
     const orders = await ordersFor(store, user.id, body.client);
-    return send(res, 200, { closed: acc.closed, access, optix: c.staff ? "ok" : optixOf(c), staff: !!c.staff, user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null });
+    return send(res, 200, { closed: acc.closed, access, optix: ox, staff: !!c.staff, user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null });
   } catch (e) {
     console.error("me:", e.message);
     return send(res, 500, { error: "Не вдалося завантажити кабінет" });
