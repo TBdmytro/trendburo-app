@@ -1383,6 +1383,8 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .ins-bb{width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1);display:grid;place-items:center;font:700 9px Onest;color:#1d1d1f;flex:none}
 .ins-bb svg{width:14px;height:14px}
 .ins-url{flex:1;height:28px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1);display:grid;place-items:center;font:500 10px Onest;color:#1d1d1f}
+.ins-url2{display:flex;align-items:center;gap:6px;padding:0 10px;justify-content:flex-start}.ins-url2 b{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:700 12px Onest;color:#1d1d1f;flex:none}.ins-hl2{color:#0071e3!important;box-shadow:0 0 0 2px #0071e3,0 0 0 5px rgba(0,113,227,.18)}
+.ins-go2{right:auto;left:50%;transform:translateX(-50%);animation-name:insb2}@keyframes insb2{0%,100%{transform:translateX(-50%)}50%{transform:translate(-50%,-5px)}}
 .ins-hl{color:#0071e3;box-shadow:0 0 0 2px #0071e3,0 0 0 6px rgba(0,113,227,.18)}
 .ins-menu{position:absolute;right:6px;bottom:7px;width:108px;background:rgba(255,255,255,.96);border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.14);padding:3px 0;font:500 9.5px Onest}
 .ins-menu div{display:flex;align-items:center;justify-content:space-between;padding:5px 9px;color:#1d1d1f}
@@ -2373,9 +2375,10 @@ function renderFooter(){try{cftSlots()}catch(x){}const L=$$("footer.cft");if(!L.
 const INS_SH='<svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M6 11H5v9h14v-9h-1"/></svg>',INS_PL='<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
 function instGuide(){if(instStandalone())return;let el=$("#ins");if(!el){el=document.createElement("div");el.id="ins";el.className="ins";document.body.appendChild(el)}
   const v=+((navigator.userAgent.match(/Version\/(\d+)/)||[])[1]||0),dots=v>=26; /* Safari 26: «Поделиться» спрятано в «•••» */
-  const bar=h=>`<div class="ins-bar"><span class="ins-bb">‹</span><span class="ins-url">trendburo</span><span class="ins-bb${h?" ins-hl":""}">${dots?"•••":INS_SH}</span></div>`;
+  /* Safari 26 бывает двух видов: «‹ адрес •••» или «‹ ≡ адрес ⧉» — показываем обе кнопки, меню «Поділитися» открывается из любой */
+  const bar=h=>dots?`<div class="ins-bar"><span class="ins-url ins-url2"><b class="${h?"ins-hl2":""}">≡</b>trendburo</span><span class="ins-bb${h?" ins-hl":""}">•••</span></div>`:`<div class="ins-bar"><span class="ins-bb">‹</span><span class="ins-url">trendburo</span><span class="ins-bb${h?" ins-hl":""}">${INS_SH}</span></div>`;
   const st=[];
-  st.push(dots?["«•••» праворуч унизу",`<div class="ins-pg"></div>${bar(1)}`]:["Кнопка «Поділитися» внизу",`<div class="ins-pg"></div>${bar(1)}`]);
+  st.push(dots?["«•••» праворуч або «≡» ліворуч в адресі",`<div class="ins-pg"></div>${bar(1)}`]:["Кнопка «Поділитися» внизу",`<div class="ins-pg"></div>${bar(1)}`]);
   if(dots)st.push(["«Поділитися»",`<div class="ins-pg"></div><div class="ins-menu"><div>Нова вкладка</div><div>Закладки</div><div class="ins-hi">Поділитися ${INS_SH}</div></div>`]);
   st.push(["«На екран „Додому“»",`<div class="ins-pg" style="height:28px"></div><div class="ins-sh"><div class="ap"><i></i><i></i><i></i><i></i></div><div class="rw">Скопіювати</div><div class="rw ins-hi">На екран «Додому» ${INS_PL}</div></div>`]);
   st.push(["«Додати»",`<div class="ins-ad"><div class="tp"><span>Скасувати</span><span class="ins-hi">Додати</span></div><div class="cd"><img src="/icons/icon-192.png?v=3" alt="">Trend Büro</div></div>`]);
@@ -2384,7 +2387,7 @@ function instGuide(){if(instStandalone())return;let el=$("#ins");if(!el){el=docu
   <p class="ins-l">Чотири дотики внизу Safari — і застосунок завжди під рукою</p>
   <div class="ins-p" aria-label="Підказка">${st.map((x,i)=>`<div class="ins-c"><div class="ins-cap"><b>${i+1}</b>${x[0]}</div><div class="ins-m">${x[1]}</div></div>`).join("")}</div>
   <p class="ins-n">Це підказка — натискайте не на неї, а на кнопки Safari внизу екрана</p>
-  <div class="ins-go">Натисніть на ${dots?"«•••»":INS_SH}<svg class="ins-dn" viewBox="0 0 24 24"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></div>`;
+  <div class="ins-go${dots?" ins-go2":""}">Натисніть ${dots?"«•••» або «≡»":"на "+INS_SH}<svg class="ins-dn" viewBox="0 0 24 24"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></div>`;
   el.hidden=false;el.querySelector(".ins-x").onclick=()=>{el.hidden=true};const g=el.querySelector(".ins-go");el.onscroll=()=>g.classList.toggle("off",el.scrollTop>24)}
 /* «Установить на телефон»: в Telegram — системное окно «На экран Домой», на Android — окно «Установить», в Safari — переход в Telegram */
 let INST_EV=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();INST_EV=e;try{instUpd()}catch(x){}});
