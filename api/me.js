@@ -47,7 +47,8 @@ export default async function handler(req, res) {
       const who = userFrom(body), cl = who ? await store.get(customerId(who.id)).catch(() => null) : null;
       const esc = t => String(t || "").replace(/[<&>]/g, m => ({ "<": "&lt;", "&": "&amp;", ">": "&gt;" }[m]));
       const items = picks.map(x => (d.items || []).find(i => i.id === x) || { id: x });
-      const client = who ? `${esc(cl?.profile?.name || who.name || "Клієнт")}${who.username ? " @" + esc(who.username) : ` (<a href="tg://user?id=${who.id}">написати</a>)`}` : "клієнт без входу — уточніть у чаті, кому надсилали";
+      const contact = String(body.contact || "").replace(/\s+/g, " ").trim().slice(0, 60);
+      const client = who ? `${esc(cl?.profile?.name || who.name || "Клієнт")}${who.username ? " @" + esc(who.username) : ` (<a href="tg://user?id=${who.id}">написати</a>)`}` : (contact ? esc(contact) + " (без входу)" : "клієнт без входу — уточніть у чаті, кому надсилали");
       const text = `❤️ <b>Вибір з добірки «${esc(d.title || "Добірка")}»</b>\n${items.map(i => `• ${esc(i.b || "")} — ${esc(i.n || i.id)}${i.p ? " — " + esc(i.p) : ""}`).join("\n")}\n\nКлієнт: ${client}${body.msg ? "\nКоментар: " + esc(String(body.msg).slice(0, 300)) : ""}`;
       let sent = 0; try { await tg("sendMessage", { chat_id: Number(d.by), text, parse_mode: "HTML" }); sent++; } catch {}
       try { const { toAdmins } = await import("../lib/access.js"); sent += await toAdmins(store, { text, parse_mode: "HTML" }); } catch {}

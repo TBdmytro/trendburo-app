@@ -491,6 +491,8 @@ button{cursor:pointer}
 .selv .c b{display:block;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:8px}.selv .c span{display:block;font-size:12.5px;font-weight:300;color:#50545b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.selv .c i{font-style:normal;font-weight:600;font-size:13px}
 .selv .lk{position:absolute;top:8px;right:8px;width:38px;height:38px;border:0;border-radius:50%;background:rgba(255,255,255,.94);display:grid;place-items:center;box-shadow:0 2px 10px rgba(31,33,37,.1);color:#26282c}
 .selv .lk svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8}.selv .lk[aria-pressed="true"]{background:#26282c;color:#fff}.selv .lk[aria-pressed="true"] svg{fill:currentColor}
+.selsh{display:flex;flex-direction:column;gap:8px}.selurl{width:100%;box-sizing:border-box;border:0;margin-top:12px;padding:12px 14px;border-radius:12px;background:#f2f3f4;font:400 13px Onest,sans-serif;color:inherit;user-select:text;-webkit-user-select:text}
+.selv .selc{display:block;margin:6px 16px 0}
 .selx{padding:40px 22px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}.selx p{color:#6b6e74;margin:0 0 8px}
 .pc .selq{position:absolute;z-index:3;right:8px;bottom:8px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.94);color:#26282c;display:grid;place-items:center;box-shadow:0 2px 10px rgba(31,33,37,.12);transition:background .15s,color .15s}
 .pc .selq svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.pc .selq .ck{display:none}
@@ -4040,7 +4042,9 @@ const meInitials=n=>String(n||"TB").split(/\s+/).filter(Boolean).slice(0,2).map(
 const avatarHTML=(u,cls="")=>u&&u.photo?`<img class="${cls}" src="${esc(u.photo)}" alt="" referrerpolicy="no-referrer">`:`<span class="${cls} ini">${esc(meInitials(u&&u.name))}</span>`;
 const I_TG='<svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><path d="M9 13l8-6"/></svg>';
 /* Вход: Telegram решает, кто вы. Есть учётная запись — «Войти», нет — «Регистрация» с именем. Один Telegram = одна учётная запись. */
-function authGate(force){if(!LIVE)return;const b=authBody();
+/* ссылка на добірку (из Telegram или Instagram): человек без аккаунта видит подборку сразу, без окна входа */
+const SEL_LINK=(()=>{try{const sp=new URLSearchParams(location.search),t=(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.start_param)||sp.get("tgWebAppStartParam")||"";return /^sel_[a-z0-9]{10}$/.test(t)||/^[a-z0-9]{10}$/.test(sp.get("sel")||"")}catch(e){return false}})();
+function authGate(force){if(!LIVE)return;const b=authBody();if(SEL_LINK&&!(b&&store.get("tb_signed",0)))return;
   if(b&&store.get("tb_signed",0)&&!force){loadMe().then(r=>{if(!r&&ME_ERR&&ME_ERR.code==="no_account"){store.set("tb_signed",0);ME=null;renderTopIcons();return authGate(true)}if(r&&r.access&&r.access!=="ok")authGate(true);else if(r&&CLOSED)catReload()});return}
   document.querySelectorAll(".gate").forEach(x=>x.remove());
   const g=document.createElement("div");g.className="gate";g.setAttribute("role","dialog");g.setAttribute("aria-label","Вхід");
@@ -4740,10 +4744,14 @@ function selSheet(){const items=[...SEL].map(findItem).filter(Boolean);
     const snap=items.map(p=>{const im=p.imgs&&p.imgs[0];return{id:p.id,b:p.brand,n:p.name,p:isPor(p)?"Ціна за запитом":eur(priceFor(p,"ua")),img:im?(im.src||im.thumb||""):""}});
     const r=await meCall({a:"sel",ids:[...SEL],items:snap,title,note});if(!r||!r.link){bt.disabled=false;bt.textContent="Надіслати клієнту";return toast(r&&r.error||"Не вийшло")}
     const n=SEL.size,txt=title+" — "+n+" "+plural(n,["річ","речі","речей"])+(note?"\n"+note:"")+"\nПосилання діє 24 години";
-    const share="https://t.me/share/url?url="+encodeURIComponent(r.link)+"&text="+encodeURIComponent(txt);
-    try{navigator.clipboard&&navigator.clipboard.writeText(r.link)}catch(x){}
-    SEL.clear();selSave();document.querySelectorAll("[data-selq]").forEach(q=>q.setAttribute("aria-pressed",false));closeSheet();toast("Посилання готове — оберіть чат клієнта");
-    try{if(TGW&&TGW.openTelegramLink){TGW.openTelegramLink(share);return}}catch(x){}open(share,"_blank")}}
+    const share="https://t.me/share/url?url="+encodeURIComponent(r.link)+"&text="+encodeURIComponent(txt),web=r.web||r.link;
+    SEL.clear();selSave();document.querySelectorAll("[data-selq]").forEach(q=>q.setAttribute("aria-pressed",false));
+    /* куда отправить: Telegram (откроется в приложении) или Instagram / WhatsApp / Viber (ссылка на сайт, вход не нужен) */
+    openSheet("Добірка готова",`<p class="muted" style="margin:0 2px 12px;font-size:14px">Посилання діє 24 години. Людині не потрібно реєструватися — вона відкриє добірку й позначить, що сподобалось.</p>
+      <div class="selsh"><button class="btn" data-shtg>Надіслати в Telegram</button><button class="btn soft" data-shcp>Скопіювати для Instagram</button></div>
+      <input class="selurl num" readonly value="${esc(web)}">`,"");
+    const s2=sheetEl;s2.querySelector("[data-shtg]").onclick=()=>{try{if(TGW&&TGW.openTelegramLink){TGW.openTelegramLink(share);return}}catch(x){}open(share,"_blank")};
+    s2.querySelector("[data-shcp]").onclick=async()=>{const t=txt+"\n"+web;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(x){}toast(ok?"Скопійовано — вставте в Direct":"Виділіть посилання й скопіюйте");if(!ok){const u=s2.querySelector(".selurl");u.focus();u.select()}}}}
 /* клиент открыл ссылку подборки: t.me/<бот>?startapp=sel_… или сайт ?sel=… */
 async function selOpenFromLink(){let id="";try{const sp=(TGW&&TGW.initDataUnsafe&&TGW.initDataUnsafe.start_param)||new URLSearchParams(location.search).get("tgWebAppStartParam")||"";if(/^sel_[a-z0-9]{10}$/.test(sp))id=sp.slice(4)}catch(e){}
   if(!id){const q=new URLSearchParams(location.search).get("sel");if(/^[a-z0-9]{10}$/.test(q||""))id=q}
@@ -4762,10 +4770,11 @@ async function selOpenFromLink(){let id="";try{const sp=(TGW&&TGW.initDataUnsafe
     <p class="hint">Позначте ♡ те, що сподобалось, — менеджер одразу отримає ваш вибір</p>
     <div class="grid">${list.map(x=>`<div class="c" data-sid="${esc(x.id)}"><div class="im" ${x.live?`data-act="product" data-id="${esc(x.id)}"`:""} style="background-image:url('${esc(x.img)}')"></div><button class="lk" data-pk="${esc(x.id)}" aria-pressed="false" aria-label="Подобається"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><b>${esc(x.b||"")}</b><span>${esc(x.n||"")}</span><i class="num">${esc(x.p||"")}</i></div>`).join("")}</div>
     <div style="height:110px"></div></div>`;
-  push("Добірка",html,{foot:`<div class="foot glass"><button class="btn" data-pksend disabled style="flex:1">Оберіть, що сподобалось</button></div>`});
+  const anon=!authBody();
+  push("Добірка",html.replace('<div style="height:110px"></div></div>',(anon?`<label class="gt-f selc"><span>Як до вас звертатися</span><input id="pkWho" maxlength="60" placeholder="Імʼя або @instagram"></label>`:"")+'<div style="height:110px"></div></div>'),{foot:`<div class="foot glass"><button class="btn" data-pksend disabled style="flex:1">Оберіть, що сподобалось</button></div>`});
   const sc=document.querySelector(".screen.pushed:last-of-type")||document;const upd=()=>{const b=document.querySelector("[data-pksend]");if(!b)return;b.disabled=!PK.size;b.textContent=PK.size?`Надіслати вибір менеджеру · ${PK.size}`:"Оберіть, що сподобалось"};
   document.querySelectorAll("[data-pk]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.pk;PK.has(k)?PK.delete(k):PK.add(k);b.setAttribute("aria-pressed",PK.has(k));try{hap("light")}catch(x){}upd()});
-  const sb=document.querySelector("[data-pksend]");if(sb)sb.onclick=async()=>{sb.disabled=true;sb.textContent="Надсилаємо…";let ok=false,j=null;try{const r=await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...(authBody()||{}),a:"selpick",id,picks:[...PK]})});j=await r.json().catch(()=>null);ok=r.ok}catch(e){}
+  const sb=document.querySelector("[data-pksend]");if(sb)sb.onclick=async()=>{const w=document.getElementById("pkWho");if(w&&!w.value.trim()){w.focus();return toast("Напишіть імʼя або Instagram — щоб менеджер знав, кому відповісти")}sb.disabled=true;sb.textContent="Надсилаємо…";let ok=false,j=null;try{const r=await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...(authBody()||{}),a:"selpick",id,picks:[...PK],contact:(document.getElementById("pkWho")||{}).value||""})});j=await r.json().catch(()=>null);ok=r.ok}catch(e){}
     if(ok){sb.textContent="✓ Менеджер отримав ваш вибір";toast("Дякуємо! Менеджер напише вам у Telegram");try{hap("success")}catch(x){}}else{sb.disabled=false;upd();toast(j&&j.error||"Не вийшло — спробуйте ще раз")}}}
 setTimeout(()=>{selOpenFromLink();selBar()},1500);
 // защита витрины: без меню «сохранить фото», без перетаскивания и копирования (кроме полей ввода)
