@@ -555,6 +555,8 @@ test("добірка: менеджер создаёт (24 часа), клиен�
   const id = r.body.id;
   let g = await call(me, { method: "GET", query: { sel: id } });
   assert.equal(g.status, 200); assert.equal(g.body.title, "Добірка · Dior, LV"); assert.equal(g.body.items[1].img, ""); assert.ok(g.body.exp > Date.now() + 23 * 36e5);
+  const act = await call(me, { method: "POST", body: { initData: "dev:777:Олена", a: "sels" } });
+  assert.equal(act.status, 200); assert.equal(act.body.sels[0].id, id); assert.equal(act.body.sels[0].n, 2);
   const p = await call(me, { method: "POST", body: { a: "selpick", id, picks: ["product.b", "product.zzz"] } });
   assert.equal(p.status, 200);
   assert.deepEqual((await store.get("selection." + id)).picks[0].ids, ["product.b"]);

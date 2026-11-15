@@ -77,6 +77,12 @@ export default async function handler(req, res) {
       c = await store.put(c);
     } else if (body.a === "save") c = await saveProfile(store, user, body.profile || {});
     else c = await touchCustomer(store, user);
+    if (body.a === "sels") { // сотрудник: мои активные добірки (живут 24 часа)
+      if (!c.staff) return send(res, 403, { error: "Только для сотрудников Trend Büro" });
+      if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
+      const now = Date.now(), L = (await store.list("selection", {}, { limit: 500 })).filter(x => String(x.by) === String(user.id) && (x.exp || 0) > now).sort((a, b) => (b.exp || 0) - (a.exp || 0)).slice(0, 20);
+      return send(res, 200, { sels: L.map(x => { const id = x._id.slice(10); return { id, title: x.title || "Добірка", n: (x.ids || []).length, exp: x.exp, picks: (x.picks || []).length, img: (x.items || []).find(i => i.img)?.img || "", link: BOT ? `https://t.me/${BOT}?startapp=sel_${id}` : `https://trendburo.com.ua/?sel=${id}`, web: `https://trendburo.com.ua/?sel=${id}` }; }) });
+    }
     if (body.a === "sel") { // сотрудник (роль из админки) сохраняет подборку для клиента → ссылка
       if (!c.staff) return send(res, 403, { error: "Только для сотрудников Trend Büro" });
       const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String).filter(x => /^[\w.:-]{3,80}$/.test(x)))].slice(0, 40);
