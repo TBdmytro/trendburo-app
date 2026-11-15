@@ -755,6 +755,11 @@ export default async function handler(req, res) {
         // так коллекция («Cruise 2027») собирает и уже загруженные вещи, без дублей
         { const add = allPx.filter(p => hasCode(p._id.slice(px.length)) && !(p.webSections || []).includes(section)).map(p => ({ id: p._id, set: { webSections: [...new Set([...(p.webSections || []), section])].slice(-12) } }));
           for (let i = 0; i < add.length; i += 200) await store.patchEach(add.slice(i, i + 200)); add.forEach(a => { const p = allPx.find(x => x._id === a.id); if (p) p.webSections = a.set.webSections; }); }
+        // раздел сумок: уже загруженные вещи тоже раскладываем (ремни для сумок, косметички — в аксессуары; сумки, ошибочно записанные одеждой/украшением, — в сумки). Ручную категорию из админки не трогаем
+        if (/handtaschen|\/taschen|\/bags|handbags|\/sacs|\/borse/i.test(section)) { try { const { bagSectionCategory } = await import("../lib/normalize.js"); const fix = [];
+          for (const p of allPx) { if (!(p.webSections || []).includes(section) || p.overrides?.category) continue; let ot = ""; try { ot = JSON.parse(p.orig || "{}").title || ""; } catch {}
+            const bc = bagSectionCategory([ot, p.title, p.sourceTitle].filter(Boolean).join(" "), section); if (bc && (bc.category !== p.category || (bc.subcategory && bc.subcategory !== p.subcategory))) fix.push({ id: p._id, set: { category: bc.category, subcategory: bc.subcategory || (bc.category === p.category ? p.subcategory : null) } }); }
+          for (let i = 0; i < fix.length; i += 100) await store.patchEach(fix.slice(i, i + 100)); if (fix.length) PCACHE = null; } catch {} }
         const mine = allPx.filter(p => (p.webSections || []).includes(section));
         const gone = mine.filter(p => !hasCode(p._id.slice(px.length))).map(p => p._id);
         if (mine.length && codes.size < mine.length * 0.8) { await rememberSection(store, { section, url: body.url, title: body.title, found: codes.size, inSection: mine.length, gone: 0, partial: true, complete: !!body.complete, health: body.stats && typeof body.stats === "object" ? { links: Math.min(5000, +body.stats.links || 0), tried: Math.min(5000, +body.stats.tried || 0), read: Math.min(5000, +body.stats.read || 0) } : null }); return send(res, 200, { gone: 0, skipped: true, inSection: mine.length, found: codes.size }); }
