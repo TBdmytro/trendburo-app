@@ -65,6 +65,19 @@ export default async function handler(req, res) {
     const ids = new Set((await getStore().list("product", {}, { limit: 60000, fields: "_id" })).filter(p => p._id.startsWith(px)).map(p => p._id.slice(px.length).toUpperCase())), arr = [...ids];
     const out = { n: codes.length, exact: 0, prefix: [], none: [] }; for (const c of codes) { if (ids.has(c)) out.exact++; else { const m = arr.filter(i => i.slice(0, 6) === c.slice(0, 6)); if (m.length) out.prefix.push(c + "→" + m.join("/")); else out.none.push(c); } }
     res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(out)); })();
+  // проверка раздела перед выставлением (только чтение): размеры, наличие, дубли, фото, цена
+  if (req.method === "GET" && /[?&]probe=secaudit\b/.test(String(req.url || ""))) return (async () => { const q = String(req.url), sec = decodeURIComponent((q.match(/[?&]s=([^&]+)/) || [])[1] || ""), px = "product.manual." + ((q.match(/[?&]p=([a-z0-9]+)/) || [])[1] || "") + "-";
+    const L = (await getStore().list("product", {}, { limit: 60000, fields: "_id, webSections, status, title, colors, sizes, variants, offers, sizeDebug, sourceUrl, category, gender, \"nIm\": count(images), \"im0\": images[0].url" })).filter(p => p._id.startsWith(px) && (p.webSections || []).some(x => String(x).includes(sec)));
+    const R = { n: L.length, byStatus: {}, cat: {}, gender: {}, noSizes: [], allOut: [], someOut: 0, noStockRead: [], noPrice: [], fewImg: [], dupTitleColor: [], dupImg: [] }, tc = {}, im = {};
+    for (const p of L) { R.byStatus[p.status] = (R.byStatus[p.status] || 0) + 1; R.cat[p.category] = (R.cat[p.category] || 0) + 1; R.gender[p.gender] = (R.gender[p.gender] || 0) + 1; const o = (p.offers || [])[0] || {}, av = o.availability || {}, id = p._id.slice(px.length).toUpperCase(), t = String(p.title || "").slice(0, 50);
+      const vs = p.variants || [], on = vs.filter(v => (av[v._key] || {}).status === "online").length;
+      if (!(p.sizes || []).length) R.noSizes.push(id + " " + t); else if (!on) R.allOut.push(id + " " + t + " [" + vs.map(v => v.size + ":" + ((av[v._key] || {}).status || "-")).join(" ") + "]"); else if (on < vs.length) R.someOut++;
+      if (/nopanel|не прочитано|не отдаёт/i.test(String(p.sizeDebug || ""))) R.noStockRead.push(id);
+      if (!o.boutique) R.noPrice.push(id); if ((p.nIm || 0) < 3) R.fewImg.push(id + ":" + (p.nIm || 0));
+      const k = (t + "|" + ((p.colors || [])[0] || "")).toLowerCase(); (tc[k] = tc[k] || []).push(id); const ik = String(p.im0 || "").split("?")[0]; if (ik) (im[ik] = im[ik] || []).push(id); }
+    R.dupTitleColor = Object.entries(tc).filter(([, v]) => v.length > 1).map(([k, v]) => k + " → " + v.join(",")).slice(0, 40); R.dupImg = Object.entries(im).filter(([, v]) => v.length > 1).map(([k, v]) => v.join(",") + " ← " + k.slice(-60)).slice(0, 40);
+    ["noSizes", "allOut", "noStockRead", "noPrice", "fewImg"].forEach(k => { R[k + "N"] = R[k].length; R[k] = R[k].slice(0, 40); });
+    res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(R, null, 1)); })();
   if (req.method === "GET" && /[?&]probe=secids\b/.test(String(req.url || ""))) return (async () => { const sec = decodeURIComponent((String(req.url).match(/[?&]s=([^&]+)/) || [])[1] || ""), px = "product.manual." + ((String(req.url).match(/[?&]p=([a-z0-9]+)/) || [])[1] || "") + "-";
     const L = (await getStore().list("product", {}, { limit: 60000, fields: "_id, webSections, status, title" })).filter(p => p._id.startsWith(px));
     const inS = L.filter(p => (p.webSections || []).some(x => String(x).includes(sec)));
