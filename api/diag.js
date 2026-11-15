@@ -152,7 +152,7 @@ export default async function handler(req, res) {
   if (req.method === "GET" && /[?&]probe=sicoll\b/.test(String(req.url || ""))) return (async () => { const st = getStore(), apply = /[?&]apply=1\b/.test(String(req.url)), { isCollection } = await import("../lib/collections.js");
     const L = (await st.list("collection", {}, { limit: 2000 }).catch(() => [])).filter(c => /stoneisland/.test(String(c.section || c._id))), out = [];
     for (const c of L) { const real = isCollection(c.title, c.url || c.section), set = { brand: "Stone Island" };
-      if (!real) set.on = false; else { if (c.g !== "k") set.g = "m"; if (c.kind === "new") set.title = "Новинки Stone Island · для нього"; else if (c.kind === "gift") set.title = "Подарунки Stone Island · для нього"; }
+      if (!real) set.on = false; else { if (c.g !== "k") set.g = "m"; if (c.kind === "new") set.title = "Новинки Stone Island · для нього"; else if (c.kind === "gift") set.title = "Подарунки Stone Island · для нього"; else if (!c.edited && c.title === String(c.title).toUpperCase()) set.title = String(c.title).replace(/^STONE ISLAND\s+/i, "").toLowerCase().replace(/\b[a-z]/g, m => m.toUpperCase()); }
       out.push({ id: c._id.slice(11), t: c.title, real, on: c.on, set }); if (apply) await st.patchMany([c._id], set); }
     res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify({ apply, out }, null, 1)); })();
   if (req.method === "GET" && /[?&]probe=sicover\b/.test(String(req.url || ""))) return (async () => { const st = getStore(), apply = /[?&]apply=1\b/.test(String(req.url)); const L = await st.list("product", {}, { limit: 30000, fields: "_id, status, images" }).catch(() => []);
