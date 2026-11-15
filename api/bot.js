@@ -91,7 +91,7 @@ export default async function handler(req, res) {
     if (ox) { let own = false; try { own = (await adminChats(getStore())).includes(String(cq.message?.chat?.id)); } catch {}
       const { setOptix } = await import("../lib/access.js"); let c = null; if (own) { try { c = await setOptix(getStore(), ox[2], ox[1] === "ok", { by: cq.from?.username ? "@" + cq.from.username : cq.from?.first_name || "бот" }); } catch {} }
       try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: !own ? "Только из чата менеджера" : c ? (ox[1] === "ok" ? "OPTIX открыт" : "Отклонено") : "Клиент не найден" }); } catch {}
-      if (own && c && cq.message?.chat?.id) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: (cq.message.text || "Заявка") + "\n\n" + (ox[1] === "ok" ? "✓ OPTIX открыт" : "✕ Отклонено") }); } catch {} }
+      if (own && c && cq.message?.chat?.id && !(await getStore().get("adminmsg.ox-" + ox[2]).catch(() => null))) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: (cq.message.text || "Заявка") + "\n\n" + (ox[1] === "ok" ? "✓ OPTIX открыт" : "✕ Отклонено") }); } catch {} }
       return done(); }
     if (!/^(lg|ac):/.test(cq.data || "")) { try { await tg("answerCallbackQuery", { callback_query_id: cq.id }); } catch {} }
     const ac = String(cq.data || "").match(/^ac:(ok|no):(\d{1,15})$/);
@@ -100,7 +100,7 @@ export default async function handler(req, res) {
       let own = false; try { own = (await adminChats(getStore())).includes(String(cq.message?.chat?.id)); } catch {}
       let c = null; if (own) { try { c = await setAccess(getStore(), ac[2], ac[1] === "ok" ? "ok" : "rejected", { by: cq.from?.username ? "@" + cq.from.username : cq.from?.first_name || "бот" }); } catch {} }
       try { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: !own ? "Только из чата менеджера" : c ? (ac[1] === "ok" ? "Доступ открыт" : "Заявка отклонена") : "Клиент не найден" }); } catch {}
-      if (own && c && cq.message?.chat?.id) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: (cq.message.text || "Заявка") + "\n\n" + (ac[1] === "ok" ? "✓ Доступ открыт" : "✕ Отклонено") }); } catch {} }
+      if (own && c && cq.message?.chat?.id && !(await getStore().get("adminmsg.ac-" + ac[2]).catch(() => null))) { try { await tg("editMessageText", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, text: (cq.message.text || "Заявка") + "\n\n" + (ac[1] === "ok" ? "✓ Доступ открыт" : "✕ Отклонено") }); } catch {} }
       return done();
     }
     if (/^lg:[a-f0-9]{24}$/.test(cq.data || "")) {

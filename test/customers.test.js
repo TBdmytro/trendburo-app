@@ -38,3 +38,18 @@ test("взять снова удалённые товары сайта", async (
   assert.equal(await forgetDeleted(store, "product.manual.dior-"), 2);
   assert.deepEqual([...await deletedSet(store)], ["product.manual.ysl-c3"]);
 });
+
+test("заявка на вход: решили в одном чате — во всех чатах «✓ Доступ открыт — кто», без кнопок", async () => {
+  const { notifyRequest, setAccess, NOTIFY_ID } = await import("../lib/access.js");
+  const store = new MemoryStore(); const old = process.env.TELEGRAM_BOT_TOKEN; process.env.TELEGRAM_BOT_TOKEN = "x";
+  await store.put({ _id: NOTIFY_ID, _type: "settings", chats: [{ id: 100 }, { id: 200 }, { id: 300 }] });
+  const c = await store.put({ _id: "customer.9", _type: "customer", tg: { id: 9, name: "Ірина" }, access: "pending" });
+  const calls = []; let mid = 1; const send = async (m, b) => { calls.push([m, b]); return { message_id: mid++ }; };
+  await notifyRequest(store, c, { send });
+  assert.equal(calls.filter(([m, b]) => m === "sendMessage" && b.reply_markup).length, 3);
+  await setAccess(store, 9, "ok", { by: "@dmytro", send });
+  const ed = calls.filter(([m]) => m === "editMessageText");
+  assert.equal(ed.length, 3); assert.match(ed[0][1].text, /✓ Доступ открыт — @dmytro/); assert.equal(ed[0][1].reply_markup, undefined);
+  await setAccess(store, 9, "ok", { by: "@x", send }); assert.equal(calls.filter(([m]) => m === "editMessageText").length, 3); // второй раз не трогаем
+  process.env.TELEGRAM_BOT_TOKEN = old;
+});
