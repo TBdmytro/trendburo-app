@@ -2688,11 +2688,11 @@ function pop(){const s=stack.pop();if(!s)return;updTop();s.classList.remove("in"
 function popAll(){while(stack.length){const s=stack.pop();s.remove()}$$(".behind").forEach(x=>x.classList.remove("behind"));$("#tabbar").classList.remove("hide")}
 
 /* ===== Товар ===== */
-// Stone Island, 2+ речі в кошику (власник, 16.11, «варіант 3»): найдорожча річ — за ціною вітрини (+10%, мінімум 40 €: у мінімумі — доставка бренду 12 €, вона одна на замовлення),
-// кожна наступна — просто +10% від ціни бутика. Різниця йде знижкою. Інші бренди — без змін.
-const MULTI_DISC={min:2,brand:/^stone\s*island$/i,pct:0.10};
-const multiDisc=items=>{const L=items.filter(x=>x.p&&MULTI_DISC.brand.test(x.p.brand||"")&&+x.p.mk>0&&+x.p.price>+x.p.mk).sort((a,b)=>b.p.price-a.p.price);if(L.length<MULTI_DISC.min)return 0;
-  return L.slice(1).reduce((a,x)=>{const pr=+x.p.price,b=pr-(+x.p.mk),t=Math.ceil(b*(1+MULTI_DISC.pct)/5)*5;return a+Math.max(0,pr-t)},0)};
+// Stone Island, 2+ речі в кошику (власник, 16.11): наценка на все замовлення = більше з двох — 10% від суми бутика або 40 € + 10 € за кожну річ; не більше, ніж сума наценок вітрини.
+// Різниця йде знижкою. Об'єднувати речі в одне замовлення завжди вигідніше, ніж ділити. Інші бренди — без змін.
+const MULTI_DISC={min:2,brand:/^stone\s*island$/i,pct:0.10,base:40,per:10};
+const multiDisc=items=>{const L=items.filter(x=>x.p&&MULTI_DISC.brand.test(x.p.brand||"")&&+x.p.mk>0&&+x.p.price>+x.p.mk);if(L.length<MULTI_DISC.min)return 0;
+  const mk=L.reduce((a,x)=>a+(+x.p.mk),0),S=L.reduce((a,x)=>a+(+x.p.price),0)-mk,t=Math.max(S*MULTI_DISC.pct,MULTI_DISC.base+MULTI_DISC.per*L.length);return Math.max(0,Math.floor((mk-t)/5)*5)};
 function quote(base,d,disc=0){const rows=[["Вартість",base]];let t=base;if(disc>0){rows.push(["Знижка за 2+ речі Stone Island","−"+eur(disc)]);t=base-disc}
   if(d==="ua")rows.push(["Доставка в Україну","безкоштовно"]);
   if(d==="eu")rows.push(["Доставка по Європі","за тарифом"]);

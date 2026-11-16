@@ -704,9 +704,9 @@ test("Louis Vuitton: сумки до 1500 € и прочее до 500 € — +
   assert.equal(priceFor({ boutique: 1450, sourceKind: "official", flatMarkup: 0.10 }, null, 1700, "bags", "Louis Vuitton").ua, 1700); // закреплённая цена главнее
 });
 
-test("Stone Island: минимум 40 €, от 400 € — +10%", async () => {
+test("Stone Island: до 250 € +30 €, 250–400 € +40 €, дороже +10%", async () => {
   const { priceFor } = await import("../lib/pipeline.js");
   const t = (b, c) => priceFor({ boutique: b, sourceKind: "official", flatMarkup: 0.10 }, null, 0, c, "Stone Island").ua;
-  assert.equal(t(150, "accessories"), 190); assert.equal(t(195, "clothing"), 235); assert.equal(t(395, "clothing"), 435);
+  assert.equal(t(150, "accessories"), 180); assert.equal(t(195, "clothing"), 225); assert.equal(t(250, "clothing"), 290); assert.equal(t(395, "clothing"), 435);
   assert.equal(t(400, "clothing"), 440); assert.equal(t(795, "clothing"), 875); assert.equal(t(1980, "clothing"), 2180);
 });
