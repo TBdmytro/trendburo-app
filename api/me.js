@@ -49,9 +49,17 @@ export default async function handler(req, res) {
       const items = picks.map(x => (d.items || []).find(i => i.id === x) || { id: x });
       const contact = String(body.contact || "").replace(/\s+/g, " ").trim().slice(0, 60);
       const client = who ? `${esc(cl?.profile?.name || who.name || "Клієнт")}${who.username ? " @" + esc(who.username) : ` (<a href="tg://user?id=${who.id}">написати</a>)`}` : (contact ? esc(contact) + " (без входу)" : "клієнт без входу — уточніть у чаті, кому надсилали");
-      const text = `❤️ <b>Вибір з добірки «${esc(d.title || "Добірка")}»</b>\n${items.map(i => `• ${esc(i.b || "")} — ${esc(i.n || i.id)}${i.p ? " — " + esc(i.p) : ""}`).join("\n")}\n\nКлієнт: ${client}${body.msg ? "\nКоментар: " + esc(String(body.msg).slice(0, 300)) : ""}`;
-      let sent = 0; try { await tg("sendMessage", { chat_id: Number(d.by), text, parse_mode: "HTML" }); sent++; } catch {}
-      try { const { toAdmins } = await import("../lib/access.js"); sent += await toAdmins(store, { text, parse_mode: "HTML" }); } catch {}
+      // чтобы было понятно, что за вещь: ссылка на страницу бренда, артикул, фото; и чья это добірка — когда и кто создал, ссылка на неё
+      const prods = await Promise.all(items.map(i => store.get(i.id).catch(() => null)));
+      const code = id => String(id || "").replace(/^product\.(manual\.)?[a-z0-9]+-/, "").toUpperCase();
+      const hm = t => { try { return new Date(t).toLocaleString("uk-UA", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); } catch { return ""; } };
+      const lines = items.map((i, k) => { const p = prods[k], u = p && /^https:\/\//.test(String(p.sourceUrl || "")) ? p.sourceUrl : "", col = p && (p.colors || [])[0];
+        return `• <b>${esc(i.b || "")}</b> — ${esc(i.n || i.id)}${i.p ? " — " + esc(i.p) : ""}\n   Арт. <code>${esc(code(i.id))}</code>${col ? " · " + esc(col) : ""}${u ? ` · <a href="${esc(u)}">на сайті бренду</a>` : ""}`; });
+      const text = `❤️ <b>Вибір з добірки «${esc(d.title || "Добірка")}»</b>\n${lines.join("\n")}\n\nКлієнт: ${client}${body.msg ? "\nКоментар: " + esc(String(body.msg).slice(0, 300)) : ""}\nДобірка: створена ${esc(hm(d.at))} · ${esc(d.byName || "")}${d.note ? " · " + esc(d.note) : ""}\n<a href="https://trendburo.com.ua/?sel=${id}">Відкрити добірку</a>`;
+      const one = items.length === 1 && /^https:\/\//.test(String(items[0].img || "")) && text.length < 1000 ? items[0].img : "";
+      const body1 = one ? { photo: one, caption: text, parse_mode: "HTML" } : { text, parse_mode: "HTML", disable_web_page_preview: true };
+      let sent = 0; try { await tg(one ? "sendPhoto" : "sendMessage", { chat_id: Number(d.by), ...body1 }); sent++; } catch { try { await tg("sendMessage", { chat_id: Number(d.by), text, parse_mode: "HTML" }); sent++; } catch {} }
+      try { const { toAdmins } = await import("../lib/access.js"); sent += await toAdmins(store, body1, undefined, "", one ? "sendPhoto" : "sendMessage"); } catch {}
       await store.put({ ...d, picks: [...(d.picks || []), { ids: picks, by: who ? String(who.id) : "", at: new Date().toISOString() }].slice(-20) }).catch(() => {});
       return send(res, 200, { ok: true, sent });
     }
