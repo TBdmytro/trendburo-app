@@ -2688,12 +2688,11 @@ function pop(){const s=stack.pop();if(!s)return;updTop();s.classList.remove("in"
 function popAll(){while(stack.length){const s=stack.pop();s.remove()}$$(".behind").forEach(x=>x.classList.remove("behind"));$("#tabbar").classList.remove("hide")}
 
 /* ===== Товар ===== */
-// Stone Island, 2+ речі в кошику (власник, 16.11): на кожну річ замість «+10%, мінімум 40 €» — +12% і +10 €; якщо речі Stone Island разом дорожчі за 700 € — +10% і +15 €.
-// Різниця з ціною на вітрині йде знижкою; дорожче за вітрину не робимо. Інші бренди — без змін.
-const MULTI_DISC={min:2,brand:/^stone\s*island$/i,over:700,lo:{pct:0.12,add:10},hi:{pct:0.10,add:15}};
-const multiDisc=items=>{const L=items.filter(x=>x.p&&MULTI_DISC.brand.test(x.p.brand||"")&&+x.p.mk>0&&+x.p.price>+x.p.mk);if(L.length<MULTI_DISC.min)return 0;
-  const tot=L.reduce((a,x)=>a+(+x.p.price),0),r=tot>MULTI_DISC.over?MULTI_DISC.hi:MULTI_DISC.lo;
-  return L.reduce((a,x)=>{const pr=+x.p.price,b=pr-(+x.p.mk),t=Math.ceil((b*(1+r.pct)+r.add)/5)*5;return a+Math.max(0,pr-t)},0)};
+// Stone Island, 2+ речі в кошику (власник, 16.11, «варіант 3»): найдорожча річ — за ціною вітрини (+10%, мінімум 40 €: у мінімумі — доставка бренду 12 €, вона одна на замовлення),
+// кожна наступна — просто +10% від ціни бутика. Різниця йде знижкою. Інші бренди — без змін.
+const MULTI_DISC={min:2,brand:/^stone\s*island$/i,pct:0.10};
+const multiDisc=items=>{const L=items.filter(x=>x.p&&MULTI_DISC.brand.test(x.p.brand||"")&&+x.p.mk>0&&+x.p.price>+x.p.mk).sort((a,b)=>b.p.price-a.p.price);if(L.length<MULTI_DISC.min)return 0;
+  return L.slice(1).reduce((a,x)=>{const pr=+x.p.price,b=pr-(+x.p.mk),t=Math.ceil(b*(1+MULTI_DISC.pct)/5)*5;return a+Math.max(0,pr-t)},0)};
 function quote(base,d,disc=0){const rows=[["Вартість",base]];let t=base;if(disc>0){rows.push(["Знижка за 2+ речі Stone Island","−"+eur(disc)]);t=base-disc}
   if(d==="ua")rows.push(["Доставка в Україну","безкоштовно"]);
   if(d==="eu")rows.push(["Доставка по Європі","за тарифом"]);
