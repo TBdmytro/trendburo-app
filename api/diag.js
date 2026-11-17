@@ -200,6 +200,14 @@ export default async function handler(req, res) {
     const cur = (await st.get("settings.site")) || {}, wn = { on: true, from: "2026-11-17", until: "2026-11-24", items: [{ t: "Stone Island", s: "повна чоловіча колекція, " + n + " речей", b: "Stone Island" }] };
     if (apply) await st.put({ ...cur, _id: "settings.site", _type: "settings", whatsnew: cleanSite({ ...cur, whatsnew: wn }).whatsnew });
     res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify({ apply, wn }, null, 1)); })();
+  // Paris Texas: опубликовать все скрытые (владелец, 17.11) и добавить в «Що нового». По ?apply=1
+  if (req.method === "GET" && /[?&]probe=ptpub\b/.test(String(req.url || ""))) return (async () => { const st = getStore(), { setStatus } = await import("../lib/publish.js"), { cleanSite } = await import("../lib/cms.js"), apply = /[?&]apply=1\b/.test(String(req.url));
+    const L = (await st.list("product", {}, { limit: 60000, fields: "_id, status, pricing" })).filter(p => p._id.startsWith("product.manual.paristexasbr-") && p.status === "incoming");
+    const noPrice = L.filter(p => !(p.pricing && (p.pricing.ua > 0 || p.pricing.final > 0))).length;
+    if (apply && L.length) { await setStatus(st, L.map(p => p._id), "published", "Claude (по слову владельца)");
+      const cur = (await st.get("settings.site")) || {}, w = cur.whatsnew || { on: true, from: "2026-11-17", until: "2026-11-24", items: [] };
+      if (!(w.items || []).some(i => /paris texas/i.test(i.t))) await st.put({ ...cur, _id: "settings.site", _type: "settings", whatsnew: cleanSite({ ...cur, whatsnew: { ...w, items: [...(w.items || []), { t: "Paris Texas", s: "жіноче взуття, новий бренд", b: "Paris Texas" }] } }).whatsnew }); }
+    res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify({ apply, n: L.length, noPrice })); })();
   // добірки: кто создал, кому (заметка), что выбрали (только чтение)
   if (req.method === "GET" && /[?&]probe=sels\b/.test(String(req.url || ""))) return (async () => { const st = getStore(); const L = (await st.list("selection", {}, { limit: 500 }).catch(() => [])).sort((a, b) => String(b._createdAt || b.at || "").localeCompare(String(a._createdAt || a.at || ""))).slice(0, 25);
     const names = {}; for (const d of L) if (d.by && !names[d.by]) { const c = await st.get("customer." + d.by).catch(() => null); names[d.by] = (c && ((c.profile && c.profile.name) || (c.tg && (c.tg.username || c.tg.name)))) || d.by; }
