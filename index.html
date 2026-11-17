@@ -1018,6 +1018,7 @@ textarea{min-height:88px;resize:vertical}
 .status{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;display:inline-block;white-space:nowrap}
 .status.ok{background:color-mix(in oklab,var(--ok) 14%,transparent);color:var(--ok)}
 .status.wait{background:color-mix(in oklab,var(--wait) 14%,transparent);color:var(--wait)}
+.itico{width:62%;height:62%;color:#8a7a60;display:block;margin:auto}.th:has(.itico),.oth:has(.itico),.olv-th:has(.itico){background:#efe8de;display:flex;align-items:center;justify-content:center}
 .photos{display:flex;gap:8px;flex-wrap:wrap}
 .photos img{width:62px;height:62px;border-radius:10px;object-fit:cover}
 
@@ -2328,6 +2329,10 @@ const initials=n=>n.replace(/&.*$/,"").split(/\s+/).filter(Boolean).slice(0,2).m
 
 /* ===== Силуэты ===== */
 let _gid=0;
+/* вещь без фото (заказ через менеджера): общая иконка категории — тонкая линия на песочном */
+const ITICO={bag:'<path d="M6 9h12l-1 11H7z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/>',shoes:'<path d="M3 16c0-3 1-6 2-8l3 1c1 3 4 5 9 5 2 0 4 1 4 3v1H3z"/><path d="M3 18h18"/>',clothes:'<path d="M8 4l-4 3 2 4 2-1v10h8V10l2 1 2-4-4-3c-1 2-2 3-4 3s-3-1-4-3z"/>',acc:'<path d="M4 12h16"/><rect x="8" y="9" width="8" height="6" rx="1"/><path d="M4 12c0-3 2-5 4-5M20 12c0-3-2-5-4-5"/>',jewelry:'<circle cx="12" cy="14" r="6"/><path d="M9 5l3 3 3-3"/>',watch:'<circle cx="12" cy="12" r="5"/><path d="M12 10v2l1.5 1.5M9 7l1-4h4l1 4M9 17l1 4h4l1-4"/>',eyewear:'<circle cx="7" cy="14" r="3.5"/><circle cx="17" cy="14" r="3.5"/><path d="M10.5 14h3M3.5 13 5 9M20.5 13 19 9"/>',beauty:'<rect x="8" y="9" width="8" height="12" rx="2"/><path d="M10 9V6h4v3M11 4h2"/>'};
+const itIco=k=>ITICO[k]?`<svg class="itico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${ITICO[k]}</svg>`:"";
+const itThumb=(it,st="")=>it&&it.photo?`<img src="${esc(it.photo)}" alt=""${st}>`:it&&it.icon?itIco(it.icon):"";
 function shapeSVG(s,c,cls="sh"){
   if(String(c).startsWith("img:")||String(s).startsWith("img:")){const u=(String(c).startsWith("img:")?c:s).slice(4);return `<img class="${cls} shimg" src="${esc(u)}" alt="" loading="lazy" decoding="async"${/^https:\/\/cdn\.sanity\.io\//.test(u)?' crossorigin="anonymous"':""}>`}
   const g="g"+(++_gid);
@@ -4071,8 +4076,10 @@ let ME=null,ME_ERR=null;
 const DEV_AUTH=()=>/^(localhost|127\.0\.0\.1)$/.test(location.hostname)&&/[?&]devauth=1/.test(location.search);
 /* подпись Telegram: в мини-аппе — initData, на сайте — сохранённые данные виджета входа (действуют 30 дней) */
 const authBody=()=>{const b={client:CLIENT};if(TGW&&TGW.initData)b.initData=TGW.initData;else if(DEV_AUTH())b.initData="dev:42:Дмитрий";else{const l=store.get("tb_login",null);if(l&&l.sess&&l.exp>Date.now())b.sess=l.sess;else if(l&&l.hash&&Date.now()/1000-l.auth_date<29*864e2)b.login=l;else return null}return b};
+/* личная ссылка от менеджера: t.me/<бот>?startapp=c_… — при входе заказы через менеджера переносятся в аккаунт */
+let INVITE=(()=>{try{const v=(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.start_param)||new URLSearchParams(location.search).get("tgWebAppStartParam")||"";return /^c_[a-z0-9]{12}$/.test(v)?v:""}catch(e){return""}})();
 async function meCall(extra){const b=authBody();if(!b||!LIVE)return{error:"Немає входу",code:"no_auth"};
-  try{const r=await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...b,...(extra||{})})});const j=await r.json().catch(()=>({}));return r.ok?j:{error:j.error||"Помилка "+r.status,code:j.code||String(r.status)}}catch(e){return{error:"Немає звʼязку з сервером",code:"net"}}}
+  try{const r=await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...b,...(INVITE?{invite:INVITE}:{}),...(extra||{})})});const j=await r.json().catch(()=>({}));if(j&&j.linked){INVITE="";setTimeout(()=>toast(j.linked.moved?"Ваші замовлення через менеджера вже тут — «Мої замовлення»":"Акаунт привʼязано до Trend Büro"),600)}return r.ok?j:{error:j.error||"Помилка "+r.status,code:j.code||String(r.status)}}catch(e){return{error:"Немає звʼязку з сервером",code:"net"}}}
 async function loadMe(extra){const j=await meCall(extra);if(j.error){ME_ERR=j;return null}const wasStaff=staffOn();ME=j;ME_ERR=null;renderTopIcons();try{selBar()}catch(e){}if(!wasStaff&&staffOn())try{catRefreshUI()}catch(e){}return ME}
 const meInitials=n=>String(n||"TB").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
 const avatarHTML=(u,cls="")=>u&&u.photo?`<img class="${cls}" src="${esc(u.photo)}" alt="" referrerpolicy="no-referrer">`:`<span class="${cls} ini">${esc(meInitials(u&&u.name))}</span>`;
@@ -4166,7 +4173,7 @@ const LEAD_ST2={new:"Оформлено",work:"Підтверджено",paid:"�
 /* мини-карточка «Сейчас в пути» в кабинете — тот же маршрут, что на экране заказа */
 function accLiveHTML(o,i){const{S,cur}=orderSteps(o),z=S[Math.max(0,cur)],col=OST[z.k]||OST.new,p0=findItem(o.items&&o.items[0]&&o.items[0].id),e=orderEta(o);
   const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
-  return `<div class="olv acc-live" style="--acc:${col[0]};--acc2:${col[1]}"><button class="olv-live press" data-oi="${i}"><div class="olv-l1"><span class="olv-th">${p0?shapeSVG(p0.shape,p0.c,""):o.items&&o.items[0]&&o.items[0].photo?`<img src="${esc(o.items[0].photo)}" alt="">`:""}</span><div class="olv-tx"><span class="olv-chip"><i></i>${esc(LEAD_ST2[z.k]||"")}</span><h2>Замовлення № ${esc(String(o.number).replace(/^TB-/,""))}</h2></div>
+  return `<div class="olv acc-live" style="--acc:${col[0]};--acc2:${col[1]}"><button class="olv-live press" data-oi="${i}"><div class="olv-l1"><span class="olv-th">${p0?shapeSVG(p0.shape,p0.c,""):itThumb(o.items&&o.items[0])}</span><div class="olv-tx"><span class="olv-chip"><i></i>${esc(LEAD_ST2[z.k]||"")}</span><h2>Замовлення № ${esc(String(o.number).replace(/^TB-/,""))}</h2></div>
     ${e?`<div class="olv-cd"><small>чекаємо у вас</small><div class="n num">${esc(e.date)}</div><small>${e.days===1?"завтра":"через "+e.days+" "+plural(e.days,["день","дні","днів"])}</small></div>`:""}</div>
     <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#e0566a"/><stop offset=".38" stop-color="#3d93ea"/><stop offset=".72" stop-color="#9677f0"/><stop offset="1" stop-color="#2fc77a"/></linearGradient></defs>
     <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g><g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${(routePos(o)>0?OST.shipping:OST.bought)[2]}</g></g></svg></div><div class="olv-lbl"></div></button></div>`}
@@ -4187,7 +4194,7 @@ function accLiveDraw(w,o,idle){const rf=w.querySelector(".rf");if(!o||!rf||!rf.g
   // пустой маршрут: машинка «пробует дорогу» — доезжает до трети пути и возвращается
   if(idle&&!matchMedia("(prefers-reduced-motion: reduce)").matches){const t0=performance.now(),D=5200,tick=t=>{if(!w.isConnected)return;const k=((t-t0)%D)/D,e=k<.5?k*2:2-k*2;set(.34*(e<.5?2*e*e:1-Math.pow(-2*e+2,2)/2));requestAnimationFrame(tick)};requestAnimationFrame(tick)}}
 function orderRowHTML(o,i){const{S,cur}=orderSteps(o);const p=o.items&&o.items[0]&&findItem(o.items[0].id);
-  return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):o.items&&o.items[0]&&o.items[0].photo?`<img src="${esc(o.items[0].photo)}" alt="" style="width:100%;height:100%;object-fit:contain">`:"<i></i>"}</span><span class="otx"><b>Замовлення № ${esc(String(o.number).replace(/^TB-/,""))}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
+  return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):(itThumb(o.items&&o.items[0],' style="width:100%;height:100%;object-fit:contain"')||"<i></i>")}</span><span class="otx"><b>Замовлення № ${esc(String(o.number).replace(/^TB-/,""))}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
     <span class="obar">${S.map((_,j)=>`<i class="${j<=cur?"on":""}"></i>`).join("")}</span></span><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}
 /* ===== Экран заказа «Live»: цветной маршрут с кометой, вспышки на городах, стопка пройденных этапов ===== */
 const OST={new:["#5b6474","#cfd6e2",'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'],work:["#4f6bd8","#b3c2ff",'<path d="M5 12.5l4.5 4.5L19 7.5"/>'],
@@ -4217,7 +4224,7 @@ function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.ro
       ${nx.map(x=>`<div class="olv-nx"><span class="ic"><svg viewBox="0 0 24 24">${(OST[x.k]||OST.new)[2]}</svg></span><div><b>${esc(x.t)}</b>${x.d?`<small>очікується ${esc(x.d)}</small>`:""}</div></div>`).join("")}
     </div>
     ${R.track?`<div class="ot-ttn"><div><span class="cap">${ua?"ТТН Нової пошти":"Трек-номер"}</span><b class="num">${esc(R.track)}</b></div><button class="btn sm soft" data-cpt>Скопіювати</button>${ua?`<a class="btn sm" href="https://novaposhta.ua/tracking/?cargo_number=${encodeURIComponent(R.track)}" target="_blank" rel="noopener">Відстежити</a>`:""}</div>`:""}
-    <div class="sec"><div class="sech"><h2>У замовленні</h2></div><div class="pad">${(o.items||[]).map(it=>{const p=findItem(it.id);return `<button class="cartrow" ${p?`data-act="product" data-id="${p.id}"`:""}><span class="th">${p?shapeSVG(p.shape,p.c,""):""}</span><div class="tx"><span class="b">${esc(it.brand||"")}</span><span class="n">${esc(it.title||"")}</span><span class="z">${[it.size&&"розмір "+it.size,it.color].filter(Boolean).map(esc).join(" · ")}</span></div>${it.price?`<b class="num">${eur(it.price)}</b>`:""}</button>`}).join("")}
+    <div class="sec"><div class="sech"><h2>У замовленні</h2></div><div class="pad">${(o.items||[]).map(it=>{const p=findItem(it.id);return `<button class="cartrow" ${p?`data-act="product" data-id="${p.id}"`:""}><span class="th">${p?shapeSVG(p.shape,p.c,""):itThumb(it)}</span><div class="tx"><span class="b">${esc(it.brand||"")}</span><span class="n">${esc(it.title||"")}</span><span class="z">${[it.size&&"розмір "+it.size,it.color].filter(Boolean).map(esc).join(" · ")}</span></div>${it.price?`<b class="num">${eur(it.price)}</b>`:""}</button>`}).join("")}
       ${o.total?`<div class="group" style="margin-top:12px"><div class="row tot"><span>Разом</span><span class="num">${eur(o.total)}</span></div></div>`:""}</div></div>
     <div class="pad" style="margin-top:16px"><a class="btn block soft" href="${esc((CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]).url)}" target="_blank" rel="noopener">Написати менеджеру про замовлення</a></div><div style="height:30px"></div></div>`);
   const live=s.querySelector(".olv-live"),rf=s.querySelector(".rf"),L=rf.getTotalLength(),cm=s.querySelector(".cm");
@@ -4287,12 +4294,12 @@ function openAccount(){
     ${u?"":`<div class="pad" style="margin-bottom:6px"><button class="btn block" data-login>${I_TG} Увійти або зареєструватися</button><p class="muted" style="font-size:12.5px;margin-top:8px;text-align:center">Через Telegram, без пароля. Замовлення й адреса доставки збережуться в профілі.</p></div>`}
     ${(()=>{const mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]),act=ords.find(o=>!["delivered","cancelled"].includes(o.status)),dv=myDelivery()||{};
       const row=(go,ic,t,sub)=>`<button class="s press" ${go}><span class="ic"><svg viewBox="0 0 24 24">${ic}</svg></span><div><b>${t}</b><small>${sub}</small></div><span class="go">›</span></button>`;
-      const th=(p,ph)=>`<span class="th">${p?shapeSVG(p.shape,p.c,""):ph?`<img src="${esc(ph)}" alt="">`:""}</span>`;
+      const th=(p,it)=>`<span class="th">${p?shapeSVG(p.shape,p.c,""):itThumb(it)}</span>`;
       const oName=o=>{const it=(o.items||[])[0];if(!it)return "Замовлення № "+esc(String(o.number).replace(/^TB-/,""));const p=findItem(it.id),n=[it.brand||(p&&p.brand),it.title||(p&&p.name)].filter(Boolean).join(" · ")||"Замовлення";return esc(n)+(o.items.length>1?` <i>+${o.items.length-1}</i>`:"")};
       const FL=P.filter(p=>favs.has(p.id)).concat(RESALE.filter(r=>favs.has(r.id)));
       return `${act?accLiveHTML(act,ords.indexOf(act)):accEmptyHTML(ords.length>0)}
       <div id="accOrders">${ords.length||reqs.length?`<div class="acl"><span>Мої замовлення</span>${ords.length?`<em class="num">${ords.length}</em>`:""}</div>
-      ${ords.length?`<div class="acx" id="accOrdList">${ords.map((o,i)=>{const it=(o.items||[])[0],p=it&&findItem(it.id);return `<button class="li press${i>=3?" ac-more":""}" data-oi="${i}">${th(p,it&&it.photo)}<div><b>${oName(o)}</b><small class="num">${[o.total&&eur(o.total),fmtD(o.createdAt)].filter(Boolean).join(" · ")}</small></div><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}).join("")}</div>${ords.length>3?`<button class="acmore" data-acmore="accOrdList">Показати всі · <span class="num">${ords.length}</span></button>`:""}`
+      ${ords.length?`<div class="acx" id="accOrdList">${ords.map((o,i)=>{const it=(o.items||[])[0],p=it&&findItem(it.id);return `<button class="li press${i>=3?" ac-more":""}" data-oi="${i}">${th(p,it)}<div><b>${oName(o)}</b><small class="num">${[o.total&&eur(o.total),fmtD(o.createdAt)].filter(Boolean).join(" · ")}</small></div><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}).join("")}</div>${ords.length>3?`<button class="acmore" data-acmore="accOrdList">Показати всі · <span class="num">${ords.length}</span></button>`:""}`
         :""}`:""}
       ${reqs.length?`<div class="acx" id="accReqList" style="margin-top:8px">${reqs.map((l,i)=>`<div class="li${i>=3?" ac-more":""}"><div><b>${esc(LEAD_KIND[l.kind]||"Запит")} ${esc(l.number)}</b><small>${fmtD(l.createdAt)}</small></div><em class="ost">${LEAD_ST[l.status]||l.status}</em></div>`).join("")}</div>${reqs.length>3?`<button class="acmore" data-acmore="accReqList">Показати всі запити · <span class="num">${reqs.length}</span></button>`:""}`:""}</div>
       <div class="acl"><span>Обране</span>${FL.length?`<button data-act="favs">Усі · <span class="num">${FL.length}</span></button>`:""}</div>

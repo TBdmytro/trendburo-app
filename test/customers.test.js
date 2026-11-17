@@ -53,3 +53,20 @@ test("заявка на вход: решили в одном чате — во �
   await setAccess(store, 9, "ok", { by: "@x", send }); assert.equal(calls.filter(([m]) => m === "editMessageText").length, 3); // второй раз не трогаем
   process.env.TELEGRAM_BOT_TOKEN = old;
 });
+
+test("клиент через менеджера без приложения: заказы с иконкой, личная ссылка переносит всё в аккаунт", async () => {
+  const { createOfflineClient, linkInvite } = await import("../lib/customers.js");
+  const store = new MemoryStore();
+  await assert.rejects(() => createOfflineClient(store, {}), /имя/);
+  const off = await createOfflineClient(store, { name: "Олена К.", username: "@olena_k", phone: "+380671112233", city: "Київ", shoes: "38" }, "Дмитрий");
+  assert.ok(off.offline); assert.match(off.invite, /^[a-z0-9]{12}$/); assert.equal(off.tg.username, "olena_k");
+  const l = await makeManualOrder(store, off, { brand: "Chanel", title: "Classic Flap", price: "9800", icon: "bag", status: "bought" });
+  assert.equal(l.cust, off._id); assert.equal(l.tgId, undefined); assert.equal(l.items[0].icon, "bag");
+  assert.equal(await linkInvite(store, { id: 55, name: "Olena" }, "c_wrongtoken12"), null);
+  const r = await linkInvite(store, { id: 55, username: "olena_k", name: "Olena" }, "c_" + off.invite);
+  assert.equal(r.moved, 1); assert.equal(r.customer.access, "ok"); assert.equal(r.customer.profile.phone, "+380671112233"); assert.equal(r.customer.sizes.shoes, "38");
+  assert.equal(await store.get(off._id), null);
+  const mine = await ordersFor(store, 55);
+  assert.equal(mine.length, 1); assert.equal(mine[0].items[0].icon, "bag");
+  assert.equal(await linkInvite(store, { id: 55 }, "c_" + off.invite), null); // ссылка одноразовая
+});

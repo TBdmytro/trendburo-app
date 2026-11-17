@@ -3158,10 +3158,10 @@ async function vCustomers(q) {
     const f = ($("#cFind")?.value || q || "").toLowerCase();
     const l = customers.filter(c => only ? c.access === only : c.access !== "pending").filter(c => !f || [c.tg?.name, c.tg?.username, c.profile?.name, c.profile?.phone].join(" ").toLowerCase().includes(f))
       .sort((a, b) => sort === "seen" ? 0 : (b[sort] || 0) - (a[sort] || 0));
-    $("#cList").innerHTML = l.length ? l.map(c => `<div class="orow" data-cu="${esc(c.id)}"><div class="tx"><b>${esc(c.profile?.name || c.tg?.name || "Клиент")}${c.tg?.username ? ` <span class="hint">@${esc(c.tg.username)}</span>` : ""}${c.optix?.st === "pending" ? ` <span class="acb" style="--c:#3f6480">хочет OPTIX</span>` : ""}${c.staff ? ` <span class="acb" style="--c:#26282c">сотрудник</span>` : ""}${ACC[c.access] ? ` <span class="acb" style="--c:${ACC[c.access][1]}">${ACC[c.access][0]}</span>` : ""}</b>
+    $("#cList").innerHTML = l.length ? l.map(c => `<div class="orow" data-cu="${esc(c.id)}"><div class="tx"><b>${esc(c.profile?.name || c.tg?.name || "Клиент")}${c.tg?.username ? ` <span class="hint">@${esc(c.tg.username)}</span>` : ""}${c.optix?.st === "pending" ? ` <span class="acb" style="--c:#3f6480">хочет OPTIX</span>` : ""}${c.offline ? ` <span class="acb" style="--c:#8a6d3b">через менеджера · ждёт входа</span>` : ""}${c.staff ? ` <span class="acb" style="--c:#26282c">сотрудник</span>` : ""}${ACC[c.access] ? ` <span class="acb" style="--c:${ACC[c.access][1]}">${ACC[c.access][0]}</span>` : ""}</b>
       <span>${[c.orders ? c.orders + " " + plural(c.orders, ["заказ", "заказа", "заказов"]) + (c.viaManager ? ` (${c.viaManager} через менеджера)` : "") : "без заказов", c.spent ? "оплачено " + eur(c.spent) : "", c.earned ? "заработок " + eur(c.earned) : "", c.profile?.city].filter(Boolean).map(esc).join(" · ")}</span></div><span class="hint">${dt(c.lastSeen)}</span></div>`).join("") : `<div class="hint" style="padding:20px 0">Клиентов пока нет — они появятся, когда войдут в мини-апп через Telegram.</div>`;
   };
-  $("#main").innerHTML = `<div class="vh"><h1>Клиенты</h1><span class="hint">${customers.length}</span></div>
+  $("#main").innerHTML = `<div class="vh"><h1>Клиенты</h1><span class="hint">${customers.length}</span><button type="button" class="btn sm" id="cNew" style="margin-left:auto">+ Новый клиент</button></div>
     <p class="vsub">Заказы с сайта и через менеджера, сколько клиент оплатил и сколько вы заработали.</p>
     <div class="tiles" style="margin-bottom:10px">
       <div class="tile dark"><span>Оплачено клиентами</span><b class="num">${eur(T.spent || 0)}</b><span>заработок ≈ ${eur(T.earned || 0)}</span></div>
@@ -3198,6 +3198,7 @@ async function vCustomers(q) {
     <div class="fchips" id="cSort" style="margin-bottom:12px">${SORTS.map(([k, v]) => `<button class="fchip ${k === sort ? "on" : ""}" data-cs="${k}">${v}</button>`).join("")}</div>
     <div id="cList"></div>`;
   draw(); $("#cFind").oninput = draw;
+  $("#cNew").onclick = () => clientFormSheet(null, () => vCustomers($("#cFind")?.value));
   $("#cClosed").onchange = async e => { const on = e.target.checked;
     if (on && !(await confirmBox("Закрыть сайт?", "Каталог будут видеть только клиенты с открытым доступом. Все, кто уже есть в базе, получат доступ сразу.", "Закрыть сайт"))) { e.target.checked = false; return; }
     try { const r = await api("accessMode", { method: "POST", body: { closed: on } }); toast(on ? "Сайт закрыт" + (r.approved ? ` · доступ открыт ${r.approved} клиентам` : "") : "Сайт открыт для всех"); vCustomers($("#cFind")?.value); } catch (err) { toast(err.message); e.target.checked = !on; } };
@@ -3219,6 +3220,7 @@ async function vCustomers(q) {
   $("#cList").onclick = e => { const r = e.target.closest("[data-cu]"); if (r) customerSheet(customers.find(x => x.id === r.dataset.cu), dlv, () => vCustomers($("#cFind")?.value), closed); };
 }
 function customerSheet(c, dlv, reload, closed) {
+  if (c.offline) return offlineSheet(c, dlv, reload);
   const p = c.profile || {};
   const d = sheet(p.name || c.tg?.name || "Клиент", `<div class="form">
     <div class="client"><span class="av">${esc(((c.tg?.name || "?")[0] || "?").toUpperCase())}</span><div class="tx"><b>${esc(c.tg?.name || "")}</b><span>${c.tg?.username ? "@" + esc(c.tg.username) + " · " : ""}с ${dt(c.createdAt)}${c.lastOrder ? " · последний заказ " + dt(c.lastOrder) : ""}</span></div>
@@ -3253,6 +3255,50 @@ function customerSheet(c, dlv, reload, closed) {
     b.disabled = true;
     try { await api("accessSet", { method: "POST", body: { customer: c.id, access: b.dataset.acc } }); toast({ ok: "Доступ открыт — придёт сообщение в Telegram", rejected: "Заявка отклонена", blocked: "Заблокирован" }[b.dataset.acc] || "Сохранено"); d.close(); reload(); } catch (err) { toast(err.message); b.disabled = false; } });
 }
+/* Клиент без приложения: пишет менеджеру в Telegram. Карточка, заказы и личная ссылка — по ней он войдёт и увидит всё сам */
+function clientFormSheet(c, done) {
+  const p = c?.profile || {}, z = c?.sizes || {};
+  const d = sheet(c ? "Данные клиента" : "Новый клиент", `<div class="form">
+    ${c ? "" : `<div class="hint">Для тех, кто заказывает через менеджера и в приложение не заходит. После сохранения появится личная ссылка: клиент нажмёт — и увидит свои заказы в приложении.</div>`}
+    <label class="f">Имя<input type="text" id="ncName" value="${esc(p.name || c?.tg?.name || "")}" placeholder="Олена К."></label>
+    <div class="fg2"><label class="f">Telegram (ник)<input type="text" id="ncUser" value="${esc(c?.tg?.username || "")}" placeholder="@olena_k"></label><label class="f">Телефон<input type="tel" id="ncPhone" value="${esc(p.phone || "")}" placeholder="+380…"></label></div>
+    <div class="fg2"><label class="f">Город<input type="text" id="ncCity" value="${esc(p.city || "")}" placeholder="Київ"></label><label class="f">Размер обуви<input type="text" id="ncShoes" value="${esc(z.shoes || "")}" placeholder="38"></label></div>
+    <label class="f">Размер одежды<input type="text" id="ncCl" value="${esc(z.clothes || "")}" placeholder="S / 36"></label>
+    ${c ? "" : `<label class="f">Заметка (видите только вы)<textarea id="ncNote" style="min-height:60px" placeholder="любимые бренды, пожелания"></textarea></label>`}</div>`,
+    `<button class="btn lg" data-ncsave>${c ? "Сохранить" : "Создать клиента"}</button>`);
+  d.querySelector(".sh-f").onclick = async () => {
+    const v = id => (d.querySelector(id)?.value || "").trim();
+    if (!v("#ncName")) return toast("Укажите имя");
+    const b = { name: v("#ncName"), username: v("#ncUser"), phone: v("#ncPhone"), city: v("#ncCity"), shoes: v("#ncShoes"), clothes: v("#ncCl"), note: v("#ncNote") };
+    try { if (c) await api("clientEdit", { method: "POST", body: { customer: c.id, ...b } }); else await api("clientCreate", { method: "POST", body: b });
+      toast(c ? "Сохранено" : "Клиент создан — откройте его, чтобы скопировать ссылку и добавить заказы"); d.close(); done(); } catch (err) { toast(err.message); }
+  };
+}
+function offlineSheet(c, dlv, reload) {
+  const p = c.profile || {}, z = c.sizes || {};
+  const d = sheet(p.name || c.tg?.name || "Клиент", `<div class="form">
+    <div class="client"><span class="av">${esc(((p.name || "?")[0] || "?").toUpperCase())}</span><div class="tx"><b>${esc(p.name || "")}</b><span>${c.tg?.username ? "@" + esc(c.tg.username) + " · " : ""}через менеджера · создан ${dt(c.createdAt)}</span></div>
+      ${c.tg?.username ? `<a href="https://t.me/${esc(c.tg.username)}" target="_blank" rel="noopener" aria-label="Написать в Telegram"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4z"/></svg></a>` : ""}</div>
+    <div class="oitem" style="flex-direction:column;align-items:stretch;gap:8px;background:#26282c;color:#fff;border-radius:14px"><div class="tx"><b style="color:#fff">Личная ссылка клиента</b><span style="color:#cdbb9c;word-break:break-all">${esc(c.invite || "бот не ответил — откройте ещё раз")}</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sm" data-inv style="background:#cdbb9c;color:#26282c">Скопировать ссылку</button>${c.tg?.username ? `<a class="btn sm ghost" style="color:#fff;border-color:#555" href="https://t.me/${esc(c.tg.username)}" target="_blank" rel="noopener">Открыть чат</a>` : ""}</div>
+      <span class="hint" style="color:#b9bcc2">Отправьте клиенту. Он нажмёт — приложение откроется, заказы и данные перейдут в его аккаунт, доступ откроется сам.</span></div>
+    <div class="kvs"><div><span>Заказы</span><b class="num">${c.orders}</b></div><div><span>Оплачено</span><b class="num">${eur(c.spent)}</b></div><div><span>Заработок</span><b class="num">${eur(c.earned)}</b></div><div><span>Размеры</span><b>${esc([z.shoes && "обувь " + z.shoes, z.clothes && "одежда " + z.clothes].filter(Boolean).join(" · ") || "—")}</b></div></div>
+    <div class="oitem"><div class="tx"><b>Контакты и доставка</b><span>${esc([p.phone, dlv(p)].filter(Boolean).join(" · ")) || "не заполнено"}</span></div><button type="button" class="btn ghost sm" data-ncedit>Изменить</button></div>
+    <label class="f">Заметка о клиенте (видите только вы)<textarea id="cuNote" style="min-height:60px" placeholder="размеры, любимые бренды, пожелания">${esc(c.note || "")}</textarea></label>
+    <button type="button" class="btn lg" data-addord>+ Добавить заказ</button>
+    ${c.leads.map(l => `<div class="oitem"><span class="othumb">${ordThumbAdm(l.items?.[0])}</span><div class="tx"><b>${esc(l.number)}${l.items?.[0] ? " · " + esc([l.items[0].brand, l.items[0].title].filter(Boolean).join(" ")) : ""}</b><span>${dt(l.createdAt)} · ${esc(ORD_ST[l.status] || l.status)}${l.items?.[0]?.size ? " · " + esc(l.items[0].size) : ""}</span></div>${l.total ? `<b class="num">${eur(l.total)}</b>` : ""}</div>`).join("")}
+    <button type="button" class="btn ghost" data-cudel style="color:#b23a48">Удалить карточку</button></div>`,
+    `<button class="btn ghost lg" data-cusave>Сохранить заметку</button>`);
+  d.querySelector(".sh-f").onclick = async () => { try { await api("customerNote", { method: "POST", body: { customer: c.id, note: d.querySelector("#cuNote").value } }); c.note = d.querySelector("#cuNote").value; toast("Сохранено"); } catch (err) { toast(err.message); } };
+  d.querySelector("[data-inv]").onclick = async () => { if (!c.invite) return; try { await navigator.clipboard.writeText(c.invite); toast("Ссылка скопирована — отправьте клиенту"); } catch { prompt("Скопируйте ссылку", c.invite); } };
+  d.querySelector("[data-ncedit]").onclick = () => clientFormSheet(c, () => { d.close(); reload(); });
+  d.querySelector("[data-addord]").onclick = () => manualOrderSheet(c, () => { d.close(); reload(); });
+  d.querySelector("[data-cudel]").onclick = async () => { if (!(await confirmBox("Удалить карточку?", "Карточка и личная ссылка исчезнут. Заказы останутся в «Заказах» и «Финансах».", "Удалить"))) return;
+    try { await api("customerDelete", { method: "POST", body: { customer: c.id } }); toast("Удалено"); d.close(); reload(); } catch (err) { toast(err.message); } };
+}
+const ADM_ICO = { bag: ["Сумка", '<path d="M6 9h12l-1 11H7z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/>'], shoes: ["Обувь", '<path d="M3 16c0-3 1-6 2-8l3 1c1 3 4 5 9 5 2 0 4 1 4 3v1H3z"/><path d="M3 18h18"/>'], clothes: ["Одежда", '<path d="M8 4l-4 3 2 4 2-1v10h8V10l2 1 2-4-4-3c-1 2-2 3-4 3s-3-1-4-3z"/>'], acc: ["Аксессуар", '<path d="M4 12h16"/><rect x="8" y="9" width="8" height="6" rx="1"/><path d="M4 12c0-3 2-5 4-5M20 12c0-3-2-5-4-5"/>'], jewelry: ["Украшение", '<circle cx="12" cy="14" r="6"/><path d="M9 5l3 3 3-3"/>'], watch: ["Часы", '<circle cx="12" cy="12" r="5"/><path d="M12 10v2l1.5 1.5M9 7l1-4h4l1 4M9 17l1 4h4l1-4"/>'], eyewear: ["Очки", '<circle cx="7" cy="14" r="3.5"/><circle cx="17" cy="14" r="3.5"/><path d="M10.5 14h3M3.5 13 5 9M20.5 13 19 9"/>'], beauty: ["Парфюм", '<rect x="8" y="9" width="8" height="12" rx="2"/><path d="M10 9V6h4v3M11 4h2"/>'] };
+const icoSvg = k => ADM_ICO[k] ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="width:60%;height:60%;color:#8a7a60">${ADM_ICO[k][1]}</svg>` : "";
+const ordThumbAdm = it => it?.photo ? `<img src="${esc(thumb(it.photo))}" alt="" style="width:100%;height:100%;object-fit:cover">` : it?.icon ? icoSvg(it.icon) : "";
 function manualOrderSheet(c, done) {
   const today = new Date().toISOString().slice(0, 10);
   const d = sheet("Заказ через менеджера", `<div class="form">
@@ -3262,18 +3308,27 @@ function manualOrderSheet(c, done) {
     <label class="f">Вещь<input type="text" id="moTitle" placeholder="Birkin 30, Togo, Gold"></label>
     <div class="fg2"><label class="f">Цвет<input type="text" id="moColor" placeholder="необязательно"></label><label class="f">Дата заказа<input type="date" id="moDate" value="${today}"></label></div>
     <div class="fg2"><label class="f">Цена для клиента, €<input type="text" inputmode="decimal" id="moPrice" placeholder="0"></label><label class="f">Наша закупка, €<input type="text" inputmode="decimal" id="moCost" placeholder="для расчёта заработка"></label></div>
-    <label class="f">Ссылка или фото (https, необязательно)<input type="text" inputmode="url" id="moUrl" placeholder="https://…"></label>
+    <div><div class="f" style="margin-bottom:8px">Фото вещи</div>
+      <div style="display:flex;gap:10px;align-items:center"><label class="mo-ph" id="moPh" style="width:72px;height:88px;border-radius:12px;background:#efe8de;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex:none;border:1px dashed #cdbb9c"><span class="hint" style="font-size:11px;text-align:center">+ фото</span><input type="file" accept="image/*" id="moFile" hidden></label>
+      <div class="hint" style="font-size:12px">Живое фото или скрин. Нет фото — выберите иконку ниже: в заказе будет аккуратная иконка категории вместо пустого места.</div></div></div>
+    <div><div class="f" style="margin-bottom:8px">Или иконка</div><div class="fchips" id="moIco" style="flex-wrap:wrap">${Object.entries(ADM_ICO).map(([k, [t]]) => `<button type="button" class="fchip" data-v="${k}" style="display:inline-flex;gap:6px;align-items:center"><span style="width:18px;height:18px;display:inline-flex">${icoSvg(k).replace("width:60%;height:60%", "width:100%;height:100%")}</span>${t}</button>`).join("")}</div></div>
+    <label class="f">Ссылка на вещь (необязательно)<input type="text" inputmode="url" id="moUrl" placeholder="https://…"></label>
     <div><div class="f" style="margin-bottom:8px">Доставка</div><div class="fchips" id="moDest">${[["ua", "Украина"], ["eu", "Европа"], ["dxb", "Дубай"]].map(([k, v], i) => `<button type="button" class="fchip ${i ? "" : "on"}" data-v="${k}">${v}</button>`).join("")}</div></div>
     <div><div class="f" style="margin-bottom:8px">Этап</div><div class="fchips" id="moSt" style="flex-wrap:wrap">${["work", "paid", "bought", "shipping", "np", "delivered"].map((k, i) => `<button type="button" class="fchip ${i ? "" : "on"}" data-v="${k}">${ORD_ST[k]}</button>`).join("")}</div></div>
     <label class="f">Заметка<textarea id="moNote" style="min-height:60px" placeholder="только для вас"></textarea></label></div>`,
     `<button class="btn lg" data-mosave>Добавить заказ</button>`);
   const pick = id => d.querySelector(id).onclick = e => { const b = e.target.closest("[data-v]"); if (b) d.querySelectorAll(id + " [data-v]").forEach(x => x.classList.toggle("on", x === b)); };
   pick("#moDest"); pick("#moSt");
+  let moPhoto = "";
+  d.querySelector("#moIco").onclick = e => { const b = e.target.closest("[data-v]"); if (!b) return; const on = !b.classList.contains("on"); d.querySelectorAll("#moIco [data-v]").forEach(x => x.classList.toggle("on", on && x === b)); };
+  d.querySelector("#moFile").onchange = async e => { const f = e.target.files[0]; if (!f) return; const box = d.querySelector("#moPh"); box.innerHTML = '<span class="hint" style="font-size:11px">загрузка…</span>';
+    try { moPhoto = await uploadPhoto(f, 1600); box.innerHTML = `<img src="${esc(thumb(moPhoto))}" alt="" style="width:100%;height:100%;object-fit:cover">`; } catch (err) { toast(err.message); box.innerHTML = '<span class="hint" style="font-size:11px">+ фото</span>'; }
+    box.appendChild(Object.assign(document.createElement("input"), { type: "file", accept: "image/*", hidden: true, id: "moFile", onchange: d.querySelector("#moFile")?.onchange || e.target.onchange })); };
   d.querySelector(".sh-f").onclick = async () => {
     const v = id => d.querySelector(id).value.trim(), on = id => d.querySelector(id + " .on").dataset.v, url = v("#moUrl");
     if (!v("#moTitle") && !v("#moBrand")) return toast("Укажите бренд или вещь");
     try {
-      const r = await api("manualOrder", { method: "POST", body: { customer: c.id, brand: v("#moBrand"), title: v("#moTitle"), size: v("#moSize"), color: v("#moColor"), price: v("#moPrice"), cost: v("#moCost"), date: v("#moDate"), dest: on("#moDest"), status: on("#moSt"), note: v("#moNote"), url: /\.(jpe?g|png|webp)(\?|$)/i.test(url) ? "" : url, photo: /\.(jpe?g|png|webp)(\?|$)/i.test(url) ? url : "" } });
+      const r = await api("manualOrder", { method: "POST", body: { customer: c.id, brand: v("#moBrand"), title: v("#moTitle"), size: v("#moSize"), color: v("#moColor"), price: v("#moPrice"), cost: v("#moCost"), date: v("#moDate"), dest: on("#moDest"), status: on("#moSt"), note: v("#moNote"), url: /\.(jpe?g|png|webp)(\?|$)/i.test(url) ? "" : url, photo: moPhoto || (/\.(jpe?g|png|webp)(\?|$)/i.test(url) ? url : ""), icon: d.querySelector("#moIco .on")?.dataset.v || "" } });
       toast("Заказ " + r.lead.number + " добавлен"); d.close(); done();
     } catch (err) { toast(err.message); }
   };

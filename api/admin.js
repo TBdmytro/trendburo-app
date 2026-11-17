@@ -1018,13 +1018,26 @@ export default async function handler(req, res) {
       }
       case "customers": {
         // клиенты из Telegram: профиль, заказы с сайта и через менеджера, оплачено, заработок, лояльность
-        const [cs, ls] = await Promise.all([store.list("customer", {}, { order: "lastSeen desc", limit: 1000 }), store.list("lead", {}, { limit: 5000, fields: "_id, tgId, number, kind, source, status, total, cost, dest, createdAt, items[]{brand, title, price, size}" })]);
+        const [cs, ls] = await Promise.all([store.list("customer", {}, { order: "lastSeen desc", limit: 1000 }), store.list("lead", {}, { limit: 5000, fields: "_id, tgId, cust, number, kind, source, status, total, cost, dest, createdAt, items[]{brand, title, price, size, photo, icon}" })]);
         const mk = mergeConfig(pricingCfg).official.markup, acc = await accessSettings(store, { fresh: true });
-        const by = {}; ls.forEach(l => { if (l.tgId) (by[l.tgId] = by[l.tgId] || []).push(l); });
-        const list = cs.map(c => { const o = (by[c.tg?.id] || []).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-          return { id: c._id, tg: c.tg, profile: c.profile, apply: c.apply || null, registeredAt: c.registeredAt || null, createdAt: c.createdAt, lastSeen: c.lastSeen, note: c.note || "", loyalty: c.loyalty || null, access: accessOf(c, acc), optix: c.optix || null, staff: !!c.staff, accessAt: c.accessAt || null, accessBy: c.accessBy || "", ...clientStats(o, mk), leads: o.slice(0, 30) }; });
+        const by = {}; ls.forEach(l => { const k = l.tgId || l.cust; if (k) (by[k] = by[k] || []).push(l); });
+        let bot = ""; if (cs.some(c => c.offline)) { try { bot = (await tg("getMe", {})).username || ""; } catch {} }
+        const list = cs.map(c => { const o = (by[c.offline ? c._id : c.tg?.id] || []).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+          return { id: c._id, tg: c.tg, profile: c.profile, apply: c.apply || null, registeredAt: c.registeredAt || null, createdAt: c.createdAt, lastSeen: c.lastSeen, note: c.note || "", loyalty: c.loyalty || null, access: accessOf(c, acc), optix: c.optix || null, staff: !!c.staff, accessAt: c.accessAt || null, accessBy: c.accessBy || "", ...(c.offline ? { offline: true, access: "offline", sizes: c.sizes || null, invite: bot ? `https://t.me/${bot}?startapp=c_${c.invite}` : "" } : { sizes: c.sizes || null, linkedAt: c.linkedAt || null }), ...clientStats(o, mk), leads: o.slice(0, 30) }; });
         const sum = k => list.reduce((a, c) => a + (c[k] || 0), 0);
         return send(res, 200, { closed: acc.closed, customers: list, totals: { clients: list.length, buyers: list.filter(c => c.spent > 0).length, repeat: list.filter(c => c.orders > 1).length, orders: sum("orders"), viaManager: sum("viaManager"), spent: sum("spent"), earned: sum("earned"), active30: list.filter(c => c.lastSeen && Date.now() - Date.parse(c.lastSeen) < 30 * 864e5).length } });
+      }
+      case "clientCreate": { // клиент, который пишет менеджеру и в приложение не заходит: карточка + личная ссылка
+        const { createOfflineClient } = await import("../lib/customers.js");
+        try { const c = await createOfflineClient(store, body, me.name); return send(res, 200, { id: c._id }); } catch (e) { return send(res, 400, { error: e.message }); }
+      }
+      case "clientEdit": { // данные клиента без приложения (имя, ник, телефон, размеры)
+        const c = await store.get(String(body.customer || ""));
+        if (!c || c._type !== "customer" || !c.offline) return send(res, 404, { error: "Клиент не найден" });
+        const { cleanProfile } = await import("../lib/customers.js"), s1 = (v, n) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, n);
+        const name = s1(body.name, 80) || c.profile?.name; c.tg = { username: String(body.username ?? c.tg?.username ?? "").replace(/^https?:\/\/t\.me\//i, "").replace(/[^\w]/g, "").slice(0, 40), name };
+        c.profile = cleanProfile({ ...c.profile, name, phone: body.phone ?? c.profile?.phone, city: body.city ?? c.profile?.city }); c.sizes = { shoes: s1(body.shoes ?? c.sizes?.shoes, 20), clothes: s1(body.clothes ?? c.sizes?.clothes, 20) };
+        c.updatedAt = new Date().toISOString(); await store.put(c); return send(res, 200, { ok: true });
       }
       case "manualOrder": {
         const c = await store.get(String(body.customer || ""));
@@ -1045,8 +1058,8 @@ export default async function handler(req, res) {
         // новые заявки на вход — для счётчика и уведомления в админке
         const acc = await accessSettings(store, { fresh: true });
         if (!acc.closed) return send(res, 200, { closed: false, n: 0, latest: [] });
-        const cs = await store.list("customer", {}, { limit: 5000, fields: "_id, tg, profile, access, registeredAt, createdAt" });
-        const p = cs.filter(c => accessOf(c, acc) === "pending").sort((a, b) => String(b.registeredAt || b.createdAt).localeCompare(String(a.registeredAt || a.createdAt)));
+        const cs = await store.list("customer", {}, { limit: 5000, fields: "_id, tg, profile, access, registeredAt, createdAt, offline" });
+        const p = cs.filter(c => !c.offline && accessOf(c, acc) === "pending").sort((a, b) => String(b.registeredAt || b.createdAt).localeCompare(String(a.registeredAt || a.createdAt)));
         return send(res, 200, { closed: true, n: p.length, latest: p.slice(0, 5).map(c => ({ id: c._id, name: c.profile?.name || c.tg?.name || "Клиент", username: c.tg?.username || "", at: c.registeredAt || c.createdAt })) });
       }
       case "notifyGet": {

@@ -8,7 +8,7 @@
  */
 import { getStore } from "../lib/store.js";
 import { userFrom, newLoginCode, pollLoginCode } from "../lib/tgauth.js";
-import { touchCustomer, saveProfile, ordersFor, customerId, cleanProfile } from "../lib/customers.js";
+import { touchCustomer, saveProfile, ordersFor, customerId, cleanProfile, linkInvite, INVITE_RE } from "../lib/customers.js";
 import { tg } from "./bot.js";
 import { accessSettings, accessOf, notifyRequest, optixRequest, optixOf } from "../lib/access.js";
 import { allow, tooMany } from "../lib/ratelimit.js";
@@ -67,10 +67,15 @@ export default async function handler(req, res) {
     if (!user) return send(res, 401, { error: "Telegram не підтвердив вхід — відкрийте застосунок знову", code: "bad_sign" });
     const store = getStore();
     const pub = { id: user.id, username: user.username, name: user.name, photo: user.photo, dev: !!user.dev };
+    // личная ссылка от менеджера (startapp=c_…): заказы, сделанные через менеджера, переносятся в этот аккаунт; регистрация и заявка не нужны
+    let linked = null;
+    if (INVITE_RE.test(String(body.invite || ""))) { try { linked = await linkInvite(store, user, body.invite); } catch (e) { console.error("invite:", e.message); }
+      if (linked) { try { const { toAdmins } = await import("../lib/access.js"); const e = t => String(t || "").replace(/[<&>]/g, m => ({ "<": "&lt;", "&": "&amp;", ">": "&gt;" }[m]));
+        await toAdmins(store, { text: `🔗 <b>${e(linked.name || user.name)}</b> відкрив(ла) особисте посилання${user.username ? " · @" + e(user.username) : ""}\nЗамовлень перенесено в акаунт: ${linked.moved}`, parse_mode: "HTML" }); } catch {} } }
     if (body.a === "check") {
       const c = await store.get(customerId(user.id));
       const acc = await accessSettings(store);
-      return send(res, 200, { exists: !!c, user: pub, profile: c?.profile || null, closed: acc.closed, access: accessOf(c, acc) });
+      return send(res, 200, { exists: !!c, user: pub, profile: c?.profile || null, closed: acc.closed, access: accessOf(c, acc), ...(linked ? { linked: { moved: linked.moved, name: linked.name } } : {}) });
     }
     let c;
     // аккаунт удалён (или его ещё нет) — только через регистрацию, сам он не создаётся
@@ -113,7 +118,7 @@ export default async function handler(req, res) {
     if (access === "pending") await notifyRequest(store, c).catch(() => {});
     if (access !== "ok") return send(res, 200, { user: pub, profile: c.profile, orders: [], since: c.registeredAt || c.createdAt || null, closed: acc.closed, access, optix: ox, staff: !!c.staff });
     const orders = await ordersFor(store, user.id, body.client);
-    return send(res, 200, { closed: acc.closed, access, optix: ox, staff: !!c.staff, user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null });
+    return send(res, 200, { closed: acc.closed, access, optix: ox, staff: !!c.staff, user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null, ...(linked ? { linked: { moved: linked.moved, name: linked.name } } : {}) });
   } catch (e) {
     console.error("me:", e.message);
     return send(res, 500, { error: "Не вдалося завантажити кабінет" });
