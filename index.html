@@ -3,6 +3,8 @@
 <head>
 <script>/* адрес сайта — trendburo.com.ua: в обычном браузере (Safari, Chrome, иконка на экране «Домой») со старого адреса *.vercel.app переходим на домен; внутри Telegram — не трогаем */
 (function(){try{var h=location.hostname;var tg=false;try{tg=/tgWebApp/.test(sessionStorage.getItem("__telegram__initParams")||"")}catch(e){}if(h==="trendburo-app.vercel.app"&&!tg&&window.parent===window&&!/tgWebApp/.test(location.hash+location.search)&&!(window.TelegramWebviewProxy||window.external&&window.external.notify)&&!/[?&]novr=1/.test(location.search)){location.replace("https://trendburo.com.ua"+location.pathname+location.search+location.hash)}}catch(e){}})();</script>
+<script>/* бета для команды: владелец и сотрудники видят новую версию (/beta.html), клиенты — стабильную. Флаг ставит сайт после входа (сервер говорит beta:true) */
+(function(){try{var b=/^\/beta(\.html)?$/.test(location.pathname);if(!b&&localStorage.getItem("tb_beta")==="1"&&!/[?&]stable=1/.test(location.search))location.replace("/beta.html"+location.search+location.hash)}catch(e){}})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="trendburo-build" content="2026-10-14-live-v61">
@@ -4080,7 +4082,12 @@ const authBody=()=>{const b={client:CLIENT};if(TGW&&TGW.initData)b.initData=TGW.
 let INVITE=(()=>{try{const v=(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.start_param)||new URLSearchParams(location.search).get("tgWebAppStartParam")||"";return /^c_[a-z0-9]{12}$/.test(v)?v:""}catch(e){return""}})();
 async function meCall(extra){const b=authBody();if(!b||!LIVE)return{error:"Немає входу",code:"no_auth"};
   try{const r=await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...b,...(INVITE?{invite:INVITE}:{}),...(extra||{})})});const j=await r.json().catch(()=>({}));if(j&&j.linked){INVITE="";setTimeout(()=>toast(j.linked.moved?"Ваші замовлення через менеджера вже тут — «Мої замовлення»":"Акаунт привʼязано до Trend Büro"),600)}return r.ok?j:{error:j.error||"Помилка "+r.status,code:j.code||String(r.status)}}catch(e){return{error:"Немає звʼязку з сервером",code:"net"}}}
-async function loadMe(extra){const j=await meCall(extra);if(j.error){ME_ERR=j;return null}const wasStaff=staffOn();ME=j;ME_ERR=null;renderTopIcons();try{selBar()}catch(e){}if(!wasStaff&&staffOn())try{catRefreshUI()}catch(e){}return ME}
+/* версии: APP_VER — номер этой версии; на /beta.html плашка «Beta 1.1», тап по плашке — переключение (только для команды) */
+const APP_VER="1.0",IS_BETA=/^\/beta(\.html)?$/.test(location.pathname);
+function betaSync(j){try{const f=localStorage.getItem("tb_beta");if(j.beta){if(f!=="0"&&f!=="1"){localStorage.setItem("tb_beta","1");if(!IS_BETA)location.replace("/beta.html"+location.search+location.hash)}}else if(f){localStorage.removeItem("tb_beta");if(IS_BETA)location.replace("/"+location.search+location.hash)}}catch(e){}}
+document.addEventListener("click",e=>{const b=e.target.closest(".betab,.tgbeta");if(!b||!(ME&&ME.beta))return;try{localStorage.setItem("tb_beta",IS_BETA?"0":"1")}catch(x){}toast(IS_BETA?"Стабільна версія — як у клієнтів":"Бета-версія для команди");setTimeout(()=>location.replace((IS_BETA?"/":"/beta.html")+location.search+location.hash),500)},true);
+if(IS_BETA){try{const st=document.createElement("style");st.textContent=`.betab::after,.tgbeta::after{content:" ${APP_VER}"}`;document.head.appendChild(st)}catch(e){}}
+async function loadMe(extra){const j=await meCall(extra);if(j.error){ME_ERR=j;return null}const wasStaff=staffOn();ME=j;betaSync(j);ME_ERR=null;renderTopIcons();try{selBar()}catch(e){}if(!wasStaff&&staffOn())try{catRefreshUI()}catch(e){}return ME}
 const meInitials=n=>String(n||"TB").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
 const avatarHTML=(u,cls="")=>u&&u.photo?`<img class="${cls}" src="${esc(u.photo)}" alt="" referrerpolicy="no-referrer">`:`<span class="${cls} ini">${esc(meInitials(u&&u.name))}</span>`;
 const I_TG='<svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><path d="M9 13l8-6"/></svg>';
