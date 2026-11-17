@@ -77,6 +77,11 @@ export default async function handler(req, res) {
     }
   } catch (e) { console.error("catalog access:", e.message); res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Недоступно" })); }
   const compact = /[?&]v=2\b/.test(String(req.url || ""));
+  // только «Що нового» и настройки витрины — маленький ответ: телефон со старым сохранённым каталогом сразу видит свежую плашку
+  if (/[?&]site=1\b/.test(String(req.url || ""))) {
+    try { const { getSite } = await import("../lib/cms.js"); const site = await getSite(getStore()); res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "private, no-store"); res.statusCode = 200; return res.end(JSON.stringify({ whatsnew: site.whatsnew })); }
+    catch (e) { res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end('{"whatsnew":null}'); }
+  }
   // только коллекции (баннеры главной) — маленький ответ: телефон со старым сохранённым каталогом сразу видит новые обложки
   if (/[?&]colls=1\b/.test(String(req.url || ""))) {
     try { const body = await catalogBody(compact), i = body.lastIndexOf(',"collections":'), k = body.lastIndexOf(',"generatedAt"');

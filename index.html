@@ -4657,8 +4657,8 @@ function renderWhatsNew(){const el=$("#whatsNew");if(!el)return;const w=WN,today
   const key="tb_wn_"+(w?(w.until+"|"+(w.items||[]).map(i=>i.t).join(",")).replace(/[^\wа-яіїє]/gi,"").slice(0,80):"");let closed=false;try{closed=localStorage.getItem("tb_wn")===key}catch(e){}
   if(!items.length||(w.until&&w.until<today)||(w.from&&w.from>today)||closed){el.hidden=true;return}
   const d=x=>{const t=new Date(x+"T12:00:00");return{d:t.getDate(),m:WN_M[t.getMonth()]}},a=w.from&&d(w.from),b=w.until&&d(w.until);
-  const dt=a&&b?(a.m===b.m?a.d+"–"+b.d+" "+b.m:a.d+" "+a.m+" – "+b.d+" "+b.m):"";
-  el.innerHTML=`<div class="wn-h"><b>Що нового</b>${dt?`<small>${esc(dt)}</small>`:""}</div><button class="wn-x" aria-label="Закрити">✕</button><ul>${items.map(i=>`<li${i.b&&brandKey(i.b)?` data-b="${esc(i.b)}"`:""}><span><b>${esc(i.t)}</b>${i.s?" — "+esc(i.s):""}</span></li>`).join("")}</ul>`;
+  const dt=a?"з "+a.d+" "+a.m:"";
+  el.innerHTML=`<div class="wn-h"><b>Що додано нового</b>${dt?`<small>${esc(dt)}</small>`:""}</div><button class="wn-x" aria-label="Закрити">✕</button><ul>${items.map(i=>`<li${i.b&&brandKey(i.b)?` data-b="${esc(i.b)}"`:""}><span><b>${esc(i.t)}</b>${i.s?" — "+esc(i.s):""}</span></li>`).join("")}</ul>`;
   el.hidden=false;
   el.onclick=e=>{if(e.target.closest(".wn-x")){try{localStorage.setItem("tb_wn",key)}catch(x){}el.hidden=true;return}const li=e.target.closest("li[data-b]");if(li)runAction({type:"brand",value:li.dataset.b})}}
 const brandKey=name=>{const n=String(name||"").trim().toLowerCase();const b=BRANDS.find(x=>x[1].toLowerCase()===n);return b?b[0]:null};
@@ -4915,6 +4915,8 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
   try{authGate()}catch(e){}
   init();
   window.hideSplash&&hideSplash();
+  // «Що нового» — отдельным маленьким запросом: видно сразу, даже если на телефоне сохранён старый каталог
+  if(LIVE){const wnNet=async()=>{try{const b=authBody(),r=await fetch(CATK+"&site=1"+(b?"&a=1":""),b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});if(!r.ok)return;const j=await r.json();if(j&&"whatsnew" in j){WN=j.whatsnew;renderWhatsNew()}}catch(e){}};wnNet();document.addEventListener("visibilitychange",()=>{if(!document.hidden)wnNet()})}
   // свежий каталог после быстрого старта: применяем, только если он отличается и экран свободен (не мешаем листать)
   if(local){let touched=false;const mark=()=>{touched=true};["touchstart","pointerdown","wheel","keydown"].forEach(ev=>addEventListener(ev,mark,{once:true,passive:true,capture:true}));
     // вход плавный: большой каталог (несколько МБ) качаем не вместе с фото главной, а через ~3 с после показа, в свободную минуту;
