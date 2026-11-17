@@ -192,6 +192,8 @@ export default async function handler(req, res) {
   if (req.method === "GET" && /[?&]probe=ptclean\b/.test(String(req.url || ""))) return (async () => { const st = getStore(), apply = /[?&]apply=1\b/.test(String(req.url));
     const L = (await st.list("product", {}, { limit: 60000, fields: "_id, status, title" })).filter(p => /^product\.manual\.paristexasbr-px.+\d{2}(5)?$/.test(p._id) && p.status === "incoming");
     if (apply) for (const p of L) await st.del(p._id); res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify({ apply, n: L.length, ids: L.map(p => p._id.slice(15)).slice(0, 50) })); })();
+  // Paris Texas: артикул из адреса (PX…X…), английские названия, женское, обувь. Только скрытые. По ?apply=1 (владелец, 17.11)
+  if (req.method === "GET" && /[?&]probe=ptfix\b/.test(String(req.url || ""))) return (async () => { const { ptFix } = await import("../lib/ptfix.js"); const r = await ptFix(getStore(), { apply: /[?&]apply=1\b/.test(String(req.url)) }); res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(r, null, 1)); })();
   // добірки: кто создал, кому (заметка), что выбрали (только чтение)
   if (req.method === "GET" && /[?&]probe=sels\b/.test(String(req.url || ""))) return (async () => { const st = getStore(); const L = (await st.list("selection", {}, { limit: 500 }).catch(() => [])).sort((a, b) => String(b._createdAt || b.at || "").localeCompare(String(a._createdAt || a.at || ""))).slice(0, 25);
     const names = {}; for (const d of L) if (d.by && !names[d.by]) { const c = await st.get("customer." + d.by).catch(() => null); names[d.by] = (c && ((c.profile && c.profile.name) || (c.tg && (c.tg.username || c.tg.name)))) || d.by; }
