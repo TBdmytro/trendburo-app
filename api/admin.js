@@ -57,7 +57,9 @@ async function copyWebImages(store, list, id = "") {
   }))).filter(Boolean);
   // не скачалось — ссылку сайта бренда оставляем, только если других фото нет (иначе на витрине пустая обложка)
   const ok = images.filter(u => /^https:\/\/cdn\.sanity\.io\//.test(u));
-  return { images: ok.length ? ok : images, copied, srcOf };
+  // Shopify-магазины брендов (Amina Muaddi): сервер они не пускают (403), а в браузере фото открываются — оставляем все кадры по порядку: наши копии + ссылки магазина
+  const shop = images.filter(u => !/^https:\/\/cdn\.sanity\.io\//.test(u)).every(u => /\/cdn\/shop\/(files|products)\//.test(u));
+  return { images: ok.length && !shop ? ok : images, copied, srcOf };
 }
 const PFIELDS = "_id, brand, title, sourceTitle, modelSku, colors[0...1], overrides, category, subcategory, status, images[0...1]{url}, pricing{ua, eu, dxb}, updatedAt, createdAt, \"issuesN\": count(issues), gender, sections, secPos, webSections, sourceUrl, offers[]{sourceId, onlineOrder}, \"chk\": offers[0].checkedAt, \"stAt\": offers[0].stockAt, stock, hasPre, \"nSz\": count(sizes), \"nIm\": count(images), imgVer, soldOld";
 let FIXHMC = false, FIXHMW = false, FIXTRD = false, FIXKIT = false, FIXVSZ = false, FIXVCA = false, FIXCHK = false, FIXALO = false, FIXOBJ = false, FIXMIU = false, FIXPRE = false, FIXOTHER = false, FIXDIOR = false, FIXLV = false, FIXGUCCI = false, FIXGG = false, FIXLVSOLD = false, FIXLVSOLD2 = false, COLLSCAN_AT = 0;
