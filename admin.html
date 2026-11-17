@@ -2100,6 +2100,10 @@ async function vSite(tabs) {
       <h3 style="margin:10px 0 0">Объявление вверху «Ленты»</h3>
       <label class="toggle"><input type="checkbox" id="sAnOn" ${site.announce.on ? "checked" : ""}>Показывать</label>
       <label class="f">Текст<input type="text" id="sAn" value="${esc(site.announce.text)}" maxlength="140" placeholder="Например: до 5 октября доставка в Украину бесплатно"></label>
+      <h3 style="margin:10px 0 0">«Що нового» вверху «Ленты»</h3>
+      <label class="toggle"><input type="checkbox" id="sWnOn" ${site.whatsnew?.on ? "checked" : ""}>Показывать</label>
+      <div class="row" style="gap:10px"><label class="f">С<input type="date" id="sWnFrom" value="${esc(site.whatsnew?.from || "")}"></label><label class="f">До (потом скроется сама)<input type="date" id="sWnUntil" value="${esc(site.whatsnew?.until || "")}"></label></div>
+      <label class="f">Пункты — по одному в строке: «Бренд — текст» <textarea id="sWnItems" style="min-height:90px" placeholder="Stone Island — повна чоловіча колекція, 1015 речей">${esc((site.whatsnew?.items || []).map(i => i.t + (i.s ? " — " + i.s : "")).join("\n"))}</textarea></label>
       <h3 style="margin:10px 0 0">Блоки «Ленты»</h3>
       <label class="toggle"><input type="checkbox" id="sOptixOpen" ${site.optix.open ? "checked" : ""}>OPTIX открыт для всех <span class="hint">выключено — закрыт у всех, кроме тех, кому вы открыли вручную в «Клиентах»</span></label>
       <label class="toggle"><input type="checkbox" id="sOptix" ${site.optix.on ? "checked" : ""}>Плитка OPTIX в каталоге</label>
@@ -2132,7 +2136,7 @@ async function vSite(tabs) {
     if (t.id === "sCadd") { contacts = readC(); contacts.push({ label: "", handle: "", url: "" }); return draw(); }
     if (t.dataset.cdel) { contacts = readC(); contacts.splice(+t.dataset.cdel, 1); return draw(); }
     if (t.id === "sSave") {
-      const s = { shipWeekday: site.shipWeekday, announce: { on: $("#sAnOn").checked, text: $("#sAn").value }, optix: { on: $("#sOptix").checked, url: $("#sOptixUrl").value, open: $("#sOptixOpen").checked }, stockBlock: $("#sStock").checked, brandStories: $("#sBrandSt").checked, contacts: readC(), theme };
+      const s = { shipWeekday: site.shipWeekday, announce: { on: $("#sAnOn").checked, text: $("#sAn").value }, whatsnew: { on: $("#sWnOn").checked, from: $("#sWnFrom").value, until: $("#sWnUntil").value, items: $("#sWnItems").value.split("\n").map(l => l.trim()).filter(Boolean).slice(0, 5).map(l => { const [t, ...r] = l.split(/\s+[—–-]\s+/); return { t: t.trim(), s: r.join(" — ").trim(), b: t.trim() }; }) }, optix: { on: $("#sOptix").checked, url: $("#sOptixUrl").value, open: $("#sOptixOpen").checked }, stockBlock: $("#sStock").checked, brandStories: $("#sBrandSt").checked, contacts: readC(), theme };
       try { const r = await api("siteSave", { method: "POST", body: { site: { ...site, ...s, feed: (site.feed || []).map(b => b.id === "announce" ? { ...b, on: s.announce.on } : b.id === "optix" ? { ...b, on: s.optix.on } : b.id === "stock" ? { ...b, on: s.stockBlock } : b) } } }); Object.assign(site, r.site); contacts = r.site.contacts; toast("Сохранено"); draw(); } catch (err) { toast(err.message); }
     }
   };

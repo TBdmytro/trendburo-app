@@ -126,6 +126,11 @@ html.appin #app{animation:appin .7s cubic-bezier(.22,1,.36,1) both}
 @keyframes appin{from{opacity:0}to{opacity:1}} /* только проявление: сдвиг и масштаб при входе выглядели как «прыжок» */
 @media (prefers-reduced-motion:reduce){.splash{display:none}}
 body{margin:0}img{max-width:100%}/* ===== Наполнение из админки ===== */
+.wnew{margin:0 18px 14px;padding:12px 14px 13px;border-radius:14px;background:var(--bg,#fff);border:1px solid var(--line,#e4e2de);position:relative}
+.wnew .wn-h{display:flex;align-items:baseline;gap:8px;margin:0 26px 7px 0}.wnew .wn-h b{font-family:Prata,Georgia,serif;font-weight:400;font-size:17px;letter-spacing:.01em}.wnew .wn-h small{font-size:11.5px;color:var(--muted)}
+.wnew .wn-x{position:absolute;right:6px;top:6px;width:30px;height:30px;border:0;background:none;color:var(--muted);font-size:15px;cursor:pointer}
+.wnew ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}.wnew li{display:flex;gap:9px;align-items:baseline;font-size:13.5px;line-height:1.35}
+.wnew li::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;flex:none;transform:translateY(-2px)}.wnew li b{font-weight:600}.wnew li span{color:var(--g2)}.wnew li b{color:var(--fg)}.wnew li[data-b]{cursor:pointer}
 .announce{margin:0 18px 14px;padding:11px 14px;border-radius:14px;background:var(--soft);font-size:13.5px;line-height:1.4;color:var(--fg)}
 .bnr{margin:0 0 6px}
 /* компактные баннеры: между подборками, в каталоге, в категории, в корзине, после заказа */
@@ -1921,6 +1926,7 @@ window.hideSplash=function(min){var s=document.getElementById("splash");if(!s||s
       <div class="hgen" id="hGen" role="group" aria-label="Для кого"><button data-hg="w">Для неї</button><button data-hg="m">Для нього</button></div>
       <div class="sec watch" id="watchSec" hidden><div class="sech"><h2>Моніторинг</h2><button class="more" data-act="watch-lock">Приховати</button></div><div class="wtiles" id="watchTiles"></div></div>
       <div class="announce" id="announce" hidden></div>
+      <div class="wnew" id="whatsNew" hidden></div>
       <div class="stories" id="stories"></div>
       <div class="sec collw" id="collRail" hidden></div>
       <div class="bnr" id="bnr" hidden></div>
@@ -2451,6 +2457,7 @@ function renderFeed(){
   $("#newsList").innerHTML=NEWS.slice(1).map(n=>{const p=P.find(x=>x.id===n.pid);return `<button class="newsrow press" data-act="news" data-id="${n.id}" style="--c:${p.c}"><span class="th">${shapeSVG(p.shape,p.c,"")}</span><div><span class="cap">${esc(BRANDS.find(b=>b[0]===n.bk)[1])} · ${n.when}</span><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div></button>`}).join("");}
   try{renderFeedColl()}catch(e){}
   try{renderHome()}catch(e){console.log(e)}try{renderFooter()}catch(e){}
+  try{renderWhatsNew()}catch(e){}
   $("#newRail").innerHTML=P.filter(p=>p.isNew).slice(0,10).map(pcHTML).join("");
   $("#bagRail").innerHTML=P.filter(p=>p.cat==="bags"&&p.price<=3000).slice(0,12).map(pcHTML).join("");
   $("#menRail").innerHTML=P.filter(p=>p.g==="m").slice(0,12).map(pcHTML).join("");
@@ -4629,7 +4636,8 @@ function applyLayout(feed){if(!Array.isArray(feed))return;
   feed.forEach(b=>{const e=el[b.id];if(!e)return;end.parentNode.insertBefore(e,end);b.on?e.removeAttribute("data-off"):e.setAttribute("data-off","");if(b.title)FEED_TITLE[b.id]=b.title});
   if(FEED_TITLE.news)$("#newsTitle").textContent=FEED_TITLE.news;if(FEED_TITLE.ship)$("#shipTitle").textContent=FEED_TITLE.ship;
   const le=$(".live-empty");if(le&&el.ship)el.ship.after(le);
-  {const cr=$("#collRail"),stb=$("#stories");if(cr&&stb)stb.after(cr)}}
+  {const cr=$("#collRail"),stb=$("#stories");if(cr&&stb)stb.after(cr)}
+  {const wn=$("#whatsNew"),stb=$("#stories");if(wn&&stb)stb.before(wn)}}
 function applyTexts(s){const T=s.texts||{};TX=T;$$("[data-t]").forEach(e=>{const k=e.dataset.t;if(!e.dataset.t0)e.dataset.t0=e.textContent;e.textContent=T[k]||e.dataset.t0});
   ["concierge","travel","resale"].forEach(k=>{if(!SVC[k])return;if(T["svc."+k+".cap"])SVC[k].cap=T["svc."+k+".cap"];if(T["svc."+k+".title"])SVC[k].title=T["svc."+k+".title"];if(T["svc."+k+".long"])SVC[k].text=T["svc."+k+".long"]});
   const hid=s.hiddenServices||[];$$("[data-svc]").forEach(e=>hid.includes(e.dataset.svc)?e.setAttribute("data-off",""):e.removeAttribute("data-off"))}
@@ -4640,7 +4648,19 @@ function applySite(s){if(!s)return;applyLayout(s.feed);applyTexts(s);applyTheme(
   $$("[data-wd],[data-wd2]").forEach(e=>e.textContent=SHIPF());
   const an=$("#announce");if(an){an.hidden=!(s.announce&&s.announce.on&&s.announce.text);an.textContent=s.announce?s.announce.text:""}
   if(s.optix)OPTIX_ON=s.optix.on!==false;const oe=$(".o-entry");if(oe)oe.hidden=!OPTIX_ON;
+  WN=s.whatsnew||null;renderWhatsNew();
 }
+/* «Що нового»: белая карточка списком, до даты из админки; клиент может закрыть ✕ (до следующего обновления списка) */
+let WN=null;const WN_M=["січня","лютого","березня","квітня","травня","червня","липня","серпня","вересня","жовтня","листопада","грудня"];
+function renderWhatsNew(){const el=$("#whatsNew");if(!el)return;const w=WN,today=new Date().toISOString().slice(0,10);
+  const items=w&&w.on?(w.items||[]).filter(i=>!i.b||brandKey(i.b)||!P.length):[];
+  const key="tb_wn_"+(w?(w.until+"|"+(w.items||[]).map(i=>i.t).join(",")).replace(/[^\wа-яіїє]/gi,"").slice(0,80):"");let closed=false;try{closed=localStorage.getItem("tb_wn")===key}catch(e){}
+  if(!items.length||(w.until&&w.until<today)||(w.from&&w.from>today)||closed){el.hidden=true;return}
+  const d=x=>{const t=new Date(x+"T12:00:00");return{d:t.getDate(),m:WN_M[t.getMonth()]}},a=w.from&&d(w.from),b=w.until&&d(w.until);
+  const dt=a&&b?(a.m===b.m?a.d+"–"+b.d+" "+b.m:a.d+" "+a.m+" – "+b.d+" "+b.m):"";
+  el.innerHTML=`<div class="wn-h"><b>Що нового</b>${dt?`<small>${esc(dt)}</small>`:""}</div><button class="wn-x" aria-label="Закрити">✕</button><ul>${items.map(i=>`<li${i.b&&brandKey(i.b)?` data-b="${esc(i.b)}"`:""}><span><b>${esc(i.t)}</b>${i.s?" — "+esc(i.s):""}</span></li>`).join("")}</ul>`;
+  el.hidden=false;
+  el.onclick=e=>{if(e.target.closest(".wn-x")){try{localStorage.setItem("tb_wn",key)}catch(x){}el.hidden=true;return}const li=e.target.closest("li[data-b]");if(li)runAction({type:"brand",value:li.dataset.b})}}
 const brandKey=name=>{const n=String(name||"").trim().toLowerCase();const b=BRANDS.find(x=>x[1].toLowerCase()===n);return b?b[0]:null};
 function runAction(a){if(!a||!a.type||a.type==="none")return;const v=a.value||"";
   if(sv){sv.remove();sv=null}

@@ -194,6 +194,12 @@ export default async function handler(req, res) {
     if (apply) for (const p of L) await st.del(p._id); res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify({ apply, n: L.length, ids: L.map(p => p._id.slice(15)).slice(0, 50) })); })();
   // Paris Texas: артикул из адреса (PX…X…), английские названия, женское, обувь. Только скрытые. По ?apply=1 (владелец, 17.11)
   if (req.method === "GET" && /[?&]probe=ptfix\b/.test(String(req.url || ""))) return (async () => { const { ptFix } = await import("../lib/ptfix.js"); const r = await ptFix(getStore(), { apply: /[?&]apply=1\b/.test(String(req.url)) }); res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(r, null, 1)); })();
+  // «Що нового»: текст от владельца (17.11) — Stone Island для него; неделя. По ?apply=1
+  if (req.method === "GET" && /[?&]probe=wnset\b/.test(String(req.url || ""))) return (async () => { const st = getStore(), { cleanSite } = await import("../lib/cms.js"), apply = /[?&]apply=1\b/.test(String(req.url));
+    const n = (await st.list("product", {}, { limit: 60000, fields: "_id, status, gender" })).filter(p => p._id.startsWith("product.manual.stoneisland-") && p.status === "published").length;
+    const cur = (await st.get("settings.site")) || {}, wn = { on: true, from: "2026-11-17", until: "2026-11-24", items: [{ t: "Stone Island", s: "повна чоловіча колекція, " + n + " речей", b: "Stone Island" }] };
+    if (apply) await st.put({ ...cur, _id: "settings.site", _type: "settings", whatsnew: cleanSite({ ...cur, whatsnew: wn }).whatsnew });
+    res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify({ apply, wn }, null, 1)); })();
   // добірки: кто создал, кому (заметка), что выбрали (только чтение)
   if (req.method === "GET" && /[?&]probe=sels\b/.test(String(req.url || ""))) return (async () => { const st = getStore(); const L = (await st.list("selection", {}, { limit: 500 }).catch(() => [])).sort((a, b) => String(b._createdAt || b.at || "").localeCompare(String(a._createdAt || a.at || ""))).slice(0, 25);
     const names = {}; for (const d of L) if (d.by && !names[d.by]) { const c = await st.get("customer." + d.by).catch(() => null); names[d.by] = (c && ((c.profile && c.profile.name) || (c.tg && (c.tg.username || c.tg.name)))) || d.by; }
