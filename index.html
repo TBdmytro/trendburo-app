@@ -2948,14 +2948,16 @@ let FAMS=null;function famSibs(p){if(!p||!p.fam)return [];if(!FAMS){FAMS=new Map
     /* один и тот же цвет на разных языках (Black / Schwarz / Noir) при той же цене — один раз */const ck=colCanon(x.col)?colCanon(x.col)+"|"+priceFor(x,"ua"):"";if(ck&&!/van cleef/i.test(x.brand||"")){if(seenC.has(ck))return false;seenC.add(ck)}/* VCA: у версий бывает одно фото — различаем по товару */if(seen.has(k))return false;seen.add(k);return true}); // один цвет — один раз
   return L.length>1?L.slice(0,16):[]}
 // большое фото карточки начинаем грузить уже при касании плитки — к открытию карточки оно готово (а не после выезда)
-const PREF=new Set();document.addEventListener("pointerdown",e=>{const t=e.target.closest&&e.target.closest('[data-act="product"][data-id]');if(!t)return;const p=P.find(x=>x.id===t.dataset.id),im=p&&p.imgs&&p.imgs[0];if(!im||PREF.has(im.src))return;PREF.add(im.src);const m=new Image();if(/^https:\/\/cdn\.sanity\.io\//.test(im.src))m.crossOrigin="anonymous";m.decoding="async";m.src=im.src},{passive:true,capture:true});
+const PREF=new Set();document.addEventListener("pointerdown",e=>{const t=e.target.closest&&e.target.closest('[data-act="product"][data-id]');if(!t)return;const p=P.find(x=>x.id===t.dataset.id),im=p&&p.imgs&&p.imgs[0];try{fullImgs(p)}catch(e){}if(!im||PREF.has(im.src))return;PREF.add(im.src);const m=new Image();if(/^https:\/\/cdn\.sanity\.io\//.test(im.src))m.crossOrigin="anonymous";m.decoding="async";m.src=im.src},{passive:true,capture:true});
 // новая версия сайта — без закрытия приложения: Telegram держит страницу открытой часами. Когда приложение снова на экране
 // и прошло больше 2 минут — сверяем версию; новая — тихо перезагружаем, только если клиент не внутри карточки, корзины или окна
 (function(){let tag=null,last=Date.now();const get=()=>fetch("/",{method:"HEAD",cache:"no-store"}).then(r=>r.headers.get("etag")||r.headers.get("last-modified")).catch(()=>null);
   setTimeout(()=>get().then(t=>{tag=t}),4000);
   document.addEventListener("visibilitychange",()=>{if(document.hidden||!tag||Date.now()-last<120000)return;last=Date.now();
     get().then(t=>{if(t&&t!==tag){const busy=(typeof stack!=="undefined"&&stack.length)||document.querySelector(".sheet.open,.gate,[role=dialog]");if(busy)return;location.reload()}})})})();
-function openProduct(id){if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(catPend(j),true);catRefreshUI()}catch(e){}}popTrack("v",id);
+/* товар: если все фото ещё не подгружены — ждём их не дольше 0,7 с (обычно они уже пришли при касании), потом открываем */
+function openProduct(id){const p=P.find(x=>x.id===id);if(p&&p.live&&p.imn&&!FULLIM.has(id)){const go=()=>{if(go.d)return;go.d=1;openProduct0(id)};fullImgs(p).then(go);setTimeout(go,700);return}openProduct0(id)}
+function openProduct0(id){if(window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(catPend(j),true);catRefreshUI()}catch(e){}}popTrack("v",id);
   const p=P.find(x=>x.id===id),r=!p&&RESALE.find(x=>x.id===id),it=p||r;if(!it)return;
   let d=prefs.dest||"ua",size="",ci=0;
   const st=p&&p.st;if(st&&st.loc==="ua")d="ua";
@@ -4838,7 +4840,15 @@ setTimeout(()=>{selOpenFromLink();selBar()},1500);
 const vcaU=(u,w)=>{const b=u.replace(/\.transform\.vca-w\d+-\dx\.png$/,"");return w<=500?b+".transform.vca-w350-2x.png":w<=1100?b+".transform.vca-w820-2x.png":b};
 const szU=(u,w)=>!u?u:/^https:\/\/www\.vancleefarpels\.com\/content\/dam\/.+\.png/.test(u)?vcaU(u,w):/^https:\/\/assets\.hermes\.com\/is\/image\/.*[?&]wid=\d+/.test(u)?(W=>u.replace(/([?&])wid=\d+/,"$1wid="+W).replace(/([?&])hei=\d+/,"$1hei="+Math.round(W*4/3)))(w<=500?600:w<=1300?1200:2000):/^https:\/\/media\.gucci\.com\/style\/[^/]+\//.test(u)?u.replace(/(\/style\/)[^/]+\//,"$1DarkGray_Center_0_0_"+(W=>W+"x"+W)(w<=500?490:w<=1300?1200:2400)+"/"):/louisvuitton\.com\/images\/.*[?&]wid=\d+/.test(u)?(W=>u.replace(/([?&])wid=\d+/,"$1wid="+W).replace(/([?&])hei=\d+/,"$1hei="+W))(w<=500?490:w<=1300?1300:2400):/cdn\.sanity\.io\/images\//.test(u)?`${u}${u.includes("?")?"&":"?"}w=${w}&fit=max&auto=format&q=82`:/cdn\.shopify\.com\/|\/cdn\/shop\//.test(u)?(w>=1600?u.replace(/[?&]width=\d+/,""):`${u.replace(/[?&]width=\d+/,"")}${u.includes("?")&&!/\?width=\d+$/.test(u)?"&":"?"}width=${w}`):u;
 const XU=u=>typeof u==="string"&&u[0]==="~"?"https://cdn.shopify.com/s/files/"+u.slice(1):u;
-const imgsOf=x=>x.im?x.im.map(u=>{u=XU(u);return {src:szU(u,1000),thumb:szU(u,400),big:szU(u,1600)}}):(x.images||[]);
+/* лёгкий каталог: размеры строками «38», «38.5~a», «M~x@Black» → как раньше {size,status,color} */
+const SZS={a:"ask",b:"boutique",p:"preorder",x:"out",u:"unknown",n:undefined};
+function szX(L){return (L||[]).map(t=>{t=String(t);let color,i=t.indexOf("@");if(i>=0){color=t.slice(i+1);t=t.slice(0,i)}let status="online";i=t.indexOf("~");if(i>=0){const c=t.slice(i+1);status=c in SZS?SZS[c]:c;t=t.slice(0,i)}return {size:t,color,status}})}
+/* все фото товара: в лёгком каталоге только 2 — остальные подгружаются при нажатии на товар (заранее, ещё до открытия) */
+const FULLIM=new Map(),FULLP=new Map();
+function fullImgs(p){if(!p||!p.live||!p.imn||FULLIM.has(p.id))return Promise.resolve();if(FULLP.has(p.id))return FULLP.get(p.id);
+  const b=authBody(),pr=fetch(CATK+"&pid="+encodeURIComponent(p.id)+(b?"&a=1":""),b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{}).then(r=>r.ok?r.json():null).then(j=>{if(j&&Array.isArray(j.im)&&j.im.length){FULLIM.set(p.id,j.im);p._im=null}}).catch(()=>{}).finally(()=>FULLP.delete(p.id));
+  FULLP.set(p.id,pr);return pr}
+const imgsOf=x=>(FULLIM.get(x.id)||x.im)?(FULLIM.get(x.id)||x.im).map(u=>{u=XU(u);return {src:szU(u,1000),thumb:szU(u,400),big:szU(u,1600)}}):(x.images||[]);
 function applyLive(list,fresh){PV++;CMXV++;
   const shapeByCat={bags:"bag",shoes:"loafer",clothing:"coat",eyewear:"glasses",accessories:"wallet",jewelry:"bracelet",watches:"watch",fragrance:"wallet",other:"bag"};
   P.length=0;
@@ -4851,7 +4861,7 @@ function applyLive(list,fresh){PV++;CMXV++;
     // скидка закончилась, а каталог ещё из кэша — показываем обычную цену
     const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn&&x.oldPrice?x.oldPrice:x.price;if(!pr)return; /* без цены — не роняем весь каталог из-за одной вещи */
     P.push({id:x.id,kit:x.kit||null,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,mk:+x.mk||0,por:Math.max(+pr.ua||0,+pr.eu||0,+pr.dxb||0)>POR_EUR,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
-      shape:(()=>{const u=x.im?x.im[0]&&szU(XU(x.im[0]),400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),get imgs(){return this._im||(this._im=imgsOf(x))},colors:(x.colors||[]).map(c=>c.image&&c.image[0]==="~"?{...c,image:XU(c.image)}:c),sizes:x.sizes||[],
+      shape:(()=>{const u=x.im?x.im[0]&&szU(XU(x.im[0]),400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),imn:x.imn||0,get imgs(){return this._im||(this._im=imgsOf(x))},colors:(x.colors||[]).map(c=>c.image&&c.image[0]==="~"?{...c,image:XU(c.image)}:c),sizes:x.sizes||szX(x.sz),
       orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0,na:x.na?Date.parse(x.na):0,fam:x.fam||null,col:x.col||""})});FAMS=null;
   NEWS.length=0;RESALE.length=0;ICONS.length=0;
   BRANDS=[...new Map(P.map(p=>[p.bk,p.brand])).entries()];
@@ -4890,11 +4900,11 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act=watch-
   h.addEventListener("touchstart",start,{passive:true});h.addEventListener("mousedown",start);["touchend","touchmove","mouseup","mouseleave"].forEach(ev=>h.addEventListener(ev,stop))}}
 /* Быстрый старт: последний каталог хранится на телефоне (Cache Storage) — витрина открывается сразу,
    свежий каталог догружается в фоне и подменяет старый, когда покупатель не смотрит товар/сторис */
-const CATK="/api/catalog?v=2",CATSTO="tb-cat-1";
+const CATK="/api/catalog?v=3",CATSTO="tb-cat-1"; /* v=3 — лёгкий каталог: 2 фото на товар (остальные — при открытии), размеры строками; в 2 раза меньше разбирать телефону */
 async function catLocal(){try{if(!window.caches)return null;const c=await caches.open(CATSTO),r=await c.match(CATK);if(!r)return null;const t=await r.text();return {j:JSON.parse(t),t}}catch(e){return null}}
 const catCore=t=>{const i=String(t||"").lastIndexOf('"generatedAt"');return i>0?t.slice(0,i):String(t||"")}; // каталог без времени сборки — сравниваем «то же ли самое», не разбирая 20+ МБ
 const catPend=x=>typeof x==="string"?JSON.parse(x):x;
-async function catSave(txt){try{if(!window.caches)return;const c=await caches.open(CATSTO);await c.put(CATK,new Response(txt,{headers:{"content-type":"application/json"}}));try{localStorage.setItem("tb_catc","1")}catch(e){}}catch(e){}}
+async function catSave(txt){try{if(!window.caches)return;const c=await caches.open(CATSTO);await c.put(CATK,new Response(txt,{headers:{"content-type":"application/json"}}));try{await c.delete("/api/catalog?v=2")}catch(e){}try{localStorage.setItem("tb_catc","1")}catch(e){}}catch(e){}}
 let CLOSED=false;
 async function catNet(){const b=authBody(),r=await fetch(b?CATK+"&a=1":CATK,b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});
   // закрытый сайт: каталог только с открытым доступом; сохранённый на телефоне каталог стираем

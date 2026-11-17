@@ -10,20 +10,22 @@ import { readSession } from "../lib/auth.js";
 import { allow, tooMany } from "../lib/ratelimit.js";
 
 /* Каталог собирается не чаще раза в 20 с на экземпляр сервера; одновременные запросы ждут одну сборку (база не получает толпу одинаковых запросов) */
-const MEMO = [null, null];
+const MEMO = [null, null, null];
 const TTL = 3 * 60e3; // 3 минуты: правки видны чуть позже, зато база не собирает каталог по каждому заходу
 let FRESH = false; // каталог сбросили после правки в админке — собираем заново, а не отдаём сохранённый
-export function _resetCatalogMemo() { MEMO[0] = MEMO[1] = null; CUST.clear(); FRESH = true; }
+export function _resetCatalogMemo() { MEMO[0] = MEMO[1] = MEMO[2] = null; CUST.clear(); FRESH = true; }
 // доступ клиента — из памяти на 2 минуты (без запроса к базе при каждом открытии приложения)
 const CUST = new Map();
 async function custCached(store, id) { const m = CUST.get(id); if (m && Date.now() - m.at < 120e3) return m.c; const c = await store.get(customerId(id)); if (CUST.size > 5000) CUST.clear(); if (c?.access === "ok") CUST.set(id, { c, at: Date.now() }); return c; } // помним только «пускаем» — одобренный только что попадает сразу
 // готовый каталог хранится и в базе (сжатым): новый экземпляр сервера (после выкладки или простоя) отдаёт его сразу,
 // а не собирает 23 000 товаров 10–15 с — раньше в это время сайт «висел» на заставке
-let SAVED_AT = 0; const LOADP = [null, null];
+const SAVED_AT = [0, 0, 0]; const LOADP = [null, null, null];
 async function savedCatalog(store, k) { try { const d = await store.get("settings.catcache" + k); if (!d || !d.gz || Date.now() - Date.parse(d.at) > 12 * 3600e3) return null; const { gunzipSync } = await import("node:zlib"); return { body: gunzipSync(Buffer.from(d.gz, "base64")).toString("utf8"), at: Date.parse(d.at) }; } catch { return null; } }
-async function saveCatalog(store, k, body) { if (Date.now() - SAVED_AT < 5 * 60e3) return; SAVED_AT = Date.now(); try { const { gzipSync } = await import("node:zlib"); await store.put({ _id: "settings.catcache" + k, _type: "settings", at: new Date().toISOString(), gz: gzipSync(Buffer.from(body)).toString("base64") }); } catch {} }
+async function saveCatalog(store, k, body) { if (Date.now() - SAVED_AT[k] < 5 * 60e3) return; SAVED_AT[k] = Date.now(); try { const { gzipSync } = await import("node:zlib"); await store.put({ _id: "settings.catcache" + k, _type: "settings", at: new Date().toISOString(), gz: gzipSync(Buffer.from(body)).toString("base64") }); } catch {} }
+// прогрев лёгкого каталога после выкладки (без него первый покупатель ждал бы сборку 27 000 товаров)
+export async function warmCatalog(v = 2) { const b = await catalogBody(v); SAVED_AT[v] = 0; await saveCatalog(getStore(), v, b); return b.length; }
 async function catalogBody(compact) {
-  const k = compact ? 1 : 0; let m = MEMO[k];
+  const k = compact === 2 ? 2 : compact ? 1 : 0; let m = MEMO[k];
   if (m && m.body && Date.now() - m.at < TTL) return m.body;
   if (!m && !FRESH) { const L = LOADP[k] = LOADP[k] || savedCatalog(getStore(), k); const sv = await L; m = MEMO[k]; if (!m && sv) MEMO[k] = m = { body: sv.body, at: 0 }; }
   if (m && m.wait) return m.body || m.wait; // сборка уже идёт — отдаём прежний каталог, не ждём
@@ -33,7 +35,7 @@ async function catalogBody(compact) {
     const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 30000,
       fields: "_id, brand, title, sourceTitle, category, subcategory, subFor, modelSku, colors, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos, webSections, sourceUrl, kit" });
     const now = Date.now();
-    const products = list.map(p => toStorefront(p, now, { compact })).filter(Boolean);
+    const products = list.map(p => toStorefront(p, now, { compact: !!compact, lean: compact === 2 })).filter(Boolean);
     // популярность у покупателей (просмотры, избранное, корзина) — витрина ставит такие товары выше
     try { const pop = (await store.get("stats.pop"))?.scores || {}; for (const x of products) { const v = pop[popKey(x.id)]; if (v > 0) x.pop = v; } } catch {}
     let content = null; try { content = await publicContent(store, new Date(now)); } catch { content = null; }
@@ -76,7 +78,14 @@ export default async function handler(req, res) {
       if (!adm && accessOf(c, acc) !== "ok") { res.statusCode = 403; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Доступ по приглашению", code: "closed", access: c ? accessOf(c, acc) : "none" })); }
     }
   } catch (e) { console.error("catalog access:", e.message); res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end(JSON.stringify({ error: "Недоступно" })); }
-  const compact = /[?&]v=2\b/.test(String(req.url || ""));
+  const compact = /[?&]v=3\b/.test(String(req.url || "")) ? 2 : /[?&]v=2\b/.test(String(req.url || "")); // v=3 — лёгкий: 2 фото и размеры строками (остальные фото — по ?pid= при открытии товара)
+  // все фото одного товара (лёгкий каталог несёт только первые два)
+  if (/[?&]pid=product\.[a-z0-9._-]{3,120}/.test(String(req.url || ""))) {
+    try { const id = String(req.url).match(/[?&]pid=(product\.[a-z0-9._-]{3,120})/)[1], p = await getStore().get(id), { storefrontImages } = await import("../lib/catalog.js");
+      res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", closed ? "private, max-age=300" : "public, max-age=300, s-maxage=300"); res.statusCode = 200;
+      return res.end(JSON.stringify({ id, im: p && p.status === "published" ? storefrontImages(p) : [] })); }
+    catch (e) { res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end('{"im":null}'); }
+  }
   // только «Що нового» и настройки витрины — маленький ответ: телефон со старым сохранённым каталогом сразу видит свежую плашку
   if (/[?&]site=1\b/.test(String(req.url || ""))) {
     try { const { getSite } = await import("../lib/cms.js"); const site = await getSite(getStore()); res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "private, no-store"); res.statusCode = 200; return res.end(JSON.stringify({ whatsnew: site.whatsnew })); }
@@ -98,7 +107,7 @@ export default async function handler(req, res) {
     res.statusCode = 200;
     res.end(body);
   } catch (e) {
-    const last = MEMO[compact ? 1 : 0];
+    const last = MEMO[compact === 2 ? 2 : compact ? 1 : 0];
     if (last && last.body) { res.statusCode = 200; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", closed ? "private, no-store" : "public, s-maxage=10"); return res.end(last.body); }
     res.statusCode = 503; res.setHeader("Content-Type", "application/json; charset=utf-8");
     // Код причины без секретов — чтобы по ответу было видно, что чинить
