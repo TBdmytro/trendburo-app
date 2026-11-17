@@ -127,7 +127,7 @@ html.appin #app{animation:appin .7s cubic-bezier(.22,1,.36,1) both}
 @media (prefers-reduced-motion:reduce){.splash{display:none}}
 body{margin:0}img{max-width:100%}/* ===== Наполнение из админки ===== */
 .wnew{margin:0 18px 14px;padding:12px 14px 13px;border-radius:14px;background:var(--bg,#fff);border:1px solid var(--line,#e4e2de);position:relative}
-.wnew .wn-h{display:flex;align-items:baseline;gap:8px;margin:0 26px 7px 0}.wnew .wn-h b{font-family:Prata,Georgia,serif;font-weight:400;font-size:17px;letter-spacing:.01em}.wnew .wn-h small{font-size:11.5px;color:var(--muted)}
+.wnew .wn-h{display:flex;align-items:baseline;gap:8px;margin:0 26px 7px 0}.wnew .wn-h b{font:600 15.5px Onest,sans-serif;letter-spacing:-.005em}.wnew .wn-h small{font-size:11.5px;color:var(--muted)}
 .wnew .wn-x{position:absolute;right:6px;top:6px;width:30px;height:30px;border:0;background:none;color:var(--muted);font-size:15px;cursor:pointer}
 .wnew ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}.wnew li{display:flex;gap:9px;align-items:baseline;font-size:13.5px;line-height:1.35}
 .wnew li::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;flex:none;transform:translateY(-2px)}.wnew li b{font-weight:600}.wnew li span{color:var(--g2)}.wnew li b{color:var(--fg)}.wnew li[data-b]{cursor:pointer}
@@ -1162,7 +1162,7 @@ img.imgx{opacity:0!important}
 .sv2 .cin .cfr{flex:1;min-height:0;position:relative}
 .sv2 .cin .tx{position:static;padding:16px 8px 0}
 .sv2 .cin .k{font:600 10px Onest,sans-serif;letter-spacing:.18em;opacity:.6}
-.sv2 .cin h2{font:400 30px/1.08 Prata,serif;margin:8px 0 0}
+.sv2 .cin h2{font:600 22px/1.25 Onest,sans-serif;letter-spacing:-.01em;margin:0}.sv2 .cin .cta{margin-top:14px}
 .sv2 .cin p{font:400 13.5px/1.45 Onest,sans-serif;opacity:.72;margin:8px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sv2 .cin .cta{margin-top:14px}
 .sv2 .in2 h2{font-family:Prata,serif;font-weight:400}
@@ -2888,6 +2888,9 @@ function fullScale(im,w,h,W,H){const u=im.currentSrc||im.src||"",r=(w/h)/(W/H),c
 /* где показать кадр, когда он обрезается рамкой: так, чтобы товар был виден целиком (у Paris Texas туфля внизу кадра — по центру её срезало) */
 function objPos(im,w,h,W,H){const si=im._si,b=si&&si.box;if(!b)return "50% 50%";const sc=Math.max(W/w,H/h),vw=Math.min(1,W/(w*sc)),vh=Math.min(1,H/(h*sc));
   const ax=(v,c0,c1)=>{if(v>=1)return 50;let t=(c0+c1)/2-v/2;t=Math.max(t,c1-v);t=Math.min(t,c0);t=Math.max(0,Math.min(1-v,t));return Math.round(t/(1-v)*1000)/10};return ax(vw,b[0],b[2])+"% "+ax(vh,b[1],b[3])+"%"}
+/* история коллекции — одна строка: «Додано бренд Paris Texas» (бренд у нас меньше 3 недель) или «Додано новинки Stone Island · для нього» */
+function storyLine(c){const b=String(c.brand||""),L=P.filter(p=>p.live&&p.brand===b),old=Date.now()-21*864e5;
+  if(b&&L.length&&L.every(p=>p.na&&p.na>=old))return "Додано бренд "+b;const t=String(c.title||b);return "Додано "+t.charAt(0).toLowerCase()+t.slice(1)}
 function placeFull(im,box,w,h){const c0=getComputedStyle(box),p0=parseFloat(c0.paddingTop)||0,W0=box.clientWidth,H0=box.clientHeight-p0-(parseFloat(c0.paddingBottom)||0);
   if(W0>10&&H0>10&&w&&h){const k=fullScale(im,w,h,W0,H0),fill=k>Math.min(W0/w,H0/h)+1e-6,dw=fill?W0:w*k,dh=fill?H0:h*k;Object.assign(im.style,{position:"absolute",left:(W0-dw)/2+"px",top:(p0+(H0-dh)/2)+"px",width:dw+"px",height:dh+"px",maxWidth:"none",maxHeight:"none",right:"auto",bottom:"auto",objectFit:fill?"cover":"fill",objectPosition:fill?objPos(im,w,h,dw,dh):"50% 50%"});im.classList.add("geo")}}
 function fitShot(im,box,src){const w=im.naturalWidth,h=im.naturalHeight;if(!w||!box)return;
@@ -3782,7 +3785,7 @@ function openAuto(ri){
   // заранее: загрузка следующего слайда и разбор фото его товаров (чтобы кадр и раскладка были готовы к показу)
   const pre=s=>{if(!s)return;[s.p,s.a,s.b].filter(Boolean).forEach(p=>shpProduct(p,3));const u=s.t==="cin"&&s.R?null:srcOf(s);if(u){const m=new Image();m.onload=()=>RAT.set(u,m.naturalWidth/m.naturalHeight);m.src=u;if(s.t==="du"){const m2=new Image();m2.crossOrigin="anonymous";m2.src=svImg(s.b,0).src}}};
   const slideH=(R,s)=>{
-    if(s.t==="cin"){const c=R.coll;collMark(c.id);return `<div class="cin"><div class="cfr">${c.cover?`<img src="${esc(szU(c.cover,1000))}" alt="" decoding="async">`:""}</div><div class="tx"><span class="k">Нова колекція · ${esc(c.brand)}</span><h2>${esc(c.title)}</h2>${c.desc?`<p>${esc(c.desc)}</p>`:""}<button class="cta" data-collgo="${esc(c.id)}">Дивитися ${c.n} ${plural(c.n,["річ","речі","речей"])} ›</button></div></div>`}
+    if(s.t==="cin"){const c=R.coll;collMark(c.id);return `<div class="cin"><div class="cfr">${c.cover?`<img src="${esc(szU(c.cover,1000))}" alt="" decoding="async">`:""}</div><div class="tx"><h2>${esc(storyLine(c))}</h2><button class="cta" data-collgo="${esc(c.id)}">Дивитися ${c.n} ${plural(c.n,["позиція","позиції","позицій"])} ›</button></div></div>`}
     if(s.t==="in"){const I=R.intro||{k:"Добірка",h:R.name,d:""};return `<div class="in2"><div class="gr">${s.ps.map(p=>`<div style="background-image:url('${esc(szU(svImg(p).src||svImg(p).thumb,600))}')"></div>`).join("")}</div><span class="k">${esc(I.k)}</span><h2>${esc(I.h)}</h2><p>${esc(I.d)}${I.d?" · ":""}${R.pool.length} ${plural(R.pool.length,["позиція","позиції","позицій"])}</p></div>`}
     if(s.t==="du")return `<div class="du ${duLay(s.a,s.b)}">${[s.a,s.b].map((p,j)=>duCardH(p,j)).join("")}<span class="vs">VS</span></div><div class="duh">змахніть нецікаве · тап по картці — відкрити</div>`;
     const p=s.p,cs=null; // в истории — только обложка товара, без смены цветов
