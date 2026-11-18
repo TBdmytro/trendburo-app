@@ -1310,7 +1310,7 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .olv .nd text{fill:rgba(255,255,255,.5);font-size:10.5px;font-weight:600;font-family:var(--f)}.olv .nd.on text{fill:#fff}
 .olv .cm .bob{transform-box:fill-box}.olv .cm.walk .bob{animation:olvbob .42s ease-in-out infinite alternate}@keyframes olvbob{from{transform:translateY(-1.2px) rotate(-4deg)}to{transform:translateY(1.2px) rotate(4deg)}}
 .olv .cm.done .body{fill:#26b06a}.olv .cm.done .glow{fill:#86f0b6}.olv .cm.done .cmi{stroke:#fff;stroke-width:2.6}
-.olv-lbl:empty{display:none}.olv .nd text{font-size:9.5px;letter-spacing:-.01em}.olv-route{height:112px}.olv-route svg{top:8px;height:96px}
+.olv-lbl:empty{display:none}.olv .nd.cur text{fill:#fff;font-size:11px;font-weight:800}.olv .mrg rect{fill:#fff;transition:fill .3s}.olv .mrg text{fill:#fff;font-size:10px;font-weight:800;font-family:var(--f)}.olv .mrg{transition:opacity .3s}.olv .nd .rp{transform-box:fill-box}.olv .nd text{font-size:9.5px;letter-spacing:-.01em}.olv-route{height:112px}.olv-route svg{top:8px;height:96px}
 .olv .cm{will-change:transform}.olv .cm .glow{fill:var(--acc2);opacity:.45;filter:blur(6px)}.olv .cm .body{fill:#fff}
 .olv-lbl{display:grid;gap:8px;margin:-14px 2px 0}
 .olv-lbl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.5);transition:color .4s;text-align:center}
@@ -4210,6 +4210,28 @@ const rtGrad=o=>{const K=rtKeys(o);return K.map((k,i)=>`<stop offset="${(i/(K.le
 /* подписи этапов прямо у точек: через одну сверху и снизу, чтобы 7–9 пунктов не налезали */
 const rtLbl=(p,i,last,n,on)=>`<text x="${Math.max(4,Math.min(350,p.x))}" y="${i%2?p.y-13:p.y+21}" text-anchor="${i===0?"start":i===last?"end":"middle"}">${esc(n)}</text>`;
 const LEAD_ST2={new:"Оформлено",work:"Підтверджено",paid:"Оплачено",bought:"Викуплено",received:"Отримали ми",packed:"Запаковано",ready:"Готово до відправки",inua:"В Україні",shipping:"У дорозі",np:"Нова пошта",delivered:"Отримано",cancelled:"Скасовано"};
+/* маршрут «склеивание»: пройденные точки съезжаются к началу и слипаются в капсулу «✓ N», цветная линия удлиняется,
+   текущий пункт — у кометы, впереди оставшиеся пункты ужимаются к финишу. p — позиция в этапах (0…n, дробная = в пути) */
+function rtEngine(root,o){const rf=root.querySelector(".rf"),cm=root.querySelector(".cm"),nds=root.querySelector(".nds");if(!rf||!nds)return null;
+  const K=rtKeys(o),n=K.length-1,L=rf.getTotalLength(),M0=.035,A=p=>.12+.88*Math.min(1,Math.max(0,p)/n),act=RT_ON.includes(o.status);
+  const F=(j,p)=>{const a=A(p),d=j-p;if(d<=-1)return M0;if(d<=0)return a+d*(a-M0);const rem=n-p;return rem<=0?1:a+(1-a)*d/rem};
+  nds.innerHTML=`<g class="mrg"><rect rx="9" height="18" y="-9"/><text y="3.6" text-anchor="middle"></text></g>`+K.map(k=>`<g class="nd" style="--c:${OST[k][0]}"><circle class="rp" r="6"/><circle class="o" r="6"/><text>${esc(RT_LB[k])}</text></g>`).join("");
+  const G=[...nds.querySelectorAll(".nd")],mg=nds.querySelector(".mrg"),mr=mg.querySelector("rect"),mt=mg.querySelector("text");rf.style.strokeDasharray=L;
+  const pt=f=>rf.getPointAtLength(L*Math.max(0,Math.min(1,f)));
+  const set=(p,icon=true)=>{const a=A(p),c=pt(a),cur=Math.floor(p+1e-6);rf.style.strokeDashoffset=L*(1-a);if(cm){cm.style.transform=`translate(${c.x}px,${c.y}px)`;if(icon)rtSetIcon(cm,o,p/n)}
+    let m=0;G.forEach((g,j)=>{const d=j-p,f=F(j,p),q=pt(f),ci=g.querySelectorAll("circle"),tx=g.querySelector("text");ci.forEach(x=>{x.setAttribute("cx",q.x);x.setAttribute("cy",q.y)});
+      if(d<=-.5&&(j>0||act))m++;const op=d<-.3?Math.max(0,1-(-d-.3)/.5):1;g.style.opacity=op;
+      g.classList.toggle("on",d<=1e-6&&(j>0||act));g.classList.toggle("cur",j===cur&&act);
+      const u=j-cur,above=u<=0||u%2===0;tx.setAttribute("x",Math.max(4,Math.min(350,q.x)));tx.setAttribute("y",j===cur&&act?q.y-21:above?q.y-13:q.y+21);
+      tx.setAttribute("text-anchor",f>.93?"end":f<.06?"start":"middle");tx.style.opacity=d<-.3?0:1});
+    const q=pt(M0);mg.style.opacity=m?1:0;mt.textContent="✓ "+m;const w=m>9?36:30;mr.setAttribute("width",w);mr.setAttribute("x",q.x-w/2+4);mt.setAttribute("x",q.x+4);mg.setAttribute("transform",`translate(0 ${q.y})`);mr.setAttribute("y",-9);mt.setAttribute("y",3.6);
+    const lc=G[Math.max(0,Math.min(n,Math.round(p-.5)))];mr.style.fill=m?getComputedStyle(lc).getPropertyValue("--c"):"";};
+  /* идти по пунктам: каждый этап — свой шаг с плавным разгоном и короткой остановкой на точке */
+  const run=(from,to,onStop,done)=>{const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,stops=[];let x=from;while(x<to-1e-6){const nx=Math.min(to,Math.floor(x+1e-6)+1);stops.push([x,nx]);x=nx}
+    if(RMo()||!stops.length){set(to);onStop&&onStop(Math.floor(to+1e-6),true);done&&done();return}
+    let i=0;const seg=()=>{if(!root.isConnected)return;if(i>=stops.length){done&&done();return}const[a,b]=stops[i++],D=Math.max(380,620*(b-a)),t0=performance.now();
+      const st=t=>{if(!root.isConnected)return;const k=Math.min(1,(t-t0)/D);set(a+(b-a)*ease(k));if(k<1)requestAnimationFrame(st);else{if(Number.isInteger(b))onStop&&onStop(b,i>=stops.length);setTimeout(seg,Number.isInteger(b)?170:0)}};requestAnimationFrame(st)};seg()};
+  return{set,run,pt:j=>pt(F(j,0)),node:j=>G[j],n,A};}
 /* мини-карточка «Сейчас в пути» в кабинете — тот же маршрут, что на экране заказа */
 function accLiveHTML(o,i){const{S,cur}=orderSteps(o),z=S[Math.max(0,cur)],col=OST[z.k]||OST.new,p0=findItem(o.items&&o.items[0]&&o.items[0].id),e=orderEta(o);
   const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
@@ -4225,14 +4247,10 @@ function accEmptyHTML(had){const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 
     <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#e0566a"/><stop offset=".38" stop-color="#3d93ea"/><stop offset=".72" stop-color="#9677f0"/><stop offset="1" stop-color="#2fc77a"/></linearGradient></defs>
     <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g><g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g class="bob"><g class="cmi" transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${OST.shipping[2]}</g></g></g></svg></div><div class="olv-lbl"></div>
     <span class="acc-cta">${had?"Обрати наступну річ":"Обрати першу річ"} ›</span></button></div>`}
-function accLiveDraw(w,o,idle){const rf=w.querySelector(".rf");if(!o||!rf||!rf.getTotalLength)return;
-  const N=routeNodes(o),last=N.length-1,ua=(o.dest||"ua")==="ua",f=routePos(o)/last,L=rf.getTotalLength();if(!L)return;
-  const ks=rtKeys(o),on=i=>i/last<=f+1e-3&&(i>0||RT_ON.includes(o.status));const gr=w.querySelector("linearGradient");if(gr)gr.innerHTML=rtGrad(o);
-  w.querySelector(".nds").innerHTML=N.map((_,i)=>{const p=rf.getPointAtLength(L*i/last);return `<g class="nd ${on(i)?"on":""}" style="--c:${OST[ks[i]][0]}"><circle class="o" cx="${p.x}" cy="${p.y}" r="6"/>${rtLbl(p,i,last,N[i])}</g>`}).join("");
-  const lb=w.querySelector(".olv-lbl");if(lb)lb.innerHTML="";
-  const set=(f,ic)=>{rf.style.strokeDashoffset=L*(1-f);const p=rf.getPointAtLength(L*f),cm=w.querySelector(".cm");cm.style.transform=`translate(${p.x}px,${p.y}px)`;if(ic!==false)rtSetIcon(cm,o,f)};rf.style.strokeDasharray=L;set(f,!idle);
-  // пустой маршрут: машинка «пробует дорогу» — доезжает до трети пути и возвращается
-  if(idle&&!matchMedia("(prefers-reduced-motion: reduce)").matches){const t0=performance.now(),D=5200,tick=t=>{if(!w.isConnected)return;const k=((t-t0)%D)/D,e=k<.5?k*2:2-k*2;set(.34*(e<.5?2*e*e:1-Math.pow(-2*e+2,2)/2),false);requestAnimationFrame(tick)};requestAnimationFrame(tick)}}
+function accLiveDraw(w,o,idle){if(!o)return;const gr=w.querySelector("linearGradient");if(gr)gr.innerHTML=rtGrad(o);const lb=w.querySelector(".olv-lbl");if(lb)lb.innerHTML="";
+  const E=rtEngine(w,o);if(!E)return;const p=routePos(o);E.set(p,!idle);
+  // пустой маршрут: человечек «пробует дорогу» — проходит пару пунктов и возвращается
+  if(idle&&!matchMedia("(prefers-reduced-motion: reduce)").matches){const t0=performance.now(),D=6400,tick=t=>{if(!w.isConnected)return;const k=((t-t0)%D)/D,e=k<.5?k*2:2-k*2;E.set(2.2*(e<.5?2*e*e:1-Math.pow(-2*e+2,2)/2));requestAnimationFrame(tick)};requestAnimationFrame(tick)}}
 function orderRowHTML(o,i){const{S,cur}=orderSteps(o);const p=o.items&&o.items[0]&&findItem(o.items[0].id);
   return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):(itThumb(o.items&&o.items[0],' style="width:100%;height:100%;object-fit:contain"')||"<i></i>")}</span><span class="otx"><b>Замовлення № ${esc(String(o.number).replace(/^TB-/,""))}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
     <span class="obar">${S.map((_,j)=>`<i class="${j<=cur?"on":""}"></i>`).join("")}</span></span><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}
@@ -4273,9 +4291,9 @@ function openOrdersAll(ords){
   box.onclick=e=>{if(e.target.closest("[data-momore]")){lim+=20;draw();return}const b=e.target.closest("[data-mo]");if(b)openOrder(ords[+b.dataset.mo])};
 }
 function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.route||{},cancelled=o.status==="cancelled";
-  const N=routeNodes(o),last=N.length-1,NF=N.map((_,i)=>i/last),pos=routePos(o)/last;
+  const N=routeNodes(o);
   const z=S[Math.max(0,cur)],col=OST[z.k]||OST.new,p0=findItem(o.items&&o.items[0]&&o.items[0].id);
-  const KEY="tb_ordseen",seenMap=store.get(KEY,{}),fromPos=seenMap[o.number]!==undefined?Math.min(seenMap[o.number],pos):0;seenMap[o.number]=pos;store.set(KEY,seenMap);
+  const P1=routePos(o),KEY="tb_ordseen9",seenMap=store.get(KEY,{}),P0=seenMap[o.number]!==undefined?Math.min(seenMap[o.number],P1):0;seenMap[o.number]=P1;store.set(KEY,seenMap);
   const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
   const RK=rtKeys(o),nodeCol=i=>OST[RK[i]][0];
   const dn=S.slice(0,Math.max(0,cur)).reverse(),nx=cancelled?[]:S.slice(cur+1);
@@ -4298,21 +4316,14 @@ function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.ro
       ${o.total?`<div class="group" style="margin-top:12px"><div class="row tot"><span>Разом</span><span class="num">${eur(o.total)}</span></div></div>`:""}</div></div>
     <div class="pad" style="margin-top:16px"><a class="btn block soft" href="${esc((CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]).url)}" target="_blank" rel="noopener">Написати менеджеру про замовлення</a></div><div style="height:30px"></div></div>`);
   const live=s.querySelector(".olv-live"),rf=s.querySelector(".rf"),L=rf.getTotalLength(),cm=s.querySelector(".cm");
-  s.querySelector(".nds").innerHTML=N.map((n,i)=>{const p=rf.getPointAtLength(L*NF[i]);return `<g class="nd" style="--c:${nodeCol(i)}"><circle class="rp" cx="${p.x}" cy="${p.y}" r="6"/><circle class="o" cx="${p.x}" cy="${p.y}" r="6"/>${rtLbl(p,i,last,n)}</g>`}).join("");
-  s.querySelector(".olv-lbl").innerHTML="";
-  s.querySelector("linearGradient").innerHTML=rtGrad(o);
-  const setPos=f=>{rf.style.strokeDashoffset=L*(1-f);const p=rf.getPointAtLength(L*f);cm.style.transform=`translate(${p.x}px,${p.y}px)`;rtSetIcon(cm,o,f)};
-  const nodes=[...s.querySelectorAll(".nd")],reached=f=>NF.map((nf,i)=>f>=nf-1e-3&&(i>0||RT_ON.includes(o.status)));
-  rf.style.strokeDasharray=L;setPos(fromPos);reached(fromPos).forEach((on,i)=>{nodes[i].classList.toggle("on",on);});
-  const sparks=(x,y,c)=>{const box=s.querySelector(".olv-route").getBoundingClientRect(),hb=live.getBoundingClientRect(),k=box.width/354;
+  s.querySelector(".olv-lbl").innerHTML="";s.querySelector("linearGradient").innerHTML=rtGrad(o);
+  const E=rtEngine(s.querySelector(".olv-route"),o);E.set(P0);
+  const sparks=(x,y,c)=>{const box=s.querySelector(".olv-route svg").getBoundingClientRect(),hb=live.getBoundingClientRect(),k=box.width/354;
     for(let j=0;j<16;j++){const e=document.createElement("i");e.className="olv-spark";const a=Math.random()*6.283,r=22+Math.random()*36;
       e.style.cssText=`left:${box.left-hb.left+x*k-3}px;top:${box.top-hb.top+y*(box.height/96)-3}px;background:${[c,"#fff",col[1]][j%3]};--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r}px`;live.append(e);setTimeout(()=>e.remove(),1100)}};
-  // комета едет ровно по кривой: плавный разгон и торможение, линия рисуется вместе с ней
-  const was=reached(fromPos),fired=was.slice(),ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,D=RMo()?0:Math.max(900,2200*Math.abs(pos-fromPos)+600);
-  const lbls=()=>[...s.querySelectorAll(".olv-lbl span")];const pop=i=>{nodes[i].classList.add("on");nodes[i].classList.remove("pop");void nodes[i].getBoundingClientRect();nodes[i].classList.add("pop");const q=rf.getPointAtLength(L*NF[i]);sparks(q.x,q.y,nodeCol(i));hap("light")};
-  setTimeout(()=>{const t0=performance.now();const step=n=>{if(!s.isConnected)return;const k=D?Math.min(1,(n-t0)/D):1,f=fromPos+(pos-fromPos)*ease(k);setPos(f);
-      reached(f).forEach((on,i)=>{if(on&&!fired[i]){fired[i]=true;pop(i)}});
-      if(k<1)requestAnimationFrame(step);else if(fromPos===pos){const li=reached(pos).lastIndexOf(true);if(li>=0)pop(li)}};requestAnimationFrame(step)},350);
+  // человечек проходит каждый пункт по очереди: точка вспыхивает, прошлая «прилипает» к капсуле в начале, линия удлиняется
+  const pop=j=>{const g=E.node(j);if(!g)return;g.classList.remove("pop");void g.getBoundingClientRect();g.classList.add("pop");const c=g.querySelector("circle.o");sparks(+c.getAttribute("cx"),+c.getAttribute("cy"),nodeCol(j));hap("light")};
+  setTimeout(()=>E.run(P0,P1,(j,last)=>{if(j>0||RT_ON.includes(o.status))pop(j)}),350);
   const st=s.querySelector(".olv-stack");if(st)st.onclick=()=>st.classList.toggle("open");
   const c=s.querySelector("[data-cpt]");if(c)c.onclick=()=>copy(R.track)}
 
