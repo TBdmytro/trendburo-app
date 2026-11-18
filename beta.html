@@ -129,7 +129,7 @@ html.appin #app{animation:appin .7s cubic-bezier(.22,1,.36,1) both}
 @media (prefers-reduced-motion:reduce){.splash{display:none}}
 body{margin:0}img{max-width:100%}/* ===== Наполнение из админки ===== */
 .wnew{margin:0 18px 14px;padding:12px 14px 13px;border-radius:14px;background:var(--bg,#fff);border:1px solid var(--line,#e4e2de);position:relative}
-.wnew .wn-h{display:flex;align-items:baseline;gap:8px;margin:0 26px 7px 0}.wnew .wn-h b{font:600 15.5px Onest,sans-serif;letter-spacing:-.005em}.wnew .wn-h small{font-size:11.5px;color:var(--muted)}
+.wnew{padding-top:11px;padding-bottom:11px}.wnew .wn-h{display:flex;align-items:baseline;gap:8px;margin:0 30px 0 0;cursor:pointer;-webkit-tap-highlight-color:transparent}.wnew .wn-h .wn-n{margin-left:auto;font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:4px;white-space:nowrap}.wnew .wn-h .wn-n svg{width:14px;height:14px;transition:transform .2s}.wnew.open .wn-h .wn-n svg{transform:rotate(180deg)}.wnew ul{display:none!important}.wnew.open ul{display:flex!important;margin-top:9px}.wnew .wn-h b{font:600 15.5px Onest,sans-serif;letter-spacing:-.005em}.wnew .wn-h small{font-size:11.5px;color:var(--muted)}
 .wnew .wn-x{position:absolute;right:6px;top:6px;width:30px;height:30px;border:0;background:none;color:var(--muted);font-size:15px;cursor:pointer}
 .wnew ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}.wnew li{display:flex;gap:9px;align-items:baseline;font-size:13.5px;line-height:1.35}
 .wnew li::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;flex:none;transform:translateY(-2px)}.wnew li b{font-weight:600}.wnew li span{color:var(--g2)}.wnew li b{color:var(--fg)}.wnew li[data-b]{cursor:pointer}
@@ -4720,9 +4720,9 @@ function renderWhatsNew(){const el=$("#whatsNew");if(!el)return;const w=WN,today
   if(!items.length||(w.until&&w.until<today)||(w.from&&w.from>today)||closed){el.hidden=true;return}
   const d=x=>{const t=new Date(x+"T12:00:00");return{d:t.getDate(),m:WN_M[t.getMonth()]}},a=w.from&&d(w.from),b=w.until&&d(w.until);
   const dt=a?"з "+a.d+" "+a.m:"";
-  el.innerHTML=`<div class="wn-h"><b>Що додано нового</b>${dt?`<small>${esc(dt)}</small>`:""}</div><button class="wn-x" aria-label="Закрити">✕</button><ul>${items.map(i=>`<li${i.b&&brandKey(i.b)?` data-b="${esc(i.b)}"`:""}><span><b>${esc(i.t)}</b>${i.s?" — "+esc(i.s):""}</span></li>`).join("")}</ul>`;
+  const nn=items.length,nw=nn%10===1&&nn%100!==11?"новинка":nn%10>=2&&nn%10<=4&&(nn%100<10||nn%100>=20)?"новинки":"новинок";el.classList.remove("open");el.innerHTML=`<div class="wn-h" role="button" aria-expanded="false"><b>Що додано нового</b>${dt?`<small>${esc(dt)}</small>`:""}<span class="wn-n">${nn} ${nw}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></div><button class="wn-x" aria-label="Закрити">✕</button><ul>${items.map(i=>`<li${i.b&&brandKey(i.b)?` data-b="${esc(i.b)}"`:""}><span><b>${esc(i.t)}</b>${i.s?" — "+esc(i.s):""}</span></li>`).join("")}</ul>`;
   el.hidden=false;
-  el.onclick=e=>{if(e.target.closest(".wn-x")){try{localStorage.setItem("tb_wn",key)}catch(x){}el.hidden=true;return}const li=e.target.closest("li[data-b]");if(li)runAction({type:"brand",value:li.dataset.b})}}
+  el.onclick=e=>{const hh=e.target.closest(".wn-h");if(hh){const o=el.classList.toggle("open");hh.setAttribute("aria-expanded",o);return}if(e.target.closest(".wn-x")){try{localStorage.setItem("tb_wn",key)}catch(x){}el.hidden=true;return}const li=e.target.closest("li[data-b]");if(li)runAction({type:"brand",value:li.dataset.b})}}
 const brandKey=name=>{const n=String(name||"").trim().toLowerCase();const b=BRANDS.find(x=>x[1].toLowerCase()===n);return b?b[0]:null};
 function runAction(a){if(!a||!a.type||a.type==="none")return;const v=a.value||"";
   if(sv){sv.remove();sv=null}
