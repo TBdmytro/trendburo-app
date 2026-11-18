@@ -60,6 +60,12 @@ export default async function handler(req, res) {
       const body1 = one ? { photo: one, caption: text, parse_mode: "HTML" } : { text, parse_mode: "HTML", disable_web_page_preview: true };
       let sent = 0; try { await tg(one ? "sendPhoto" : "sendMessage", { chat_id: Number(d.by), ...body1 }); sent++; } catch { try { await tg("sendMessage", { chat_id: Number(d.by), text, parse_mode: "HTML" }); sent++; } catch {} }
       try { const { toAdmins } = await import("../lib/access.js"); sent += await toAdmins(store, body1, undefined, "", one ? "sendPhoto" : "sendMessage"); } catch {}
+      // выбрано несколько вещей — фото каждой отдельным сообщением (до 8), чтобы сразу видеть, что выбрали
+      if (items.length > 1) for (const i of items.filter(i => /^https:\/\//.test(String(i.img || ""))).slice(0, 8)) {
+        const ph = { photo: i.img, caption: `${i.b ? i.b + " — " : ""}${i.n || ""}${i.p ? " — " + i.p : ""}`.slice(0, 900) };
+        try { await tg("sendPhoto", { chat_id: Number(d.by), ...ph }); } catch {}
+        try { const { toAdmins } = await import("../lib/access.js"); await toAdmins(store, ph, undefined, "", "sendPhoto"); } catch {}
+      }
       await store.put({ ...d, picks: [...(d.picks || []), { ids: picks, by: who ? String(who.id) : "", at: new Date().toISOString() }].slice(-20) }).catch(() => {});
       return send(res, 200, { ok: true, sent });
     }
