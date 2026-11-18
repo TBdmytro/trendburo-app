@@ -536,7 +536,7 @@ textarea{min-height:110px}
 .orow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .orow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.orow .tx b{font-size:14.5px}.orow .tx span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .st{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--soft);white-space:nowrap}
-.st.new{background:var(--err);color:#fff}.st.work{background:var(--soft2)}.st.paid,.st.bought,.st.shipping,.st.np{background:var(--ink);color:#fff}.st.delivered{background:var(--ok-bg);color:var(--ok)}
+.st.new{background:var(--err);color:#fff}.st.work{background:var(--soft2)}.st.paid,.st.bought,.st.received,.st.packed,.st.ready,.st.shipping,.st.inua,.st.np{background:var(--ink);color:#fff}.st.delivered{background:var(--ok-bg);color:var(--ok)}
 .stages{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
 .stages i{height:5px;border-radius:3px;background:var(--line)}.stages i.on{background:var(--ink)}
 .stlab{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;font-size:10.5px;color:var(--muted);margin-top:4px}.stlab b{color:var(--fg)}
@@ -2146,7 +2146,7 @@ async function vSite(tabs) {
    Заявки
    ===================================================================== */
 const LEAD_KIND = { order: "Заказ", availability: "Уточнить наличие", concierge: "Консьерж", travel: "Поездка", resale: "Ресейл", request: "Запрос", optix: "OPTIX" };
-const LEAD_ST = { new: ["Новая", "err"], work: ["В работе", "warn"], bought: ["Выкуплено", "dark"], shipping: ["В пути", "dark"], np: ["Новая почта", "dark"], delivered: ["Доставлено", "ok"], cancelled: ["Отменена", ""] };
+const LEAD_ST = { new: ["Новая", "err"], work: ["В работе", "warn"], bought: ["Выкуплено", "dark"], received: ["Получено нами", "dark"], packed: ["Запаковано", "dark"], inua: ["В Украине", "dark"], ready: ["Готово к отправке", "dark"], shipping: ["В пути", "dark"], np: ["Новая почта", "dark"], delivered: ["Доставлено", "ok"], cancelled: ["Отменена", ""] };
 function updateLeadBadge(n) { const c = $("#leadCnt"); if (c) { c.hidden = !n; c.textContent = n; } const m = $("#mLeadCnt"); if (m) { m.hidden = !n; m.textContent = n; } }
 /* =====================================================================
    Телефон и Telegram: нижнее меню, кнопка «Назад» Telegram
@@ -3082,9 +3082,11 @@ async function vProducts2(pre) {
 }
 
 /* ---------- Заказы ---------- */
-const ORD_FLOW = ["new", "work", "paid", "bought", "shipping", "np", "delivered"];
-const ORD_ST = { new: "Новая", work: "Принят", paid: "Оплачен", bought: "Выкуплен", shipping: "В пути", np: "Новая почта", delivered: "Доставлен", cancelled: "Отменён" };
-const ORD_NEXT = { new: "Принять заказ", work: "Отметить «Оплачен»", paid: "Отметить «Выкуплен»", bought: "Отправить — «В пути»", shipping: "Передан в Новую почту", np: "Отметить «Доставлен»" };
+const ORD_FLOW = ["new", "work", "paid", "bought", "received", "packed", "ready", "shipping", "inua", "np", "delivered"];
+/* этапы конкретного заказа: постоянный клиент — выкупаем до оплаты (этапа «Оплачен» нет); Европа/Дубай — без «В Украине» и Новой почты */
+const ordFlow = l => ORD_FLOW.filter(s => !(l.payLater && s === "paid") && !((l.dest || "ua") !== "ua" && (s === "inua" || s === "np")));
+const ORD_ST = { new: "Новая", work: "Принят", paid: "Оплачен", bought: "Выкуплен", received: "Получен нами", packed: "Запакован", ready: "Готов к отправке", shipping: "Отправлен", inua: "В Украине", np: "Новая почта", delivered: "Доставлен", cancelled: "Отменён" };
+const ORD_NEXT = (cur, next) => cur === "new" ? "Принять заказ" : next === "shipping" ? "Отправить" : "Отметить «" + ORD_ST[next] + "»";
 async function vOrders(st) {
   const status = ORD_ST[st] ? st : "";
   const { leads, fresh } = await api("leads", { query: status ? { status } : {} });
@@ -3100,37 +3102,40 @@ async function vOrders(st) {
   };
 }
 function orderSheet(l, reload) {
-  const i = ORD_FLOW.indexOf(l.status), next = i >= 0 && i < ORD_FLOW.length - 1 ? ORD_FLOW[i + 1] : null;
+  const FL = ordFlow(l), i = FL.indexOf(l.status), next = i >= 0 && i < FL.length - 1 ? FL[i + 1] : null;
   const who = l.tg?.username ? "@" + l.tg.username : l.tg?.name || "Клиент";
   const d = sheet(`${LEAD_KIND[l.kind] || "Заявка"} ${l.number}`, `<div class="form">
     <div class="hint">${dt(l.createdAt)}${l.manager ? " · ведёт " + esc(l.manager) : ""}</div>
-    ${l.status === "cancelled" ? `<div class="note-box err">${svg("warn")}<div>Заказ отменён</div></div>` : `<div><div class="stages">${ORD_FLOW.slice(1).map((s, k) => `<i class="${k + 1 <= i ? "on" : ""}"></i>`).join("")}</div><div class="stlab">${ORD_FLOW.slice(1).map(s => s === l.status ? `<b>${ORD_ST[s]}</b>` : `<span>${ORD_ST[s]}</span>`).join("")}</div></div>`}
+    ${l.status === "cancelled" ? `<div class="note-box err">${svg("warn")}<div>Заказ отменён</div></div>` : `<div><div class="stages">${FL.slice(1).map((s, k) => `<i class="${k + 1 <= i ? "on" : ""}"></i>`).join("")}</div><div class="stlab">${FL.slice(1).map(s => s === l.status ? `<b>${ORD_ST[s]}</b>` : `<span>${ORD_ST[s]}</span>`).join("")}</div></div>`}
     <div class="client"><span class="av">${esc((who.replace("@", "")[0] || "?").toUpperCase())}</span><div class="tx"><b>${esc(who)}</b><span>${l.dest ? { ua: "доставка в Украину", eu: "доставка по Европе", dxb: "доставка в Дубай" }[l.dest] : "доставка не указана"}${l.contact ? " · " + esc(l.contact) : ""}</span></div>
       ${l.tg?.username ? `<a href="https://t.me/${esc(l.tg.username)}" target="_blank" rel="noopener" aria-label="Написать в Telegram"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4z"/></svg></a>` : ""}</div>
     ${l.items?.length ? `<div>${l.items.map(it => `<div class="oitem"><div class="tx"><b>${esc(it.brand)} ${esc(it.title)}</b><span>${[it.size && "размер " + it.size, it.color].filter(Boolean).map(esc).join(" · ") || "&nbsp;"}</span></div><b class="num">${it.price ? eur(it.price) : ""}</b></div>`).join("")}
       ${l.total ? `<div class="oitem"><div class="tx"><b>Итого</b></div><b class="num">${eur(l.total)}</b></div>` : ""}</div>` : ""}
     <details><summary class="hint" style="cursor:pointer">Сообщение клиента</summary><pre class="msg" style="margin-top:8px">${esc(l.message || "—")}</pre></details>
     ${l.kind === "order" ? `<div><div class="f" style="margin-bottom:8px">Маршрут для клиента</div><div class="hint" style="margin:-4px 0 8px">Клиент видит это в «Мои заказы»: где выкупили и когда что отправится.</div>
+      <div class="fchips" style="margin-bottom:6px">${[["0", "Оплата до выкупа"], ["1", "Выкупаем, оплата позже"]].map(([k, v]) => `<button type="button" class="fchip ${(l.payLater ? "1" : "0") === k ? "on" : ""}" data-pl="${k}">${v}</button>`).join("")}</div>
+      ${l.payLater ? `<label class="toggle" style="margin-bottom:10px"><input type="checkbox" id="oPaid" ${l.paidAt ? "checked" : ""}>Клиент оплатил${l.paidAt ? " · " + dt(l.paidAt) : ""}</label>` : ""}
       <div class="fchips" style="margin-bottom:10px">${[["boutique", "Выкуп в бутике"], ["online", "Заказ на сайте бренда"]].map(([k, v]) => `<button type="button" class="fchip ${(l.buyMode || "boutique") === k ? "on" : ""}" data-bm="${k}">${v}</button>`).join("")}</div>
       <div class="fg2"><label class="f" id="oBuyCityL">${l.buyMode === "online" ? "Куда пришёл (наш город)" : "Город выкупа"}<input type="text" id="oBuyCity" list="oCities" value="${esc(l.buyCity || "")}" placeholder="${l.buyMode === "online" ? "Дюссельдорф" : "Париж"}"></label><label class="f">Дата выкупа<input type="date" id="oBuyDate" value="${esc(l.buyDate || "")}"></label></div>
       <datalist id="oCities">${["Париж", "Милан", "Мюнхен", "Вена", "Берлин", "Лондон", "Рим", "Мадрид", "Дубай"].map(c => `<option>${c}</option>`).join("")}</datalist>
       ${(l.dest || "ua") === "ua" ? `<label class="f">Город в Украине, откуда водитель отправит Новой почтой<input type="text" id="oUaCity" value="${esc(l.uaCity || "")}" placeholder="Ивано-Франковск"></label><div class="fg2"><label class="f">Отправка в Украину<input type="date" id="oShipDate" value="${esc(l.shipDate || "")}"></label><label class="f">Передача в Новую почту<input type="date" id="oNpDate" value="${esc(l.npDate || "")}"></label></div>` : `<label class="f">Дата отправки<input type="date" id="oShipDate" value="${esc(l.shipDate || "")}"></label>`}</div>` : ""}
     ${l.delivery ? `<div class="oitem"><div class="tx"><b>Доставка: ${esc(l.delivery.name || "")}${l.delivery.phone ? " · " + esc(l.delivery.phone) : ""}</b><span>${esc([l.delivery.city, { branch: "отделение", locker: "почтомат", courier: "курьер" }[l.delivery.npType], l.delivery.npPoint, l.delivery.address].filter(Boolean).join(", "))}${l.delivery.comment ? " · " + esc(l.delivery.comment) : ""}</span></div></div>` : ""}
-    <label class="f">${(l.dest || "ua") === "ua" ? "ТТН Новой почты" : "Трек-номер"}<input type="text" id="oTrack" value="${esc(l.track || "")}" placeholder="клиент увидит его в заказе"></label>
+    <label class="f">${(l.dest || "ua") === "ua" ? "ТТН Новой почты — только для нас, клиент не видит" : "Трек-номер DHL — клиент увидит в заказе"}<input type="text" id="oTrack" value="${esc(l.track || "")}" placeholder="${(l.dest || "ua") === "ua" ? "для себя" : "клиент увидит его в заказе"}"></label>
     <label class="f">Заметка для себя<textarea id="oNote" style="min-height:70px">${esc(l.note || "")}</textarea></label>
     <label class="toggle"><input type="checkbox" id="oNotify" ${l.tg?.id ? "checked" : "disabled"}>${l.tg?.id ? "Сообщать клиенту в Telegram при смене этапа" : "Клиент без Telegram — бот не сможет написать"}</label>
     <div><div class="f" style="margin-bottom:8px">Изменить этап вручную</div><div class="fchips" style="flex-wrap:wrap">${Object.entries(ORD_ST).map(([k, v]) => `<button type="button" class="fchip ${l.status === k ? "on" : ""}" data-setst="${k}">${v}</button>`).join("")}</div></div>
     <button type="button" class="btn danger sm" data-odel style="align-self:flex-start">Удалить заявку</button></div>`,
-    `${next ? `<button class="btn lg" data-next="${next}">${ORD_NEXT[l.status]}</button>` : ""}<button class="btn ${next ? "ghost" : ""} lg" data-osave>Сохранить</button>`);
+    `${next ? `<button class="btn lg" data-next="${next}">${ORD_NEXT(l.status, next)}</button>` : ""}<button class="btn ${next ? "ghost" : ""} lg" data-osave>Сохранить</button>`);
   const send = async status => {
     try {
       const v = id => { const e = d.querySelector(id); return e ? e.value : undefined; };
-      const r = await api("leadSave", { method: "POST", body: { id: l._id, status, note: v("#oNote"), track: v("#oTrack"), buyMode: (d.querySelector("[data-bm].on") || {}).dataset?.bm, buyCity: v("#oBuyCity"), buyDate: v("#oBuyDate"), uaCity: v("#oUaCity"), shipDate: v("#oShipDate"), npDate: v("#oNpDate"), notify: d.querySelector("#oNotify").checked } });
+      const r = await api("leadSave", { method: "POST", body: { id: l._id, status, note: v("#oNote"), track: v("#oTrack"), buyMode: (d.querySelector("[data-bm].on") || {}).dataset?.bm, payLater: d.querySelector("[data-pl].on") ? d.querySelector("[data-pl].on").dataset.pl === "1" : undefined, paid: d.querySelector("#oPaid") ? d.querySelector("#oPaid").checked : undefined, buyCity: v("#oBuyCity"), buyDate: v("#oBuyDate"), uaCity: v("#oUaCity"), shipDate: v("#oShipDate"), npDate: v("#oNpDate"), notify: d.querySelector("#oNotify").checked } });
       toast(status && status !== l.status ? `${ORD_ST[status]}${r.lead.clientNotified ? " · клиенту отправлено сообщение" : ""}` : "Сохранено"); d.close(); reload();
     } catch (err) { toast(err.message); }
   };
   d.querySelector(".sh-b").onclick = async e => {
     const bm = e.target.closest("[data-bm]"); if (bm) { d.querySelectorAll("[data-bm]").forEach(x => x.classList.toggle("on", x === bm)); const on = bm.dataset.bm === "online", lb = d.querySelector("#oBuyCityL"); lb.firstChild.textContent = on ? "Куда пришёл (наш город)" : "Город выкупа"; d.querySelector("#oBuyCity").placeholder = on ? "Дюссельдорф" : "Париж"; return; }
+    const pl = e.target.closest("[data-pl]"); if (pl) { l.payLater = pl.dataset.pl === "1"; await send(undefined); return; }
     const s = e.target.closest("[data-setst]"); if (s) return send(s.dataset.setst);
     if (e.target.closest("[data-odel]")) {
       if (!(await confirmBox("Удалить заявку?", "Клиент перестанет видеть её статус в «Кабинете»."))) return;
@@ -3314,7 +3319,7 @@ function manualOrderSheet(c, done) {
     <div><div class="f" style="margin-bottom:8px">Или иконка</div><div class="fchips" id="moIco" style="flex-wrap:wrap">${Object.entries(ADM_ICO).map(([k, [t]]) => `<button type="button" class="fchip" data-v="${k}" style="display:inline-flex;gap:6px;align-items:center"><span style="width:18px;height:18px;display:inline-flex">${icoSvg(k).replace("width:60%;height:60%", "width:100%;height:100%")}</span>${t}</button>`).join("")}</div></div>
     <label class="f">Ссылка на вещь (необязательно)<input type="text" inputmode="url" id="moUrl" placeholder="https://…"></label>
     <div><div class="f" style="margin-bottom:8px">Доставка</div><div class="fchips" id="moDest">${[["ua", "Украина"], ["eu", "Европа"], ["dxb", "Дубай"]].map(([k, v], i) => `<button type="button" class="fchip ${i ? "" : "on"}" data-v="${k}">${v}</button>`).join("")}</div></div>
-    <div><div class="f" style="margin-bottom:8px">Этап</div><div class="fchips" id="moSt" style="flex-wrap:wrap">${["work", "paid", "bought", "shipping", "np", "delivered"].map((k, i) => `<button type="button" class="fchip ${i ? "" : "on"}" data-v="${k}">${ORD_ST[k]}</button>`).join("")}</div></div>
+    <div><div class="f" style="margin-bottom:8px">Этап</div><div class="fchips" id="moSt" style="flex-wrap:wrap">${["work", "paid", "bought", "received", "packed", "ready", "shipping", "inua", "np", "delivered"].map((k, i) => `<button type="button" class="fchip ${i ? "" : "on"}" data-v="${k}">${ORD_ST[k]}</button>`).join("")}</div></div>
     <label class="f">Заметка<textarea id="moNote" style="min-height:60px" placeholder="только для вас"></textarea></label></div>`,
     `<button class="btn lg" data-mosave>Добавить заказ</button>`);
   const pick = id => d.querySelector(id).onclick = e => { const b = e.target.closest("[data-v]"); if (b) d.querySelectorAll(id + " [data-v]").forEach(x => x.classList.toggle("on", x === b)); };

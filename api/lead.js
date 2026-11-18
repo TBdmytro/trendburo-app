@@ -12,14 +12,18 @@ import { toAdmins } from "../lib/access.js";
 import { allow, tooMany } from "../lib/ratelimit.js";
 
 export const LEAD_KINDS = { order: "Заказ", availability: "Уточнить наличие", concierge: "Консьерж", travel: "Поездка", resale: "Ресейл", request: "Запрос под заказ", optix: "OPTIX" };
-export const LEAD_STATUS = ["new", "work", "paid", "bought", "shipping", "np", "delivered", "cancelled"];
+export const LEAD_STATUS = ["new", "work", "paid", "bought", "received", "packed", "ready", "shipping", "inua", "np", "delivered", "cancelled"];
 /** Что бот пишет клиенту при смене статуса заказа. */
 export const CLIENT_TEXT = {
   work: n => `Заказ ${n} принят менеджером. Скоро напишем по деталям.`,
   paid: n => `Оплата по заказу ${n} получена, спасибо! Выкупаем.`,
   bought: (n, l) => l?.buyMode === "online" ? `Заказ ${n} пришёл к нам${l?.buyCity ? " в " + l.buyCity : ""}. Готовим к отправке в Украину.` : `Заказ ${n} выкуплен${l?.buyCity ? " (" + l.buyCity + ")" : " в бутике"}. Готовим к отправке.`,
   shipping: (n, l) => l?.dest && l.dest !== "ua" ? `Заказ ${n} отправлен.${l?.track ? " Трек-номер: " + l.track : ""}` : `Заказ ${n} едет в Украину.${l?.npDate ? " Передадим в Новую почту: " + l.npDate + "." : ""}`,
-  np: (n, l) => `Заказ ${n} передан в Новую почту.${l?.track ? " ТТН: " + l.track : ""}`,
+  received: n => `Заказ ${n} у нас — проверяем и пакуем.`,
+  inua: n => `Заказ ${n} уже в Украине. Скоро передадим в Новую почту.`,
+  packed: n => `Заказ ${n} проверили и запаковали.`,
+  ready: n => `Заказ ${n} упакован и готов к отправке.`,
+  np: n => `Заказ ${n} передан в Новую почту — скоро будет у вас.`, /* ТТН Новой почты клиенту не даём */
   delivered: n => `Заказ ${n} доставлен. Спасибо, что выбрали Trend Büro!`,
   cancelled: n => `Заказ ${n} отменён. Если это ошибка — напишите менеджеру.`
 };
@@ -67,8 +71,8 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       const client = new URL(req.url, "http://x").searchParams.get("client") || "";
       if (!/^[a-z0-9]{16,48}$/i.test(client)) return send(res, 400, { error: "Нет ключа клиента" });
-      const list = await store.list("lead", { client }, { order: "createdAt desc", limit: 50, fields: "number, kind, status, createdAt, total, track, items[]{title, brand}" });
-      return send(res, 200, { leads: list });
+      const list = await store.list("lead", { client }, { order: "createdAt desc", limit: 50, fields: "number, kind, status, createdAt, total, dest, track, items[]{title, brand}" });
+      return send(res, 200, { leads: list.map(l => ({ ...l, track: l.dest && l.dest !== "ua" ? l.track : undefined })) }); /* клиенту — только трек DHL (Европа/Дубай) */
     }
     if (req.method !== "POST") return send(res, 405, { error: "Метод не поддерживается" });
     if (new URL(req.url, "http://x").searchParams.get("a") === "bnstat") { await addBannerStats(store, readBody(req)); return send(res, 200, { ok: true }); }
