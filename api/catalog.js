@@ -23,7 +23,7 @@ const SAVED_AT = [0, 0, 0]; const LOADP = [null, null, null];
 async function savedCatalog(store, k) { try { const d = await store.get("settings.catcache" + k); if (!d || !d.gz || Date.now() - Date.parse(d.at) > 12 * 3600e3) return null; const { gunzipSync } = await import("node:zlib"); return { body: gunzipSync(Buffer.from(d.gz, "base64")).toString("utf8"), at: Date.parse(d.at) }; } catch { return null; } }
 async function saveCatalog(store, k, body) { if (Date.now() - SAVED_AT[k] < 5 * 60e3) return; SAVED_AT[k] = Date.now(); try { const { gzipSync } = await import("node:zlib"); await store.put({ _id: "settings.catcache" + k, _type: "settings", at: new Date().toISOString(), gz: gzipSync(Buffer.from(body)).toString("base64") }); } catch {} }
 // прогрев лёгкого каталога после выкладки (без него первый покупатель ждал бы сборку 27 000 товаров)
-export async function warmCatalog(v = 2) { const b = await catalogBody(v); SAVED_AT[v] = 0; await saveCatalog(getStore(), v, b); return b.length; }
+export async function warmCatalog(v = 2) { _resetCatalogMemo(); const b = await catalogBody(v); /* всегда свежая сборка: иначе прогрев мог пересохранить старый каталог */ SAVED_AT[v] = 0; await saveCatalog(getStore(), v, b); return b.length; }
 async function catalogBody(compact) {
   const k = compact === 2 ? 2 : compact ? 1 : 0; let m = MEMO[k];
   if (m && m.body && Date.now() - m.at < TTL) return m.body;
