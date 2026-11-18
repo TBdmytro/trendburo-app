@@ -140,5 +140,9 @@ test("Hermès: цвета одной модели — одна семья", asyn
   const { famKey } = await import("../lib/catalog.js");
   const f = (sku, id) => famKey({ _id: "product.manual.hermes-" + id, brand: "Hermès", title: "Sneakers Day", modelSku: sku });
   assert.equal(f("H241856ZHC9", "a"), f("H241856ZH90", "b"));
-  assert.notEqual(f("H241856ZHC9", "a"), f("H212901ZH90", "c"));
+  // владелец, 18.11: одна модель = одно название — все материалы вместе («Sneakers Bouncing» = «Bouncing sneakers»)
+  assert.equal(f("H241856ZHC9", "a"), f("H212901ZH90", "c"));
+  const g = (t, id) => famKey({ _id: "product.manual.hermes-" + id, brand: "Hermès", title: t, modelSku: "H2" + id + "ZH90" });
+  assert.equal(g("Sneakers Bouncing", "11"), g("Bouncing sneakers", "12"));
+  assert.notEqual(g("Sneakers Bouncing", "11"), g("Sneakers Jet", "13"));
 });

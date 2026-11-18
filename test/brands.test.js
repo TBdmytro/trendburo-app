@@ -240,7 +240,7 @@ test("Loro Piana Summer Walk / Open Walk: +200 €, меховые — обыч�
 test("Hermès: обувь +12%, одежда +10%", async () => {
   const { priceFor } = await import("../lib/pipeline.js");
   const o = { sourceKind: "official", boutique: 895, flatMarkup: 0.1 };
-  assert.equal(priceFor(o, null, null, "shoes", "Hermès").ua, 1005); // 895*1.12=1002.4 → 1005
-  assert.equal(priceFor(o, null, null, "shoes", "Hermes").ua, 1005);
+  assert.equal(priceFor(o, null, null, "shoes", "Hermès").ua, 1000); // 895*1.12=1002.4 → вниз до 5 € = 1000 (владелец, 18.11)
+  assert.equal(priceFor(o, null, null, "shoes", "Hermes").ua, 1000);
   assert.equal(priceFor({ ...o, boutique: 1000 }, null, null, "clothing", "Hermès").ua, 1100);
 });
