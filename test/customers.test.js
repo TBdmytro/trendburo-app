@@ -63,10 +63,18 @@ test("клиент через менеджера без приложения: з
   const l = await makeManualOrder(store, off, { brand: "Chanel", title: "Classic Flap", price: "9800", icon: "bag", status: "bought" });
   assert.equal(l.cust, off._id); assert.equal(l.tgId, undefined); assert.equal(l.items[0].icon, "bag");
   assert.equal(await linkInvite(store, { id: 55, name: "Olena" }, "c_wrongtoken12"), null);
+  // открыть ссылку ≠ получить заказы: только запрос, менеджер подтверждает
   const r = await linkInvite(store, { id: 55, username: "olena_k", name: "Olena" }, "c_" + off.invite);
-  assert.equal(r.moved, 1); assert.equal(r.customer.access, "ok"); assert.equal(r.customer.profile.phone, "+380671112233"); assert.equal(r.customer.sizes.shoes, "38");
-  assert.equal(await store.get(off._id), null);
+  assert.equal(r.claim, true); assert.equal((await ordersFor(store, 55)).length, 0);
+  assert.equal((await store.get(off._id)).claims[0].tgId, 55);
+  // сотрудник, открывший ссылку клиента, запроса не создаёт
+  await store.put({ _id: "customer.77", _type: "customer", tg: { id: 77 }, staff: true });
+  assert.equal((await linkInvite(store, { id: 77 }, "c_" + off.invite)).staff, true);
+  const { opClaim } = await import("../lib/staffops.js");
+  const ok = await opClaim(store, { id: l._id, tgId: 55, ok: true }, "Дмитрий");
+  assert.equal(ok.body.moved, 1); assert.equal(await store.get(off._id), null);
+  const c = await store.get("customer.55"); assert.equal(c.profile.phone, "+380671112233"); assert.equal(c.sizes.shoes, "38");
   const mine = await ordersFor(store, 55);
   assert.equal(mine.length, 1); assert.equal(mine[0].items[0].icon, "bag");
-  assert.equal(await linkInvite(store, { id: 55 }, "c_" + off.invite), null); // ссылка одноразовая
+  assert.equal(await linkInvite(store, { id: 55 }, "c_" + off.invite), null); // карточки больше нет
 });

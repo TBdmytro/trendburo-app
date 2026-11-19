@@ -11,6 +11,19 @@ export default async function handler(req, res) {
       return res.status(200).send(`(function(){ var f = ${code.replace(/^async function tbCollect\(\)/, "async function ()")}; window.__tbFromNet = 1; f().finally(function () { window.__tbFromNet = 0; }); })();`);
     } catch (e) { res.setHeader("Content-Type", "application/javascript"); return res.status(500).send("/* " + String(e.message).slice(0, 80) + " */"); }
   }
+  // разовая починка: заказ клиента ушёл в аккаунт сотрудника, открывшего личную ссылку клиента → возвращаем карточку клиента и заказы
+  if (req.method === "GET" && /[?&]probe=linkundo\b/.test(String(req.url || ""))) return (async () => { const st = getStore(), { randomBytes } = await import("node:crypto"); const out = [];
+    const cs = (await st.list("customer", {}, { limit: 2000 })).filter(c => c.staff && c.linkedFrom);
+    for (const c of cs) { const tgId = Number(c.tg?.id); const ls = (await st.list("lead", { tgId }, { limit: 200 })).filter(l => l.linkedAt && Math.abs(Date.parse(l.linkedAt) - Date.parse(c.linkedAt)) < 6e4);
+      const d = ls[0]?.delivery || {}, inv = randomBytes(16).toString("hex").replace(/[^a-z0-9]/g, "").slice(0, 12);
+      const off = { _id: c.linkedFrom, _type: "customer", offline: true, invite: inv, createdAt: ls[0]?.createdAt || new Date().toISOString(), createdBy: "восстановлено",
+        tg: { username: "", name: d.name || "" }, profile: { name: d.name || "", phone: d.phone || "", city: d.city || "", npType: d.npType || "branch", npPoint: d.npPoint || "", address: d.address || "", comment: "" }, ...(c.insta ? { insta: c.insta } : {}), sizes: { shoes: "", clothes: "" }, note: "" };
+      if (!(await st.get(off._id))) await st.put(off);
+      for (const l of ls) { l.cust = off._id; delete l.tgId; l.tg = { username: "", name: d.name || "" }; delete l.linkedAt; await st.put(l); }
+      const p = c.profile || {}; for (const k of ["phone", "city", "npPoint", "address"]) if (p[k] && p[k] === d[k]) p[k] = "";
+      delete c.linkedFrom; delete c.linkedAt; if (c.insta && off.insta === c.insta) delete c.insta; await st.put(c);
+      out.push({ staff: true, moved: ls.length }); }
+    res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(out)); })();
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
   // переезд в Postgres (Neon): шаги копирования документов из Sanity — только количество, без содержимого

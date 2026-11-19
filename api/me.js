@@ -8,7 +8,7 @@
  */
 import { getStore } from "../lib/store.js";
 import { userFrom, newLoginCode, pollLoginCode } from "../lib/tgauth.js";
-import { touchCustomer, saveProfile, ordersFor, customerId, cleanProfile, linkInvite, INVITE_RE } from "../lib/customers.js";
+import { touchCustomer, saveProfile, ordersFor, customerId, cleanProfile, linkInvite, INVITE_RE, orderByView, ensureView, publicOrder } from "../lib/customers.js";
 import { tg } from "./bot.js";
 import { accessSettings, accessOf, notifyRequest, optixRequest, optixOf } from "../lib/access.js";
 import { allow, tooMany } from "../lib/ratelimit.js";
@@ -27,6 +27,11 @@ export default async function handler(req, res) {
         if (!d) return send(res, 404, { error: "Добірку не знайдено" });
         if (d.exp && d.exp < Date.now()) return send(res, 410, { error: "Термін дії добірки минув", expired: true, by: d.byName || "Trend Büro" });
         return send(res, 200, { ids: d.ids || [], items: d.items || [], title: d.title || "", note: d.note || "", by: d.byName || "Trend Büro", at: d.at, exp: d.exp || null }); }
+      // ссылка на один заказ: только этот заказ, получатель — имя и первая буква фамилии
+      const view = new URL(req.url, "http://x").searchParams.get("order");
+      if (view) { const l = await orderByView(getStore(), view); if (!l) return send(res, 404, { error: "Замовлення не знайдено" });
+        const o = publicOrder(l); if (o.delivery?.name) o.delivery.name = o.delivery.name.split(/\s+/).map((w, i) => i ? w[0] + "." : w).slice(0, 2).join(" ");
+        return send(res, 200, { order: { ...o, view } }); }
       const ready = !!process.env.TELEGRAM_BOT_TOKEN || process.env.DEV_AUTH === "1";
       if (ready && !BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch { BOT = null; } }
       return send(res, 200, { ready, bot: BOT });
@@ -76,12 +81,13 @@ export default async function handler(req, res) {
     // личная ссылка от менеджера (startapp=c_…): заказы, сделанные через менеджера, переносятся в этот аккаунт; регистрация и заявка не нужны
     let linked = null;
     if (INVITE_RE.test(String(body.invite || ""))) { try { linked = await linkInvite(store, user, body.invite); } catch (e) { console.error("invite:", e.message); }
-      if (linked) { try { const { toAdmins } = await import("../lib/access.js"); const e = t => String(t || "").replace(/[<&>]/g, m => ({ "<": "&lt;", "&": "&amp;", ">": "&gt;" }[m]));
-        await toAdmins(store, { text: `🔗 <b>${e(linked.name || user.name)}</b> відкрив(ла) особисте посилання${user.username ? " · @" + e(user.username) : ""}\nЗамовлень перенесено в акаунт: ${linked.moved}`, parse_mode: "HTML" }); } catch {} } }
+      if (linked?.claim) { try { const { toAdmins } = await import("../lib/access.js"); const e = t => String(t || "").replace(/[<&>]/g, m => ({ "<": "&lt;", "&": "&amp;", ">": "&gt;" }[m]));
+        await toAdmins(store, { text: `🔗 Личную ссылку клиента <b>${e(linked.name)}</b> открыл(а) ${e(user.name)}${user.username ? " · @" + e(user.username) : ""}\nЕсли это он(а) — подтвердите в приложении: Заказы → заказ клиента → «Подтвердить». Без подтверждения заказы не видны.`, parse_mode: "HTML" }); } catch {} }
+      if (linked) linked = linked.claim ? { claim: true } : null; }
     if (body.a === "check") {
       const c = await store.get(customerId(user.id));
       const acc = await accessSettings(store);
-      return send(res, 200, { exists: !!c, user: pub, profile: c?.profile || null, closed: acc.closed, access: accessOf(c, acc), ...(linked ? { linked: { moved: linked.moved, name: linked.name } } : {}) });
+      return send(res, 200, { exists: !!c, user: pub, profile: c?.profile || null, closed: acc.closed, access: accessOf(c, acc), ...(linked ? { claim: true } : {}) });
     }
     let c;
     // аккаунт удалён (или его ещё нет) — только через регистрацию, сам он не создаётся
@@ -105,14 +111,14 @@ export default async function handler(req, res) {
     if (body.a === "st") { // сотрудник в приложении: заказы (как в админке, без закупочных цен)
       if (!c.staff) return send(res, 403, { error: "Только для сотрудников Trend Büro" });
       const S = await import("../lib/staffops.js"), d = body.d && typeof body.d === "object" ? body.d : {}, by = (c.profile?.name || user.name || "сотрудник") + " · приложение";
-      const r = body.op === "link" ? await (async () => { const l = await store.get(String(d.id || "")); if (!l || l._type !== "lead") return { code: 404, body: { error: "Заказ не найден" } }; const cu = l.cust ? await store.get(l.cust).catch(() => null) : null; return { code: 200, body: { cust: l.cust || "", offline: !!cu?.offline, invite: cu?.offline ? cu.invite || "" : "" } }; })()
+      const r = body.op === "link" ? await (async () => { const l = await store.get(String(d.id || "")); if (!l || l._type !== "lead") return { code: 404, body: { error: "Заказ не найден" } }; return { code: 200, body: { view: await ensureView(store, l), linked: !!l.tgId } }; })()
+        : body.op === "claim" ? await S.opClaim(store, d, by)
         : body.op === "leads" ? await S.opLeads(store, d.status) : body.op === "save" ? await S.opLeadSave(store, d, by) : body.op === "bulk" ? await S.opLeadBulk(store, d, by)
         : body.op === "driver" ? await S.opDriverList(store, d.days) : body.op === "clients" ? await S.opClientsLite(store) : body.op === "order" ? await S.opManualOrder(store, d, by) : body.op === "client" ? await S.opClientCreate(store, d, by) : { code: 400, body: { error: "Неизвестное действие" } };
       // новый заказ — ссылка для клиента: по личной ссылке он войдёт и увидит свой заказ с маршрутом
-      if (body.op === "link" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} } r.body = { link: BOT ? `https://t.me/${BOT}?startapp${r.body.invite ? "=c_" + r.body.invite : ""}` : "https://trendburo.com.ua", offline: r.body.offline }; }
+      if (body.op === "link" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} } r.body = { link: BOT ? `https://t.me/${BOT}?startapp=o_${r.body.view}` : `https://trendburo.com.ua/?order=${r.body.view}`, web: `https://trendburo.com.ua/?order=${r.body.view}`, linked: r.body.linked }; }
       if (body.op === "order" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
-        const cu = await store.get(String(d.customer || "")).catch(() => null);
-        r.body.link = BOT ? `https://t.me/${BOT}?startapp${cu?.offline && cu.invite ? "=c_" + cu.invite : ""}` : "https://trendburo.com.ua"; }
+        const v = r.body.lead?.view || ""; r.body.link = v ? (BOT ? `https://t.me/${BOT}?startapp=o_${v}` : `https://trendburo.com.ua/?order=${v}`) : ""; }
       return send(res, r.code, r.body);
     }
     if (body.a === "sel") { // сотрудник (роль из админки) сохраняет подборку для клиента → ссылка
@@ -129,6 +135,15 @@ export default async function handler(req, res) {
       const site = "https://trendburo.com.ua";
       return send(res, 200, { id, link: BOT ? `https://t.me/${BOT}?startapp=sel_${id}` : `${site}/?sel=${id}`, web: `${site}/?sel=${id}` });
     }
+    if (body.a === "claim") { // «це моє замовлення» по ссылке на заказ → запрос менеджеру
+      const l = await orderByView(store, body.view); if (!l) return send(res, 404, { error: "Замовлення не знайдено" });
+      if (Number(l.tgId) === Number(user.id)) return send(res, 200, { mine: true });
+      if (c.staff) return send(res, 200, { staff: true });
+      l.claims = [...(l.claims || []).filter(x => Number(x.tgId) !== Number(user.id)), { tgId: Number(user.id), username: user.username || "", name: user.name || "", at: new Date().toISOString() }].slice(-5); await store.put(l);
+      try { const { toAdmins } = await import("../lib/access.js"); const e = t => String(t || "").replace(/[<&>]/g, m => ({ "<": "&lt;", "&": "&amp;", ">": "&gt;" }[m]));
+        await toAdmins(store, { text: `🙋 ${e(user.name)}${user.username ? " · @" + e(user.username) : ""} просит добавить заказ ${e(l.number)} в свой кабинет.\nПроверьте и подтвердите в приложении: Заказы → ${e(l.number)}.`, parse_mode: "HTML" }); } catch {}
+      return send(res, 200, { sent: true });
+    }
     if (body.a === "optix") { const st = await optixRequest(store, c); return send(res, 200, { optix: st }); } // заявка на доступ к OPTIX
     const acc = await accessSettings(store), access = accessOf(c, acc);
     // бета-версия сайта (/beta.html) — для команды: сотрудники и те, кто подключён к уведомлениям админки (владелец)
@@ -139,7 +154,7 @@ export default async function handler(req, res) {
     if (access === "pending") await notifyRequest(store, c).catch(() => {});
     if (access !== "ok") return send(res, 200, { user: pub, profile: c.profile, orders: [], since: c.registeredAt || c.createdAt || null, closed: acc.closed, access, optix: ox, staff: !!c.staff, beta });
     const orders = await ordersFor(store, user.id, body.client);
-    return send(res, 200, { closed: acc.closed, access, optix: ox, staff: !!c.staff, beta, user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null, ...(linked ? { linked: { moved: linked.moved, name: linked.name } } : {}) });
+    return send(res, 200, { closed: acc.closed, access, optix: ox, staff: !!c.staff, beta, user: pub, profile: c.profile, orders, since: c.registeredAt || c.createdAt || null, loyalty: c.loyalty || null, ...(linked ? { claim: true } : {}) });
   } catch (e) {
     console.error("me:", e.message);
     return send(res, 500, { error: "Не вдалося завантажити кабінет" });
