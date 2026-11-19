@@ -2,6 +2,13 @@
  *  Без личных данных: только техника устройства и замеры. Включается вводом «#diag» в поиске каталога. */
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+  // временная передача данных со страницы бренда (Golden Goose) в админку: страница бренда кладёт список новых моделей под одноразовым ключом, админка забирает
+  if (req.query && req.query.probe === "relay") { const k = String(req.query.k || ""); if (!/^[a-f0-9]{24}$/.test(k)) { res.statusCode = 400; return res.end("bad"); }
+    res.setHeader("Access-Control-Allow-Origin", "https://www.goldengoose.com"); res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS"); res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
+    const st = getStore(), id = "settings.relay" + k;
+    if (req.method === "POST") { const b = typeof req.body === "string" ? req.body : JSON.stringify(req.body || {}); if (b.length > 900e3) { res.statusCode = 413; return res.end("big"); } const prev = await st.get(id); const parts = [...((prev && prev.parts) || []), b].slice(0, 10); await st.put({ _id: id, _type: "settings", parts, at: new Date().toISOString() }); res.setHeader("Content-Type", "application/json"); return res.end(JSON.stringify({ ok: true, parts: parts.length })); }
+    const d = await st.get(id); if (req.query.del === "1" && d) await st.delMany([id]); res.setHeader("Content-Type", "application/json"); return res.end(JSON.stringify(d ? d.parts : [])); }
   // свежий код кнопки «В Trend Büro»: закладка сначала грузит его отсюда — новые версии работают без перетаскивания закладки заново
   if (req.query && req.query.probe === "bm") {
     try { const host = req.headers["x-forwarded-host"] || req.headers.host; const t = await fetch(`https://${host}/mt.html`, { cache: "no-store" }).then(r => r.text());
