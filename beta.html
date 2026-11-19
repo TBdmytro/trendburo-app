@@ -354,6 +354,42 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .gt-est{display:flex;align-items:center;gap:12px;font-size:11px!important;letter-spacing:.32em;text-transform:uppercase;color:var(--g2)}
 .gt-est span{font:400 14px/1 Prata,Georgia,serif;letter-spacing:0;color:#9a8460}
 @media (prefers-reduced-motion:reduce){.gt-logo::after,.sp-logo .sp-r3{animation:none;opacity:1}}
+
+/* ── маршрут заказа v2 ── */
+.r2c{position:relative;display:block;width:calc(100% - 24px);margin:0 12px;border:0;font:inherit;text-align:left;color:#fff;border-radius:28px;background:linear-gradient(160deg,#34373d,#1d1f22 60%,#141517);padding:16px 14px 6px;overflow:hidden;box-shadow:0 18px 40px rgba(29,31,34,.28);isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);clip-path:inset(0 round 28px)}
+button.r2c{cursor:pointer}
+.r2g{position:absolute;right:-80px;top:-110px;width:300px;height:300px;border-radius:50%;opacity:.75;filter:blur(20px);z-index:-1;transition:background 1.2s ease}
+.r2t{display:flex;align-items:center;gap:12px}
+.r2th{width:54px;height:54px;border-radius:16px;background:#f3f3f3;flex:none;display:grid;place-items:center;overflow:hidden}.r2th:empty{display:none}.r2th svg,.r2th img{width:100%;height:100%;object-fit:contain}
+.r2s{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.r2row{display:flex;align-items:center;gap:8px;height:28px}
+.r2big{font-size:21px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+.r2it{display:block;font-size:12.5px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r2pc{display:inline-block;margin-right:7px;padding:2px 7px;border-radius:99px;background:rgba(217,164,65,.18);color:#f0c46c;font-size:10.5px;font-weight:700;letter-spacing:.02em}
+.r2eta{flex:none;text-align:right;line-height:1.1}.r2eta small{display:block;font-size:10.5px;color:rgba(255,255,255,.5);letter-spacing:.04em;text-transform:uppercase;font-weight:600}.r2eta b{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.r2rt{display:block;margin:16px -6px 0}.r2rt svg{display:block;width:100%;height:auto;overflow:visible}
+.r2rt text{font:700 10.5px var(--f);letter-spacing:.01em;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.r2c .acc-cta{margin:0 2px 8px}
+.r2bob{animation:r2bob .46s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 100%}@keyframes r2bob{from{transform:rotate(-4deg) translateY(-.5px)}to{transform:rotate(4deg) translateY(.5px)}}
+.r2c .act .fl{animation:r2fl 1.6s ease-in-out infinite alternate}@keyframes r2fl{from{transform:translateY(0)}to{transform:translateY(-3px)}}
+.r2c .act .sp{transform-box:fill-box;transform-origin:center;animation:r2sp 2.6s cubic-bezier(.45,0,.55,1) infinite}@keyframes r2sp{0%,30%{transform:scaleX(1)}50%{transform:scaleX(-1)}80%,100%{transform:scaleX(1)}}
+.r2c .xo,.r2c .xn{transform-box:fill-box;transform-origin:center}
+.r2tl{margin:12px 12px 0;background:#fff;border-radius:24px;padding:16px 16px 6px;border:1px solid var(--line)}
+.r2tl h3{margin:0 0 10px;font-size:15px;display:flex;justify-content:space-between;align-items:baseline}.r2tl h3 span{font-size:12.5px;color:var(--muted);font-weight:600}
+.r2tl .rows{position:relative}
+.r2tl .r{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;min-height:46px;position:relative}
+.r2tl .dot{width:32px;height:32px;display:grid;place-items:center;position:relative;z-index:1}.r2tl .dot svg{width:32px;height:32px;overflow:visible}
+.r2tl .hol{width:12px;height:12px;border-radius:50%;border:2px solid var(--line);background:#fff}
+.r2tl .tx{min-width:0}.r2tl .tx b{display:block;font-size:14px;font-weight:600;color:var(--muted);transition:color .4s}.r2tl .tx small{font-size:12px;color:var(--muted)}
+.r2tl .dt{font-size:12px;color:var(--muted);white-space:nowrap}
+.r2tl .r.ok .tx b{color:var(--fg)}.r2tl .r.now .tx b{color:var(--fg);font-weight:800;font-size:15px}.r2tl .r.now .tx small{color:var(--c);font-weight:700}
+.r2tl .r.pend .tx b,.r2tl .r.pend small,.r2tl .r.pend small a{color:#b07a22}.r2tl .r.pend small a{text-decoration:underline;text-underline-offset:2px}
+.r2tl .seg{position:absolute;left:15px;top:36px;width:2px;height:calc(100% - 26px);border-radius:2px;background:repeating-linear-gradient(to bottom,var(--line) 0 4px,transparent 4px 8px);z-index:0}
+.r2tl .seg i{position:absolute;inset:0;border-radius:2px;transform-origin:top;transform:scaleY(0);background:linear-gradient(var(--c),var(--c2))}
+.r2tl .r:last-child .seg{display:none}
+.r2tl .r2ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--c);animation:r2rg 1.8s ease-out infinite;opacity:0}@keyframes r2rg{0%{transform:scale(.9);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+.r2dl{display:flex;gap:12px;align-items:center;margin:12px 12px 0;padding:14px 16px;background:var(--soft);border-radius:20px}.r2dl .r2i{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none}.r2dl .r2i svg{width:20px;height:20px}.r2dl b{display:block;font-size:14px}.r2dl small{font-size:12.5px;color:var(--g2)}
+@media (prefers-reduced-motion:reduce){.r2c *,.r2tl *{animation:none!important;transition:none!important}}
 </style>
 <title>Trend Büro</title>
 <script>/* каталог заранее — только при первом входе; дальше он уже есть на телефоне, и качать его вместе с фото главной не нужно */try{if(!localStorage.getItem("tb_catc")){var l=document.createElement("link");l.rel="preload";l.href="/api/catalog?v=2";l.as="fetch";l.crossOrigin="anonymous";document.head.appendChild(l)}}catch(e){}</script>
@@ -4258,25 +4294,134 @@ function rtEngine(root,o){const rf=root.querySelector(".rf"),cm=root.querySelect
     let i=0;const seg=()=>{if(!root.isConnected)return;if(i>=stops.length){done&&done();return}const[a,b]=stops[i++],D=Math.max(420,760*(b-a)),t0=performance.now();
       const st=t=>{if(!root.isConnected)return;const k=Math.min(1,(t-t0)/D);set(a+(b-a)*ease(k));if(k<1)requestAnimationFrame(st);else{if(Number.isInteger(b))onStop&&onStop(b,i>=stops.length);setTimeout(seg,Number.isInteger(b)?260:0)}};requestAnimationFrame(st)};seg()};
   return{set,run,node:j=>G[j],n};}
-/* мини-карточка «Сейчас в пути» в кабинете — тот же маршрут, что на экране заказа */
-function accLiveHTML(o,i){const{S,cur}=orderSteps(o),z=S[Math.max(0,cur)],col=OST[z.k]||OST.new,p0=findItem(o.items&&o.items[0]&&o.items[0].id),e=orderEta(o);
-  const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
-  return `<div class="olv acc-live" style="--acc:${col[0]};--acc2:${col[1]}"><button class="olv-live press" data-oi="${i}"><div class="olv-l1"><span class="olv-th">${p0?shapeSVG(p0.shape,p0.c,""):itThumb(o.items&&o.items[0])}</span><div class="olv-tx"><span class="olv-chip"><i></i>${esc(LEAD_ST2[z.k]||"")}</span><h2>Замовлення № ${esc(String(o.number).replace(/^TB-/,""))}</h2></div>
-    ${e?`<div class="olv-cd"><small>чекаємо у вас</small><div class="n num">${esc(e.date)}</div><small>${e.days===1?"завтра":"через "+e.days+" "+plural(e.days,["день","дні","днів"])}</small></div>`:""}</div>
-    <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#e0566a"/><stop offset=".38" stop-color="#3d93ea"/><stop offset=".72" stop-color="#9677f0"/><stop offset="1" stop-color="#2fc77a"/></linearGradient></defs>
-    <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g><g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g class="bob"><g class="cmi" transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></g></g></g></svg></div><div class="olv-lbl"></div></button></div>`}
-/* нет заказа в пути: маршрут уже готов — ждёт первую (или следующую) посылку */
-const ACC_EMPTY_O={dest:"ua",status:"new",route:{buyCity:"Бутик"}};
-function accEmptyHTML(had){const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
-  return `<div class="olv acc-live" data-empty="1" style="--acc:#3d93ea;--acc2:#a6d4ff"><button class="olv-live press" data-act="gocat"><div class="olv-l1"><div class="olv-tx"><span class="olv-chip"><i></i>${had?"Маршрут вільний":"Маршрут готовий"}</span><h2>${had?"Готові до нової посилки":"Тут поїде ваше замовлення"}</h2></div>
-    <div class="olv-cd"><small>в Україну</small><div class="n">0 €</div><small>доставка</small></div></div>
-    <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#e0566a"/><stop offset=".38" stop-color="#3d93ea"/><stop offset=".72" stop-color="#9677f0"/><stop offset="1" stop-color="#2fc77a"/></linearGradient></defs>
-    <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g><g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g class="bob"><g class="cmi" transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${OST.shipping[2]}</g></g></g></svg></div><div class="olv-lbl"></div>
-    <span class="acc-cta">${had?"Обрати наступну річ":"Обрати першу річ"} ›</span></button></div>`}
-function accLiveDraw(w,o,idle){if(!o)return;const gr=w.querySelector("linearGradient");if(gr)gr.innerHTML=rtGrad(o);const lb=w.querySelector(".olv-lbl");if(lb)lb.innerHTML="";
-  const E=rtEngine(w,o);if(!E)return;const p=routePos(o);E.set(p,!idle);
-  // пустой маршрут: человечек «пробует дорогу» — проходит пару пунктов и возвращается
-  if(idle&&!matchMedia("(prefers-reduced-motion: reduce)").matches){const t0=performance.now(),D=6400,tick=t=>{if(!w.isConnected)return;const k=((t-t0)%D)/D,e=k<.5?k*2:2-k*2;E.set(2.2*(e<.5?2*e*e:1-Math.pow(-2*e+2,2)/2));requestAnimationFrame(tick)};requestAnimationFrame(tick)}}
+/* ===== Маршрут заказа v2 (утверждён 19.11): волна, человечек до отправки → машинка (Україна) / літак (Європа, Дубай),
+   у Нової пошти машинка + червона коробка зверху, в кінці зелена галочка. Під карткою — «Етапи замовлення». ===== */
+const R2P="M36 84 C 59.7 84, 59.7 60, 83.3 60 C 115.2 60, 115.2 86, 147.1 86 C 192.6 86, 192.6 26, 238.1 26 C 269 26, 269 74, 300 74 C 310 74, 310 66, 320 66";
+const R2SO={
+ walk:'<circle cx="13.6" cy="3.7" r="2.4"/><path d="M13 7.2c.9 0 1.7.6 2 1.4l.9 2.4 2.4 1.1c.7.3 1 1.1.7 1.8-.3.6-1.1.9-1.8.6l-2.9-1.4-.5 2 2.4 2.5c.2.2.4.5.4.8l.6 4.2c.1.8-.4 1.5-1.2 1.6-.8.1-1.4-.4-1.6-1.2l-.5-3.8-2.2-2.2-1.2 2.8-2.6 3.8c-.4.6-1.3.8-1.9.4-.6-.4-.8-1.3-.4-1.9l2.5-3.6 1.8-7.1-1.4.8-1 2.6c-.3.7-1 1-1.7.8-.7-.3-1-1-.8-1.7l1.2-3c.1-.3.4-.6.7-.7l3.3-1.9c.4-.2.7-.3 1-.3z"/>',
+ card:'<path fill-rule="evenodd" d="M5 4.5h14a3 3 0 0 1 3 3V9H2V7.5a3 3 0 0 1 3-3zM2 11.5h20v5a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3zm3.6 3.4a.9.9 0 0 0 0 1.8h4a.9.9 0 0 0 0-1.8z"/>',
+ bag:'<path fill-rule="evenodd" d="M8.2 7.5V7a3.8 3.8 0 0 1 7.6 0v.5h2.3a1.5 1.5 0 0 1 1.5 1.4l.8 10.4a2 2 0 0 1-2 2.2H5.6a2 2 0 0 1-2-2.2l.8-10.4a1.5 1.5 0 0 1 1.5-1.4zm1.8 0h4V7a2 2 0 0 0-4 0z"/>',
+ home:'<path d="M11.3 3.3a1 1 0 0 1 1.4 0l8 7.2c.6.6.2 1.5-.6 1.5H19v7.5a1.5 1.5 0 0 1-1.5 1.5h-3v-5h-5v5h-3A1.5 1.5 0 0 1 5 19.5V12H3.9c-.8 0-1.2-.9-.6-1.5z"/>',
+ box:'<path d="M12.4 2.6l7.8 3.5L12 9.8 3.8 6.1l7.8-3.5a1 1 0 0 1 .8 0zM2.8 7.7l8.3 3.7v9.7l-7.6-3.6a1.2 1.2 0 0 1-.7-1.1zM21.2 7.7v8.7a1.2 1.2 0 0 1-.7 1.1l-7.6 3.6v-9.7z"/>',
+ truck:'<path d="M1.5 6.5A1.5 1.5 0 0 1 3 5h9.5A1.5 1.5 0 0 1 14 6.5V8h3.4a1.5 1.5 0 0 1 1.2.6l2.8 3.5c.2.3.3.6.3.9v3.5a1.5 1.5 0 0 1-1.5 1.5h-.4a2.9 2.9 0 0 0-5.6 0H9.9a2.9 2.9 0 0 0-5.6 0H3a1.5 1.5 0 0 1-1.5-1.5z"/><circle cx="7.1" cy="18.2" r="2"/><circle cx="16.8" cy="18.2" r="2"/>',
+ plane:'<path transform="rotate(90 12 12)" d="M21 15.6v-1.9l-7.6-4.8V3.9a1.4 1.4 0 0 0-2.8 0v5L3 13.7v1.9l7.6-2.4v5l-2 1.5V21l3.4-1 3.4 1v-1.3l-2-1.5v-5z"/>',
+ np:'<path fill-rule="evenodd" d="M3 4.5h18a1 1 0 0 1 1 1V8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1zM3.5 10.5h17v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2zm6 2.5a.9.9 0 0 0 0 1.8h5a.9.9 0 0 0 0-1.8z"/>',
+ check:'<path class="ck" pathLength="1" d="M5.4 12.6l4.3 4.3L18.7 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'};
+const R2D={walk:"#a8344a",card:"#b07a22",bag:"#9c3446",home:"#3f58b8",box:"#6e54c4",truck:"#2a6fb8",plane:"#2a6fb8",np:"#b5333f",check:"#1f9459"};
+const R2C={walk:"#d0475c",card:"#d39a35",bag:"#c2465a",home:"#5a74d6",box:"#9a7cf2",truck:"#3a8de4",plane:"#3a8de4",np:"#e2374a",check:"#2bb673"};
+const r2Badge=(k,r)=>`<circle r="${r}" fill="${R2D[k]}"/><circle r="${r-.5}" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="1"/><g transform="scale(${r/20*.8}) translate(-12 -12)" fill="#fff" color="#fff">${k==="walk"?'<g class="r2bob">'+R2SO.walk+"</g>":R2SO[k]}</g>`;
+const R2RM=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
+function r2Spring(d,bounce,on,done){if(R2RM()){on(1);done&&done();return()=>{}}const k=Math.pow(2*Math.PI/d,2),c=4*Math.PI*(1-bounce)/d;let x=0,v=0,last=performance.now(),id,stop=false;
+  const f=t=>{if(stop)return;let dt=Math.min(.05,(t-last)/1000);last=t;while(dt>0){const h=Math.min(dt,1/240);v+=(-k*(x-1)-c*v)*h;x+=v*h;dt-=h}on(x);if(Math.abs(1-x)<.0006&&Math.abs(v)<.002){on(1);done&&done()}else id=requestAnimationFrame(f)};id=requestAnimationFrame(f);return()=>{stop=true;cancelAnimationFrame(id)}}
+const r2dm=s=>{if(!s)return"";const d=new Date(String(s).length===10?s+"T12:00":s);return isNaN(d)?"":String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")};
+/* из заказа — всё, что нужно картке: этапы, точки, подписи */
+function r2Cfg(o){const ua=(o.dest||"ua")==="ua",R=o.route||{},online=R.buyMode==="online",at=k=>{const h=(o.history||[]).filter(x=>x.status===k).pop();return h?h.at:""};
+  const st={ready:"packed",inua:"shipping"}[o.status]||o.status;
+  const K=["paid","bought",...(online?["received"]:[]),"packed","shipping",...(ua?["np"]:[]),"delivered"];
+  const U={paid:0,bought:online?.33:.5,received:.66,packed:1,shipping:1.5,np:2,delivered:ua?3:2};
+  const IC={paid:"card",bought:"bag",received:"home",packed:"box",shipping:ua?"truck":"plane",np:"np",delivered:"check"};
+  const T={paid:"Оплачено",bought:online?"Замовлено на сайті бренду":"Викуплено в бутику",received:"Отримали ми",packed:"Запаковано",shipping:ua?"Відправлено в Україну":o.dest==="dxb"?"Летить у Дубай":"Летить до вас",np:"Відправлено Новою поштою",delivered:"Отримано"};
+  const W={paid:"Оплачено",bought:online?"Замовлено":"Викуплено",received:"Отримали",packed:"Запаковано",shipping:ua?"В дорозі":"Летить",np:"Нова пошта",delivered:"Отримано"};
+  const D={bought:R.buyDate,shipping:R.shipDate,np:R.npDate};
+  const steps=K.map(k=>({k,ic:IC[k],u:U[k],t:T[k],w:W[k],d:r2dm(D[k]||at(k))}));
+  let i=K.indexOf(st);if(st==="cancelled")i=-1;
+  const pend=o.payLater?!o.paidAt:i<0;if(o.payLater&&o.paidAt&&!steps[0].d)steps[0].d=r2dm(o.paidAt);
+  const disp=o.origin||(!ua&&R.buyCity)||"Відправка";
+  const nodes=ua?[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[238.1,26,"Нова пошта","#b5333f"],[320,66,"У вас","#1f9459"]]:[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[320,66,"У вас","#1f9459"]];
+  // прибуде: від Нової пошти ~2 дні, від відправки ~4 дні в Україну (3 — Європа/Дубай)
+  const iNp=K.indexOf("np"),iSh=K.indexOf("shipping"),npAt=R.npDate||at("np"),shAt=R.shipDate||at("shipping"),pl=(s,d)=>{const t=Date.parse(String(s).length===10?s+"T12:00":s);return isNaN(t)?"":r2dm(new Date(t+d*864e5).toISOString())};
+  const eta=iNp>=0&&i>=iNp&&npAt?pl(npAt,2):i>=iSh&&shAt?pl(shAt,ua?4:3):"";
+  return{ua,online,steps,i,pend,first:online?"Замовлено":"Викуплено",nodes,eta,done:st==="delivered",doneD:r2dm(at("delivered")),cancelled:o.status==="cancelled",word0:{new:"Оформлено",work:"Підтверджено"}[st]||"Оформлено"}}
+/* картка: шапка (значок + слово + «прибуде»), хвиля з точками */
+function r2CardHTML(o,{thumb="",name="",tag="div",attrs=""}={}){
+  return `<${tag} class="r2c${tag==="button"?" press":""}" ${attrs}><span class="r2g"></span>
+    <span class="r2t"><span class="r2th">${thumb}</span><span class="r2s"><span class="r2row"></span><span class="r2it"><span class="r2pc" hidden>очікує оплату</span>${esc(name)}</span></span><span class="r2eta"><small></small><b class="num"></b></span></span>
+    <span class="r2rt"></span></${tag}>`}
+function r2Make(card,C,list,opt={}){const id="r2"+Math.random().toString(36).slice(2,7),root=card.querySelector(".r2rt"),glow=card.querySelector(".r2g"),last=C.nodes.length-1;
+  root.innerHTML=`<svg viewBox="0 0 354 116" aria-hidden="true"><defs><linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="36" x2="320"></linearGradient><filter id="${id}b" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="5"/></filter><filter id="${id}s" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity=".5"/></filter></defs>
+   <g transform="translate(0 6)"><path d="${R2P}" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="6" stroke-linecap="round"/><path class="r2f" d="${R2P}" fill="none" stroke="url(#${id}g)" stroke-width="6" stroke-linecap="round"/><path class="r2h" d="${R2P}" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity="0"/>
+   <g class="nds"></g><g class="fx"></g><g class="veh"><circle class="vg" r="22" opacity=".5" filter="url(#${id}b)"/><g class="vb" filter="url(#${id}s)"></g><g class="act" opacity="0"><g class="fl"><g class="sp"></g></g></g></g></g></svg>`;
+  const svg=root.querySelector("svg"),rf=svg.querySelector(".r2f"),sh=svg.querySelector(".r2h"),L=rf.getTotalLength(),cl=x=>Math.max(0,Math.min(1,x)),lerp=(a,b,t)=>a+(b-a)*t,pt=f=>rf.getPointAtLength(L*cl(f));rf.style.strokeDasharray=L;
+  const near=(x,y)=>{let b=0,bd=1e9;for(let j=0;j<=600;j++){const p=pt(j/600),d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;b=j/600}}return b};
+  const NF=C.nodes.map((n,j)=>j===0?0:j===last?1:near(n[0],n[1]));
+  C.steps.forEach(s=>{const a=Math.min(NF.length-2,Math.floor(s.u));s.f=lerp(NF[a],NF[a+1],s.u-a)});
+  const vehOf=f=>f<NF[1]+.004?"walk":f<.995?(C.ua?"truck":"plane"):"check";
+  svg.querySelector("linearGradient").innerHTML=C.nodes.map((n,j)=>`<stop offset="${NF[j]}" stop-color="${n[3]}"/>`).join("");
+  svg.querySelector(".nds").innerHTML=C.nodes.map((n,j)=>{const q=pt(NF[j]),r=(j===0||j===last)?8:6.5;return`<g transform="translate(${q.x} ${q.y})" class="r2n"><circle class="pr" r="${r}" fill="none" stroke="${n[3]}" stroke-width="2" opacity="0"/><circle class="b" r="${r}" fill="#26282c" stroke="rgba(255,255,255,.32)" stroke-width="1.6"/><text text-anchor="middle" x="0" y="-21" fill="rgba(255,255,255,.5)">${esc(n[2])}</text></g>`}).join("");
+  const ND=[...svg.querySelectorAll(".r2n")],veh=svg.querySelector(".veh"),vb=svg.querySelector(".vb"),vg=svg.querySelector(".vg"),fx=svg.querySelector(".fx"),act=svg.querySelector(".act"),asp=svg.querySelector(".act .sp");
+  let F=0,si=Math.max(0,C.i),vk="",actK="";
+  const setVeh=(k,quiet)=>{if(k===vk)return;const prev=vk;vk=k;if(k==="check"){celebrate(quiet);return}const html=r2Badge(k,14);
+    if(quiet||R2RM()||!prev||prev==="check"){vb.innerHTML=html;return}
+    vb.innerHTML=`<g class="xo">${vb.innerHTML}</g><g class="xn">${html}</g>`;const a=vb.querySelector(".xo"),b=vb.querySelector(".xn");
+    a.animate([{opacity:1,transform:"scale(1)",filter:"blur(0)"},{opacity:0,transform:"scale(.82)",filter:"blur(1.5px)"}],{duration:520,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"});
+    b.animate([{opacity:0,transform:"scale(1.12)",filter:"blur(1.5px)"},{opacity:1,transform:"scale(1)",filter:"blur(0)"}],{duration:620,easing:"cubic-bezier(.2,.8,.2,1)",fill:"forwards"}).onfinish=()=>{if(vk===k)vb.innerHTML=html}};
+  // значок «чим зараз зайняті» над человечком (як у Sims); у Нової пошти — червона коробка над машинкою
+  const setAct=()=>{const s=C.steps[si],show=!opt.empty&&C.i>=0&&(vk==="walk"||(vk==="truck"&&s.k==="np"&&F>s.f-.03));act.style.transition="opacity .5s";act.setAttribute("opacity",show?1:0);if(!show)return;const k=s.ic;if(k===actK)return;actK=k;
+    const html=`<g transform="translate(0 -28)">${r2Badge(k,8)}<path d="M-3 9.8l3 3.2 3-3.2z" fill="${R2D[k]}"/></g>`;
+    if(R2RM()||!asp.innerHTML){asp.innerHTML=html;return}asp.innerHTML=`<g class="xo">${asp.innerHTML}</g><g class="xn">${html}</g>`;
+    asp.querySelector(".xo").animate([{opacity:1},{opacity:0,transform:"translateY(-6px)"}],{duration:380,easing:"ease-in",fill:"forwards"});
+    asp.querySelector(".xn").animate([{opacity:0,transform:"translateY(6px) scale(.6)"},{opacity:1,transform:"none"}],{duration:560,delay:120,easing:"cubic-bezier(.2,1.3,.4,1)",fill:"both"}).onfinish=()=>{if(actK===k)asp.innerHTML=html}};
+  // «Отримано»: значок м'яко з'являється, малюється галочка, дві хвилі й трохи конфеті в кольорах етапів
+  const celebrate=quiet=>{vb.innerHTML=r2Badge("check",15);const ck=vb.querySelector(".ck");if(quiet||R2RM())return;ck.style.strokeDasharray=1;ck.style.strokeDashoffset=1;
+    r2Spring(.6,.45,x=>vb.setAttribute("transform",`scale(${.4+.6*x})`));setTimeout(()=>r2Spring(.5,0,x=>ck.style.strokeDashoffset=1-x),160);
+    const q=pt(1),NS="http://www.w3.org/2000/svg";[0,260].forEach(d=>setTimeout(()=>{const c=document.createElementNS(NS,"circle");c.setAttribute("cx",q.x);c.setAttribute("cy",q.y);c.setAttribute("r",15);c.setAttribute("fill","none");c.setAttribute("stroke","#2bb673");c.setAttribute("stroke-width",2);fx.append(c);c.animate([{r:15,opacity:.8},{r:38,opacity:0}],{duration:1100,easing:"cubic-bezier(.2,.8,.2,1)"}).onfinish=()=>c.remove()},d));
+    const cols=["#d39a35","#c2465a","#9a7cf2","#3a8de4","#2bb673","#fff"];
+    for(let j=0;j<16;j++){const a=-Math.PI*(.15+.7*Math.random()),r=26+Math.random()*30,e=document.createElementNS(NS,j%3?"rect":"circle");
+      if(j%3){e.setAttribute("width",4);e.setAttribute("height",2.2);e.setAttribute("rx",1);e.setAttribute("x",q.x-2);e.setAttribute("y",q.y-1)}else{e.setAttribute("cx",q.x);e.setAttribute("cy",q.y);e.setAttribute("r",1.8)}
+      e.setAttribute("fill",cols[j%cols.length]);fx.append(e);const dx=Math.cos(a)*r-10,dy=Math.sin(a)*r;
+      e.animate([{transform:"translate(0,0) rotate(0)",opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${180+Math.random()*180}deg)`,opacity:1,offset:.6},{transform:`translate(${dx*1.1}px,${dy+16}px) rotate(360deg)`,opacity:0}],{duration:1500+Math.random()*500,easing:"cubic-bezier(.15,.7,.3,1)",fill:"forwards"}).onfinish=()=>e.remove()}};
+  const draw=(f,quiet)=>{F=f;const q=pt(f),q2=pt(Math.min(1,f+.004)),q0=pt(Math.max(0,f-.004));veh.setAttribute("transform",`translate(${q.x} ${q.y})`);rf.style.strokeDashoffset=L*(1-(opt.empty?0:f));
+    setVeh(vehOf(f),quiet);const ang=Math.atan2(q2.y-q0.y,q2.x-q0.x)*180/Math.PI;if(vk==="plane")vb.setAttribute("transform",`rotate(${ang})`);else if(vk==="truck")vb.setAttribute("transform",`rotate(${ang*.35})`);else if(vk==="walk")vb.setAttribute("transform","");
+    let m=0;NF.forEach((x,j)=>{if(f>=x-.004)m=j});vg.setAttribute("fill",opt.empty?"#3a8de4":C.nodes[Math.min(last,m+(f>NF[m]+.01?1:0))][3]);
+    ND.forEach((g,j)=>{const on=!opt.empty&&C.i>=0&&f>=NF[j]-.004,b=g.querySelector(".b"),tx=g.querySelector("text"),pd=j===0&&C.pend&&!opt.empty;
+      b.setAttribute("fill",pd?"#d9a441":on?C.nodes[j][3]:"#26282c");b.setAttribute("stroke",on||pd?"#fff":"rgba(255,255,255,.32)");tx.setAttribute("fill",on?"#fff":"rgba(255,255,255,.5)");
+      if(j===0&&!opt.empty)tx.textContent=si>=1&&C.i>=1?C.first:"Оплачено";
+      const nr=Math.abs(f-NF[j])<.03&&(vk==="walk"||C.steps[si].k==="np");tx.style.transform=nr?"translateY(-20px)":""});
+    setAct()};
+  // шапка: значок + одне слово; «прибуде дд.мм»
+  const head=anim=>{const row=card.querySelector(".r2row");let k,w;
+    if(opt.empty){k="walk";w=opt.word||"Маршрут готовий"}else if(C.cancelled){k="card";w="Скасовано"}else if(C.i<0){k="card";w=C.word0}else{const s=C.steps[si];k=s.ic;w=s.w}
+    glow.style.background=`radial-gradient(circle,${R2C[k]} 0%,transparent 65%)`;
+    const html=`<svg viewBox="-14 -14 28 28" width="28" height="28" style="overflow:visible;flex:none">${r2Badge(k,13)}</svg><span class="r2big">${esc(w)}</span>`;
+    if(!anim||R2RM())row.innerHTML=html;else row.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-6px)"}],{duration:170,easing:"ease-in"}).onfinish=()=>{row.innerHTML=html;row.animate([{opacity:0,transform:"translateY(8px)"},{opacity:1,transform:"none"}],{duration:460,easing:"cubic-bezier(.2,.8,.2,1)"})};
+    const pc=card.querySelector(".r2pc");if(pc)pc.hidden=!(C.pend&&!opt.empty&&!C.cancelled);
+    const sm=card.querySelector(".r2eta small"),eb=card.querySelector(".r2eta b");
+    if(opt.empty){sm.textContent=opt.etaS||"";eb.textContent=opt.etaB||""}else if(si===C.steps.length-1&&C.i===si){sm.textContent="отримано";eb.textContent=C.doneD}else{sm.textContent=C.eta?"прибуде":"";eb.textContent=C.eta}};
+  // плашка «Етапи замовлення»: пройдені залиті кольором, поточний з кільцем, лінія доростає вниз
+  let RW=[];if(list){list.innerHTML=`<h3>Етапи замовлення<span class="cnt"></span></h3><div class="rows">${C.steps.map((s,j)=>{const c=R2C[s.ic],c2=C.steps[j+1]?R2C[C.steps[j+1].ic]:c;return`<div class="r" style="--c:${c};--c2:${c2}"><div class="dot"><span class="hol"></span></div><div class="tx"><b>${esc(s.t)}</b><small></small></div><div class="dt num"></div><div class="seg"><i></i></div></div>`}).join("")}</div>`;RW=[...list.querySelectorAll(".r")]}
+  const tl=anim=>{if(!list)return;const i=C.i<0?-1:si,n=C.steps.length-1;
+    RW.forEach((r,j)=>{const s=C.steps[j],dot=r.querySelector(".dot"),isNow=j===i&&j<n,ok=j<i||(j===i&&j===n);r.classList.toggle("ok",ok);r.classList.toggle("now",isNow);
+      r.querySelector(".dt").textContent=j<=i?s.d:"";r.querySelector("small").textContent=isNow?"зараз":"";
+      const want=j<=i?"b":"h";if(dot.dataset.s!==want){dot.dataset.s=want;dot.innerHTML=want==="b"?`<svg viewBox="-16 -16 32 32">${r2Badge(s.ic,14)}</svg>${isNow?'<span class="r2ring"></span>':""}`:`<span class="hol"></span>`;
+        if(want==="b"&&anim&&!R2RM())dot.firstChild.animate([{transform:"scale(.3)",opacity:0},{transform:"scale(1)",opacity:1}],{duration:520,easing:"cubic-bezier(.2,1.5,.4,1)"})}
+      else if(want==="b"){const ring=dot.querySelector(".r2ring");if(isNow&&!ring)dot.insertAdjacentHTML("beforeend",'<span class="r2ring"></span>');if(!isNow&&ring)ring.remove()}
+      const seg=r.querySelector(".seg i"),full=j<i;if(seg.dataset.f!==String(full)){seg.dataset.f=String(full);seg.animate([{transform:`scaleY(${full?0:1})`},{transform:`scaleY(${full?1:0})`}],{duration:anim&&!R2RM()?520:0,easing:"cubic-bezier(.3,.7,.2,1)",fill:"forwards"})}});
+    // оплата пізніше: «Оплачено» чекає жовтим — «Очікує оплату · сума · Як оплатити»
+    const r=RW[0];if(r&&C.pend){r.classList.remove("ok","now");r.classList.add("pend");r.querySelector(".tx b").textContent="Очікує оплату";r.querySelector("small").innerHTML=`${opt.sum?esc(opt.sum)+" · ":""}${opt.payUrl?`<a href="${esc(opt.payUrl)}" target="_blank" rel="noopener">Як оплатити</a>`:"менеджер надішле реквізити"}`;r.querySelector(".dt").textContent="";
+      const dot=r.querySelector(".dot");dot.dataset.s="p";dot.innerHTML=`<svg viewBox="-16 -16 32 32"><circle r="13" fill="#fff7ea" stroke="#d9a441" stroke-width="1.6" stroke-dasharray="3 2.6"/><g transform="scale(.6) translate(-12 -12)" fill="none" stroke="#b07a22" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></g></svg><span class="r2ring" style="--c:#d9a441"></span>`;r.querySelector(".seg i").style.background="repeating-linear-gradient(to bottom,#d9a441 0 4px,transparent 4px 8px)"}
+    else if(r)r.classList.remove("pend");
+    const cn=list.querySelector(".cnt");if(cn)cn.textContent=i>=0?`${i+1} з ${C.steps.length}`:""};
+  // лёгкий блик по пройденій частині
+  if(!R2RM()&&!opt.empty){const t0=performance.now(),shine=t=>{if(!card.isConnected)return;const k=((t-t0)%2800)/2800;if(F>.05){sh.style.strokeDasharray=`20 ${L}`;sh.style.strokeDashoffset=-(k*F*L-10);sh.setAttribute("opacity",.35*Math.sin(Math.PI*k))}else sh.setAttribute("opacity",0);requestAnimationFrame(shine)};requestAnimationFrame(shine)}
+  const pulse=f=>{if(R2RM())return;ND.forEach((g,j)=>{if(Math.abs(NF[j]-f)<.005)g.querySelector(".pr").animate([{opacity:.9,transform:"scale(1)"},{opacity:0,transform:"scale(2.2)"}],{duration:900,easing:"ease-out"})})};
+  const posOf=i=>i<0?0:C.steps[i].f;
+  // показать сразу (без анимации) этап i
+  const show=i=>{si=Math.max(0,i);vk="";actK="";vb.innerHTML="";fx.innerHTML="";draw(posOf(C.i<0?-1:si),true);head(false);tl(false)};
+  // проиграть от этапа a до текущего — по одному этапу, с паузой на каждой точке
+  const play=a=>{if(C.i<0||C.cancelled||a>=C.i||R2RM()){show(C.i);return}show(a);let j=a;const step=()=>{if(!card.isConnected)return;if(j>=C.i)return;j++;si=j;const from=F,to=posOf(j);head(true);tl(true);
+      r2Spring(Math.max(.8,.6+1.5*Math.abs(to-from)),.05,x=>draw(lerp(from,to,x)),()=>{pulse(to);setTimeout(step,450)})};setTimeout(step,500)};
+  return{show,play}}
+/* мини-карточка в кабинете — та же картка маршрута, что на экране заказа */
+const r2Name=o=>{const it=(o.items||[])[0];if(!it)return"Замовлення № "+String(o.number).replace(/^TB-/,"");const p=findItem(it.id);return[it.brand||(p&&p.brand),it.title||(p&&p.name)].filter(Boolean).join(" · ")+(o.items.length>1?" +"+(o.items.length-1):"")};
+const r2Thumb=o=>{const it=(o.items||[])[0],p=it&&findItem(it.id);return p?shapeSVG(p.shape,p.c,""):itThumb(it)};
+function accLiveHTML(o,i){return `<div class="acc-live">${r2CardHTML(o,{tag:"button",attrs:`data-oi="${i}"`,thumb:r2Thumb(o),name:r2Name(o)})}</div>`}
+const ACC_EMPTY_O={dest:"ua",status:"new"};
+function accEmptyHTML(had){return `<div class="acc-live" data-empty="${had?2:1}"><button class="r2c press" data-act="gocat"><span class="r2g"></span>
+    <span class="r2t"><span class="r2s"><span class="r2row"></span><span class="r2it">${had?"Готові до нової посилки":"Тут поїде ваше замовлення"}</span></span><span class="r2eta"><small></small><b class="num"></b></span></span>
+    <span class="r2rt"></span><span class="acc-cta">${had?"Обрати наступну річ":"Обрати першу річ"} ›</span></button></div>`}
+function accLiveDraw(w,o,idle){if(!o)return;const card=w.querySelector(".r2c");if(!card)return;
+  if(idle){const d=(typeof prefs!=="undefined"&&prefs&&prefs.dest)||"ua";r2Make(card,r2Cfg({dest:d,status:"new"}),null,{empty:true,word:w.dataset.empty==="2"?"Маршрут вільний":"Маршрут готовий",etaS:"доставка",etaB:"0 €"}).show(0);return}
+  r2Make(card,r2Cfg(o),null).show(r2Cfg(o).i)}
 function orderRowHTML(o,i){const{S,cur}=orderSteps(o);const p=o.items&&o.items[0]&&findItem(o.items[0].id);
   return `<button class="ordc press" data-oi="${i}"><span class="oth">${p?shapeSVG(p.shape,p.c,""):(itThumb(o.items&&o.items[0],' style="width:100%;height:100%;object-fit:contain"')||"<i></i>")}</span><span class="otx"><b>Замовлення № ${esc(String(o.number).replace(/^TB-/,""))}</b><small>${fmtD(o.createdAt)}${o.total?" · "+eur(o.total):""}</small>
     <span class="obar">${S.map((_,j)=>`<i class="${j<=cur?"on":""}"></i>`).join("")}</span></span><em class="ost ${o.status}">${LEAD_ST2[o.status]||""}</em></button>`}
@@ -4316,43 +4461,21 @@ function openOrdersAll(ords){
   s.querySelector(".mo-q input").oninput=e=>{q=e.target.value;lim=20;draw()};
   box.onclick=e=>{if(e.target.closest("[data-momore]")){lim+=20;draw();return}const b=e.target.closest("[data-mo]");if(b)openOrder(ords[+b.dataset.mo])};
 }
-function openOrder(o){const{S,cur}=orderSteps(o),ua=(o.dest||"ua")==="ua",R=o.route||{},cancelled=o.status==="cancelled";
-  const N=routeNodes(o);
-  const z=S[Math.max(0,cur)],col=OST[z.k]||OST.new,p0=findItem(o.items&&o.items[0]&&o.items[0].id);
-  const P1=routePos(o),KEY="tb_ordseen9",seenMap=store.get(KEY,{}),P0=seenMap[o.number]!==undefined?Math.min(seenMap[o.number],P1):0;seenMap[o.number]=P1;store.set(KEY,seenMap);
-  const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
-  const RK=rtKeys(o),nodeCol=i=>OST[RK[i]][0];
-  const dn=S.slice(0,Math.max(0,cur)).reverse(),nx=cancelled?[]:S.slice(cur+1);
-  const s=push("Замовлення № "+String(o.number).replace(/^TB-/,""),`<div class="olv" style="--acc:${col[0]};--acc2:${col[1]}">
-    <div class="olv-tt"><small>${fmtD(o.createdAt)} · ${ua?"доставка в Україну":DEST_NAME[o.dest]}</small><h1>Моє замовлення</h1></div>
-    <div class="olv-live"><div class="olv-l1"><span class="olv-th">${p0?shapeSVG(p0.shape,p0.c,""):""}</span><div class="olv-tx"><span class="olv-chip"><i></i>${cancelled?"Скасовано":esc(LEAD_ST2[z.k]||"")}</span><h2>${cancelled?"Замовлення скасовано":esc(z.t.split(" · ")[0])}</h2></div>
-      ${(()=>{if(cancelled)return"";if(o.status==="delivered")return `<div class="olv-cd"><small>отримано</small><div class="n">✓</div></div>`;const e=orderEta(o);return e?`<div class="olv-cd"><small>чекаємо у вас</small><div class="n num">${esc(e.date)}</div><small>${e.days===1?"завтра":"через "+e.days+" "+plural(e.days,["день","дні","днів"])}</small></div>`:""})()}</div>
-      <div class="olv-route"><svg viewBox="0 0 354 96" aria-hidden="true"><defs><linearGradient id="olvg" gradientUnits="userSpaceOnUse" x1="18" x2="336"><stop offset="0" stop-color="#e0566a"/><stop offset=".38" stop-color="#3d93ea"/><stop offset=".72" stop-color="#9677f0"/><stop offset="1" stop-color="#2fc77a"/></linearGradient></defs>
-        <path class="rb" d="${PATH}"/><path class="rf" d="${PATH}"/><g class="nds"></g>
-        <g class="cm"><circle class="glow" r="16"/><circle class="body" r="13"/><g class="bob"><g class="cmi" transform="translate(-8 -8) scale(.68)" fill="none" stroke="#1f2125" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></g></g></g></svg></div><div class="olv-lbl"></div></div>
-    <div class="olv-st">
-      ${o.payLater&&!cancelled?`<div class="olv-nx" style="--c:${OST.paid[0]}"><span class="ic" style="background:${o.paidAt?OST.paid[0]:"var(--soft)"};color:${o.paidAt?"#fff":"inherit"}"><svg viewBox="0 0 24 24">${OST.paid[2]}</svg></span><div><b>${o.paidAt?"Оплачено":"Оплата після викупу"}</b><small>${o.paidAt?esc(fmtD(o.paidAt)):"менеджер надішле реквізити"}</small></div></div>`:""}
-      ${dn.length?`<div class="olv-stack" data-n="${dn.length} ${plural(dn.length,["етап пройдено","етапи пройдено","етапів пройдено"])}">${dn.map(x=>`<div class="s" style="--c:${(OST[x.k]||OST.new)[0]}"><span class="ic"><svg viewBox="0 0 24 24">${(OST[x.k]||OST.new)[2]}</svg></span><div><b>${esc(x.t)}</b><small>${esc(x.d||"")}</small></div><span class="ok">✓</span></div>`).join("")}</div>`:""}
-      ${cancelled?`<div class="olv-done" style="background:var(--ink-grad);box-shadow:none"><b>Замовлення скасовано</b><p>Якщо це помилка — напишіть менеджеру.</p></div>`:o.status==="delivered"?`<div class="olv-done"><span class="wm">TREND BÜRO</span><b>Замовлення у вас</b><p>Дякуємо, що обрали нас. Носіть із задоволенням.</p></div>`
-        :`<div class="olv-cur" style="--c:${col[0]}"><span class="ic"><svg viewBox="0 0 24 24">${col[2]}</svg></span><span class="k">Зараз${z.d?" · "+esc(z.d):""}</span><b>${esc(z.t)}</b><p>${esc({new:"Менеджер перевірить наявність і розмір і напише вам у Telegram.",work:"Наявність підтверджено — менеджер надішле реквізити для оплати.",paid:"Дякуємо! Викуповуємо вашу річ у бутику.",bought:R.buyMode==="online"?"Бренд відправив замовлення — чекаємо в нас.":"Викупили — веземо до нас на перевірку.",received:"Річ у нас — перевіряємо й пакуємо.",inua:"Посилка вже в Україні — скоро передамо в Нову пошту.",packed:"Перевірили й дбайливо запакували.",ready:"Коробка готова — їде найближчою відправкою.",shipping:ua?"Посилка їде в Україну.":"Посилка летить до вас — трек DHL нижче.",np:"Посилка в Новій пошті — скоро буде у вас."}[z.k]||"")}</p><div class="bar"><i></i></div></div>`}
-      ${nx.map(x=>`<div class="olv-nx"><span class="ic"><svg viewBox="0 0 24 24">${(OST[x.k]||OST.new)[2]}</svg></span><div><b>${esc(x.t)}</b>${x.d?`<small>очікується ${esc(x.d)}</small>`:""}</div></div>`).join("")}
-    </div>
+function openOrder(o){const C=r2Cfg(o),ua=C.ua,R=o.route||{};
+  const KEY="tb_ordseen10",seen=store.get(KEY,{}),from=seen[o.number]!==undefined?Math.min(seen[o.number],C.i):0;seen[o.number]=C.i;store.set(KEY,seen);
+  const mgr=(CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]).url;
+  const dv=o.delivery||null,dvt=dv&&(dv.npType==="courier"?(dv.address?"курʼєр · "+dv.address:"курʼєр"):dv.npPoint?(dv.npType==="locker"?"поштомат № ":"відділення № ")+dv.npPoint:dv.address||"");
+  const s=push("Замовлення № "+String(o.number).replace(/^TB-/,""),`<div class="olv r2o">
+    <div class="olv-tt"><small>${fmtD(o.createdAt)} · ${ua?"доставка в Україну":DEST_NAME[o.dest]||""}</small><h1>Моє замовлення</h1></div>
+    ${r2CardHTML(o,{thumb:r2Thumb(o),name:r2Name(o)})}
+    ${C.cancelled?`<div class="olv-done" style="background:var(--ink-grad);box-shadow:none;margin:12px 12px 0"><b>Замовлення скасовано</b><p>Якщо це помилка — напишіть менеджеру.</p></div>`:`<div class="r2tl"></div>`}
+    ${dv?`<div class="r2dl"><span class="r2i" style="background:${dv.carrier==="np"?"#b5333f":"#d4a72c"}"><svg viewBox="0 0 24 24" fill="#fff">${dv.carrier==="np"?R2SO.np:R2SO.plane}</svg></span><div><b>${dv.carrier==="np"?"Нова пошта":"DHL"}${dv.city?" · "+esc(dv.city):""}</b><small>${esc([dvt,dv.name,dv.phone].filter(Boolean).join(" · "))}</small></div></div>`:""}
     ${R.track&&!ua?`<div class="ot-ttn"><div><span class="cap">Трек-номер DHL</span><b class="num">${esc(R.track)}</b></div><button class="btn sm soft" data-cpt>Скопіювати</button><a class="btn sm" href="https://www.dhl.com/global-en/home/tracking.html?tracking-id=${encodeURIComponent(R.track)}" target="_blank" rel="noopener">Відстежити</a></div>`:""}
     <div class="sec"><div class="sech"><h2>У замовленні</h2></div><div class="pad">${(o.items||[]).map(it=>{const p=findItem(it.id);return `<button class="cartrow" ${p?`data-act="product" data-id="${p.id}"`:""}><span class="th">${p?shapeSVG(p.shape,p.c,""):itThumb(it)}</span><div class="tx"><span class="b">${esc(it.brand||"")}</span><span class="n">${esc(it.title||"")}</span><span class="z">${[it.size&&"розмір "+it.size,it.color].filter(Boolean).map(esc).join(" · ")}</span></div>${it.price?`<b class="num">${eur(it.price)}</b>`:""}</button>`}).join("")}
       ${o.total?`<div class="group" style="margin-top:12px"><div class="row tot"><span>Разом</span><span class="num">${eur(o.total)}</span></div></div>`:""}</div></div>
-    <div class="pad" style="margin-top:16px"><a class="btn block soft" href="${esc((CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]).url)}" target="_blank" rel="noopener">Написати менеджеру про замовлення</a></div><div style="height:30px"></div></div>`);
-  const live=s.querySelector(".olv-live"),rf=s.querySelector(".rf"),L=rf.getTotalLength(),cm=s.querySelector(".cm");
-  s.querySelector(".olv-lbl").innerHTML="";s.querySelector("linearGradient").innerHTML=rtGrad(o);
-  const E=rtEngine(s.querySelector(".olv-route"),o);E.set(P0);
-  const sparks=(x,y,c)=>{const box=s.querySelector(".olv-route svg").getBoundingClientRect(),hb=live.getBoundingClientRect(),k=box.width/354;
-    for(let j=0;j<16;j++){const e=document.createElement("i");e.className="olv-spark";const a=Math.random()*6.283,r=22+Math.random()*36;
-      e.style.cssText=`left:${box.left-hb.left+x*k-3}px;top:${box.top-hb.top+y*(box.height/96)-3}px;background:${[c,"#fff",col[1]][j%3]};--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r}px`;live.append(e);setTimeout(()=>e.remove(),1100)}};
-  // человечек проходит каждый пункт по очереди: точка вспыхивает, прошлая «прилипает» к капсуле в начале, линия удлиняется
-  const pop=j=>{const g=E.node(j);if(!g)return;g.classList.remove("pop");void g.getBoundingClientRect();g.classList.add("pop");const c=g.querySelector("circle.o");sparks(+c.getAttribute("cx"),+c.getAttribute("cy"),nodeCol(j));hap("light")};
-  setTimeout(()=>E.run(P0,P1,(j,last)=>{if(j>0||RT_ON.includes(o.status))pop(j)}),350);
-  const st=s.querySelector(".olv-stack");if(st)st.onclick=()=>st.classList.toggle("open");
+    <div class="pad" style="margin-top:16px"><a class="btn block soft" href="${esc(mgr)}" target="_blank" rel="noopener">Написати менеджеру про замовлення</a></div><div style="height:30px"></div></div>`);
+  const E=r2Make(s.querySelector(".r2c"),C,s.querySelector(".r2tl"),{sum:o.total?eur(o.total):"",payUrl:mgr});E.play(Math.max(0,from));
   const c=s.querySelector("[data-cpt]");if(c)c.onclick=()=>copy(R.track)}
-
 
 /* доставка: форма (профиль и оформление заказа) */
 const DLV_EMPTY={name:"",phone:"",city:"",npType:"branch",npPoint:"",address:"",comment:""};
