@@ -86,6 +86,15 @@ export default async function handler(req, res) {
       return res.end(JSON.stringify({ id, im: p && p.status === "published" ? storefrontImages(p) : [] })); }
     catch (e) { res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end('{"im":null}'); }
   }
+  // только выбранные вещи (добірка по ссылке): телефон клиента ещё качает весь каталог — карточку товара открываем сразу по этим данным
+  if (/[?&]ids=/.test(String(req.url || ""))) {
+    try { const ids = [...new Set(String(new URL(req.url, "http://x").searchParams.get("ids") || "").split(",").filter(x => /^product\.[a-z0-9._-]{3,120}$/.test(x)))].slice(0, 40);
+      const docs = (await getStore().getMany(ids)).filter(p => p && p.status === "published"), now = Date.now();
+      const products = docs.map(p => toStorefront(p, now, { compact: true, lean: compact === 2 })).filter(Boolean);
+      res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", closed ? "private, max-age=120" : "public, max-age=120, s-maxage=120"); res.statusCode = 200;
+      return res.end(JSON.stringify({ products })); }
+    catch (e) { res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end('{"products":null}'); }
+  }
   // только «Що нового» и настройки витрины — маленький ответ: телефон со старым сохранённым каталогом сразу видит свежую плашку
   if (/[?&]site=1\b/.test(String(req.url || ""))) {
     try { const { getSite } = await import("../lib/cms.js"); const site = await getSite(getStore()); res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "private, no-store"); res.statusCode = 200; return res.end(JSON.stringify({ whatsnew: site.whatsnew })); }
