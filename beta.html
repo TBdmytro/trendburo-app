@@ -4556,11 +4556,11 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
 /* новый заказ: выбрать клиента (или нового) → вещь, цена, доставка, этап */
 async function soNew(reload){let cl=[],pick=null;
   // сначала новый клиент (чаще всего), ниже — поиск среди тех, кто уже есть
-  const d=openSheet("Новый заказ",`<div class="so-f"><div class="fl">Новый клиент</div><input type="text" id="cN" placeholder="Имя"><input type="text" id="cU" placeholder="@ник в Telegram (если есть)"><div class="frow"><input type="text" id="cP" placeholder="Телефон" inputmode="tel"><input type="text" id="cC" placeholder="Город"></div><button class="btn" data-cmk>Дальше — к заказу</button>
-    <div class="fl" style="margin-top:10px">Или клиент, который уже есть</div><input type="search" id="soQ" placeholder="Имя, @ник, телефон" autocomplete="off"><div class="so-cl"><p class="ace">Завантажуємо…</p></div></div>`);
+  const d=openSheet("Новый заказ",`<div class="so-f"><div class="fl">Новый клиент</div><input type="text" id="cN" placeholder="Имя"><input type="text" id="cI" placeholder="Instagram: @ник" autocapitalize="off" autocorrect="off" spellcheck="false"><input type="text" id="cU" placeholder="Telegram: @ник (если есть)" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="frow"><input type="text" id="cP" placeholder="Телефон" inputmode="tel"><input type="text" id="cC" placeholder="Город"></div><button class="btn" data-cmk>Дальше — к заказу</button>
+    <div class="fl" style="margin-top:10px">Или клиент, который уже есть</div><input type="search" id="soQ" placeholder="Имя, Instagram, Telegram, телефон" autocomplete="off"><div class="so-cl"><p class="ace">Завантажуємо…</p></div></div>`);
   const box=d.querySelector(".so-cl");
-  const drawC=()=>{const q=d.querySelector("#soQ").value.toLowerCase().trim(),V=cl.filter(c=>!q||[c.name,c.username,c.phone].join(" ").toLowerCase().includes(q)).slice(0,q?30:5);
-    box.innerHTML=V.map(c=>`<button class="so-ci" data-cid="${esc(c.id)}"><b>${esc(c.name||"Без имени")}</b><small>${esc([c.username&&"@"+c.username,c.phone,c.city,c.offline&&"через менеджера"].filter(Boolean).join(" · "))}</small></button>`).join("")||'<p class="ace">Никого не нашли</p>'};
+  const drawC=()=>{const q=d.querySelector("#soQ").value.toLowerCase().trim(),V=cl.filter(c=>!q||[c.name,c.username,c.insta,c.phone].join(" ").toLowerCase().includes(q.replace(/^@/,""))).slice(0,q?30:5);
+    box.innerHTML=V.map(c=>`<button class="so-ci" data-cid="${esc(c.id)}"><b>${esc(c.name||"Без имени")}</b><small>${esc([c.insta&&"IG @"+c.insta,c.username&&"TG @"+c.username,c.phone,c.city,c.offline&&"через менеджера"].filter(Boolean).join(" · "))}</small></button>`).join("")||'<p class="ace">Никого не нашли</p>'};
   try{cl=(await soCall("clients")).clients||[];drawC()}catch(e){box.innerHTML=`<p class="ace">${esc(e.message)}</p>`}
   d.querySelector("#soQ").oninput=drawC;
   const form=()=>{d.querySelector(".sh-h h3").textContent="Заказ · "+(pick.name||"клиент");d.querySelector(".sh-b").innerHTML=`<div class="so-f">
@@ -4573,7 +4573,7 @@ async function soNew(reload){let cl=[],pick=null;
       <textarea id="nN" placeholder="Заметка — только для нас" style="min-height:60px"></textarea></div>`;
     let f=d.querySelector(".sh-f");if(!f){f=document.createElement("div");f.className="sh-f";d.append(f)}f.innerHTML=`<button class="btn" data-nsave style="flex:1">Добавить заказ</button>`};
   d.addEventListener("click",async e=>{const c=e.target.closest("[data-cid]");if(c){pick=cl.find(x=>x.id===c.dataset.cid);form();return}
-    if(e.target.closest("[data-cmk]")){const v=id=>d.querySelector(id).value.trim();if(!v("#cN"))return toast("Нужно имя");const bt=e.target.closest("[data-cmk]");bt.disabled=true;try{const r=await soCall("client",{name:v("#cN"),username:v("#cU"),phone:v("#cP"),city:v("#cC")});pick={id:r.id,name:v("#cN")};form()}catch(x){toast(x.message);bt.disabled=false}return}
+    if(e.target.closest("[data-cmk]")){const v=id=>d.querySelector(id).value.trim();if(!v("#cN"))return toast("Нужно имя");const bt=e.target.closest("[data-cmk]");bt.disabled=true;try{const r=await soCall("client",{name:v("#cN"),insta:v("#cI"),username:v("#cU"),phone:v("#cP"),city:v("#cC")});pick={id:r.id,name:v("#cN")};form()}catch(x){toast(x.message);bt.disabled=false}return}
     const ch=e.target.closest(".so-chs [data-v]");if(ch){ch.parentNode.querySelectorAll("[data-v]").forEach(x=>x.classList.toggle("on",x===ch));return}
     const sv=e.target.closest("[data-nsave]");if(!sv)return;const v=id=>d.querySelector(id).value.trim(),on=id=>d.querySelector(id+" .on").dataset.v;
     if(!v("#nT")&&!v("#nB"))return toast("Укажите вещь");sv.disabled=true;
