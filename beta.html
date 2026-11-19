@@ -4667,6 +4667,9 @@ const snNum=v=>+String(v||"").replace(/\s/g,"").replace(",",".")||0;
 /* строка вещи в заказе: фото, название, размер (кнопки, если знаем размеры), цена, убрать */
 const snItemRow=(i,j,hl)=>`<div class="sn-it${hl?" hl":""}"><span class="im">${i.photo?`<img src="${esc(i.photo)}" alt="">`:""}</span><div><b>${esc([i.brand,i.title].filter(Boolean).join(" · "))}</b>${i.sizes&&i.sizes.length>1?`<span class="sn-sz">${i.sizes.slice(0,14).map(z=>`<button class="${String(z)===String(i.size)?"on":""}" data-sz="${j}" data-v="${esc(z)}">${esc(z)}</button>`).join("")}</span>`:`<small>${esc([i.size,i.color,i.note].filter(Boolean).join(" · "))}</small>`}${i.sizes&&i.sizes.length>1&&!i.size?'<small class="sn-need">выберите размер</small>':""}</div><span class="sn-pc2"><label><small>цена</small><input type="text" class="sn-pr" data-ip="${j}" value="${esc(String(i.price||""))}" inputmode="decimal"></label><label class="cst"><small>закупка</small><input type="text" class="sn-pr" data-ic="${j}" value="${esc(String(i.cost||""))}" inputmode="decimal" placeholder="—"></label></span><button class="sn-x" data-rm="${j}" aria-label="Убрать">✕</button></div>`;
 
+/* поиск клиента на любой раскладке: «анаст» находит «Anastasiya», «kiril» — «Кирил» */
+const TLR={а:"a",б:"b",в:"v",г:"h",ґ:"g",д:"d",е:"e",є:"ie",ё:"e",ж:"zh",з:"z",и:"i",і:"i",ї:"i",й:"i",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"h",ц:"ts",ч:"ch",ш:"sh",щ:"sch",ъ:"",ы:"i",ь:"",э:"e",ю:"iu",я:"ia"};
+const fz=t=>String(t||"").toLowerCase().replace(/[а-яёіїєґ]/g,c=>TLR[c]??c).replace(/[^a-z0-9]/g,"").replace(/kh/g,"h").replace(/g/g,"h").replace(/y/g,"i").replace(/(.)\1+/g,"$1");
 /* новый заказ — 4 шага. Сверху всегда видно, что уже собрано: клиент · вещи · доставка (нажатие — вернуться к шагу). Черновик сохраняется. */
 const SN_DRAFT="tb_sndraft";
 async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
@@ -4695,7 +4698,7 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
       <span class="st">${c.n?`${c.n} ${plural(c.n,["заказ","заказа","заказов"])} · ${eur(c.sum||0)} · последний ${fmtD(c.last)}`:"заказов ещё нет"}${c.app?" · в приложении":" · через менеджера"}</span>
       ${on&&c.lastItem?`<span class="st">Последнее: ${esc(c.lastItem)}</span>`:""}${on&&(dv.city||dv.npPoint)?`<span class="st">Доставка: ${esc([dv.name,dv.city,dv.npPoint&&"НП № "+dv.npPoint].filter(Boolean).join(" · "))}</span>`:""}</span></button>`};
   const dyn0=()=>{const k=S.kind=S.forced||kindOf(S.q),qq=S.q.trim().toLowerCase().replace(/^@/,"");
-    const M=qq.length>1?cl.filter(c=>[c.name,c.username,c.insta,c.phone].join(" ").toLowerCase().includes(qq)).slice(0,4):[];
+    const fq=fz(qq),M=qq.length>1?cl.filter(c=>[c.name,c.username,c.insta,c.phone].join(" ").toLowerCase().includes(qq)||(fq.length>1&&fz([c.name,c.username,c.insta].join(" ")).includes(fq))).slice(0,4):[];
     B.querySelector(".sn-dyn").innerHTML=`${k?`<div class="so-chs">${Object.entries(KN).map(([x,v])=>`<button class="so-ch2${x===k?" on":""}" data-kd="${x}">${v}</button>`).join("")}</div>`:`<div class="hint sn-h">Хватит одного: Instagram, Telegram или телефон. Имя — по желанию.</div>`}
       ${M.length&&!S.pick?`<div class="fl">Уже есть у нас</div>`:""}${(S.pick?[S.pick]:M).map(c=>snCli(c,S.pick&&S.pick.id===c.id)).join("")}
       ${S.pick?`<button class="so-ch2" data-cid="${esc(S.pick.id)}" style="align-self:flex-start">Это не он — новый клиент</button>`:k?`<div class="sn-new">Новый клиент · ${esc(KN[k])}: <b>${esc(k==="ig"?"@"+clean("ig",S.q):k==="tg"?"@"+clean("tg",S.q):S.q.trim())}</b></div>
