@@ -111,6 +111,16 @@ async function allProducts(store) {
 }
 // ключ кнопки «В Trend Büro»: даёт только загрузку товаров с сайтов брендов (скрытыми), без доступа к остальной админке.
 // Хранится на сервере только отпечаток (sha256); сам ключ — внутри закладки пользователя
+// Shopify (Sporty & Rich и др.): артикул — последние 30 знаков адреса товара, у разных вещей одного цвета из одной коллекции он совпадал
+// («…camowoodlandfw2690sstreetwear» — худи, лонгслив и футболка) и вещи затирали друг друга. Если под этим артикулом уже лежит другой товар
+// (другой адрес), берём свой артикул: начало + отпечаток адреса
+const shHandle = u => (String(u || "").match(/\/products\/([^/?#]+)/) || [])[1] || "";
+async function webIdFor(store, id, url) {
+  const h = shHandle(url); if (!h) return { id };
+  const p = await store.get(id), ph = p && shHandle(p.sourceUrl); if (!ph || ph === h) return { id };
+  const m = id.match(/^(product\.manual\.[a-z0-9]{1,12}-)([a-z0-9]+)$/);
+  return { id: m[1] + m[2].slice(0, 22) + createHash("sha1").update(h).digest("hex").slice(0, 8), moved: true };
+}
 const KEY_ACTIONS = new Set(["me", "knownProducts", "webImport", "webUpdate", "sectionKnown", "sectionSync", "markNew", "imageUpload", "subcats", "snapSave", "webProgress"]);
 const keyHash = k => createHash("sha256").update(String(k)).digest("hex");
 async function keySession(req, a, store) {
@@ -604,8 +614,9 @@ export default async function handler(req, res) {
       case "manualSave": return send(res, 200, { product: await saveManualProduct(store, body, { by: me.name, pricingCfg }) });
       case "webUpdate": {
         // прогон: товар уже есть — обновить цену и наличие по размерам
-        const id = String(body.id || ""), it = body.item || {};
+        let id = String(body.id || ""); const it = body.item || {};
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
+        if (it.url) { const w = await webIdFor(store, id, it.url); if (w.moved) { if (!(await store.get(w.id))) return send(res, 200, { needImport: true }); id = w.id; } } // под этим артикулом другая вещь — свою загружаем отдельно, чужую не трогаем
         // ваша обложка из админки остаётся, если это фото есть на странице бренда
         // фото заново с сайта бренда — один раз (imgVer 2): прежняя «склейка похожих фото» могла заменить перед сумки на вид сзади. Ваши обложка/порядок фото из админки — не трогаем
         if (Array.isArray(it.images) && it.images.length) { try { const p0 = await store.get(id);
@@ -953,8 +964,9 @@ export default async function handler(req, res) {
       }
       case "webImport": {
         // товар с кнопки «В Trend Büro» одним запросом: сервер сам скачивает фото по ссылкам (параллельно) и сохраняет товар скрытым
-        const it = body.item || {}, id = String(body.id || "");
+        const it = body.item || {}; let id = String(body.id || "");
         if (!/^product\.manual\.[a-z0-9]{1,12}-[a-z0-9]{1,30}$/.test(id)) return send(res, 400, { error: "Нет артикула товара" });
+        if (it.url) id = (await webIdFor(store, id, it.url)).id;
         if (it.revive) { const dd = await store.get("settings.deleted"); if (dd && (dd.ids || []).includes(id)) { dd.ids = dd.ids.filter(x => x !== id); delete dd._rev; delete dd._createdAt; delete dd._updatedAt; await store.put(dd); } } // открыли товар сами и нажали кнопку — снова берём
         const { images, copied, srcOf } = await copyWebImages(store, it.images, id);
         if (!images.length) return send(res, 400, { error: "Нет фото" });

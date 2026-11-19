@@ -28,7 +28,7 @@ async function catalogBody(compact) {
   const k = compact === 2 ? 2 : compact ? 1 : 0; let m = MEMO[k];
   if (m && m.body && Date.now() - m.at < TTL) return m.body;
   if (!m && !FRESH) { const L = LOADP[k] = LOADP[k] || savedCatalog(getStore(), k); const sv = await L; m = MEMO[k]; if (!m && sv) MEMO[k] = m = { body: sv.body, at: 0 }; }
-  if (m && m.wait) return m.body || m.wait; // сборка уже идёт — отдаём прежний каталог, не ждём
+  if (m && m.wait && Date.now() - (m.waitAt || 0) < 90e3) return m.body || m.wait; // сборка уже идёт — отдаём прежний каталог, не ждём. Старше 90 с — сборка оборвалась (сервер «заморозили» после ответа), иначе каталог застревал на часы: собираем заново
   const wait = (async () => {
     const store = getStore();
     // без потолка в 5000: товаров на витрине стало больше — новые бренды (Saint Laurent) не попадали в каталог
@@ -44,7 +44,7 @@ async function catalogBody(compact) {
     let collections = []; try { const { activeCollections } = await import("../lib/collections.js"); const shown = new Set(products.map(x => x.id)); collections = activeCollections(await store.list("collection", {}, { limit: 500 }), list, { now: new Date(now) }).map(c => ({ ...c, ids: c.ids.filter(i => shown.has(i)) })).filter(c => c.ids.length).map(c => ({ ...c, n: c.ids.length })); } catch { collections = []; }
     return JSON.stringify({ products, content, collections, generatedAt: new Date(now).toISOString(), demo: !!store.demo });
   })();
-  MEMO[k] = { ...(m || {}), wait };
+  MEMO[k] = { ...(m || {}), wait, waitAt: Date.now() };
   const done = wait.then(body => { MEMO[k] = { body, at: Date.now() }; saveCatalog(getStore(), k, body); return body; }, e => { MEMO[k] = m && m.body ? { body: m.body, at: m.at } : null; throw e; });
   if (m && m.body && !FRESH) { done.catch(() => {}); try { globalThis[Symbol.for("@vercel/request-context")]?.get?.()?.waitUntil?.(done.catch(() => {})); } catch {} return m.body; } // Vercel: дособрать свежий каталог после ответа, а не «заморозить» сборку // есть прежний каталог — отдаём сразу, свежий соберётся в фоне
   done.then(() => { FRESH = false; }, () => {});
