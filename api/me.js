@@ -108,6 +108,10 @@ export default async function handler(req, res) {
       const r = body.op === "leads" ? await S.opLeads(store, d.status, { lite: true }) : body.op === "save" ? await S.opLeadSave(store, d, by) : body.op === "bulk" ? await S.opLeadBulk(store, d, by)
         : body.op === "driver" ? await S.opDriverList(store, d.days) : body.op === "clients" ? await S.opClientsLite(store) : body.op === "order" ? await S.opManualOrder(store, d, by) : body.op === "client" ? await S.opClientCreate(store, d, by) : { code: 400, body: { error: "Неизвестное действие" } };
       if (r.body && r.body.lead) { const { cost, ...l } = r.body.lead; r.body.lead = l; }
+      // новый заказ — ссылка для клиента: по личной ссылке он войдёт и увидит свой заказ с маршрутом
+      if (body.op === "order" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
+        const cu = await store.get(String(d.customer || "")).catch(() => null);
+        r.body.link = BOT ? `https://t.me/${BOT}?startapp${cu?.offline && cu.invite ? "=c_" + cu.invite : ""}` : "https://trendburo.com.ua"; }
       return send(res, r.code, r.body);
     }
     if (body.a === "sel") { // сотрудник (роль из админки) сохраняет подборку для клиента → ссылка

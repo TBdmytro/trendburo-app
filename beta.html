@@ -375,6 +375,19 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so-f{display:flex;flex-direction:column;gap:10px;padding-bottom:8px}.so-f input[type=search],.so-f input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;border-radius:12px;padding:12px 14px;font-size:15px;outline:none;-webkit-appearance:none;appearance:none}.so-tg{display:flex;gap:10px;align-items:center;font-size:14px}.so-tg input{width:20px;height:20px;accent-color:#25272b}
 .so-it{display:flex;flex-direction:column;gap:6px;background:var(--soft);border-radius:14px;padding:10px 12px}.so-it b{display:block;font-size:14px}.so-it small{font-size:12.5px;color:var(--g2)}
 .so-cl,.so-dl{display:flex;flex-direction:column}.so-ci{border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font:inherit;color:inherit;padding:10px 0;display:flex;flex-direction:column;gap:2px;cursor:pointer}.so-ci b{font-size:14.5px}.so-ci small{font-size:12.5px;color:var(--g2)}
+.sn{gap:12px}.sn-st{display:flex;gap:6px}.sn-st i{flex:1;height:4px;border-radius:4px;background:var(--line)}.sn-st i.on{background:var(--ink)}
+.sn-f{display:flex;flex-wrap:wrap;gap:8px;width:100%}.sn-f .btn{flex:1;height:48px}.sn-f .btn[data-bk]{flex:0 0 96px}.sn-f .sn-lk{flex:1 1 100%;height:44px;font-size:14px}.sn-f .btn:disabled,.sn .btn:disabled{opacity:.4}
+.sn-dyn{display:flex;flex-direction:column;gap:10px}.sn-new{background:var(--soft);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.45}.sn-new small{color:var(--g2)}
+.sn-m{border:1px solid var(--line);border-radius:14px;padding:10px 12px}.sn-m.on{border-color:var(--ink);background:var(--soft)}
+.sn-seg{display:flex;background:var(--soft);border-radius:12px;padding:3px}.sn-seg button{flex:1;border:0;background:none;padding:9px 6px;border-radius:10px;font:inherit;font-size:14px;font-weight:600;color:var(--g2);cursor:pointer}.sn-seg button.on{background:var(--bg);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.sn-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sn-g .ace{grid-column:1/-1}
+.sn-pc{position:relative;border:0;background:var(--soft);border-radius:14px;padding:8px;text-align:left;font:inherit;color:inherit;display:flex;flex-direction:column;gap:3px;cursor:pointer;min-width:0}.sn-pc .im{aspect-ratio:1;border-radius:10px;background:#fff;overflow:hidden;display:grid;place-items:center}.sn-pc .im img,.sn-pc .im svg{width:100%;height:100%;object-fit:contain}.sn-pc b{font-size:12px}.sn-pc small{font-size:11.5px;color:var(--g2);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.sn-pc .pr{font-size:12.5px;font-weight:700}.sn-pc i{position:absolute;right:12px;top:12px;width:26px;height:26px;border-radius:50%;background:#25272b;color:#fff;display:grid;place-items:center;font-style:normal;font-weight:700}
+.sn-it{display:flex;gap:10px;align-items:center;background:var(--soft);border-radius:14px;padding:8px}.sn-it .im{width:52px;height:52px;border-radius:10px;background:#fff;flex:none;overflow:hidden}.sn-it .im img{width:100%;height:100%;object-fit:contain}.sn-it>div{flex:1;min-width:0}.sn-it b{display:block;font-size:13.5px}.sn-it small{display:block;font-size:12px;color:var(--g2)}
+.sn-sz{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.sn-sz button{border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:2px 7px;font:inherit;font-size:11.5px;cursor:pointer}.sn-sz button.on{background:#25272b;color:#fff;border-color:#25272b}
+.sn .sn-pr{width:74px!important;flex:none;padding:8px!important;text-align:right;font-weight:700;background:var(--bg)!important}.sn-x{border:0;background:none;color:var(--g2);font-size:15px;padding:6px;cursor:pointer}
+.sn-sum{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding-top:10px}.sn-sum b{font-size:18px}
+.sn-rest{display:flex;align-items:center;font-size:13.5px;color:var(--g2);gap:4px}.sn-w{background:#fbf1de;color:#8a5c12;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.45}
+.so-na{font-style:normal;font-size:10.5px;font-weight:700;background:#fde7e7;color:#a8343a;border-radius:99px;padding:2px 7px}
 /* ── маршрут заказа v2 ── */
 .r2c{position:relative;display:block;width:calc(100% - 24px);margin:0 12px;border:0;font:inherit;text-align:left;color:#fff;border-radius:28px;background:linear-gradient(160deg,#34373d,#1d1f22 60%,#141517);padding:16px 14px 6px;overflow:hidden;box-shadow:0 18px 40px rgba(29,31,34,.28);isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);clip-path:inset(0 round 28px)}
 button.r2c{cursor:pointer}
@@ -4514,7 +4527,7 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="
     s.querySelector(".so-tiles").innerHTML=[["paid","выкупить",cnt("paid")],["bought",packAt?"упакуются "+new Date(packAt).toLocaleString("ru",{weekday:"short",hour:"2-digit",minute:"2-digit"}):"ждут упаковки",cnt("bought")+cnt("received")],["packed","к отправке",cnt("packed")],["shipping","в дороге → НП",all.filter(l=>l.status==="shipping"&&ua(l)).length]].map(([k,t,n])=>`<button class="so-tile${st===k?" on":""}" data-sost="${k}"><span>${t}</span><b class="num">${n}</b></button>`).join("");
     s.querySelector(".so-ch").innerHTML=`<button class="chip${!st?" on":""}" data-sost="">Все · ${all.length}</button>`+Object.entries(SO_ST).filter(([k])=>cnt(k)).map(([k,v])=>`<button class="chip${st===k?" on":""}" data-sost="${k}">${v} · ${cnt(k)}</button>`).join("");
     const V=st?all.filter(l=>soSt(l)===st):all.filter(l=>!["delivered","cancelled"].includes(l.status));
-    L.innerHTML=V.length?V.map(l=>`<div class="so-row" data-soid="${esc(l._id)}"><label class="so-ck"><input type="checkbox" data-sopk="${esc(l._id)}" ${sel.has(l._id)?"checked":""} aria-label="Вибрати"></label><button class="so-tx" data-soopen="${esc(l._id)}"><b>${esc(soName(l))} · ${esc(String(l.number||"").replace(/^TB-/,"№"))}</b><small>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")).slice(0,2).join(", ")||"Заявка")}${l.origin?" · "+esc(l.origin):""}</small></button><span class="so-r">${soFlag(l.dest)}${l.payLater&&!l.paidAt?'<i class="so-pl">оплата позже</i>':""}<em class="so-st ${soSt(l)}">${SO_ST[soSt(l)]||l.status}</em></span></div>`).join(""):`<p class="ace">${st?"С этим этапом заказов нет":"Активных заказов нет"}</p>`;
+    L.innerHTML=V.length?V.map(l=>`<div class="so-row" data-soid="${esc(l._id)}"><label class="so-ck"><input type="checkbox" data-sopk="${esc(l._id)}" ${sel.has(l._id)?"checked":""} aria-label="Вибрати"></label><button class="so-tx" data-soopen="${esc(l._id)}"><b>${esc(soName(l))} · ${esc(String(l.number||"").replace(/^TB-/,"№"))}</b><small>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")).slice(0,2).join(", ")||"Заявка")}${l.origin?" · "+esc(l.origin):""}</small></button><span class="so-r">${soFlag(l.dest)}${l.payLater&&!l.paidAt?'<i class="so-pl">оплата позже</i>':""}${(l.noAddress||!(l.delivery&&(l.delivery.city||l.delivery.address)))&&!["delivered","cancelled"].includes(l.status)?'<i class="so-na">нет адреса</i>':""}<em class="so-st ${soSt(l)}">${SO_ST[soSt(l)]||l.status}</em></span></div>`).join(""):`<p class="ace">${st?"С этим этапом заказов нет":"Активных заказов нет"}</p>`;
     upBar()};
   const upBar=()=>{const ids=[...sel],Ls=all.filter(l=>sel.has(l._id));bar.hidden=!ids.length;if(!ids.length)return;
     const nx={};Ls.forEach(l=>{const F=soFlow(l),i=F.indexOf(soSt(l)),n=i>=0&&i<F.length-1?F[i+1]:"";if(n)nx[n]=(nx[n]||0)+1});
@@ -4553,31 +4566,93 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
     const sv=e.target.closest("[data-sosave]");if(!sv)return;sv.disabled=true;const v=id=>{const x=d.querySelector(id);return x?x.value.trim():undefined};
     const body={id:l._id,origin:v("#soOr"),buyMode:bm,note:v("#soNo"),notify:d.querySelector("#soNt").checked,delivery:{name:v("#soDn"),phone:v("#soDp"),city:v("#soDc"),address:v("#soDa"),...(ua?{npPoint:v("#soDb")}:{})},...(ua?{}:{track:v("#soTr")}),...(stage!==soSt(l)?{status:stage}:{}),...(d.querySelector("#soPaid")?{paid:d.querySelector("#soPaid").checked}:{})};
     try{await soCall("save",body);toast("Сохранено");closeSheet();reload()}catch(x){toast(x.message);sv.disabled=false}})}
-/* новый заказ: выбрать клиента (или нового) → вещь, цена, доставка, этап */
-async function soNew(reload){let cl=[],pick=null;
-  // сначала новый клиент (чаще всего), ниже — поиск среди тех, кто уже есть
-  const d=openSheet("Новый заказ",`<div class="so-f"><div class="fl">Новый клиент</div><input type="text" id="cN" placeholder="Имя"><input type="text" id="cI" placeholder="Instagram: @ник" autocapitalize="off" autocorrect="off" spellcheck="false"><input type="text" id="cU" placeholder="Telegram: @ник (если есть)" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="frow"><input type="text" id="cP" placeholder="Телефон" inputmode="tel"><input type="text" id="cC" placeholder="Город"></div><button class="btn" data-cmk>Дальше — к заказу</button>
-    <div class="fl" style="margin-top:10px">Или клиент, который уже есть</div><input type="search" id="soQ" placeholder="Имя, Instagram, Telegram, телефон" autocomplete="off"><div class="so-cl"><p class="ace">Завантажуємо…</p></div></div>`);
-  const box=d.querySelector(".so-cl");
-  const drawC=()=>{const q=d.querySelector("#soQ").value.toLowerCase().trim(),V=cl.filter(c=>!q||[c.name,c.username,c.insta,c.phone].join(" ").toLowerCase().includes(q.replace(/^@/,""))).slice(0,q?30:5);
-    box.innerHTML=V.map(c=>`<button class="so-ci" data-cid="${esc(c.id)}"><b>${esc(c.name||"Без имени")}</b><small>${esc([c.insta&&"IG @"+c.insta,c.username&&"TG @"+c.username,c.phone,c.city,c.offline&&"через менеджера"].filter(Boolean).join(" · "))}</small></button>`).join("")||'<p class="ace">Никого не нашли</p>'};
-  try{cl=(await soCall("clients")).clients||[];drawC()}catch(e){box.innerHTML=`<p class="ace">${esc(e.message)}</p>`}
-  d.querySelector("#soQ").oninput=drawC;
-  const form=()=>{d.querySelector(".sh-h h3").textContent="Заказ · "+(pick.name||"клиент");d.querySelector(".sh-b").innerHTML=`<div class="so-f">
-      <div class="frow"><input type="text" id="nB" placeholder="Бренд" list="nBL"><input type="text" id="nS" placeholder="Размер"></div><datalist id="nBL">${["Louis Vuitton","Dior","Saint Laurent","Hermès","Chanel","Prada","Gucci","Bottega Veneta","Loewe","Celine","Miu Miu","The Row"].map(b=>`<option>${b}</option>`).join("")}</datalist>
-      <input type="text" id="nT" placeholder="Вещь: Birkin 30, Togo, Gold">
-      <div class="frow"><input type="text" id="nC" placeholder="Цвет"><input type="text" id="nP" placeholder="Цена для клиента, €" inputmode="decimal"></div>
-      <div class="fl">Доставка</div><div class="so-chs" id="nD">${[["ua","Украина"],["eu","Европа"],["dxb","Дубай"]].map(([k,v],i)=>`<button class="so-ch2${i?"":" on"}" data-v="${k}">${v}</button>`).join("")}</div>
-      <div class="fl">Этап</div><div class="so-chs" id="nSt">${["work","paid","bought","received","packed","shipping","np","delivered"].map((k,i)=>`<button class="so-ch2${i?"":" on"}" data-v="${k}">${SO_ST[k]}</button>`).join("")}</div>
-      <label class="so-tg"><input type="checkbox" id="nPL"> Оплата позже (постоянный клиент)</label>
-      <textarea id="nN" placeholder="Заметка — только для нас" style="min-height:60px"></textarea></div>`;
-    let f=d.querySelector(".sh-f");if(!f){f=document.createElement("div");f.className="sh-f";d.append(f)}f.innerHTML=`<button class="btn" data-nsave style="flex:1">Добавить заказ</button>`};
-  d.addEventListener("click",async e=>{const c=e.target.closest("[data-cid]");if(c){pick=cl.find(x=>x.id===c.dataset.cid);form();return}
-    if(e.target.closest("[data-cmk]")){const v=id=>d.querySelector(id).value.trim();if(!v("#cN"))return toast("Нужно имя");const bt=e.target.closest("[data-cmk]");bt.disabled=true;try{const r=await soCall("client",{name:v("#cN"),insta:v("#cI"),username:v("#cU"),phone:v("#cP"),city:v("#cC")});pick={id:r.id,name:v("#cN")};form()}catch(x){toast(x.message);bt.disabled=false}return}
-    const ch=e.target.closest(".so-chs [data-v]");if(ch){ch.parentNode.querySelectorAll("[data-v]").forEach(x=>x.classList.toggle("on",x===ch));return}
-    const sv=e.target.closest("[data-nsave]");if(!sv)return;const v=id=>d.querySelector(id).value.trim(),on=id=>d.querySelector(id+" .on").dataset.v;
-    if(!v("#nT")&&!v("#nB"))return toast("Укажите вещь");sv.disabled=true;
-    try{await soCall("order",{customer:pick.id,brand:v("#nB"),title:v("#nT"),size:v("#nS"),color:v("#nC"),price:v("#nP"),dest:on("#nD"),status:on("#nSt"),payLater:d.querySelector("#nPL").checked,note:v("#nN"),date:new Date().toISOString().slice(0,10)});toast("Заказ добавлен");hap("medium");closeSheet();reload()}catch(x){toast(x.message);sv.disabled=false}})}
+/* новый заказ — 4 шага: клиент (хватит Instagram) → товары (из каталога или вручную) → доставка (получатель может быть другим) → итог и оплата */
+async function soNew(reload){let cl=[],step=0,link=false;
+  const S={q:"",kind:"",pick:null,name:"",tgu:"",phone:"",items:[],mode:"cat",cq:"",dest:"ua",rc:"self",dv:{name:"",phone:"",city:"",npType:"branch",npPoint:"",address:""},noAddr:false,pay:"paid",prepaid:"",status:"work",origin:"",note:""};
+  const d=openSheet("Новый заказ",`<div class="so-f sn"></div>`,`<div class="sn-f"></div>`);const B=d.querySelector(".sn"),FT=d.querySelector(".sn-f");
+  soCall("clients").then(r=>{cl=r.clients||[];if(step===0&&B.querySelector(".sn-dyn"))dyn0()}).catch(()=>{});
+  const kindOf=q=>{q=q.trim();if(!q)return"";if(/t\.me\//i.test(q))return"tg";if(/^\+?[\d\s()-]{9,}$/.test(q))return"ph";if(/\s|[а-яіїєґё]/i.test(q))return"nm";return"ig"};
+  const KN={ig:"Instagram",tg:"Telegram",ph:"Телефон",nm:"Имя"};
+  const clean=(k,q)=>k==="ig"?q.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i,"").replace(/[/?#].*$/,"").replace(/^@/,"").toLowerCase():k==="tg"?q.trim().replace(/^https?:\/\/t\.me\//i,"").replace(/^@/,""):q.trim();
+  const who=()=>S.pick?(S.pick.name||(S.pick.insta?"@"+S.pick.insta:"")||"клиент"):S.kind==="ig"?"@"+clean("ig",S.q):S.kind==="tg"?"TG @"+clean("tg",S.q):S.q.trim()||S.name;
+  const total=()=>S.items.reduce((a,i)=>a+(+String(i.price).replace(",",".")||0),0);
+  const steps=()=>`<div class="sn-st">${[0,1,2,3].map(i=>`<i class="${i<=step?"on":""}"></i>`).join("")}</div>`;
+  const pimg=p=>{const im=p.imgs&&p.imgs[0];return im?`<img src="${esc(im.thumb||im.src)}" alt="" loading="lazy">`:shapeSVG(p.shape,p.c,"")};
+  const dyn0=()=>{const k=S.kind=S.forced||kindOf(S.q),qq=S.q.trim().toLowerCase().replace(/^@/,"");
+    const M=qq.length>1?cl.filter(c=>[c.name,c.username,c.insta,c.phone].join(" ").toLowerCase().includes(qq)).slice(0,4):[];
+    B.querySelector(".sn-dyn").innerHTML=`${k?`<div class="so-chs">${Object.entries(KN).map(([x,v])=>`<button class="so-ch2${x===k?" on":""}" data-kd="${x}">${v}</button>`).join("")}</div>`:`<div class="hint sn-h">Хватит одного: Instagram, Telegram или телефон. Имя — по желанию.</div>`}
+      ${M.map(c=>`<button class="so-ci sn-m${S.pick&&S.pick.id===c.id?" on":""}" data-cid="${esc(c.id)}"><b>${esc(c.name||"Без имени")}</b><small>${esc([c.insta&&"IG @"+c.insta,c.username&&"TG @"+c.username,c.phone,c.city].filter(Boolean).join(" · "))} · уже есть</small></button>`).join("")}
+      ${S.pick?`<div class="sn-new">Выбран: <b>${esc(S.pick.name||"@"+S.pick.insta)}</b></div>`:k?`<div class="sn-new">Новый клиент · ${esc(KN[k])}: <b>${esc(k==="ig"?"@"+clean("ig",S.q):k==="tg"?"@"+clean("tg",S.q):S.q.trim())}</b></div>
+      <div class="fl">Можно дописать (необязательно)</div>${k!=="nm"?`<input type="text" id="snN" value="${esc(S.name)}" placeholder="Имя">`:""}<div class="frow">${k!=="tg"?`<input type="text" id="snT" value="${esc(S.tgu)}" placeholder="Telegram @ник" autocapitalize="off">`:""}${k!=="ph"?`<input type="tel" id="snP" value="${esc(S.phone)}" placeholder="Телефон" inputmode="tel">`:""}</div>`:""}`;
+    const nx=FT.querySelector("[data-nx]");if(nx)nx.disabled=!(S.pick||k)};
+  const res1=()=>{const words=S.cq.toLowerCase().split(/\s+/).filter(Boolean),R=words.length?P.filter(p=>{const t=(p.brand+" "+p.name).toLowerCase();return words.every(w=>t.includes(w))}).slice(0,24):[];
+    return R.map(p=>`<button class="sn-pc" data-pid="${esc(p.id)}"><span class="im">${pimg(p)}</span><b>${esc(p.brand)}</b><small>${esc(p.name)}</small><span class="pr">${isPor(p)?"за запитом":eur(priceFor(p,S.dest))}</span><i>+</i></button>`).join("")||(words.length?'<p class="ace">На сайте не нашли — добавьте вручную</p>':"")};
+  const draw=()=>{const h=d.querySelector(".sh-h h3");
+    if(step===0){h.textContent="Новый заказ · клиент";
+      B.innerHTML=steps()+`<div class="fl">Кто заказал</div><input type="text" id="snQ" value="${esc(S.q)}" placeholder="@instagram, телефон, Telegram или имя" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="sn-dyn"></div>`;
+      FT.innerHTML=`<button class="btn" data-nx>Дальше — товары</button>`;dyn0();
+      const qi=B.querySelector("#snQ");qi.oninput=()=>{keep();S.q=qi.value;S.pick=null;S.forced="";dyn0()};return}
+    if(step===1){h.textContent="Товары"+(S.items.length?" · "+S.items.length:"");
+      B.innerHTML=steps()+`<div class="sn-seg"><button class="${S.mode==="cat"?"on":""}" data-md="cat">Из каталога</button><button class="${S.mode==="man"?"on":""}" data-md="man">Вручную</button></div>
+        ${S.mode==="cat"?`<input type="search" id="snC" value="${esc(S.cq)}" placeholder="Бренд и модель: prada re-edition" autocomplete="off"><div class="sn-g">${res1()}</div>`
+        :`<div class="frow"><input type="text" id="mB" placeholder="Бренд" list="nBL"><input type="text" id="mS" placeholder="Размер"></div><datalist id="nBL">${["Prada","Louis Vuitton","Dior","Saint Laurent","Hermès","Chanel","Gucci","Bottega Veneta","Loewe","Celine","Miu Miu","The Row"].map(b=>`<option>${b}</option>`).join("")}</datalist><input type="text" id="mT" placeholder="Модель: Re-Edition 2005, чёрный"><div class="frow"><input type="text" id="mC" placeholder="Цвет"><input type="text" id="mP" placeholder="Цена, €" inputmode="decimal"></div><button class="btn soft" data-madd>+ Добавить в заказ</button>`}
+        ${S.items.length?`<div class="fl">В заказе</div>${S.items.map((i,j)=>`<div class="sn-it"><span class="im">${i.photo?`<img src="${esc(i.photo)}" alt="">`:""}</span><div><b>${esc([i.brand,i.title].filter(Boolean).join(" · "))}</b>${i.sizes&&i.sizes.length?`<span class="sn-sz">${i.sizes.slice(0,12).map(z=>`<button class="${String(z)===String(i.size)?"on":""}" data-sz="${j}" data-v="${esc(z)}">${esc(z)}</button>`).join("")}</span>`:`<small>${esc([i.size,i.color].filter(Boolean).join(" · "))}</small>`}</div><input type="text" class="sn-pr" data-ip="${j}" value="${esc(String(i.price||""))}" inputmode="decimal" aria-label="Цена"><button class="sn-x" data-rm="${j}" aria-label="Убрать">✕</button></div>`).join("")}<div class="sn-sum"><span>Итого</span><b>${eur(total())}</b></div>`:""}`;
+      FT.innerHTML=`<button class="btn soft" data-bk>Назад</button><button class="btn" data-nx ${S.items.length?"":"disabled"}>Дальше — доставка</button>`;
+      const ci=B.querySelector("#snC");if(ci)ci.oninput=()=>{S.cq=ci.value;clearTimeout(draw.t);draw.t=setTimeout(()=>{B.querySelector(".sn-g").innerHTML=res1()},200)};return}
+    if(step===2){h.textContent="Доставка";const ua=S.dest==="ua",self=S.rc==="self";
+      B.innerHTML=steps()+`<div class="so-chs">${[["ua","🇺🇦 Украина"],["eu","🇪🇺 Европа"],["dxb","🇦🇪 Дубай"]].map(([k,v])=>`<button class="so-ch2${S.dest===k?" on":""}" data-ds="${k}">${v}</button>`).join("")}</div>
+        <label class="so-tg"><input type="checkbox" id="snNo" ${S.noAddr?"checked":""}> Данных пока нет — клиент пришлёт позже</label>
+        ${S.noAddr?`<div class="warn sn-w">Заказ создастся с меткой «нет адреса». Данные добавите потом в карточке заказа.</div>`:`<div class="fl">Получатель</div><div class="sn-seg"><button class="${self?"on":""}" data-rc="self">Сам клиент</button><button class="${self?"":"on"}" data-rc="other">Другой человек</button></div>
+        <input type="text" id="dN" value="${esc(S.dv.name)}" placeholder="Імʼя та прізвище"><input type="tel" id="dP" value="${esc(S.dv.phone)}" placeholder="Телефон" inputmode="tel">
+        ${ua?`<div class="frow"><input type="text" id="dC" value="${esc(S.dv.city)}" placeholder="Місто"><input type="text" id="dB" value="${esc(S.dv.npPoint)}" placeholder="${S.dv.npType==="courier"?"—":S.dv.npType==="locker"?"Поштомат №":"Відділення №"}" inputmode="numeric" ${S.dv.npType==="courier"?"disabled":""}></div>
+          <div class="so-chs">${[["branch","Відділення"],["locker","Поштомат"],["courier","Курʼєр"]].map(([k,v])=>`<button class="so-ch2${S.dv.npType===k?" on":""}" data-nt="${k}">${v}</button>`).join("")}</div>${S.dv.npType==="courier"?`<input type="text" id="dA" value="${esc(S.dv.address)}" placeholder="Адреса">`:""}`
+        :`<input type="text" id="dC" value="${esc(S.dv.city)}" placeholder="Країна, місто"><input type="text" id="dA" value="${esc(S.dv.address)}" placeholder="Адреса, індекс">`}`}`;
+      FT.innerHTML=`<button class="btn soft" data-bk>Назад</button><button class="btn" data-nx>Дальше — итог</button>`;return}
+    h.textContent="Итог";const dv=S.dv,dl=S.noAddr?"адрес пришлёт позже":[dv.name,dv.city,S.dest==="ua"?(dv.npType==="courier"?"курʼєр":dv.npPoint&&(dv.npType==="locker"?"поштомат ":"НП № ")+dv.npPoint):dv.address].filter(Boolean).join(" · ")||"без адреса";
+    B.innerHTML=steps()+`<div class="sn-new"><b>${esc(who())}</b><br><small>${esc(({ua:"Украина",eu:"Европа",dxb:"Дубай"})[S.dest])} · ${esc(dl)}</small></div>
+      ${S.items.map(i=>`<div class="sn-it"><span class="im">${i.photo?`<img src="${esc(i.photo)}" alt="">`:""}</span><div><b>${esc([i.brand,i.title].filter(Boolean).join(" · "))}</b><small>${esc([i.size,i.color].filter(Boolean).join(" · "))}</small></div><b class="num">${eur(+String(i.price).replace(",",".")||0)}</b></div>`).join("")}
+      <div class="sn-sum"><span>Итого</span><b>${eur(total())}</b></div>
+      <div class="fl">Оплата</div><div class="so-chs">${[["paid","Оплатил"],["prepay","Предоплата"],["later","Оплатит позже"]].map(([k,v])=>`<button class="so-ch2${S.pay===k?" on":""}" data-py="${k}">${v}</button>`).join("")}</div>
+      ${S.pay==="prepay"?`<div class="frow"><input type="text" id="snPp" value="${esc(S.prepaid)}" placeholder="Предоплата, €" inputmode="decimal"><div class="sn-rest">остаток <b>${eur(Math.max(0,total()-(+String(S.prepaid).replace(",",".")||0)))}</b></div></div>`:""}
+      <div class="fl">Этап сейчас</div><div class="so-chs">${["work","paid","bought"].map(k=>`<button class="so-ch2${S.status===k?" on":""}" data-sx="${k}">${SO_ST[k]}</button>`).join("")}</div>
+      <input type="text" id="snO" value="${esc(S.origin)}" list="soOrL2" placeholder="Откуда поедет: Франція / Мілан (можно потом)"><datalist id="soOrL2">${SO_ORIG.map(o=>`<option>${o}</option>`).join("")}</datalist>
+      <textarea id="snNt" placeholder="Заметка — только для нас" style="min-height:56px">${esc(S.note)}</textarea>`;
+    FT.innerHTML=`<button class="btn soft" data-bk>Назад</button><button class="btn" data-mk>Создать заказ</button><button class="btn soft sn-lk" data-mkl>Создать и получить ссылку для клиента</button>`};
+  const keep=()=>{const v=id=>{const x=B.querySelector(id);return x?x.value:undefined};
+    if(step===0){["#snN","#snT","#snP"].forEach((id,i)=>{const x=v(id);if(x!==undefined)S[["name","tgu","phone"][i]]=x})}
+    if(step===2){const m={"#dN":"name","#dP":"phone","#dC":"city","#dB":"npPoint","#dA":"address"};Object.entries(m).forEach(([id,k])=>{const x=v(id);if(x!==undefined)S.dv[k]=x})}
+    if(step===3){S.prepaid=v("#snPp")??S.prepaid;S.origin=v("#snO")??S.origin;S.note=v("#snNt")??S.note}};
+  const fillSelf=()=>{const c=S.pick;if(c&&c.dv)S.dv={...S.dv,...Object.fromEntries(Object.entries(c.dv).filter(([,v])=>v))};else if(!S.dv.name&&S.name)S.dv.name=S.name;if(!S.dv.phone&&S.phone)S.dv.phone=S.phone};
+  const create=async btn=>{keep();btn.disabled=true;try{let id=S.pick&&S.pick.id;
+      if(!id){const k=S.kind,q=S.q;const r=await soCall("client",{insta:k==="ig"?clean("ig",q):"",username:k==="tg"?clean("tg",q):S.tgu,phone:k==="ph"?q:S.phone,name:k==="nm"?q.trim():S.name});id=r.id}
+      const r=await soCall("order",{customer:id,items:S.items.map(i=>({id:i.id,brand:i.brand,title:i.title,size:i.size,color:i.color,price:i.price,photo:i.photo})),dest:S.dest,delivery:S.noAddr?null:{...S.dv,...(S.dest==="ua"?{}:{npType:"courier"})},noAddress:S.noAddr,pay:S.pay,prepaid:S.prepaid,status:S.status,origin:S.origin,note:S.note,date:new Date().toISOString().slice(0,10)});
+      hap("medium");reload();
+      if(!link){toast("Заказ создан");closeSheet();return}
+      d.querySelector(".sh-h h3").textContent="Заказ создан";B.innerHTML=`<div class="sn-new"><b>Ссылка для клиента</b><br><small>Отправьте в Instagram или Telegram — клиент откроет приложение и увидит свой заказ с маршрутом.</small></div><div class="msg" id="snL">${esc(r.link||"")}</div>`;
+      FT.innerHTML=`<button class="btn" data-cpl>Скопировать ссылку</button>`}catch(x){toast(x.message);btn.disabled=false}};
+  d.addEventListener("click",e=>{const t=e.target;let x;
+    if(x=t.closest("[data-kd]")){keep();S.forced=x.dataset.kd;dyn0();return}
+    if(x=t.closest("[data-cid]")){keep();const c=cl.find(y=>y.id===x.dataset.cid);S.pick=S.pick&&S.pick.id===c.id?null:c;dyn0();return}
+    if(t.closest("[data-nx]")){keep();if(step===1&&S.rc==="self")fillSelf();step++;draw();B.scrollTop=0;return}
+    if(t.closest("[data-bk]")){keep();step--;draw();return}
+    if(x=t.closest("[data-md]")){S.mode=x.dataset.md;draw();return}
+    if(x=t.closest("[data-pid]")){const p=P.find(y=>y.id===x.dataset.pid);if(!p)return;const im=p.imgs&&p.imgs[0],sz=(p.sizes||[]).map(z=>z.size);
+      S.items.push({id:p.id,brand:p.brand,title:p.name,price:isPor(p)?"":priceFor(p,S.dest),photo:im?(im.thumb||im.src):"",sizes:sz,size:sz.length===1?sz[0]:""});hap("light");toast("Добавлено: "+p.brand);draw();return}
+    if(t.closest("[data-madd]")){const v=id=>B.querySelector(id).value.trim();if(!v("#mB")&&!v("#mT"))return toast("Укажите бренд или модель");S.items.push({brand:v("#mB"),title:v("#mT"),size:v("#mS"),color:v("#mC"),price:v("#mP")});draw();return}
+    if(x=t.closest("[data-sz]")){S.items[+x.dataset.sz].size=x.dataset.v;draw();return}
+    if(x=t.closest("[data-rm]")){S.items.splice(+x.dataset.rm,1);draw();return}
+    if(x=t.closest("[data-ds]")){keep();S.dest=x.dataset.ds;draw();return}
+    if(x=t.closest("[data-rc]")){keep();S.rc=x.dataset.rc;if(S.rc==="self")fillSelf();else S.dv={name:"",phone:"",city:"",npType:"branch",npPoint:"",address:""};draw();return}
+    if(x=t.closest("[data-nt]")){keep();S.dv.npType=x.dataset.nt;draw();return}
+    if(x=t.closest("[data-py]")){keep();S.pay=x.dataset.py;draw();return}
+    if(x=t.closest("[data-sx]")){keep();S.status=x.dataset.sx;draw();return}
+    if(x=t.closest("[data-mk]")){link=false;create(x);return}
+    if(x=t.closest("[data-mkl]")){link=true;create(x);return}
+    if(t.closest("[data-cpl]")){copy(B.querySelector("#snL").textContent,B.querySelector("#snL"));return}});
+  d.addEventListener("change",e=>{if(e.target.id==="snNo"){keep();S.noAddr=e.target.checked;draw()}});
+  d.addEventListener("input",e=>{const j=e.target.dataset&&e.target.dataset.ip;if(j!==undefined){S.items[+j].price=e.target.value;const s=B.querySelector(".sn-sum b");if(s)s.textContent=eur(total())}if(e.target.id==="snPp"){S.prepaid=e.target.value;const r=B.querySelector(".sn-rest b");if(r)r.textContent=eur(Math.max(0,total()-(+String(S.prepaid).replace(",",".")||0)))}});
+  draw()}
+
 /* водителю: что отправлено в Украину — скопировать таблицей (Excel / Telegram) */
 async function soDriver(){let days=7,rows=[];
   const d=openSheet("Список для водителя",`<div class="so-f"><div class="so-chs">${[[3,"3 дня"],[7,"Неделя"],[14,"2 недели"]].map(([k,v])=>`<button class="so-ch2${k===days?" on":""}" data-dd="${k}">${v}</button>`).join("")}</div><div class="so-dl"><p class="ace">Завантажуємо…</p></div></div>`,`<button class="btn" data-dcp style="flex:1">Копировать таблицу</button>`);

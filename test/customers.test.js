@@ -57,7 +57,7 @@ test("заявка на вход: решили в одном чате — во �
 test("клиент через менеджера без приложения: заказы с иконкой, личная ссылка переносит всё в аккаунт", async () => {
   const { createOfflineClient, linkInvite } = await import("../lib/customers.js");
   const store = new MemoryStore();
-  await assert.rejects(() => createOfflineClient(store, {}), /имя/);
+  await assert.rejects(() => createOfflineClient(store, {}), /Instagram, Telegram или телефон/);
   const off = await createOfflineClient(store, { name: "Олена К.", username: "@olena_k", phone: "+380671112233", city: "Київ", shoes: "38" }, "Дмитрий");
   assert.ok(off.offline); assert.match(off.invite, /^[a-z0-9]{12}$/); assert.equal(off.tg.username, "olena_k");
   const l = await makeManualOrder(store, off, { brand: "Chanel", title: "Classic Flap", price: "9800", icon: "bag", status: "bought" });
