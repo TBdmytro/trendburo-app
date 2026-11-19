@@ -1310,7 +1310,11 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .olv .nd text{fill:rgba(255,255,255,.5);font-size:10.5px;font-weight:600;font-family:var(--f)}.olv .nd.on text{fill:#fff}
 .olv .cm .bob{transform-box:fill-box}.olv .cm.walk .bob{animation:olvbob .42s ease-in-out infinite alternate}@keyframes olvbob{from{transform:translateY(-1.2px) rotate(-4deg)}to{transform:translateY(1.2px) rotate(4deg)}}
 .olv .cm.done .body{fill:#26b06a}.olv .cm.done .glow{fill:#86f0b6}.olv .cm.done .cmi{stroke:#fff;stroke-width:2.6}
-.olv-lbl:empty{display:none}.olv .nd.cur text{fill:#fff;font-size:11px;font-weight:800}.olv .mrg rect{fill:#fff;transition:fill .3s}.olv .mrg text{fill:#fff;font-size:10px;font-weight:800;font-family:var(--f)}.olv .mrg{transition:opacity .3s}.olv .nd .rp{transform-box:fill-box}.olv .nd text{font-size:9.5px;letter-spacing:-.01em}.olv-route{height:112px}.olv-route svg{top:8px;height:96px}
+.olv-lbl:empty{display:none}.olv .nd.pz circle.o{fill:#2a2c30;stroke:rgba(255,255,255,.35);stroke-width:1.6}.olv .nd.pz .pi{stroke:rgba(255,255,255,.55);stroke-width:2}
+.olv .nd.pz.cur circle.o{fill:#fff;stroke:var(--c);stroke-width:3}.olv .nd.pz.cur .pi{stroke:#1f2125;stroke-width:2}
+.olv .nd.pz.dn circle.o{fill:var(--c);stroke:#fff;stroke-width:1.6}.olv .nd.pz.dn .pi{stroke:#fff}
+.olv .nd.pz[data-m="road"] circle.o{stroke-width:2}.olv .nd.pz.cur text{fill:#fff;font-size:11px;font-weight:800}
+.olv .nd.pz[data-m="slot"]{filter:drop-shadow(1px 0 2px rgba(0,0,0,.45))}.olv .cm{transition:opacity .3s}.olv .nd.cur text{fill:#fff;font-size:11px;font-weight:800}.olv .mrg rect{fill:#fff;transition:fill .3s}.olv .mrg text{fill:#fff;font-size:10px;font-weight:800;font-family:var(--f)}.olv .mrg{transition:opacity .3s}.olv .nd .rp{transform-box:fill-box}.olv .nd text{font-size:9.5px;letter-spacing:-.01em}.olv-route{height:112px}.olv-route svg{top:8px;height:96px}
 .olv .cm{will-change:transform}.olv .cm .glow{fill:var(--acc2);opacity:.45;filter:blur(6px)}.olv .cm .body{fill:#fff}
 .olv-lbl{display:grid;gap:8px;margin:-14px 2px 0}
 .olv-lbl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.5);transition:color .4s;text-align:center}
@@ -4210,28 +4214,37 @@ const rtGrad=o=>{const K=rtKeys(o);return K.map((k,i)=>`<stop offset="${(i/(K.le
 /* подписи этапов прямо у точек: через одну сверху и снизу, чтобы 7–9 пунктов не налезали */
 const rtLbl=(p,i,last,n,on)=>`<text x="${Math.max(4,Math.min(350,p.x))}" y="${i%2?p.y-13:p.y+21}" text-anchor="${i===0?"start":i===last?"end":"middle"}">${esc(n)}</text>`;
 const LEAD_ST2={new:"Оформлено",work:"Підтверджено",paid:"Оплачено",bought:"Викуплено",received:"Отримали ми",packed:"Запаковано",ready:"Готово до відправки",inua:"В Україні",shipping:"У дорозі",np:"Нова пошта",delivered:"Отримано",cancelled:"Скасовано"};
-/* маршрут «склеивание»: пройденные точки съезжаются к началу и слипаются в капсулу «✓ N», цветная линия удлиняется,
-   текущий пункт — у кометы, впереди оставшиеся пункты ужимаются к финишу. p — позиция в этапах (0…n, дробная = в пути) */
+/* маршрут «пазл»: до отправки дорога стоит; текущий этап — крупный кружок с иконкой по центру, следующий справа.
+   Пройденный этап улетает влево и пристёгивается к началу дороги рядом с предыдущими — собирается «пазл» (оплата, викуп, у нас, пакування, готово).
+   С «Відправки» всё замирает и едет только машинка / літачок по оставшимся точкам. p — позиция в этапах (дробная = в пути) */
 function rtEngine(root,o){const rf=root.querySelector(".rf"),cm=root.querySelector(".cm"),nds=root.querySelector(".nds");if(!rf||!nds)return null;
-  const K=rtKeys(o),n=K.length-1,L=rf.getTotalLength(),M0=.035,A=p=>.12+.88*Math.min(1,Math.max(0,p)/n),act=RT_ON.includes(o.status);
-  const F=(j,p)=>{const a=A(p),d=j-p;if(d<=-1)return M0;if(d<=0)return a+d*(a-M0);const rem=n-p;return rem<=0?1:a+(1-a)*d/rem};
-  nds.innerHTML=`<g class="mrg"><rect rx="9" height="18" y="-9"/><text y="3.6" text-anchor="middle"></text></g>`+K.map(k=>`<g class="nd" style="--c:${OST[k][0]}"><circle class="rp" r="6"/><circle class="o" r="6"/><text>${esc(RT_LB[k])}</text></g>`).join("");
-  const G=[...nds.querySelectorAll(".nd")],mg=nds.querySelector(".mrg"),mr=mg.querySelector("rect"),mt=mg.querySelector("text");rf.style.strokeDasharray=L;
-  const pt=f=>rf.getPointAtLength(L*Math.max(0,Math.min(1,f)));
-  const set=(p,icon=true)=>{const a=A(p),c=pt(a),cur=Math.floor(p+1e-6);rf.style.strokeDashoffset=L*(1-a);if(cm){cm.style.transform=`translate(${c.x}px,${c.y}px)`;if(icon)rtSetIcon(cm,o,p/n)}
-    let m=0;G.forEach((g,j)=>{const d=j-p,f=F(j,p),q=pt(f),ci=g.querySelectorAll("circle"),tx=g.querySelector("text");ci.forEach(x=>{x.setAttribute("cx",q.x);x.setAttribute("cy",q.y)});
-      if(d<=-.5&&(j>0||act))m++;const op=d<-.12?Math.max(0,1-(-d-.12)/.25):1;g.style.opacity=op;
-      g.classList.toggle("on",d<=1e-6&&(j>0||act));g.classList.toggle("cur",j===cur&&act);
-      const u=j-cur,above=u<=0||u%2===0;tx.setAttribute("x",Math.max(4,Math.min(350,q.x)));tx.setAttribute("y",j===cur&&act?q.y-21:above?q.y-13:q.y+21);
-      tx.setAttribute("text-anchor",f>.93?"end":f<.06?"start":"middle");tx.style.opacity=d<-.1?0:1});
-    const q=pt(M0);mg.style.opacity=m?1:0;mt.textContent="✓ "+m;const w=m>9?36:30;mr.setAttribute("width",w);mr.setAttribute("x",q.x-w/2+4);mt.setAttribute("x",q.x+4);mg.setAttribute("transform",`translate(0 ${q.y})`);mr.setAttribute("y",-9);mt.setAttribute("y",3.6);
-    const lc=G[Math.max(0,Math.min(n,Math.round(p-.5)))];mr.style.fill=m?getComputedStyle(lc).getPropertyValue("--c"):"";};
-  /* идти по пунктам: каждый этап — свой шаг с плавным разгоном и короткой остановкой на точке */
+  const K=rtKeys(o),n=K.length-1,Ks=Math.max(1,K.indexOf("shipping")),L=rf.getTotalLength(),act=RT_ON.includes(o.status);
+  const pt=f=>rf.getPointAtLength(L*Math.max(0,Math.min(1,f))),lerp=(a,b,t)=>a+(b-a)*t,cl=x=>Math.max(0,Math.min(1,x));
+  const SL=j=>.025+j*.047,FS=SL(Ks-1)+.075,CEN=.5,NXT=.83,P2=j=>FS+(1-FS)*(j-Ks+1)/(n-Ks+1);
+  nds.innerHTML=K.map((k,j)=>`<g class="nd pz${j<Ks?" pre":""}" style="--c:${OST[k][0]}"><circle class="rp" r="12"/><circle class="o" r="10"/><g class="pi" fill="none" stroke-linecap="round" stroke-linejoin="round">${OST[k][2]}</g><text>${esc(RT_LB[k])}</text></g>`).join("");
+  const G=[...nds.querySelectorAll(".nd")];rf.style.strokeDasharray=L;
+  const set=(p,icon=true)=>{const t2=cl(p-(Ks-1)),cur=Math.floor(p+1e-6);let fill=0;
+    G.forEach((g,j)=>{const d=j-p,o1=g.querySelector("circle.o"),rp=g.querySelector(".rp"),pi=g.querySelector(".pi"),tx=g.querySelector("text");let f,r,op=1,mode;
+      if(j<Ks){ // этапы до отправки: пазл слева ← центр ← справа
+        if(d<=-1){f=SL(j);r=10;mode="slot"}else if(d<=0){const t=1+d;f=lerp(SL(j),CEN,t);r=lerp(10,15,t);mode=t>.5?"cen":"slot"}
+        else if(d<=1){f=lerp(CEN,NXT,d);r=lerp(15,9,d);mode=d<.5?"cen":"nxt"}else{f=NXT+.06*Math.min(1,d-1);r=9;op=Math.max(0,1-(d-1)*2);mode="nxt"}
+        if(mode==="slot"||(mode==="cen"&&d<0))fill=Math.max(fill,f)}
+      else{ // после отправки — обычные точки на дороге, видны с момента отправки
+        const fp=P2(j);if(j===Ks&&p<Ks){const d1=Ks-p;f=d1<=1?lerp(fp,NXT,d1):NXT+.06;r=d1<=1?lerp(6,9,d1):9;op=d1<=1?1:Math.max(0,1-(d1-1)*2);mode=d1>.5?"nxt":"road"}else{f=fp;r=6;op=j===Ks?1:t2;mode="road"}}
+      const q=pt(f);[o1,rp].forEach(x=>{x.setAttribute("cx",q.x);x.setAttribute("cy",q.y)});o1.setAttribute("r",r);rp.setAttribute("r",r+2);g.style.opacity=op;
+      const sc=r/10.5;pi.setAttribute("transform",`translate(${q.x-12*sc} ${q.y-12*sc}) scale(${sc})`);
+      const done=j<cur||(j===cur&&act&&(j>=Ks||j===n));g.dataset.m=mode;g.classList.toggle("on",d<=1e-6&&(j>0||act));g.classList.toggle("dn",(mode==="slot")||(mode==="road"&&d<=1e-6&&(j>0||act)));g.classList.toggle("cur",j===cur&&mode==="cen");
+      pi.style.display=mode==="road"?"none":"";const lab=mode==="cen"||mode==="nxt"||mode==="road";tx.style.opacity=lab?(mode==="road"?op:1):0;
+      tx.setAttribute("x",Math.max(4,Math.min(350,q.x)));tx.setAttribute("y",mode==="cen"?q.y-r-7:mode==="nxt"?q.y+r+13:((j-Ks)%2?q.y+20:q.y-12));tx.setAttribute("text-anchor",f>.93?"end":"middle")});
+    // машинка появляется у собранного пазла и едет по оставшимся точкам
+    let fc=FS;if(p>=Ks){const a=Math.min(n,Math.floor(p)),b=Math.min(n,a+1),fa=P2(Math.max(Ks,a)),fb=P2(Math.max(Ks,b));fc=a>=n?1:lerp(fa,fb,p-a)}else fc=lerp(FS-.03,P2(Ks),t2);
+    if(cm){const q=pt(fc);cm.style.transform=`translate(${q.x}px,${q.y}px)`;cm.style.opacity=t2;if(icon)rtSetIcon(cm,o,Math.max(p,Ks)/n)}
+    rf.style.strokeDashoffset=L*(1-(t2>0?Math.max(fc,FS-.03):fill));};
   const run=(from,to,onStop,done)=>{const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,stops=[];let x=from;while(x<to-1e-6){const nx=Math.min(to,Math.floor(x+1e-6)+1);stops.push([x,nx]);x=nx}
     if(RMo()||!stops.length){set(to);onStop&&onStop(Math.floor(to+1e-6),true);done&&done();return}
-    let i=0;const seg=()=>{if(!root.isConnected)return;if(i>=stops.length){done&&done();return}const[a,b]=stops[i++],D=Math.max(380,620*(b-a)),t0=performance.now();
-      const st=t=>{if(!root.isConnected)return;const k=Math.min(1,(t-t0)/D);set(a+(b-a)*ease(k));if(k<1)requestAnimationFrame(st);else{if(Number.isInteger(b))onStop&&onStop(b,i>=stops.length);setTimeout(seg,Number.isInteger(b)?170:0)}};requestAnimationFrame(st)};seg()};
-  return{set,run,pt:j=>pt(F(j,0)),node:j=>G[j],n,A};}
+    let i=0;const seg=()=>{if(!root.isConnected)return;if(i>=stops.length){done&&done();return}const[a,b]=stops[i++],D=Math.max(420,760*(b-a)),t0=performance.now();
+      const st=t=>{if(!root.isConnected)return;const k=Math.min(1,(t-t0)/D);set(a+(b-a)*ease(k));if(k<1)requestAnimationFrame(st);else{if(Number.isInteger(b))onStop&&onStop(b,i>=stops.length);setTimeout(seg,Number.isInteger(b)?260:0)}};requestAnimationFrame(st)};seg()};
+  return{set,run,node:j=>G[j],n};}
 /* мини-карточка «Сейчас в пути» в кабинете — тот же маршрут, что на экране заказа */
 function accLiveHTML(o,i){const{S,cur}=orderSteps(o),z=S[Math.max(0,cur)],col=OST[z.k]||OST.new,p0=findItem(o.items&&o.items[0]&&o.items[0].id),e=orderEta(o);
   const PATH="M18 58 C 70 10, 110 90, 170 50 S 270 14, 336 46";
