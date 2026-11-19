@@ -38,7 +38,9 @@ export default async function handler(req, res) {
         return send(res, 200, { name: String(off.profile?.name || "").split(/\s+/)[0] || "", orders }); }
       if (view) { const l = await orderByView(getStore(), view); if (!l) return send(res, 404, { error: "Замовлення не знайдено" });
         const o = mask(publicOrder(l));
-        return send(res, 200, { order: { ...o, view } }); }
+        // другие посылки этой же покупки
+        const sibs = []; if (l.group) for (const x of (await getStore().list("lead", { group: l.group }, { limit: 10 })).filter(x => x._id !== l._id && x.status !== "cancelled")) sibs.push({ ...mask(publicOrder(x)), view: await ensureView(getStore(), x) });
+        return send(res, 200, { order: { ...o, view }, sibs }); }
       const ready = !!process.env.TELEGRAM_BOT_TOKEN || process.env.DEV_AUTH === "1";
       if (ready && !BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch { BOT = null; } }
       return send(res, 200, { ready, bot: BOT });
@@ -119,7 +121,7 @@ export default async function handler(req, res) {
       if (!c.staff) return send(res, 403, { error: "Только для сотрудников Trend Büro" });
       const S = await import("../lib/staffops.js"), d = body.d && typeof body.d === "object" ? body.d : {}, by = (c.profile?.name || user.name || "сотрудник") + " · приложение";
       const r = body.op === "link" ? await (async () => { const l = await store.get(String(d.id || "")); if (!l || l._type !== "lead") return { code: 404, body: { error: "Заказ не найден" } }; const cu = d.all && l.cust ? await store.get(l.cust).catch(() => null) : null; return { code: 200, body: { view: await ensureView(store, l), linked: !!l.tgId, invite: cu?.offline ? cu.invite || "" : "" } }; })()
-        : body.op === "claim" ? await S.opClaim(store, d, by) : body.op === "merge" ? await S.opMerge(store, d, by)
+        : body.op === "split" ? await S.opSplit(store, d, by) : body.op === "claim" ? await S.opClaim(store, d, by) : body.op === "merge" ? await S.opMerge(store, d, by)
         : body.op === "leads" ? await S.opLeads(store, d.status) : body.op === "save" ? await S.opLeadSave(store, d, by) : body.op === "bulk" ? await S.opLeadBulk(store, d, by)
         : body.op === "driver" ? await S.opDriverList(store, d.days) : body.op === "clients" ? await S.opClientsLite(store) : body.op === "order" ? await S.opManualOrder(store, d, by) : body.op === "client" ? await S.opClientCreate(store, d, by) : { code: 400, body: { error: "Неизвестное действие" } };
       // новый заказ — ссылка для клиента: по личной ссылке он войдёт и увидит свой заказ с маршрутом
