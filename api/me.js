@@ -148,7 +148,7 @@ export default async function handler(req, res) {
       if (!ids.length) return send(res, 400, { error: "Подборка пустая" });
       const { randomBytes } = await import("node:crypto"); const id = randomBytes(8).toString("hex").replace(/[^a-z0-9]/g, "").slice(0, 10).padEnd(10, "0");
       const str = (v, n) => String(v || "").replace(/\s+/g, " ").trim().slice(0, n), now = Date.now();
-      const items = (Array.isArray(body.items) ? body.items : []).filter(i => i && ids.includes(String(i.id))).slice(0, 40).map(i => ({ id: String(i.id), b: str(i.b, 40), n: str(i.n, 120), p: str(i.p, 24), img: /^https:\/\//.test(String(i.img || "")) ? String(i.img).slice(0, 600) : "" }));
+      const items = (Array.isArray(body.items) ? body.items : []).filter(i => i && ids.includes(String(i.id))).slice(0, 40).map(i => ({ id: String(i.id), g: ["w", "m", "u", "k"].includes(i.g) ? i.g : "", b: str(i.b, 40), n: str(i.n, 120), p: str(i.p, 24), img: /^https:\/\//.test(String(i.img || "")) ? String(i.img).slice(0, 600) : "" }));
       // добірка живёт 24 часа; просроченные удаляем при создании новой — в базе не копятся
       try { const old = (await store.list("selection", {}, { limit: 500 })).filter(x => (x.exp || (Date.parse(x.at) + 864e5)) < now).map(x => x._id); if (old.length) await store.delMany(old); } catch {}
       await store.put({ _id: "selection." + id, _type: "selection", ids, items, title: str(body.title, 60), note: str(body.note, 300), by: String(user.id), byName: c.profile?.name || user.name || "Trend Büro", at: new Date(now).toISOString(), exp: now + 864e5 });
