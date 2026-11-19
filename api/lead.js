@@ -7,7 +7,7 @@ import { getStore } from "../lib/store.js";
 import { addBannerStats } from "../lib/cms.js";
 import { createHash } from "node:crypto";
 import { userFrom } from "../lib/tgauth.js";
-import { nextOrderNo, verifyItems, cleanProfile, touchCustomer, fillCosts } from "../lib/customers.js";
+import { nextOrderNo, newOrderCode, verifyItems, cleanProfile, touchCustomer, fillCosts } from "../lib/customers.js";
 import { toAdmins } from "../lib/access.js";
 import { allow, tooMany } from "../lib/ratelimit.js";
 
@@ -26,7 +26,7 @@ export const CLIENT_TEXT = {
 /** Сообщение клиенту в Telegram от бота (если клиент открывал мини-апп из бота и токен задан). */
 export async function notifyClient(lead, status) {
   const token = process.env.TELEGRAM_BOT_TOKEN, chat = lead.tg?.id;
-  const text = CLIENT_TEXT[status]?.(lead.number, lead);
+  const text = CLIENT_TEXT[status]?.(lead.code || lead.number, lead);
   if (!token || !chat || !text) return false;
   try {
     const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat, text }) });
@@ -56,7 +56,7 @@ export function cleanLead(b) {
 async function notify(lead) {
   // всем админам, подключившим Telegram в админке (и в чат из TELEGRAM_MANAGER_CHAT, если задан)
   const who = lead.tg ? (lead.tg.username ? "@" + lead.tg.username : lead.tg.name || "клиент") : "клиент";
-  const text = `🛍 ${LEAD_KINDS[lead.kind]} ${lead.number} от ${who}\n\n${lead.message}`.slice(0, 3900);
+  const text = `🛍 ${LEAD_KINDS[lead.kind]} ${lead.number}${lead.code ? " · код " + lead.code : ""} от ${who}\n\n${lead.message}`.slice(0, 3900);
   try { return (await toAdmins(getStore(), { text, disable_web_page_preview: true })) > 0; } catch { return false; }
 }
 
@@ -67,8 +67,8 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       const client = new URL(req.url, "http://x").searchParams.get("client") || "";
       if (!/^[a-z0-9]{16,48}$/i.test(client)) return send(res, 400, { error: "Нет ключа клиента" });
-      const list = await store.list("lead", { client }, { order: "createdAt desc", limit: 50, fields: "number, kind, status, createdAt, total, dest, track, items[]{title, brand}" });
-      return send(res, 200, { leads: list.map(l => ({ ...l, track: l.dest && l.dest !== "ua" ? l.track : undefined })) }); /* клиенту — только трек DHL (Европа/Дубай) */
+      const list = await store.list("lead", { client }, { order: "createdAt desc", limit: 50, fields: "number, code, kind, status, createdAt, total, dest, track, items[]{title, brand}" });
+      return send(res, 200, { leads: list.map(({ code, ...l }) => ({ ...l, number: code || l.number, track: l.dest && l.dest !== "ua" ? l.track : undefined })) }); /* клиенту — только трек DHL (Европа/Дубай) */
     }
     if (req.method !== "POST") return send(res, 405, { error: "Метод не поддерживается" });
     if (new URL(req.url, "http://x").searchParams.get("a") === "bnstat") { await addBannerStats(store, readBody(req)); return send(res, 200, { ok: true }); }
@@ -81,7 +81,7 @@ export default async function handler(req, res) {
     else if (lead.tg) lead.tg = { ...lead.tg, id: null };
     if (body.delivery) lead.delivery = cleanProfile(body.delivery);
     if (lead.kind === "order") {
-      lead.number = await nextOrderNo(store);
+      lead.number = await nextOrderNo(store); lead.code = await newOrderCode(store);
       if (lead.items.length) { const v = await verifyItems(store, lead.items, lead.dest || "ua"); lead.items = v.items; if (v.total) lead.total = v.total; try { await fillCosts(store, lead.items); const c = lead.items.reduce((a, i) => a + (i.cost || 0), 0); if (c && lead.items.every(i => i.cost)) lead.cost = c; } catch {} }
     }
     // защита от спама: не больше 20 заявок в час с одного устройства
@@ -91,7 +91,7 @@ export default async function handler(req, res) {
     const doc = { _id: "lead." + createHash("sha1").update(lead.client + now + Math.random()).digest("hex").slice(0, 14), _type: "lead", ...lead, status: "new", createdAt: now, history: [{ at: now, status: "new", by: "клиент" }] };
     doc.notified = await notify(doc);
     await store.put(doc);
-    return send(res, 200, { ok: true, number: doc.number, notified: doc.notified });
+    return send(res, 200, { ok: true, number: doc.code || doc.number, notified: doc.notified });
   } catch (e) {
     return send(res, 503, { error: "Не вдалося надіслати заявку" });
   }

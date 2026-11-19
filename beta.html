@@ -4572,6 +4572,8 @@ const soName=l=>(l.tg&&l.tg.name)||(l.delivery&&l.delivery.name)||(l.tg&&l.tg.us
 const SO_IC={new:"card",work:"card",paid:"card",bought:"bag",received:"home",packed:"box",shipping:"truck",np:"np",delivered:"check",cancelled:"card"};
 const soCol=k=>k==="new"||k==="work"?"#6b6d72":k==="cancelled"?"#9a9da3":R2D[SO_IC[k]]||"#6b6d72";
 const soPill=k=>`<em class="so-st" style="--c:${soCol(k)}">${SO_ST[k]||k}</em>`;
+/* наш номер (#1001) и код для клиента (7KQ4) */
+const soNo=l=>"#"+String(l.number||"").replace(/^TB-/,"")+(l.code?" · "+l.code:"");
 const soMoney=l=>{const t=l.total||0,c=l.cost||0;return{t,c,p:c?t-c:0}};
 async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="boutique",origin="";
   const s=push("Заказы",`<div class="so">
@@ -4593,7 +4595,7 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="
       return `<div class="so-row${sel.has(l._id)?" on":""}"><label class="so-ck"><input type="checkbox" data-sopk="${esc(l._id)}" ${sel.has(l._id)?"checked":""} aria-label="Вибрати"><i></i></label>
       <button class="so-tx" data-soopen="${esc(l._id)}"><span class="so-th" style="--c:${soCol(k)}">${it.photo?`<img src="${esc(it.photo)}" alt="" loading="lazy">`:`<b>${esc(((it.brand||soName(l)||"?").replace(/^@/,"")[0]||"?").toUpperCase())}</b>`}</span>
         <span class="so-m"><b>${esc(soName(l))}</b><small>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")).join(", ")||"Заявка")}</small>
-        <span class="so-tags"><span>${soFlag(l.dest)} ${esc(String(l.number||"").replace(/^TB-/,"№"))}</span>${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}</span></span>
+        <span class="so-tags"><span>${soFlag(l.dest)} ${esc(soNo(l))}</span>${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}</span></span>
         <span class="so-rr"><b class="num">${l.total?eur(l.total):""}</b>${m.p?`<small class="num">+${eur(m.p)}</small>`:""}${soPill(k)}</span></button></div>`}).join("")}</div>`
       :`<div class="so-empty"><svg viewBox="-14 -14 28 28" width="44" height="44">${r2Badge("check",13)}</svg><b>${st?"С этим этапом заказов нет":"Активных заказов нет"}</b><span>Нажмите «Новый заказ», чтобы добавить</span></div>`;
     upBar()};
@@ -4766,7 +4768,7 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
 function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.delivery||{},F=soFlow(l);let stage=soSt(l),bm=l.buyMode||"boutique",adding=false;
   const items=(l.items||[]).map(i=>({...i})),C={mode:"cat",cq:"",br:"",ct:""};
   const k0=soSt(l),it0=(l.items||[])[0]||{};
-  const d=openSheet("Заказ "+String(l.number||"").replace(/^TB-/,"№"),`<div class="so-f sn"><div class="so-oh" style="--c:${soCol(k0)}"><span class="so-th" style="--c:${soCol(k0)}">${it0.photo?`<img src="${esc(it0.photo)}" alt="">`:`<b>${esc((soName(l).replace(/^@/,"")[0]||"?").toUpperCase())}</b>`}</span><div><b>${esc(soName(l))}</b><small>${soFlag(l.dest)} ${esc(fmtD(l.createdAt))}${l.prepaid?" · предоплата "+eur(l.prepaid):""}</small></div>${soPill(k0)}</div>
+  const d=openSheet("Заказ "+soNo(l),`<div class="so-f sn"><div class="so-oh" style="--c:${soCol(k0)}"><span class="so-th" style="--c:${soCol(k0)}">${it0.photo?`<img src="${esc(it0.photo)}" alt="">`:`<b>${esc((soName(l).replace(/^@/,"")[0]||"?").toUpperCase())}</b>`}</span><div><b>${esc(soName(l))}</b><small>${soFlag(l.dest)} ${esc(fmtD(l.createdAt))}${l.prepaid?" · предоплата "+eur(l.prepaid):""}</small></div>${soPill(k0)}</div>
     ${[...(l.claims||[]),...(l.custClaims||[])].map(c=>`<div class="so-claim"><div><b>🙋 ${esc(c.name||"Клиент")}${c.username?" · @"+esc(c.username):""}</b><small>просит добавить ${l.custClaims&&l.custClaims.includes(c)?"все заказы этого клиента":"этот заказ"} в свой кабинет · ${esc(fmtD(c.at))}</small></div><span><button class="so-ch2" data-clno="${c.tgId}">Нет</button><button class="so-ch2 on" data-clok="${c.tgId}">Это он ✓</button></span></div>`).join("")}
     <button class="so-link press" data-solink><span>🔗</span><div><b>Ссылка для клиента</b><small>отправьте в Instagram или Telegram — клиент увидит заказ с маршрутом</small></div></button><div class="so-lk"></div>${l.cust?`<button class="so-link press so-link2" data-mgo><span>👤</span><div><b>Связать с аккаунтом Telegram</b><small>клиент зарегистрировался в приложении? Выберите его аккаунт — все заказы перейдут туда</small></div></button><div class="so-mg"></div>`:""}<div class="sn-items"></div><div class="sn-add"></div>
     <div class="fl">Этап${l.history&&l.history.length?" · сейчас: "+SO_ST[soSt(l)]:""}</div><div class="so-chs">${[...F,"cancelled"].map(k=>`<button class="so-ch2${k===stage?" on":""}" data-stg="${k}">${SO_ST[k]}</button>`).join("")}</div>

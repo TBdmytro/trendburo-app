@@ -98,7 +98,7 @@ test("заявки: витрина отправляет, клиент видит
   const lead = (await import("../api/lead.js")).default;
   const client = "abcdef0123456789abcd";
   let r = await call(lead, { method: "POST", body: { kind: "order", client, number: "TB-12345", message: "Заказ", items: [{ id: "product.x", brand: "LV", title: "Neverfull", price: 2420 }], total: 2420, dest: "ua" } });
-  assert.equal(r.status, 200); assert.match(r.body.number, /^TB-\d{4}-\d{4}$/); // номер выдаёт сервер: дата + перемешанные цифры
+  assert.equal(r.status, 200); assert.match(r.body.number, /^[2-9A-Z]{4}$/); // номер выдаёт сервер: дата + перемешанные цифры
   assert.equal((await call(lead, { method: "POST", body: { kind: "order" } })).status, 400);
   const ck = await adminCookie(); const H = { cookie: ck, "x-tb": "1" };
   const list = (await call(handler, { query: { a: "leads" }, headers: H })).body;
@@ -130,9 +130,9 @@ test("кабинет: профиль, доставка, заказ с маршр
   let r = await call(me, { method: "POST", body: { initData: "dev:555:Анна", a: "save", profile: { name: "Анна Ковальчук", phone: "+380 67 123 45 67", city: "Киев", npType: "locker", npPoint: "26814" } } });
   assert.equal(r.status, 200); assert.equal(r.body.profile.phone, "+380671234567"); assert.equal(r.body.profile.npType, "locker");
   r = await call(lead, { method: "POST", body: { kind: "order", client: "zzzz0123456789abcdef", initData: "dev:555:Анна", message: "Заказ", items: [{ id: "product.nope", brand: "LV", title: "X", price: 1 }], dest: "ua", delivery: { name: "Анна", phone: "+380671234567", city: "Киев", npPoint: "1" } } });
-  assert.equal(r.status, 200); assert.match(r.body.number, /^TB-\d{4}-\d{4}$/);
+  assert.equal(r.status, 200); assert.match(r.body.number, /^[2-9A-Z]{4}$/);
   const ck = await adminCookie(); const H = { cookie: ck, "x-tb": "1" };
-  const id = (await call(handler, { query: { a: "leads" }, headers: H })).body.leads.find(l => l.number === r.body.number)._id;
+  const id = (await call(handler, { query: { a: "leads" }, headers: H })).body.leads.find(l => l.code === r.body.number)._id;
   await call(handler, { method: "POST", query: { a: "leadSave" }, body: { id, status: "shipping", buyCity: "Париж", buyDate: "2026-10-12", shipDate: "2026-10-17", npDate: "2026-10-19", notify: false }, headers: H });
   const o = (await call(me, { method: "POST", body: { initData: "dev:555:Анна" } })).body.orders.find(x => x.number === r.body.number);
   assert.equal(o.status, "shipping"); assert.equal(o.route.buyCity, "Париж"); assert.equal(o.route.shipDate, "2026-10-17");
