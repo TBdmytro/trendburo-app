@@ -916,6 +916,15 @@ export default async function handler(req, res) {
         await store.patchMany([id], set);
         return send(res, 200, { ok: true });
       }
+      case "selSave": {
+        // подборка для клиента из админки (как у сотрудника в приложении): ссылка на выбранные вещи, живёт N дней (по умолчанию 7)
+        const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String).filter(x => /^[\w.:-]{3,80}$/.test(x)))].slice(0, 40);
+        if (!ids.length) return send(res, 400, { error: "Подборка пустая" });
+        const id = randomBytes(8).toString("hex").slice(0, 10), now = Date.now(), days = Math.min(30, Math.max(1, Number(body.days) || 7)), str = (v, n) => String(v || "").replace(/\s+/g, " ").trim().slice(0, n);
+        const items = (Array.isArray(body.items) ? body.items : []).filter(i => i && ids.includes(String(i.id))).slice(0, 40).map(i => ({ id: String(i.id), b: str(i.b, 40), n: str(i.n, 120), p: str(i.p, 24), img: /^https:\/\//.test(String(i.img || "")) ? String(i.img).slice(0, 600) : "" }));
+        await store.put({ _id: "selection." + id, _type: "selection", ids, items, title: str(body.title, 60), note: str(body.note, 300), by: "admin", byName: str(body.byName, 40) || "Trend Büro", at: new Date(now).toISOString(), exp: now + days * 864e5 });
+        return send(res, 200, { id, link: "https://t.me/trendburo_app_bot?startapp=sel_" + id, web: "https://trendburo.com.ua/?sel=" + id });
+      }
       case "collDel": {
         const id = String(body.id || ""); if (!/^collection\.[A-Za-z0-9_-]{1,180}$/.test(id)) return send(res, 400, { error: "Нет коллекции" });
         await store.del(id); return send(res, 200, { ok: true });
