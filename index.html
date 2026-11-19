@@ -5466,7 +5466,9 @@ async function clientOpenFromLink(){let v="";try{const sp=(TGW&&TGW.initDataUnsa
   if(!j||!j.orders||!j.orders.length)return;if(j.orders.length===1)return openOrder(j.orders[0],{view:j.orders[0].view});
   const s=push("Мої замовлення",`<div class="pad" style="padding-top:6px"><h1 style="font-size:28px;margin:0 0 4px">${j.name?esc(j.name)+", ваші":"Ваші"} замовлення</h1><p class="muted" style="margin:0 0 14px;font-size:14px">${j.orders.length} ${plural(j.orders.length,["замовлення","замовлення","замовлень"])} · натисніть, щоб побачити маршрут</p></div><div class="cl-list" style="display:flex;flex-direction:column;gap:12px">${j.orders.map((o,i)=>`<div class="acc-live">${r2CardHTML(o,{tag:"button",attrs:`data-ci="${i}"`,thumb:r2Thumb(o),name:r2Name(o)})}</div>`).join("")}</div><div style="height:30px"></div>`);
   s.querySelectorAll(".acc-live").forEach((w,i)=>accLiveDraw(w,j.orders[i]));s.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const o=j.orders[+b.dataset.ci];openOrder(o,{view:o.view,sibs:o.group?j.orders.filter(x=>x.group===o.group&&x!==o):[]})})}
-setTimeout(()=>{selOpenFromLink();orderOpenFromLink();clientOpenFromLink();selBar()},1500);
+/* ссылки из сообщений: экран приложения ещё может строиться (медленный телефон) — пробуем снова, пока не откроется */
+const linkTry=(f,n=0)=>Promise.resolve().then(f).catch(()=>{if(n<12)setTimeout(()=>linkTry(f,n+1),700)});
+setTimeout(()=>{linkTry(selOpenFromLink);linkTry(orderOpenFromLink);linkTry(clientOpenFromLink);selBar()},1500);
 // защита витрины: без меню «сохранить фото», без перетаскивания и копирования (кроме полей ввода)
 (function(){const ed=t=>t&&t.closest&&t.closest("input,textarea,[contenteditable]");
   document.addEventListener("contextmenu",e=>{if(!ed(e.target))e.preventDefault()});
