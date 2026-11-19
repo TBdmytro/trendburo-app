@@ -28,9 +28,16 @@ export default async function handler(req, res) {
         if (d.exp && d.exp < Date.now()) return send(res, 410, { error: "Термін дії добірки минув", expired: true, by: d.byName || "Trend Büro" });
         return send(res, 200, { ids: d.ids || [], items: d.items || [], title: d.title || "", note: d.note || "", by: d.byName || "Trend Büro", at: d.at, exp: d.exp || null }); }
       // ссылка на один заказ: только этот заказ, получатель — имя и первая буква фамилии
-      const view = new URL(req.url, "http://x").searchParams.get("order");
+      const view = new URL(req.url, "http://x").searchParams.get("order"), cinv = new URL(req.url, "http://x").searchParams.get("client");
+      const mask = o => { if (o.delivery?.name) o.delivery.name = o.delivery.name.split(/\s+/).map((w, i) => i ? w[0] + "." : w).slice(0, 2).join(" "); return o; };
+      // личная ссылка клиента без приложения: все его заказы (только посмотреть)
+      if (cinv) { if (!/^[a-z0-9]{12}$/.test(cinv)) return send(res, 404, { error: "Не знайдено" }); const st = getStore(); const [off] = await st.list("customer", { invite: cinv }, { limit: 1 });
+        if (!off || !off.offline) return send(res, 404, { error: "Не знайдено" });
+        const ls = (await st.list("lead", { cust: off._id }, { order: "createdAt desc", limit: 100 })).filter(l => l.status !== "cancelled");
+        const orders = []; for (const l of ls) { const v = await ensureView(st, l); orders.push({ ...mask(publicOrder(l)), view: v }); }
+        return send(res, 200, { name: String(off.profile?.name || "").split(/\s+/)[0] || "", orders }); }
       if (view) { const l = await orderByView(getStore(), view); if (!l) return send(res, 404, { error: "Замовлення не знайдено" });
-        const o = publicOrder(l); if (o.delivery?.name) o.delivery.name = o.delivery.name.split(/\s+/).map((w, i) => i ? w[0] + "." : w).slice(0, 2).join(" ");
+        const o = mask(publicOrder(l));
         return send(res, 200, { order: { ...o, view } }); }
       const ready = !!process.env.TELEGRAM_BOT_TOKEN || process.env.DEV_AUTH === "1";
       if (ready && !BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch { BOT = null; } }
@@ -111,12 +118,12 @@ export default async function handler(req, res) {
     if (body.a === "st") { // сотрудник в приложении: заказы (как в админке, без закупочных цен)
       if (!c.staff) return send(res, 403, { error: "Только для сотрудников Trend Büro" });
       const S = await import("../lib/staffops.js"), d = body.d && typeof body.d === "object" ? body.d : {}, by = (c.profile?.name || user.name || "сотрудник") + " · приложение";
-      const r = body.op === "link" ? await (async () => { const l = await store.get(String(d.id || "")); if (!l || l._type !== "lead") return { code: 404, body: { error: "Заказ не найден" } }; return { code: 200, body: { view: await ensureView(store, l), linked: !!l.tgId } }; })()
+      const r = body.op === "link" ? await (async () => { const l = await store.get(String(d.id || "")); if (!l || l._type !== "lead") return { code: 404, body: { error: "Заказ не найден" } }; const cu = d.all && l.cust ? await store.get(l.cust).catch(() => null) : null; return { code: 200, body: { view: await ensureView(store, l), linked: !!l.tgId, invite: cu?.offline ? cu.invite || "" : "" } }; })()
         : body.op === "claim" ? await S.opClaim(store, d, by) : body.op === "merge" ? await S.opMerge(store, d, by)
         : body.op === "leads" ? await S.opLeads(store, d.status) : body.op === "save" ? await S.opLeadSave(store, d, by) : body.op === "bulk" ? await S.opLeadBulk(store, d, by)
         : body.op === "driver" ? await S.opDriverList(store, d.days) : body.op === "clients" ? await S.opClientsLite(store) : body.op === "order" ? await S.opManualOrder(store, d, by) : body.op === "client" ? await S.opClientCreate(store, d, by) : { code: 400, body: { error: "Неизвестное действие" } };
       // новый заказ — ссылка для клиента: по личной ссылке он войдёт и увидит свой заказ с маршрутом
-      if (body.op === "link" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} } r.body = { link: BOT ? `https://t.me/${BOT}?startapp=o_${r.body.view}` : `https://trendburo.com.ua/?order=${r.body.view}`, web: `https://trendburo.com.ua/?order=${r.body.view}`, linked: r.body.linked }; }
+      if (body.op === "link" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} } const inv = r.body.invite; r.body = inv ? { link: BOT ? `https://t.me/${BOT}?startapp=c_${inv}` : `https://trendburo.com.ua/?client=${inv}`, all: true } : { link: BOT ? `https://t.me/${BOT}?startapp=o_${r.body.view}` : `https://trendburo.com.ua/?order=${r.body.view}`, linked: r.body.linked }; }
       if (body.op === "order" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
         const v = r.body.lead?.view || ""; r.body.link = v ? (BOT ? `https://t.me/${BOT}?startapp=o_${v}` : `https://trendburo.com.ua/?order=${v}`) : ""; }
       return send(res, r.code, r.body);

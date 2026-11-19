@@ -11,11 +11,6 @@ export default async function handler(req, res) {
       return res.status(200).send(`(function(){ var f = ${code.replace(/^async function tbCollect\(\)/, "async function ()")}; window.__tbFromNet = 1; f().finally(function () { window.__tbFromNet = 0; }); })();`);
     } catch (e) { res.setHeader("Content-Type", "application/javascript"); return res.status(500).send("/* " + String(e.message).slice(0, 80) + " */"); }
   }
-  // проверка: заказы через менеджера, оказавшиеся в аккаунтах сотрудников (без личных данных)
-  if (req.method === "GET" && /[?&]probe=staffleads\b/.test(String(req.url || ""))) return (async () => { const st = getStore(); const staff = (await st.list("customer", {}, { limit: 2000 })).filter(c => c.staff && c.tg?.id);
-    const out = []; for (const c of staff) { const ls = await st.list("lead", { tgId: Number(c.tg.id) }, { limit: 200 }); out.push({ staff: (c.tg.username || "").slice(0, 3) + "…", leads: ls.map(l => ({ n: l.number, src: l.source || "", linkedAt: l.linkedAt || "", claims: (l.claims || []).length, cust: !!l.cust })) }); }
-    const n = await st.list("lead", { number: "TB-1001" }, { limit: 3 }); out.push({ tb1001: n.map(l => ({ tg: !!l.tgId, cust: !!l.cust, claims: (l.claims || []).length, view: !!l.view })) });
-    res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(out)); })();
   // проверка доступности сайта Mytheresa для честной загрузки: robots.txt, карта сайта, страница товара — без обхода защиты
   if (req.method === "GET" && /[?&]probe=mytheresa\b/.test(String(req.url || ""))) return probeMytheresa(res);
   // переезд в Postgres (Neon): шаги копирования документов из Sanity — только количество, без содержимого
