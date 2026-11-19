@@ -3335,7 +3335,7 @@ function clientFormSheet(c, done) {
   const d = sheet(c ? "Данные клиента" : "Новый клиент", `<div class="form">
     ${c ? "" : `<div class="hint">Для тех, кто заказывает через менеджера и в приложение не заходит. После сохранения появится личная ссылка: клиент нажмёт — и увидит свои заказы в приложении.</div>`}
     <label class="f">Имя (если знаете)<input type="text" id="ncName" value="${esc(p.name || c?.tg?.name || "")}" placeholder="необязательно"></label>
-    <div class="fg2"><label class="f">Telegram (ник)<input type="text" id="ncUser" value="${esc(c?.tg?.username || "")}" placeholder="@olena_k"></label><label class="f">Телефон<input type="tel" id="ncPhone" value="${esc(p.phone || "")}" placeholder="+380…"></label></div>
+    <div class="fg2"><label class="f">Telegram (ник)<input type="text" id="ncUser" value="${esc(c?.tg?.username || "")}" placeholder="@olena_k"></label><label class="f">Телефон<input type="text" inputmode="tel" id="ncPhone" value="${esc(p.phone || "")}" placeholder="+380…"></label></div>
     <label class="f">Instagram (ник)<input type="text" id="ncInsta" value="${esc(c?.insta ? "@" + c.insta : "")}" placeholder="@olena.k" autocapitalize="off"></label>
     <div class="fg2"><label class="f">Город<input type="text" id="ncCity" value="${esc(p.city || "")}" placeholder="Київ"></label><label class="f">Размер обуви<input type="text" id="ncShoes" value="${esc(z.shoes || "")}" placeholder="38"></label></div>
     <label class="f">Размер одежды<input type="text" id="ncCl" value="${esc(z.clothes || "")}" placeholder="S / 36"></label>
