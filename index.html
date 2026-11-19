@@ -3658,6 +3658,10 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
      <div class="meta num"><span>${all.length} ${plural(all.length,["товар","товари","товарів"])}</span>${ICONS.some(ic=>ic.bk===bk)?`<span>${ICONS.filter(ic=>ic.bk===bk).length} моделей під замовлення</span>`:""}</div>
      <div class="acts"><button class="btn sm follow" data-follow aria-pressed="${follows.has(bk)}" style="flex:1">${follows.has(bk)?"Ви стежите":"Стежити"}</button></div></div>
    ${(()=>{const L=COLL.filter(c=>c.ids.some(id=>all.some(p=>p.id===id)));if(JH)return "";return L.length?`<div class="sec"><div class="sech"><h2>Колекції</h2><span class="muted" style="font-size:13px">${L.length}</span></div><div class="collmr">${L.map(c=>collCardHTML(c,false)).join("")}</div></div>`:""})()}
+   ${!JH&&MODEL_BK.test(bn)?(()=>{const cg={};all.forEach(p=>{const c=jColl(p);if(c)(cg[c]=cg[c]||[]).push(p)});const ML=Object.entries(cg).filter(([,l])=>l.length>=2).sort((a,b)=>b[1].length-a[1].length);if(ML.length<2)return "";
+     const pic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.thumb||i.src))||String(p.shape).replace(/^img:/,"")};
+     /* навигация по моделям: плитка модели (все её цвета и высоты каблука) → сетка ниже показывает только эту модель */
+     return `<div class="sec"><div class="sech"><h2>Моделі</h2><span class="muted" style="font-size:13px">${ML.length}</span></div><div class="collmr">${ML.map(([n,l])=>`<button class="collm press" data-jcoll="${esc(n)}"><span class="ci" style="background-image:url('${esc(szU(pic(l[0]),400))}')"></span><span class="tx"><b>${esc(n)}</b><span class="k num">${l.length} ${plural(l.length,["варіант","варіанти","варіантів"])}</span></span></button>`).join("")}</div></div>`})():""}
    ${JH?(()=>{const pic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.thumb||i.src))||String(p.shape).replace(/^img:/,"")};
      const cg={};all.forEach(p=>{const c=jColl(p);if(c)(cg[c]=cg[c]||[]).push(p)});const CL=Object.entries(cg).filter(([,l])=>l.length>=2).sort((a,b)=>b[1].length-a[1].length);
      const tg={};all.forEach(p=>{const sc=(SUBCATS[p.cat]||[]).length?subOf(p):"";const k=p.cat+"|"+(sc&&sc!=="other"?sc:"");(tg[k]=tg[k]||[]).push(p)});const TL=Object.entries(tg).sort((a,b)=>b[1].length-a[1].length);
@@ -4986,7 +4990,7 @@ function renderOptix(){
   const line=OF.dest==="ua"?"Відправка щосуботи · зазвичай 7–14 днів":"Доставка по ЄС · зазвичай 7–14 днів";$$(".oShipLine").forEach(x=>x.textContent=line);
   const af=[];if(OF.face)af.push([OF.face,()=>{OF.face="";OF.shapes.clear()}]);if(OF.onlyNew)af.push(["Новинки",()=>OF.onlyNew=false]);if(OF.onlySale)af.push(["Зі знижкою",()=>OF.onlySale=false]);
   renderOptix.af=af;$("#oAf").innerHTML=af.map((x,i)=>`<span>${esc(x[0])}<button data-act="ounaf" data-i="${i}" aria-label="Прибрати">×</button></span>`).join("");
-  const list=oList();$("#oCount").textContent=list.length+" "+plural(list.length,["модель","моделі","моделей"]);
+  const list=oList();$("#oCount").textContent=list.length+" "+plural(list.length,["варіант","варіанти","варіантів"]);
   $("#oGrid").innerHTML=list.length?list.map(ocHTML).join(""):`<div class="empty" style="grid-column:1/-1"><h3>Таких моделей тут немає</h3><p>Напишіть менеджеру — підберемо оправу під замовлення.</p></div>`;
   renderOFavs();
 }
@@ -5004,7 +5008,10 @@ const JCOLL=[["Alhambra",/alhambra/i],["Perlée",/perl[eé]e/i],["Frivole",/friv
 const JTYPES=[["ring","Каблучки",'<circle cx="12" cy="14" r="6"/><path d="M9.5 7.5L12 5l2.5 2.5"/>'],["earr","Сережки",'<path d="M9 4v4a3 3 0 1 0 6 0V4"/><circle cx="12" cy="17" r="3"/>'],["brac","Браслети",'<ellipse cx="12" cy="12" rx="8" ry="5"/><ellipse cx="12" cy="12" rx="5" ry="2.5"/>'],["neck","Кольє",'<path d="M5 5c0 6 3 10 7 10s7-4 7-10"/><path d="M12 15l2.5 2.5L12 20l-2.5-2.5z"/>'],["brooch","Брошки",'<circle cx="12" cy="12" r="3"/><path d="M12 4v5M12 15v5M4 12h5M15 12h5"/>']];
 const JF={type:"",coll:"",brand:"",mine:false};let jCur="home",jRing=String(store.get("tb_ring","")||"");
 const jList=()=>P.filter(p=>p.cat==="jewelry");
-const jColl=p=>{const t=String(p.name||"");const c=JCOLL.find(x=>x[1].test(t));return c?c[0]:""};
+// обувные бренды с моделями по имени (Le Silla: Bella, Eva, Uma, Colette…): модель = имя в начале названия, до вида обуви и высоты каблука
+const MODEL_BK=/le ?silla/i,SHOE_W=/^(pump|pumps|sandal|sandals|slingback|slingbacks|boot|boots|ankle|over|over-the-knee|thigh-high|thigh|knee-high|ballet|flat|mule|mules|running|sneaker|sneakers|cowboy|loafer|platform|slide|\d+)$/i;
+const shoeModel=t=>{const w=String(t||"").split(/\s+/),o=[];for(const x of w){if(SHOE_W.test(x)||/^\d/.test(x))break;o.push(x)}return o.slice(0,3).map(x=>x.charAt(0).toUpperCase()+x.slice(1).toLowerCase()).join(" ")};
+const jColl=p=>{const t=String(p.name||"");const c=JCOLL.find(x=>x[1].test(t));if(c)return c[0];return MODEL_BK.test(String(p.brand||""))?shoeModel(t):""};
 const jHas=(p,z)=>!!(z&&p.sizes&&p.sizes.some(x=>String(x.size)===String(z)&&(x.status==="online"||x.status==="boutique")));
 const jMine=p=>subOf(p)==="ring"&&jHas(p,jRing);
 function jFilter(){return jList().filter(p=>(!JF.type||subOf(p)===JF.type)&&(!JF.coll||jColl(p)===JF.coll)&&(!JF.brand||p.bk===JF.brand)&&(!JF.mine||jMine(p)))}
