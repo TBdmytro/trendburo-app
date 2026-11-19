@@ -29,17 +29,21 @@ export default async function handler(req, res) {
         return send(res, 200, { ids: d.ids || [], items: d.items || [], title: d.title || "", note: d.note || "", by: d.byName || "Trend Büro", at: d.at, exp: d.exp || null }); }
       // ссылка на один заказ: только этот заказ, получатель — имя и первая буква фамилии
       const view = new URL(req.url, "http://x").searchParams.get("order"), cinv = new URL(req.url, "http://x").searchParams.get("client");
+      // ссылки для клиентов без приложения живут, пока заказ в пути, и ещё 3 дня после «Отримано»
+      const alive = l => { if (l.status === "cancelled") return false; if (l.status !== "delivered") return true; const h = [...(l.history || [])].reverse().find(x => x.status === "delivered"); return Date.now() - Date.parse(h?.at || l.updatedAt || 0) < 3 * 864e5; };
+      const gone = () => send(res, 410, { error: "Посилання вже недійсне — замовлення отримано", expired: true });
       const mask = o => { if (o.delivery?.name) o.delivery.name = o.delivery.name.split(/\s+/).map((w, i) => i ? w[0] + "." : w).slice(0, 2).join(" "); return o; };
       // личная ссылка клиента без приложения: все его заказы (только посмотреть)
       if (cinv) { if (!/^[a-z0-9]{12}$/.test(cinv)) return send(res, 404, { error: "Не знайдено" }); const st = getStore(); const [off] = await st.list("customer", { invite: cinv }, { limit: 1 });
         if (!off || !off.offline) return send(res, 404, { error: "Не знайдено" });
-        const ls = (await st.list("lead", { cust: off._id }, { order: "createdAt desc", limit: 100 })).filter(l => l.status !== "cancelled");
+        const ls = (await st.list("lead", { cust: off._id }, { order: "createdAt desc", limit: 100 })).filter(alive);
+        if (!ls.length) return gone();
         const orders = []; for (const l of ls) { const v = await ensureView(st, l); orders.push({ ...mask(publicOrder(l)), view: v }); }
         return send(res, 200, { name: String(off.profile?.name || "").split(/\s+/)[0] || "", orders }); }
-      if (view) { const l = await orderByView(getStore(), view); if (!l) return send(res, 404, { error: "Замовлення не знайдено" });
+      if (view) { const l = await orderByView(getStore(), view); if (!l) return send(res, 404, { error: "Замовлення не знайдено" }); if (!alive(l)) return gone();
         const o = mask(publicOrder(l));
         // другие посылки этой же покупки
-        const sibs = []; if (l.group) for (const x of (await getStore().list("lead", { group: l.group }, { limit: 10 })).filter(x => x._id !== l._id && x.status !== "cancelled")) sibs.push({ ...mask(publicOrder(x)), view: await ensureView(getStore(), x) });
+        const sibs = []; if (l.group) for (const x of (await getStore().list("lead", { group: l.group }, { limit: 10 })).filter(x => x._id !== l._id && alive(x))) sibs.push({ ...mask(publicOrder(x)), view: await ensureView(getStore(), x) });
         return send(res, 200, { order: { ...o, view }, sibs }); }
       const ready = !!process.env.TELEGRAM_BOT_TOKEN || process.env.DEV_AUTH === "1";
       if (ready && !BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch { BOT = null; } }
