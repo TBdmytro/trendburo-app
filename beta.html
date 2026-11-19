@@ -435,6 +435,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .sn-pf{width:auto!important;text-align:right;font-size:10.5px;font-weight:700;color:#1f9459}.sn-pc2 .sn-pf:not(:empty){display:block}
 .sn-ph{display:flex;align-items:center;gap:10px;border:1.5px dashed #c9ccd2;border-radius:14px;padding:12px;font-size:14px;color:#3b3d42;cursor:pointer;background:#fff}.sn-ph span{display:flex;align-items:center;gap:10px}.sn-ph img{width:44px;height:44px;border-radius:8px;object-fit:cover}.sn-ph.on{border-style:solid;border-color:#1f9459}
 .sn-items .hint{font-size:13px;line-height:1.4;color:var(--g2)}
+.so-tags .t-ts{background:#efe8f8;color:#6b3fa0}
 .sn-paysum{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--soft);border-radius:12px;padding:10px 12px;font-weight:600;font-size:14px}
 .sn-pc2{display:flex;flex-direction:column;gap:4px;flex:none}.sn-pc2 label{display:flex;align-items:center;gap:4px}.sn-pc2 small{font-size:10.5px;color:var(--g2);width:46px;text-align:right}.sn-pc2 .cst input{color:#6b6d72;font-weight:600}
 .r2claim{background:#eef4fd;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:8px}.r2claim b{font-size:16px}.r2claim p{margin:0;font-size:13.5px;color:var(--g2);line-height:1.45}
@@ -4608,8 +4609,8 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="
   {const f=s.querySelector("footer.cft");if(f)f.remove()} // рабочий экран — без блока «Ми на звʼязку» внизу
   s.classList.add("so-scr");
   const L=s.querySelector(".so-list"),bar=s.querySelector(".so-bar");
-  const draw=()=>{const cnt=k=>all.filter(l=>soSt(l)===k).length,ua=l=>(l.dest||"ua")==="ua",act=all.filter(l=>!["delivered","cancelled"].includes(l.status));
-    const sum=act.reduce((a,l)=>a+(l.total||0),0),prof=act.reduce((a,l)=>a+soMoney(l).p,0);
+  const draw=()=>{const cnt=k=>all.filter(l=>soSt(l)===k).length,ua=l=>(l.dest||"ua")==="ua",act=all.filter(l=>!["delivered","cancelled"].includes(l.status)),real=act.filter(l=>!l.test);
+    const sum=real.reduce((a,l)=>a+(l.total||0),0),prof=real.reduce((a,l)=>a+soMoney(l).p,0);
     s.querySelector(".so-sub").textContent=`${act.length} ${plural(act.length,["активный","активных","активных"])}${sum?" · "+eur(sum):""}${prof?" · заработок "+eur(prof):""}`;
     const packAt=all.filter(l=>["bought","received"].includes(l.status)&&l.packAt).map(l=>l.packAt).sort()[0];
     s.querySelector(".so-tiles").innerHTML=[["paid","card","Выкупить",cnt("paid")],["bought","box",packAt?"Упакуются "+new Date(packAt).toLocaleString("ru",{weekday:"short",hour:"2-digit",minute:"2-digit"}):"Ждут упаковки",cnt("bought")+cnt("received")],["packed","truck","К отправке",cnt("packed")],["shipping","np","В дороге → НП",all.filter(l=>l.status==="shipping"&&ua(l)).length]].map(([k,ic,t,n])=>`<button class="so-tile press${st===k?" on":""}" data-sost="${k}" style="--c:${R2D[ic]}"><svg viewBox="-14 -14 28 28" width="30" height="30">${r2Badge(ic,13)}</svg><b class="num">${n}</b><span>${t}</span></button>`).join("");
@@ -4619,7 +4620,7 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="
       return `<div class="so-row${sel.has(l._id)?" on":""}"><label class="so-ck"><input type="checkbox" data-sopk="${esc(l._id)}" ${sel.has(l._id)?"checked":""} aria-label="Вибрати"><i></i></label>
       <button class="so-tx" data-soopen="${esc(l._id)}"><span class="so-th" style="--c:${soCol(k)}">${it.photo?`<img src="${esc(it.photo)}" alt="" loading="lazy">`:`<b>${esc(((it.brand||soName(l)||"?").replace(/^@/,"")[0]||"?").toUpperCase())}</b>`}</span>
         <span class="so-m"><b>${esc(soName(l))}</b><small>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")).join(", ")||"Заявка")}</small>
-        <span class="so-tags"><span>${soFlag(l.dest)} ${esc(soNo(l))}</span>${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}${l.group?'<span>📦 посылка</span>':""}${l.handover?'<span>🤝 в руки</span>':""}</span></span>
+        <span class="so-tags"><span>${soFlag(l.dest)} ${esc(soNo(l))}</span>${l.test?'<span class="t-ts">🧪 тест</span>':""}${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}${l.group?'<span>📦 посылка</span>':""}${l.handover?'<span>🤝 в руки</span>':""}</span></span>
         <span class="so-rr"><b class="num">${l.total?eur(l.total):""}</b>${m.p?`<small class="num">+${eur(m.p)}</small>`:""}${soPill(k)}</span></button></div>`}).join("")}</div>`
       :`<div class="so-empty"><svg viewBox="-14 -14 28 28" width="44" height="44">${r2Badge("check",13)}</svg><b>${st?"С этим этапом заказов нет":"Активных заказов нет"}</b><span>Нажмите «Новый заказ», чтобы добавить</span></div>`;
     upBar()};
@@ -4765,6 +4766,7 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
       <div class="fl">Этап сейчас</div><div class="so-chs">${["work","paid","bought"].map(k=>`<button class="so-ch2${S.status===k?" on":""}" data-sx="${k}">${SO_ST[k]}</button>`).join("")}</div>
       <input type="text" id="snO" value="${esc(S.origin)}" list="soOrL2" placeholder="Откуда поедет: Франція / Мілан (можно потом)"><datalist id="soOrL2">${SO_ORIG.map(o=>`<option>${o}</option>`).join("")}</datalist>
       <textarea id="snNt" placeholder="Заметка — только для нас" style="min-height:56px">${esc(S.note)}</textarea>
+      <label class="so-tg"><input type="checkbox" id="snTs" ${S.test?"checked":""}> 🧪 Тестовый заказ — для проверки, не считается в деньгах</label>
       ${S.pick&&S.pick.app?`<label class="so-tg"><input type="checkbox" id="snNf" ${S.notify!==false?"checked":""}> Сообщить клиенту в Telegram о новом заказе</label><div class="hint">Клиент в приложении — заказ сразу появится у него в «Мої замовлення».</div>`:""}`;
     FT.innerHTML=`<button class="btn soft" data-bk>Назад</button><button class="btn" data-mk>Создать заказ</button><button class="btn soft sn-lk" data-mkl>Создать и получить ссылку для клиента</button>`};
   const keep=()=>{const v=id=>{const x=B.querySelector(id);return x?x.value:undefined};
@@ -4776,7 +4778,7 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
   const create=async btn=>{keep();const miss=S.items.findIndex(i=>i.sizes&&i.sizes.length>1&&!i.size);if(miss>=0){toast("Выберите размер: "+(S.items[miss].title||S.items[miss].brand));return}
     btn.disabled=true;try{let id=S.pick&&S.pick.id;
       if(!id){const k=S.kind,q=S.q;const r=await soCall("client",{insta:k==="ig"?clean("ig",q):"",username:k==="tg"?clean("tg",q):S.tgu,phone:k==="ph"?q:S.phone,name:k==="nm"?q.trim():S.name});id=r.id;S.pick={id,name:who()}}
-      const base={customer:id,dest:S.dest,handover:!!S.hand,notify:S.notify!==false,delivery:S.hand?{city:S.dv.city,address:S.dv.address,npType:"courier"}:S.noAddr?null:{...S.dv,...(S.dest==="ua"?{}:{npType:"courier"})},noAddress:S.hand?false:S.noAddr,pay:S.pay,status:S.status,origin:S.origin,note:S.note,date:new Date().toISOString().slice(0,10)};
+      const base={customer:id,dest:S.dest,handover:!!S.hand,notify:S.notify!==false,delivery:S.hand?{city:S.dv.city,address:S.dv.address,npType:"courier"}:S.noAddr?null:{...S.dv,...(S.dest==="ua"?{}:{npType:"courier"})},noAddress:S.hand?false:S.noAddr,pay:S.pay,status:S.status,origin:S.origin,note:S.note,test:!!S.test,date:new Date().toISOString().slice(0,10)};
       const it=i=>({id:i.id,brand:i.brand,title:i.title,size:i.size,color:i.color,price:i.price,cost:i.cost,photo:i.photo,url:i.url,note:i.note});
       let r;if(S.split&&S.items.length>1){let left=snNum(S.prepaid);base.group="g"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);for(const i of S.items){const pp=Math.min(left,snNum(i.price));left-=pp;r=await soCall("order",{...base,origin:i.origin||base.origin,items:[it(i)],prepaid:pp})}}
       else r=await soCall("order",{...base,items:S.items.map(it),prepaid:S.prepaid});
@@ -4809,7 +4811,7 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
     if(t.closest("[data-close2]")){closeSheet();return}
     if(t.closest("[data-drc]")){S={...blank(),...dr};step=dr.step||0;draw();return}
     if(t.closest("[data-drn]")){drop();draw();return}});
-  d.addEventListener("change",async e=>{if(await snFile(e,S.C,S.items,()=>{items1();save()}))return;if(e.target.id==="snNo"){keep();S.noAddr=e.target.checked;draw()}if(e.target.id==="snNf"){S.notify=e.target.checked;save()}if(e.target.id==="snSp"){keep();S.split=e.target.checked;save();draw()}});
+  d.addEventListener("change",async e=>{if(await snFile(e,S.C,S.items,()=>{items1();save()}))return;if(e.target.id==="snNo"){keep();S.noAddr=e.target.checked;draw()}if(e.target.id==="snNf"){S.notify=e.target.checked;save()}if(e.target.id==="snTs"){S.test=e.target.checked;save()}if(e.target.id==="snSp"){keep();S.split=e.target.checked;save();draw()}});
   d.addEventListener("input",e=>{const ds=e.target.dataset||{};if(ds.ip!==undefined||ds.ic!==undefined){if(ds.ip!==undefined)S.items[+ds.ip].price=e.target.value;else S.items[+ds.ic].cost=e.target.value;save();const m=B.querySelector(".sn-money");if(m)m.outerHTML=money();snPf(B,S.items,+(ds.ip??ds.ic))}
     if(e.target.dataset&&e.target.dataset.io!==undefined){S.items[+e.target.dataset.io].origin=e.target.value;save()}
     if(e.target.id==="snPp"){S.prepaid=e.target.value;const r=B.querySelector(".sn-rest b");if(r)r.textContent=eur(Math.max(0,total()-snNum(S.prepaid)))}
@@ -4831,6 +4833,7 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
     <div class="field"><label for="soOr">Откуда поедет — клиент видит на маршруте</label><input type="text" id="soOr" list="soOrL" value="${esc(l.origin||"")}" placeholder="${ua?"Франція / Італія":"Мілан"}"><datalist id="soOrL">${SO_ORIG.map(o=>`<option>${o}</option>`).join("")}</datalist></div>
     <div class="so-chs">${[["boutique","Бутик"],["online","Сайт бренда"]].map(([k,v])=>`<button class="so-ch2${bm===k?" on":""}" data-bm="${k}">${v}</button>`).join("")}</div>
     <label class="so-tg"><input type="checkbox" id="soHd" ${l.handover?"checked":""}> 🤝 Лично в руки (без почты)</label>
+    <label class="so-tg"><input type="checkbox" id="soTs" ${l.test?"checked":""}> 🧪 Тестовый заказ — проходит все этапы, но не считается в продажах и заработке</label>
     <div class="fl">Доставка · ${l.handover?"место передачи":ua?"Нова пошта":"DHL"}${l.noAddress?' · <b style="color:#a8343a">нет адреса</b>':""}</div>
     <div class="frow"><input type="text" id="soDn" value="${esc(dv.name||"")}" placeholder="Отримувач"><input type="tel" id="soDp" data-ua="${ua?1:0}" value="${esc(snPhone(dv.phone||"",ua))}" placeholder="Телефон" inputmode="tel"></div>
     <div class="frow"><input type="text" id="soDc" value="${esc(dv.city||"")}" placeholder="Місто">${ua?`<input type="text" id="soDb" value="${esc(dv.npPoint||"")}" placeholder="Відділення №" inputmode="numeric">`:`<input type="text" id="soTr" value="${esc(l.track||"")}" placeholder="Трек DHL">`}</div>
@@ -4869,7 +4872,7 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
     if(x=t.closest("[data-opy]")){pay=x.dataset.opy;d.querySelectorAll("[data-opy]").forEach(y=>y.classList.toggle("on",y===x));d.querySelector(".so-ppw").hidden=pay!=="prepay";return}
     if(x=t.closest("[data-bm]")){bm=x.dataset.bm;d.querySelectorAll("[data-bm]").forEach(y=>y.classList.toggle("on",y===x));return}
     const sv=t.closest("[data-sosave]");if(!sv)return;sv.disabled=true;const v=id=>{const y=d.querySelector(id);return y?y.value.trim():undefined};
-    const body={id:l._id,items:items.map(i=>({id:i.id,brand:i.brand,title:i.title,size:i.size,color:i.color,price:i.price,cost:i.cost,photo:i.photo,icon:i.icon,url:i.url,note:i.note})),origin:v("#soOr"),buyMode:bm,note:v("#soNo"),notify:d.querySelector("#soNt").checked,delivery:{name:v("#soDn"),phone:v("#soDp"),city:v("#soDc"),address:v("#soDa"),...(ua?{npPoint:v("#soDb")}:{})},...(ua?{}:{track:v("#soTr")}),...(stage!==soSt(l)?{status:stage}:{}),...(pay&&(pay!==pay0||(pay==="prepay"&&v("#soPp")!==String(l.prepaid||"")))?{pay,prepaid:v("#soPp")}:{}),handover:d.querySelector("#soHd").checked};
+    const body={id:l._id,items:items.map(i=>({id:i.id,brand:i.brand,title:i.title,size:i.size,color:i.color,price:i.price,cost:i.cost,photo:i.photo,icon:i.icon,url:i.url,note:i.note})),origin:v("#soOr"),buyMode:bm,note:v("#soNo"),notify:d.querySelector("#soNt").checked,delivery:{name:v("#soDn"),phone:v("#soDp"),city:v("#soDc"),address:v("#soDa"),...(ua?{npPoint:v("#soDb")}:{})},...(ua?{}:{track:v("#soTr")}),...(stage!==soSt(l)?{status:stage}:{}),...(pay&&(pay!==pay0||(pay==="prepay"&&v("#soPp")!==String(l.prepaid||"")))?{pay,prepaid:v("#soPp")}:{}),handover:d.querySelector("#soHd").checked,test:d.querySelector("#soTs").checked};
     try{await soCall("save",body);toast("Сохранено");closeSheet();reload()}catch(y){toast(y.message);sv.disabled=false}})}
 
 /* водителю: что отправлено в Украину — скопировать таблицей (Excel / Telegram) */

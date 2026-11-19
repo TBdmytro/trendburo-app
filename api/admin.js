@@ -1126,7 +1126,7 @@ export default async function handler(req, res) {
       case "finance": {
         const days = { week: 7, month: 31, quarter: 92, year: 366 }[req.query.period] || 31;
         const since = new Date(Date.now() - days * 864e5).toISOString();
-        const all = (await store.list("lead", { kind: "order" }, { order: "createdAt desc", limit: 5000, fields: "createdAt, status, total, cost, dest, tgId, cust, tg, delivery, items[]{brand, price, cost}" })).filter(l => l.status !== "cancelled");
+        const all = (await store.list("lead", { kind: "order" }, { order: "createdAt desc", limit: 5000, fields: "createdAt, status, total, cost, dest, tgId, cust, tg, delivery, test, items[]{brand, price, cost}" })).filter(l => l.status !== "cancelled" && !l.test); // тестовые заказы в деньги не идут
         const inPeriod = all.filter(l => l.createdAt >= since);
         const done = inPeriod.filter(l => ["paid", "bought", "received", "packed", "ready", "shipping", "inua", "np", "delivered"].includes(l.status));
         const mk = mergeConfig(pricingCfg).official.markup;
