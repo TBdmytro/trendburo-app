@@ -3320,7 +3320,7 @@ function qMatcher(raw){const key=raw;if(QM_MEMO[key])return QM_MEMO[key];
   const m={toks:tk,g,test:p=>(!g||p.g===g||p.g==="u")&&tk.every(x=>one(x,p))};
   if(Object.keys(QM_MEMO).length>50)for(const k in QM_MEMO)delete QM_MEMO[k];return QM_MEMO[key]=m}
 const sortKey=n=>norm(n).toUpperCase();
-const RU={chanel:"шанель",hermes:"эрмес гермес",lv:"луи виттон вюиттон",dior:"диор",prada:"прада",bv:"боттега венета",loewe:"лоеве лоэве",celine:"селин",ysl:"сен лоран ив сен лоран",miumiu:"миу миу",gucci:"гуччи",therow:"зе роу",lp:"лоро пиана",bc:"брунелло кучинелли",moncler:"монклер",balenciaga:"баленсиага",alaia:"алайя",cartier:"картье",vca:"ван клиф",rolex:"ролекс",valentino:"валентино",fendi:"фенди",maxmara:"макс мара",tomford:"том форд",jilsander:"джил сандер",khaite:"кхайт",zegna:"зенья",burberry:"барберри",givenchy:"живанши",chloe:"хлое"};
+const RU={chanel:"шанель",hermes:"эрмес гермес",lv:"луи виттон вюиттон",dior:"диор",prada:"прада",bv:"боттега венета",loewe:"лоеве лоэве",celine:"селин",ysl:"сен лоран ив сен лоран",miumiu:"миу миу",gucci:"гуччи",therow:"зе роу",lp:"лоро пиана",bc:"брунелло кучинелли",moncler:"монклер",balenciaga:"баленсиага",alaia:"алайя",cartier:"картье",vca:"ван клиф",rolex:"ролекс",valentino:"валентино",fendi:"фенди",maxmara:"макс мара",tomford:"том форд",jilsander:"джил сандер",khaite:"кхайт",zegna:"зенья",burberry:"барберри",givenchy:"живанши",chloe:"хлое",lesilla:"ле силла лесилла силла",sportyrich:"спорти рич спортирич",stoneisland:"стон айленд стоун айленд",aminamuaddi:"амина муади муадди",renecaovilla:"рене каовилла",paristexas:"парис техас париж техас",aloyoga:"ало йога",goldengoose:"голден гус",amiri:"амири",bottegaveneta:"боттега"};
 /* Культовые модели под заказ: [бренд, модель, категория, цена от €, силуэт, цвет, флаг, рус.] — ориентир */
 const ICONS=[
  ["hermes","Birkin 25","bags",10500,"bag","#8d6a4f","wait","биркин"],["hermes","Kelly 25","bags",9500,"bag","#a3172d","wait","келли"],["hermes","Constance 18","bags",8500,"bag","#2f2f2f","wait","констанс"],["hermes","Picotin Lock 18","bags",3300,"bag","#b98b58","","пикотин"],["hermes","Lindy 26","bags",7000,"bag","#5b6b7a","wait","линди"],["hermes","Clic H","jewelry",700,"bracelet","#c9a45a","","клик"],
@@ -4639,12 +4639,12 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="
 /* общий выбор вещей: умный поиск по каталогу / бренд → раздел / вручную. C — состояние {mode,cq,br,ct}, dest — для цены */
 const snImg=p=>{const im=p.imgs&&p.imgs[0];return im?`<img src="${esc(im.thumb||im.src)}" alt="" loading="lazy">`:shapeSVG(p.shape,p.c,"")};
 function snCatRes(C,dest){const q=C.cq.trim();let R,head="";
-  if(q){const m=qMatcher(q);R=P.filter(p=>m.test(p)).slice(0,40)}
+  if(q){const m=qMatcher(q);R=P.filter(p=>m.test(p)).slice(0,80)}
   else if(C.br){/* бренд → для кого → раздел → вид вещи (Аксессуары: кепки, шарфы…) */
     const A0=P.filter(p=>(p.bk||p.brand)===C.br),gOk=p=>!C.g||p.g===C.g||(p.g==="u"&&C.g!=="k"),A=A0.filter(gOk),cats=[...new Set(A.map(p=>p.cat))].filter(c=>CATS[c]);
     const gs=[["w","Жіноче"],["m","Чоловіче"],["k","Дитяче"]].filter(([g])=>A0.some(p=>p.g===g));
     const subs=C.ct?(()=>{const cnt={};A.forEach(p=>{if(p.cat===C.ct){const k=subOf(p);cnt[k]=(cnt[k]||0)+1}});return Object.entries(cnt).filter(([k])=>k&&k!=="other").sort((a,b)=>b[1]-a[1])})():[];
-    R=A.filter(p=>(!C.ct||p.cat===C.ct)&&(!C.sc||subOf(p)===C.sc)).slice(0,120);
+    R=A.filter(p=>(!C.ct||p.cat===C.ct)&&(!C.sc||subOf(p)===C.sc)).slice(0,300);
     head=`<div class="sn-bh"><button class="so-ch2" data-br="">← Бренды</button><b>${esc((A0[0]||{}).brand||"")}</b><span>${A.length}</span></div>`
       +(gs.length>1?`<div class="sn-cs"><button class="so-ch2${!C.g?" on":""}" data-sng="">Все</button>${gs.map(([g,n])=>`<button class="so-ch2${C.g===g?" on":""}" data-sng="${g}">${n} · ${A0.filter(p=>p.g===g||(p.g==="u"&&g!=="k")).length}</button>`).join("")}</div>`:"")
       +(cats.length>1?`<div class="sn-cs">${cats.map(c=>`<button class="so-ch2${C.ct===c?" on":""}" data-ct="${c}">${CATS[c]} · ${A.filter(p=>p.cat===c).length}</button>`).join("")}</div>`:"")
