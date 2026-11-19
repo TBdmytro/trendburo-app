@@ -21,6 +21,10 @@ export default async function handler(req, res) {
   if (!allow(req, "me", 120, 60000)) return tooMany(res); // защита от флуда с одного адреса
   try {
     if (req.method === "GET") {
+      // фото вещи, загруженное сотрудником в заказ (лежит в базе): отдаём картинку, кэш на год
+      { const im = new URL(req.url, "http://x").searchParams.get("img"); if (im) { if (!/^[a-z0-9]{16}$/.test(im)) { res.statusCode = 404; return res.end(); }
+        const d = await getStore().get("upimg." + im); if (!d || !d.data) { res.statusCode = 404; return res.end(); }
+        res.statusCode = 200; res.setHeader("Content-Type", d.ct || "image/jpeg"); res.setHeader("Cache-Control", "public, max-age=31536000, immutable"); return res.end(Buffer.from(d.data, "base64")); } }
       // подборка от менеджера: по ссылке клиент видит выбранные вещи
       const selId = new URL(req.url, "http://x").searchParams.get("sel");
       if (selId) { if (!/^[a-z0-9]{10}$/.test(selId)) return send(res, 404, { error: "Добірку не знайдено" }); const d = await getStore().get("selection." + selId);
@@ -127,7 +131,7 @@ export default async function handler(req, res) {
       const r = body.op === "link" ? await (async () => { const l = await store.get(String(d.id || "")); if (!l || l._type !== "lead") return { code: 404, body: { error: "Заказ не найден" } }; const cu = d.all && l.cust ? await store.get(l.cust).catch(() => null) : null; // заказ уже получен — менеджер может выдать новую ссылку ещё на 3 дня («доставлено ✓»)
           let renewed = false; if (l.status === "delivered" && !d.all) { const { randomBytes } = await import("node:crypto"); l.view = randomBytes(16).toString("hex").replace(/[^a-z0-9]/g, "").slice(0, 12); l.viewUntil = new Date(Date.now() + 3 * 864e5).toISOString(); await store.put(l); renewed = true; }
           return { code: 200, body: { view: await ensureView(store, l), linked: !!l.tgId, renewed, invite: cu?.offline ? cu.invite || "" : "" } }; })()
-        : body.op === "img" ? await S.opImage(store, d) : body.op === "costs" ? await S.opCosts(store, d): body.op === "split" ? await S.opSplit(store, d, by) : body.op === "claim" ? await S.opClaim(store, d, by) : body.op === "merge" ? await S.opMerge(store, d, by) : body.op === "clientEdit" ? await S.opClientEdit(store, d, by)
+        : body.op === "img" ? await S.opImage(store, d, String(req.headers["x-forwarded-host"] || req.headers.host || "trendburo.com.ua")) : body.op === "costs" ? await S.opCosts(store, d): body.op === "split" ? await S.opSplit(store, d, by) : body.op === "claim" ? await S.opClaim(store, d, by) : body.op === "merge" ? await S.opMerge(store, d, by) : body.op === "clientEdit" ? await S.opClientEdit(store, d, by)
         : body.op === "leads" ? await S.opLeads(store, d.status) : body.op === "save" ? await S.opLeadSave(store, d, by) : body.op === "bulk" ? await S.opLeadBulk(store, d, by)
         : body.op === "driver" ? await S.opDriverList(store, d.days) : body.op === "clients" ? await S.opClientsLite(store) : body.op === "order" ? await S.opManualOrder(store, d, by) : body.op === "client" ? await S.opClientCreate(store, d, by) : { code: 400, body: { error: "Неизвестное действие" } };
       // новый заказ — ссылка для клиента: по личной ссылке он войдёт и увидит свой заказ с маршрутом
