@@ -4640,8 +4640,15 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="
 const snImg=p=>{const im=p.imgs&&p.imgs[0];return im?`<img src="${esc(im.thumb||im.src)}" alt="" loading="lazy">`:shapeSVG(p.shape,p.c,"")};
 function snCatRes(C,dest){const q=C.cq.trim();let R,head="";
   if(q){const m=qMatcher(q);R=P.filter(p=>m.test(p)).slice(0,40)}
-  else if(C.br){const A=P.filter(p=>(p.bk||p.brand)===C.br),cats=[...new Set(A.map(p=>p.cat))].filter(c=>CATS[c]);R=A.filter(p=>!C.ct||p.cat===C.ct).slice(0,60);
-    head=`<div class="sn-bh"><button class="so-ch2" data-br="">← Бренды</button><b>${esc((A[0]||{}).brand||"")}</b><span>${A.length}</span></div>${cats.length>1?`<div class="sn-cs">${cats.map(c=>`<button class="so-ch2${C.ct===c?" on":""}" data-ct="${c}">${CATS[c]} · ${A.filter(p=>p.cat===c).length}</button>`).join("")}</div>`:""}`}
+  else if(C.br){/* бренд → для кого → раздел → вид вещи (Аксессуары: кепки, шарфы…) */
+    const A0=P.filter(p=>(p.bk||p.brand)===C.br),gOk=p=>!C.g||p.g===C.g||(p.g==="u"&&C.g!=="k"),A=A0.filter(gOk),cats=[...new Set(A.map(p=>p.cat))].filter(c=>CATS[c]);
+    const gs=[["w","Жіноче"],["m","Чоловіче"],["k","Дитяче"]].filter(([g])=>A0.some(p=>p.g===g));
+    const subs=C.ct?(()=>{const cnt={};A.forEach(p=>{if(p.cat===C.ct){const k=subOf(p);cnt[k]=(cnt[k]||0)+1}});return Object.entries(cnt).filter(([k])=>k&&k!=="other").sort((a,b)=>b[1]-a[1])})():[];
+    R=A.filter(p=>(!C.ct||p.cat===C.ct)&&(!C.sc||subOf(p)===C.sc)).slice(0,120);
+    head=`<div class="sn-bh"><button class="so-ch2" data-br="">← Бренды</button><b>${esc((A0[0]||{}).brand||"")}</b><span>${A.length}</span></div>`
+      +(gs.length>1?`<div class="sn-cs"><button class="so-ch2${!C.g?" on":""}" data-sng="">Все</button>${gs.map(([g,n])=>`<button class="so-ch2${C.g===g?" on":""}" data-sng="${g}">${n} · ${A0.filter(p=>p.g===g||(p.g==="u"&&g!=="k")).length}</button>`).join("")}</div>`:"")
+      +(cats.length>1?`<div class="sn-cs">${cats.map(c=>`<button class="so-ch2${C.ct===c?" on":""}" data-ct="${c}">${CATS[c]} · ${A.filter(p=>p.cat===c).length}</button>`).join("")}</div>`:"")
+      +(subs.length>1?`<div class="sn-cs">${subs.map(([k,n])=>`<button class="so-ch2${C.sc===k?" on":""}" data-snsc="${esc(k)}">${esc(subName(C.ct,k))} · ${n}</button>`).join("")}</div>`:"")}
   else{const by={};P.forEach(p=>{const k=p.bk||p.brand;if(!by[k])by[k]={n:0,name:p.brand};by[k].n++});
     return `<div class="sn-brs">${Object.entries(by).sort((a,b)=>b[1].n-a[1].n).map(([k,v])=>`<button class="sn-br" data-br="${esc(k)}"><b>${esc(v.name)}</b><span>${v.n}</span></button>`).join("")}</div>`}
   return head+`<div class="sn-g">${R.map(p=>`<button class="sn-pc" data-pid="${esc(p.id)}"><span class="im">${snImg(p)}</span><b>${esc(p.brand)}</b><small>${esc(p.name)}</small><span class="pr">${isPor(p)?"за запитом":eur(priceFor(p,dest))}</span><i>+</i></button>`).join("")||'<p class="ace">Не нашли — добавьте вручную</p>'}</div>`}
@@ -4653,8 +4660,10 @@ function snPickHTML(C,dest){return `<div class="sn-seg"><button class="${C.mode=
 /* обработчик выбора: вернёт вещь (или null), сам перерисует результаты поиска */
 function snPickClick(t,C,root,dest,redraw){let x;
   if(x=t.closest("[data-md]")){C.mode=x.dataset.md;redraw();return null}
-  if(x=t.closest("[data-br]")){C.br=x.dataset.br;C.ct="";root.querySelector(".sn-res").innerHTML=snCatRes(C,dest);return null}
-  if(x=t.closest("[data-ct]")){C.ct=C.ct===x.dataset.ct?"":x.dataset.ct;root.querySelector(".sn-res").innerHTML=snCatRes(C,dest);return null}
+  if(x=t.closest("[data-sng]")){C.g=C.g===x.dataset.sng?"":x.dataset.sng;C.ct="";C.sc="";root.querySelector(".sn-res").innerHTML=snCatRes(C,dest);return null}
+  if(x=t.closest("[data-snsc]")){C.sc=C.sc===x.dataset.snsc?"":x.dataset.snsc;root.querySelector(".sn-res").innerHTML=snCatRes(C,dest);return null}
+  if(x=t.closest("[data-br]")){C.br=x.dataset.br;C.ct="";C.g="";C.sc="";root.querySelector(".sn-res").innerHTML=snCatRes(C,dest);return null}
+  if(x=t.closest("[data-ct]")){C.ct=C.ct===x.dataset.ct?"":x.dataset.ct;C.sc="";root.querySelector(".sn-res").innerHTML=snCatRes(C,dest);return null}
   if(x=t.closest("[data-pid]")){const p=P.find(y=>y.id===x.dataset.pid);if(!p)return null;const im=p.imgs&&p.imgs[0],sz=(p.sizes||[]).map(z=>z.size);hap("light");
     return{id:p.id,brand:p.brand,title:p.name,price:isPor(p)?"":priceFor(p,dest),photo:im?(im.thumb||im.src):"",sizes:sz,size:sz.length===1?sz[0]:""}}
   if(t.closest("[data-madd]")){const v=c=>root.querySelector(c).value.trim();if(!v(".mB")&&!v(".mT")){toast("Укажите бренд или модель");return null}
