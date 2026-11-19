@@ -5468,11 +5468,11 @@ function selSheet(){const items=[...SEL].map(findItem).filter(Boolean);
     const snap=items.map(p=>{const im=p.imgs&&p.imgs[0];return{id:p.id,g:p.g,b:p.brand,n:p.name,p:isPor(p)?"Ціна за запитом":eur(priceFor(p,"ua")),img:im?(im.src||im.thumb||""):""}});
     const r=await meCall({a:"sel",ids:[...SEL],items:snap,title,note});if(!r||!r.link){bt.disabled=false;bt.textContent="Надіслати клієнту";return toast(r&&r.error||"Не вийшло")}
     const n=SEL.size,txt=title+" — "+n+" "+plural(n,["позиція","позиції","позицій"])+(note?"\n"+note:"")+"\nПосилання діє 24 години";
-    const share="https://t.me/share/url?url="+encodeURIComponent(r.link)+"&text="+encodeURIComponent(txt),web=r.web||r.link;
+    const share="https://t.me/share/url?url="+encodeURIComponent(r.link)+"&text="+encodeURIComponent(txt),web=r.link||r.web; /* по слову владельца: всегда ссылка t.me/…?startapp=sel_… — открывается в приложении, вещь → полная карточка */
     SEL.clear();selSave();document.querySelectorAll("[data-selq]").forEach(q=>q.setAttribute("aria-pressed",false));
     /* куда отправить: Telegram (откроется в приложении) или Instagram / WhatsApp / Viber (ссылка на сайт, вход не нужен) */
     openSheet("Добірка готова",`<p class="muted" style="margin:0 2px 12px;font-size:14px">Посилання діє 24 години. Людині не потрібно реєструватися — вона відкриє добірку й позначить, що сподобалось.</p>
-      <div class="selsh"><button class="btn" data-shtg>Надіслати в Telegram</button><button class="btn soft" data-shcp>Скопіювати для Instagram</button></div>
+      <div class="selsh"><button class="btn" data-shtg>Надіслати в Telegram</button><button class="btn soft" data-shcp>Скопіювати посилання</button></div>
       <input class="selurl num" readonly value="${esc(web)}">`,"");
     const s2=sheetEl;s2.querySelector("[data-shtg]").onclick=()=>{try{if(TGW&&TGW.openTelegramLink){TGW.openTelegramLink(share);return}}catch(x){}open(share,"_blank")};
     s2.querySelector("[data-shcp]").onclick=async()=>{const t=txt+"\n"+web;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(x){}toast(ok?"Скопійовано — вставте в Direct":"Виділіть посилання й скопіюйте");if(!ok){const u=s2.querySelector(".selurl");u.focus();u.select()}}}}
