@@ -533,6 +533,8 @@ textarea{min-height:110px}
 .pbar .w{background:#fff;color:var(--ink)}.pbar .g{background:#3a3d43;color:#fff}
 
 /* заказы */
+.ock{display:flex;align-items:center;padding:4px}.ock input{width:18px;height:18px;accent-color:var(--ink,#26282c)}
+.obulk{position:sticky;bottom:calc(88px + var(--sb,0px));margin-top:12px;background:#26282c;color:#fff;border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 12px 30px rgba(0,0,0,.25);z-index:5}.obulk .ob-t{display:flex;justify-content:space-between;gap:8px;font-size:13px}.obulk .ob-t span{color:rgba(255,255,255,.7);text-align:right}.obulk .fchip{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}.obulk .fchip.on{background:#fff;color:#26282c}.obulk select{background:#fff;color:#26282c;border:0;flex:1;min-width:150px;border-radius:10px;padding:6px 8px;font:inherit;font-size:13px}.obulk .ob-a{display:flex;gap:8px;justify-content:flex-end}.obulk .btn{background:#fff;color:#26282c}.obulk .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}
 .orow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .orow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.orow .tx b{font-size:14.5px}.orow .tx span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .st{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--soft);white-space:nowrap}
@@ -3082,24 +3084,84 @@ async function vProducts2(pre) {
 }
 
 /* ---------- Заказы ---------- */
-const ORD_FLOW = ["new", "work", "paid", "bought", "received", "packed", "ready", "shipping", "inua", "np", "delivered"];
+const ORD_FLOW = ["new", "work", "paid", "bought", "received", "packed", "shipping", "np", "delivered"];
 /* этапы конкретного заказа: постоянный клиент — выкупаем до оплаты (этапа «Оплачен» нет); Европа/Дубай — без «В Украине» и Новой почты */
-const ordFlow = l => ORD_FLOW.filter(s => !(l.payLater && s === "paid") && !((l.dest || "ua") !== "ua" && (s === "inua" || s === "np")));
-const ORD_ST = { new: "Новая", work: "Принят", paid: "Оплачен", bought: "Выкуплен", received: "Получен нами", packed: "Запакован", ready: "Готов к отправке", shipping: "Отправлен", inua: "В Украине", np: "Новая почта", delivered: "Доставлен", cancelled: "Отменён" };
+/* выкуп в бутике: без «Получен нами»; заказ на сайте бренда: с ним. Этапы идут строго по очереди */
+const ordFlow = l => ORD_FLOW.filter(s => !(l.payLater && s === "paid") && !(l.buyMode !== "online" && s === "received") && !((l.dest || "ua") !== "ua" && s === "np"));
+const ORD_ST = { new: "Новая", work: "Принят", paid: "Оплачен", bought: "Выкуплен", received: "Получен нами", packed: "Запакован", shipping: "Отправлен", np: "Новая почта", delivered: "Получен", cancelled: "Отменён" };
+const ORD_OLD = { ready: "Запакован", inua: "Отправлен" }; /* старые этапы — показываем как ближайшие новые */
+const ORIGINS = ["Франція", "Італія", "Німеччина", "Австрія", "Іспанія", "Париж", "Мілан", "Дюссельдорф", "Відень", "Дубай"];
 const ORD_NEXT = (cur, next) => cur === "new" ? "Принять заказ" : next === "shipping" ? "Отправить" : "Отметить «" + ORD_ST[next] + "»";
 async function vOrders(st) {
   const status = ORD_ST[st] ? st : "";
-  const { leads, fresh } = await api("leads", { query: status ? { status } : {} });
+  const { leads: all, fresh } = await api("leads");
   updateLeadBadge(fresh);
-  $("#main").innerHTML = `<div class="vh"><h1>Заказы</h1><a class="btn soft sm" href="#finance">${svg("finance")}Финансы</a></div><p class="vsub">Заказы и вопросы из приложения. Меняете этап — клиент получает сообщение от бота.</p>
-    <div class="fchips"><button class="fchip ${!status ? "on" : ""}" data-lst="">Все</button>${Object.entries(ORD_ST).map(([k, v]) => `<button class="fchip ${status === k ? "on" : ""}" data-lst="${k}">${v}${k === "new" && fresh ? " · " + fresh : ""}</button>`).join("")}</div>
-    <div>${leads.map(l => `<div class="orow" data-lead="${esc(l._id)}"><div class="tx"><b>${esc(LEAD_KIND[l.kind] || "Заявка")} ${esc(l.number)}${l.total ? " · " + eur(l.total) : ""}${l.source === "manager" ? ` <span class="hint">· через менеджера</span>` : ""}</b>
-      <span>${dt(l.createdAt)} · ${esc(l.tg?.username ? "@" + l.tg.username : l.tg?.name || "клиент")}${l.items?.length ? " · " + esc(l.items.map(i => i.title).slice(0, 2).join(", ")) : ""}</span></div><span class="st ${l.status}">${ORD_ST[l.status] || l.status}</span></div>`).join("")
-      || `<div class="empty"><b>Пусто</b>${status ? "С этим статусом заказов нет" : "Когда клиент оформит заказ или задаст вопрос в приложении, он появится здесь"}</div>`}</div>`;
-  $("#main").onclick = e => {
-    const f = e.target.closest("[data-lst]"); if (f) return go("leads" + (f.dataset.lst ? ":" + f.dataset.lst : ""));
-    const r = e.target.closest("[data-lead]"); if (r) orderSheet(leads.find(l => l._id === r.dataset.lead), () => vOrders(status));
+  const stOf = l => ORD_OLD[l.status] ? Object.keys(ORD_ST).find(k => ORD_ST[k] === ORD_OLD[l.status]) : l.status;
+  const leads = status ? all.filter(l => stOf(l) === status) : all;
+  const cnt = k => all.filter(l => stOf(l) === k).length, ua = l => (l.dest || "ua") === "ua";
+  const sel = new Set();
+  const packAt = all.filter(l => ["bought", "received"].includes(l.status) && l.packAt).map(l => l.packAt).sort()[0];
+  const today = [["paid", "выкупить", cnt("paid")], ["bought", packAt ? "запакуются " + new Date(packAt).toLocaleString("ru", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "ждут упаковки", cnt("bought") + cnt("received")], ["packed", "к отправке", cnt("packed")], ["shipping", "в дороге → в НП", all.filter(l => l.status === "shipping" && ua(l)).length]];
+  const row = l => `<div class="orow" data-lead="${esc(l._id)}"><label class="ock" data-ock><input type="checkbox" data-pk="${esc(l._id)}" aria-label="Выбрать"></label><div class="tx"><b>${esc(l.delivery?.name || l.tg?.name || (l.tg?.username ? "@" + l.tg.username : "Клиент"))} · ${esc(l.number)}${l.total ? " · " + eur(l.total) : ""}</b>
+      <span>${l.items?.length ? esc(l.items.map(i => [i.brand, i.title].filter(Boolean).join(" ")).slice(0, 2).join(", ")) : esc(LEAD_KIND[l.kind] || "Заявка")}${l.origin ? " · из " + esc(l.origin) : ""}</span></div>
+      <span class="hint" style="white-space:nowrap">${{ ua: "🇺🇦", eu: "🇪🇺", dxb: "🇦🇪" }[l.dest || "ua"] || ""}${l.payLater && !l.paidAt ? ` <span class="acb" style="--c:#b07a22">оплата позже</span>` : ""}</span><span class="st ${stOf(l)}">${ORD_ST[stOf(l)] || l.status}</span></div>`;
+  $("#main").innerHTML = `<div class="vh"><h1>Заказы</h1><button type="button" class="btn soft sm" id="oDriver" style="margin-left:auto">Список для водителя</button><a class="btn soft sm" href="#finance">${svg("finance")}Финансы</a></div>
+    <p class="vsub">Отметьте заказы галочками и нажмите «Следующий этап» — каждый перейдёт ровно на один свой этап. «Запакован» ставится сам в пятницу в 12:00.</p>
+    <div class="tiles" style="margin-bottom:12px">${today.map(([k, t, n]) => `<button type="button" class="tile ${status === k ? "dark" : ""}" data-lst="${k}" style="text-align:left;cursor:pointer"><span>${t}</span><b class="num">${n}</b></button>`).join("")}</div>
+    <div class="fchips"><button class="fchip ${!status ? "on" : ""}" data-lst="">Все</button>${Object.entries(ORD_ST).map(([k, v]) => `<button class="fchip ${status === k ? "on" : ""}" data-lst="${k}">${v}${cnt(k) ? " · " + cnt(k) : ""}</button>`).join("")}</div>
+    ${leads.length ? `<label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="oAll">Выбрать все (${leads.length})</label>` : ""}
+    <div>${leads.map(row).join("") || `<div class="empty"><b>Пусто</b>${status ? "С этим этапом заказов нет" : "Когда клиент оформит заказ или задаст вопрос в приложении, он появится здесь"}</div>`}</div>
+    <div class="obulk" id="oBulk" hidden><div class="ob-t"><b id="obN"></b><span id="obHint"></span></div><div id="obOpts" class="fchips"></div><div class="ob-a"><button type="button" class="btn ghost sm" data-obclr>Снять</button><button type="button" class="btn" data-obgo>Следующий этап</button></div></div>`;
+  let mode = "boutique", origin = "";
+  const bar = () => {
+    const b = $("#oBulk"), ids = [...sel], L = all.filter(l => sel.has(l._id)); b.hidden = !ids.length; if (!ids.length) return;
+    const nexts = {}; L.forEach(l => { const F = ordFlow(l), i = F.indexOf(l.status), n = i >= 0 && i < F.length - 1 ? F[i + 1] : ""; if (n) nexts[n] = (nexts[n] || 0) + 1; });
+    $("#obN").textContent = `Выбрано: ${ids.length}`;
+    $("#obHint").textContent = Object.entries(nexts).map(([k, n]) => `${n} → ${ORD_ST[k]}`).join(" · ") || "дальше этапов нет";
+    const buying = L.some(l => ["new", "work", "paid"].includes(l.status));
+    $("#obOpts").innerHTML = buying ? `${[["boutique", "Бутик"], ["online", "Сайт бренда"]].map(([k, v]) => `<button type="button" class="fchip ${mode === k ? "on" : ""}" data-obm="${k}">${v}</button>`).join("")}<select id="obOrigin" aria-label="Откуда поедет"><option value="">Откуда поедет…</option>${ORIGINS.map(o => `<option ${o === origin ? "selected" : ""}>${o}</option>`).join("")}</select>` : "";
   };
+  $("#main").onclick = async e => {
+    if (e.target.closest("[data-ock]")) return; // клик по галочке не открывает заказ
+    const f = e.target.closest("[data-lst]"); if (f) return go("leads" + (f.dataset.lst ? ":" + f.dataset.lst : ""));
+    const m = e.target.closest("[data-obm]"); if (m) { mode = m.dataset.obm; return bar(); }
+    if (e.target.closest("[data-obclr]")) { sel.clear(); document.querySelectorAll("[data-pk]").forEach(c => c.checked = false); const a = $("#oAll"); if (a) a.checked = false; return bar(); }
+    if (e.target.closest("[data-obgo]")) {
+      const L = all.filter(l => sel.has(l._id));
+      if (L.some(l => ["new", "work", "paid"].includes(l.status)) && !origin && !(await confirmBox("Не указано, откуда поедет посылка", "Клиент увидит на маршруте страну или город отправки. Отметить без этого?", "Отметить"))) return;
+      try { const r = await api("leadBulk", { method: "POST", body: { ids: [...sel], next: true, buyMode: mode, origin } });
+        toast(`Обновлено ${r.n}: ${Object.entries(r.by || {}).map(([k, n]) => `${n} → ${ORD_ST[k]}`).join(", ")}${r.sent ? " · сообщений клиентам: " + r.sent : ""}`); return vOrders(status);
+      } catch (err) { return toast(err.message); }
+    }
+    if (e.target.closest("#oDriver")) return driverList();
+    const r = e.target.closest("[data-lead]"); if (r) orderSheet(all.find(l => l._id === r.dataset.lead), () => vOrders(status));
+  };
+  $("#main").onchange = e => {
+    const c = e.target.closest("[data-pk]"); if (c) { c.checked ? sel.add(c.dataset.pk) : sel.delete(c.dataset.pk); return bar(); }
+    if (e.target.id === "oAll") { document.querySelectorAll("[data-pk]").forEach(x => { x.checked = e.target.checked; e.target.checked ? sel.add(x.dataset.pk) : sel.delete(x.dataset.pk); }); return bar(); }
+    if (e.target.id === "obOrigin") origin = e.target.value;
+  };
+}
+/* список для водителя: что отправлено в Украину — таблица для Excel/Telegram */
+async function driverList() {
+  let days = 7;
+  const d = sheet("Список для водителя", `<div class="form"><div class="fchips">${[[3, "3 дня"], [7, "Неделя"], [14, "2 недели"]].map(([k, v]) => `<button type="button" class="fchip ${k === days ? "on" : ""}" data-dd="${k}">${v}</button>`).join("")}</div><div id="dlBody"><div class="hint">Загрузка…</div></div></div>`,
+    `<button class="btn ghost lg" data-dlcsv>Excel (CSV)</button><button class="btn lg" data-dlcopy>Копировать таблицу</button>`);
+  let rows = [];
+  const tsv = () => ["№\tКлиент\tТелефон\tГород\tНП / адрес\tТовар\tЗаказ" + (rows.some(r => r.payLater) ? "\tОплата" : ""), ...rows.map((r, i) => [i + 1, r.client, r.phone, r.city, r.place, r.items, r.number, ...(rows.some(x => x.payLater) ? [r.payLater ? "ждём оплату" : ""] : [])].join("\t"))].join("\n");
+  const load = async () => {
+    rows = (await api("driverList", { query: { days } })).rows;
+    const by = {}; rows.forEach(r => { const c = r.city || "без города"; by[c] = (by[c] || 0) + 1; });
+    d.querySelector("#dlBody").innerHTML = rows.length ? `<div class="hint" style="margin-bottom:8px">Посылок: ${rows.length} · ${Object.entries(by).map(([c, n]) => `${esc(c)} ${n}`).join(" · ")}</div>
+      ${rows.map((r, i) => `<div class="oitem"><div class="tx"><b>${i + 1}. ${esc(r.items || "—")}</b><span>${esc([r.client, r.phone].filter(Boolean).join(" · "))}</span><span>${esc(r.place || "адрес не указан")}${r.payLater ? " · ждём оплату" : ""}</span></div><span class="hint">${esc(r.number)}</span></div>`).join("")}`
+      : `<div class="empty"><b>Пусто</b>За этот период в Украину ничего не отправлено</div>`;
+  };
+  d.querySelector(".sh-b").onclick = e => { const b = e.target.closest("[data-dd]"); if (!b) return; days = +b.dataset.dd; d.querySelectorAll("[data-dd]").forEach(x => x.classList.toggle("on", x === b)); load(); };
+  d.querySelector(".sh-f").onclick = async e => {
+    if (e.target.closest("[data-dlcopy]")) { try { await navigator.clipboard.writeText(tsv()); toast("Скопировано — вставьте в Excel или Telegram"); } catch { toast("Не удалось скопировать"); } }
+    if (e.target.closest("[data-dlcsv]")) { const csv = "﻿" + tsv().split("\n").map(l => l.split("\t").map(c => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = `vodij-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); }
+  };
+  load();
 }
 function orderSheet(l, reload) {
   const FL = ordFlow(l), i = FL.indexOf(l.status), next = i >= 0 && i < FL.length - 1 ? FL[i + 1] : null;
@@ -3119,7 +3181,11 @@ function orderSheet(l, reload) {
       <div class="fg2"><label class="f" id="oBuyCityL">${l.buyMode === "online" ? "Куда пришёл (наш город)" : "Город выкупа"}<input type="text" id="oBuyCity" list="oCities" value="${esc(l.buyCity || "")}" placeholder="${l.buyMode === "online" ? "Дюссельдорф" : "Париж"}"></label><label class="f">Дата выкупа<input type="date" id="oBuyDate" value="${esc(l.buyDate || "")}"></label></div>
       <datalist id="oCities">${["Париж", "Милан", "Мюнхен", "Вена", "Берлин", "Лондон", "Рим", "Мадрид", "Дубай"].map(c => `<option>${c}</option>`).join("")}</datalist>
       ${(l.dest || "ua") === "ua" ? `<label class="f">Город в Украине, откуда водитель отправит Новой почтой<input type="text" id="oUaCity" value="${esc(l.uaCity || "")}" placeholder="Ивано-Франковск"></label><div class="fg2"><label class="f">Отправка в Украину<input type="date" id="oShipDate" value="${esc(l.shipDate || "")}"></label><label class="f">Передача в Новую почту<input type="date" id="oNpDate" value="${esc(l.npDate || "")}"></label></div>` : `<label class="f">Дата отправки<input type="date" id="oShipDate" value="${esc(l.shipDate || "")}"></label>`}</div>` : ""}
-    ${l.delivery ? `<div class="oitem"><div class="tx"><b>Доставка: ${esc(l.delivery.name || "")}${l.delivery.phone ? " · " + esc(l.delivery.phone) : ""}</b><span>${esc([l.delivery.city, { branch: "отделение", locker: "почтомат", courier: "курьер" }[l.delivery.npType], l.delivery.npPoint, l.delivery.address].filter(Boolean).join(", "))}${l.delivery.comment ? " · " + esc(l.delivery.comment) : ""}</span></div></div>` : ""}
+    <div><div class="f" style="margin-bottom:6px">Откуда поедет посылка — клиент видит это на маршруте</div><input type="text" id="oOrigin" list="oOrigins" value="${esc(l.origin || "")}" placeholder="${(l.dest || "ua") === "ua" ? "Франція / Італія / Німеччина" : "Мілан / Париж"}"><datalist id="oOrigins">${ORIGINS.map(c => `<option>${c}</option>`).join("")}</datalist></div>
+    <div><div class="f" style="margin-bottom:6px">Доставка${(l.dest || "ua") === "ua" ? " · Нова пошта" : " · DHL"}</div><div class="fg2"><label class="f">Получатель<input type="text" id="dName" value="${esc(l.delivery?.name || "")}"></label><label class="f">Телефон<input type="tel" id="dPhone" value="${esc(l.delivery?.phone || "")}"></label></div>
+      <div class="fg2"><label class="f">Город<input type="text" id="dCity" value="${esc(l.delivery?.city || "")}"></label>${(l.dest || "ua") === "ua" ? `<label class="f">Отделение НП №<input type="text" id="dPoint" value="${esc(l.delivery?.npPoint || "")}"></label>` : ""}</div>
+      <label class="f">${(l.dest || "ua") === "ua" ? "Адрес (если курьер)" : "Адрес"}<input type="text" id="dAddr" value="${esc(l.delivery?.address || "")}"></label></div>
+    ${l.delivery?.comment ? `<div class="hint">Комментарий клиента: ${esc(l.delivery.comment)}</div>` : ""}
     <label class="f">${(l.dest || "ua") === "ua" ? "ТТН Новой почты — только для нас, клиент не видит" : "Трек-номер DHL — клиент увидит в заказе"}<input type="text" id="oTrack" value="${esc(l.track || "")}" placeholder="${(l.dest || "ua") === "ua" ? "для себя" : "клиент увидит его в заказе"}"></label>
     <label class="f">Заметка для себя<textarea id="oNote" style="min-height:70px">${esc(l.note || "")}</textarea></label>
     <label class="toggle"><input type="checkbox" id="oNotify" ${l.tg?.id ? "checked" : "disabled"}>${l.tg?.id ? "Сообщать клиенту в Telegram при смене этапа" : "Клиент без Telegram — бот не сможет написать"}</label>
@@ -3129,7 +3195,8 @@ function orderSheet(l, reload) {
   const send = async status => {
     try {
       const v = id => { const e = d.querySelector(id); return e ? e.value : undefined; };
-      const r = await api("leadSave", { method: "POST", body: { id: l._id, status, note: v("#oNote"), track: v("#oTrack"), buyMode: (d.querySelector("[data-bm].on") || {}).dataset?.bm, payLater: d.querySelector("[data-pl].on") ? d.querySelector("[data-pl].on").dataset.pl === "1" : undefined, paid: d.querySelector("#oPaid") ? d.querySelector("#oPaid").checked : undefined, buyCity: v("#oBuyCity"), buyDate: v("#oBuyDate"), uaCity: v("#oUaCity"), shipDate: v("#oShipDate"), npDate: v("#oNpDate"), notify: d.querySelector("#oNotify").checked } });
+      const dv = { name: v("#dName"), phone: v("#dPhone"), city: v("#dCity"), npPoint: v("#dPoint"), address: v("#dAddr") }; if (dv.npPoint === undefined) delete dv.npPoint;
+      const r = await api("leadSave", { method: "POST", body: { id: l._id, status, origin: v("#oOrigin"), delivery: dv, note: v("#oNote"), track: v("#oTrack"), buyMode: (d.querySelector("[data-bm].on") || {}).dataset?.bm, payLater: d.querySelector("[data-pl].on") ? d.querySelector("[data-pl].on").dataset.pl === "1" : undefined, paid: d.querySelector("#oPaid") ? d.querySelector("#oPaid").checked : undefined, buyCity: v("#oBuyCity"), buyDate: v("#oBuyDate"), uaCity: v("#oUaCity"), shipDate: v("#oShipDate"), npDate: v("#oNpDate"), notify: d.querySelector("#oNotify").checked } });
       toast(status && status !== l.status ? `${ORD_ST[status]}${r.lead.clientNotified ? " · клиенту отправлено сообщение" : ""}` : "Сохранено"); d.close(); reload();
     } catch (err) { toast(err.message); }
   };

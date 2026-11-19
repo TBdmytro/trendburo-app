@@ -36,6 +36,8 @@ export default async function handler(req, res) {
     if (r.left > 0 && n < 400 && z2 < 12) try { await fetch(`${publicUrl(req)}/api/cron?tr=1&n=${n + 1}&z=${r.limited || !r.done ? z2 || 1 : 0}`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET}` }, signal: AbortSignal.timeout(2500) }); } catch {}
     res.setHeader("Content-Type", "application/json"); res.statusCode = 200; return res.end(JSON.stringify({ n, ...r }));
   }
+  // ночной запуск: автоматика этапов заказов
+  if (!qp.get("chain")) { try { const { sweep } = await import("../lib/orderflow.js"), { notifyClient } = await import("./lead.js"); await sweep(store, notifyClient); } catch (e) { console.log("[sweep]", e.message); } }
   // ночной запуск: загрузки каталога, у которых оборвалась цепочка, продолжаем
   if (!qp.get("chain")) {
     for (const s of await store.list("sourceSettings", {}, { limit: 500, fields: "sourceId, load" }).catch(() => [])) {
