@@ -1020,14 +1020,7 @@ export default async function handler(req, res) {
         try { const c = await createOfflineClient(store, body, me.name); return send(res, 200, { id: c._id }); } catch (e) { return send(res, 400, { error: e.message }); }
       }
       case "clientMerge": { const { opMerge } = await import("../lib/staffops.js"); const r = await opMerge(store, body, me.name); return send(res, r.code, r.body); }
-      case "clientEdit": { // данные клиента без приложения (имя, ник, телефон, размеры)
-        const c = await store.get(String(body.customer || ""));
-        if (!c || c._type !== "customer" || !c.offline) return send(res, 404, { error: "Клиент не найден" });
-        const { cleanProfile } = await import("../lib/customers.js"), s1 = (v, n) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, n);
-        const name = s1(body.name, 80) || c.profile?.name; c.tg = { username: String(body.username ?? c.tg?.username ?? "").replace(/^https?:\/\/t\.me\//i, "").replace(/[^\w]/g, "").slice(0, 40), name };
-        c.profile = cleanProfile({ ...c.profile, name, phone: body.phone ?? c.profile?.phone, city: body.city ?? c.profile?.city }); if (body.insta !== undefined) { const { normInsta } = await import("../lib/customers.js"); c.insta = normInsta(body.insta); } c.sizes = { shoes: s1(body.shoes ?? c.sizes?.shoes, 20), clothes: s1(body.clothes ?? c.sizes?.clothes, 20) };
-        c.updatedAt = new Date().toISOString(); await store.put(c); return send(res, 200, { ok: true });
-      }
+      case "clientEdit": { const { opClientEdit } = await import("../lib/staffops.js"); const r = await opClientEdit(store, body, me.name); return send(res, r.code, r.body); } // данные клиента (и подпись во всех его заказах)
       case "manualOrder": {
         const c = await store.get(String(body.customer || ""));
         if (!c || c._type !== "customer") return send(res, 404, { error: "Клиент не найден" });
