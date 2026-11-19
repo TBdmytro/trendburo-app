@@ -1872,6 +1872,9 @@ div.done{margin:10px 18px;padding:22px 18px;border-radius:20px;background:var(--
 
 /* подборка сотрудника */
 .selbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + var(--sb));z-index:40;display:flex;align-items:center;gap:10px;border:0;border-radius:99px;padding:10px 12px 10px 18px;background:var(--ink-grad);color:#fff;font:600 14px var(--f);box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.selbar{left:auto;right:max(16px,env(safe-area-inset-right,0px));transform:none;padding:8px 8px 8px 14px;font-size:13px;gap:8px}
+.selbar.mini{width:46px;height:46px;padding:0;justify-content:center;border-radius:50%}
+.selbar .on{position:absolute;top:3px;right:3px;width:10px;height:10px;border-radius:50%;background:#34c759;box-shadow:0 0 0 2px #fff}
 .selbar b{background:#fff;color:var(--fg);border-radius:99px;min-width:26px;height:26px;display:grid;place-items:center;font-size:13px;padding:0 6px}
 .pushed .selbar,.foot~.selbar{bottom:calc(96px + var(--sb))}
 .fv.selp[aria-pressed="true"]{background:#fff;color:var(--fg)}.fv.selp svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
@@ -5440,7 +5443,9 @@ function selSave(){try{localStorage.setItem("tb_sel",JSON.stringify([...SEL]))}c
 function selToggle(id){SEL.has(id)?SEL.delete(id):SEL.add(id);selSave();try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(e){}toast(SEL.has(id)?"Додано в добірку · "+SEL.size:"Прибрано з добірки")}
 function selBar(){let b=document.getElementById("selbar");if(!staffOn()){if(b)b.remove();return}
   if(!b){b=document.createElement("button");b.id="selbar";b.className="selbar press";b.onclick=()=>{if(SEL.size)return selSheet();openSheet("Режим добірки",`<p class="muted" style="margin:0 2px 4px;font-size:14px">Тисніть «+» на картках у каталозі — речі збираються в добірку. Потім натисніть на цю панель і надішліть посилання клієнту.</p>`,`<button class="btn soft" data-selmoff style="flex:1">Вимкнути режим</button>`);const x=sheetEl.querySelector("[data-selmoff]");if(x)x.onclick=()=>{closeSheet();selModeSet(0)}};document.body.append(b)}
-  b.innerHTML=SEL.size?`<span>Добірка для клієнта</span><b class="num">${SEL.size}</b>`:`<span>Режим добірки · тисніть «+»</span><b>✓</b>`}
+  /* компактно справа: пустая — кружок с зелёной точкой «режим включён»; с вещами — «Добірка · N» */
+  b.classList.toggle("mini",!SEL.size);b.setAttribute("aria-label",SEL.size?"Добірка для клієнта: "+SEL.size:"Режим добірки увімкнено");
+  b.innerHTML=SEL.size?`<span>Добірка</span><b class="num">${SEL.size}</b>`:`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><i class="on"></i>`}
 function selKind(items){const C=[...new Set(items.map(p=>p.cat))];if(C.length!==1)return "";const L=SUBCATS[C[0]]||[],S=[...new Set(items.map(p=>{try{return subOf(p)}catch(e){return ""}}))];if(S.length===1){const r=L.find(x=>x[0]===S[0]);if(r&&S[0]!=="other")return r[1]}return CATS[C[0]]||""}
 function selDefTitle(items){const B=[...new Set(items.map(p=>p.brand).filter(Boolean))],k=selKind(items);return (k||"Добірка")+(B.length?" · "+B.slice(0,3).join(", ")+(B.length>3?" та ще "+(B.length-3):""):"")}
 function selSheet(){const items=[...SEL].map(findItem).filter(Boolean);
