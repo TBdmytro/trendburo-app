@@ -4420,7 +4420,7 @@ function r2Cfg(o){const ua=(o.dest||"ua")==="ua",R=o.route||{},online=R.buyMode=
   let i=K.indexOf(st);if(st==="cancelled")i=-1;
   const pend=o.payLater?!o.paidAt:i<0;if(o.payLater&&o.paidAt&&!steps[0].d)steps[0].d=r2dm(o.paidAt);
   const disp=o.origin||(!ua&&R.buyCity)||"Відправка";
-  const nodes=hand?(ua?[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[238.1,26,"Передача","#1d8a7a"],[320,66,"У ваших руках","#1f9459"]]:[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#1d8a7a"],[320,66,"У ваших руках","#1f9459"]]):ua?[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[238.1,26,"Нова пошта","#b5333f"],[320,66,"У вас","#1f9459"]]:[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[320,66,"У вас","#1f9459"]];
+  const nodes=hand?(ua?[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[238.1,26,"Передача","#1d8a7a"],[320,66,"Отримано","#1f9459"]]:[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#1d8a7a"],[320,66,"Отримано","#1f9459"]]):ua?[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[238.1,26,"Нова пошта","#b5333f"],[320,66,"У вас","#1f9459"]]:[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[320,66,"У вас","#1f9459"]];
   // прибуде: від Нової пошти ~2 дні, від відправки ~4 дні в Україну (3 — Європа/Дубай)
   const iNp=K.indexOf("np"),iSh=K.indexOf("shipping"),npAt=R.npDate||at("np"),shAt=R.shipDate||at("shipping"),pl=(s,d)=>{const t=Date.parse(String(s).length===10?s+"T12:00":s);return isNaN(t)?"":r2dm(new Date(t+d*864e5).toISOString())};
   const eta=hand?"":iNp>=0&&i>=iNp&&npAt?pl(npAt,2):i>=iSh&&shAt?pl(shAt,ua?4:3):"";
