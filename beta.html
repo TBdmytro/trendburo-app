@@ -372,7 +372,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so-ba{display:flex;gap:8px}.so-ba .btn{height:44px;flex:1;font-size:15px}.so-ba .btn:last-child{flex:2;background:#fff;color:#1f2125;box-shadow:none}.so-ba .btn.soft{background:rgba(255,255,255,.12);color:#fff}
 .so-ch2{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:99px;padding:7px 12px;font:inherit;font-size:13.5px;cursor:pointer}.so-ch2.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .so-chs{display:flex;flex-wrap:wrap;gap:6px}
-.so-f{display:flex;flex-direction:column;gap:10px;padding-bottom:8px}.so-tg{display:flex;gap:10px;align-items:center;font-size:14px}.so-tg input{width:20px;height:20px;accent-color:#25272b}
+.so-f{display:flex;flex-direction:column;gap:10px;padding-bottom:8px}.so-f input[type=search],.so-f input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;border-radius:12px;padding:12px 14px;font-size:15px;outline:none;-webkit-appearance:none;appearance:none}.so-tg{display:flex;gap:10px;align-items:center;font-size:14px}.so-tg input{width:20px;height:20px;accent-color:#25272b}
 .so-it{display:flex;flex-direction:column;gap:6px;background:var(--soft);border-radius:14px;padding:10px 12px}.so-it b{display:block;font-size:14px}.so-it small{font-size:12.5px;color:var(--g2)}
 .so-cl,.so-dl{display:flex;flex-direction:column}.so-ci{border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font:inherit;color:inherit;padding:10px 0;display:flex;flex-direction:column;gap:2px;cursor:pointer}.so-ci b{font-size:14.5px}.so-ci small{font-size:12.5px;color:var(--g2)}
 /* ── маршрут заказа v2 ── */
@@ -4555,9 +4555,11 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
     try{await soCall("save",body);toast("Сохранено");closeSheet();reload()}catch(x){toast(x.message);sv.disabled=false}})}
 /* новый заказ: выбрать клиента (или нового) → вещь, цена, доставка, этап */
 async function soNew(reload){let cl=[],pick=null;
-  const d=openSheet("Новый заказ",`<div class="so-f"><input type="search" id="soQ" placeholder="Клиент: имя, @ник, телефон" autocomplete="off"><div class="so-cl"><p class="ace">Завантажуємо…</p></div><button class="so-ch2" data-socnew style="align-self:flex-start">+ Новый клиент (без приложения)</button></div>`);
+  // сначала новый клиент (чаще всего), ниже — поиск среди тех, кто уже есть
+  const d=openSheet("Новый заказ",`<div class="so-f"><div class="fl">Новый клиент</div><input type="text" id="cN" placeholder="Имя"><input type="text" id="cU" placeholder="@ник в Telegram (если есть)"><div class="frow"><input type="text" id="cP" placeholder="Телефон" inputmode="tel"><input type="text" id="cC" placeholder="Город"></div><button class="btn" data-cmk>Дальше — к заказу</button>
+    <div class="fl" style="margin-top:10px">Или клиент, который уже есть</div><input type="search" id="soQ" placeholder="Имя, @ник, телефон" autocomplete="off"><div class="so-cl"><p class="ace">Завантажуємо…</p></div></div>`);
   const box=d.querySelector(".so-cl");
-  const drawC=()=>{const q=d.querySelector("#soQ").value.toLowerCase().trim(),V=cl.filter(c=>!q||[c.name,c.username,c.phone].join(" ").toLowerCase().includes(q)).slice(0,30);
+  const drawC=()=>{const q=d.querySelector("#soQ").value.toLowerCase().trim(),V=cl.filter(c=>!q||[c.name,c.username,c.phone].join(" ").toLowerCase().includes(q)).slice(0,q?30:5);
     box.innerHTML=V.map(c=>`<button class="so-ci" data-cid="${esc(c.id)}"><b>${esc(c.name||"Без имени")}</b><small>${esc([c.username&&"@"+c.username,c.phone,c.city,c.offline&&"через менеджера"].filter(Boolean).join(" · "))}</small></button>`).join("")||'<p class="ace">Никого не нашли</p>'};
   try{cl=(await soCall("clients")).clients||[];drawC()}catch(e){box.innerHTML=`<p class="ace">${esc(e.message)}</p>`}
   d.querySelector("#soQ").oninput=drawC;
@@ -4571,8 +4573,7 @@ async function soNew(reload){let cl=[],pick=null;
       <textarea id="nN" placeholder="Заметка — только для нас" style="min-height:60px"></textarea></div>`;
     let f=d.querySelector(".sh-f");if(!f){f=document.createElement("div");f.className="sh-f";d.append(f)}f.innerHTML=`<button class="btn" data-nsave style="flex:1">Добавить заказ</button>`};
   d.addEventListener("click",async e=>{const c=e.target.closest("[data-cid]");if(c){pick=cl.find(x=>x.id===c.dataset.cid);form();return}
-    if(e.target.closest("[data-socnew]")){d.querySelector(".sh-b").innerHTML=`<div class="so-f"><input type="text" id="cN" placeholder="Имя"><input type="text" id="cU" placeholder="@ник в Telegram (если есть)"><div class="frow"><input type="text" id="cP" placeholder="Телефон" inputmode="tel"><input type="text" id="cC" placeholder="Город"></div><button class="btn" data-cmk>Создать и перейти к заказу</button></div>`;return}
-    if(e.target.closest("[data-cmk]")){const v=id=>d.querySelector(id).value.trim();if(!v("#cN"))return toast("Нужно имя");try{const r=await soCall("client",{name:v("#cN"),username:v("#cU"),phone:v("#cP"),city:v("#cC")});pick={id:r.id,name:v("#cN")};form()}catch(x){toast(x.message)}return}
+    if(e.target.closest("[data-cmk]")){const v=id=>d.querySelector(id).value.trim();if(!v("#cN"))return toast("Нужно имя");const bt=e.target.closest("[data-cmk]");bt.disabled=true;try{const r=await soCall("client",{name:v("#cN"),username:v("#cU"),phone:v("#cP"),city:v("#cC")});pick={id:r.id,name:v("#cN")};form()}catch(x){toast(x.message);bt.disabled=false}return}
     const ch=e.target.closest(".so-chs [data-v]");if(ch){ch.parentNode.querySelectorAll("[data-v]").forEach(x=>x.classList.toggle("on",x===ch));return}
     const sv=e.target.closest("[data-nsave]");if(!sv)return;const v=id=>d.querySelector(id).value.trim(),on=id=>d.querySelector(id+" .on").dataset.v;
     if(!v("#nT")&&!v("#nB"))return toast("Укажите вещь");sv.disabled=true;
