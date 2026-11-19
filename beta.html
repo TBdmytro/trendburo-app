@@ -486,6 +486,8 @@ button.r2c{cursor:pointer}
 .selv .c .sg{font-style:normal;font-weight:600;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:#8a6d3b;background:#f3ece0;border-radius:6px;padding:2px 6px;margin-left:4px;vertical-align:1px}.selv .c .im{cursor:pointer}
 .selv .c .im.ld{opacity:.6}
 .selph{display:flex;flex-direction:column;gap:10px}.selph img{width:100%;border-radius:14px;background:var(--studio,#f2f3f4);aspect-ratio:4/5;object-fit:contain}
+/* карточка товара — у неё своя кнопка «+» в добірку внизу; плавающая кнопка добірки не нужна и закрывала цену доставки */
+#app:has(> .screen.pushed:last-child .pv-hero) ~ .selbar{display:none}
 </style>
 <title>Trend Büro</title>
 <script>/* каталог заранее — только при первом входе; дальше он уже есть на телефоне, и качать его вместе с фото главной не нужно */try{if(!localStorage.getItem("tb_catc")){var l=document.createElement("link");l.rel="preload";l.href="/api/catalog?v=2";l.as="fetch";l.crossOrigin="anonymous";document.head.appendChild(l)}}catch(e){}</script>
