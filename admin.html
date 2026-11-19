@@ -535,6 +535,7 @@ textarea{min-height:110px}
 /* заказы */
 .ock{display:flex;align-items:center;padding:4px}.ock input{width:18px;height:18px;accent-color:var(--ink,#26282c)}
 .obulk{position:sticky;bottom:calc(88px + var(--sb,0px));margin-top:12px;background:#26282c;color:#fff;border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 12px 30px rgba(0,0,0,.25);z-index:5}.obulk .ob-t{display:flex;justify-content:space-between;gap:8px;font-size:13px}.obulk .ob-t span{color:rgba(255,255,255,.7);text-align:right}.obulk .fchip{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}.obulk .fchip.on{background:#fff;color:#26282c}.obulk select{background:#fff;color:#26282c;border:0;flex:1;min-width:150px;border-radius:10px;padding:6px 8px;font:inherit;font-size:13px}.obulk .ob-a{display:flex;gap:8px;justify-content:flex-end}.obulk .btn{background:#fff;color:#26282c}.obulk .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}
+.fcl{background:var(--card,#fff);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:12px}.fcl-h,.fcl-r{display:grid;grid-template-columns:1fr 54px 90px 90px;gap:8px;padding:10px 14px;align-items:center;font-size:13.5px}.fcl-h{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--soft,#f2f3f4)}.fcl-r+.fcl-r{border-top:1px solid var(--line)}.fcl-r b{display:block}.fcl-r small{font-size:11.5px;color:var(--muted)}.fcl-h span:not(:first-child),.fcl-r span:not(:first-child){text-align:right}
 .orow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .orow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.orow .tx b{font-size:14.5px}.orow .tx span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .st{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--soft);white-space:nowrap}
@@ -3347,6 +3348,18 @@ function clientFormSheet(c, done) {
       toast(c ? "Сохранено" : "Клиент создан — откройте его, чтобы скопировать ссылку и добавить заказы"); d.close(); done(); } catch (err) { toast(err.message); }
   };
 }
+/* клиент без приложения → его аккаунт Telegram: все заказы переходят туда. Только вручную. */
+async function mergeSheet(c, done) {
+  const { customers } = await api("customers"); const L = customers.filter(x => !x.offline && x.tg?.id);
+  const nm = x => x.profile?.name || x.tg?.name || (x.tg?.username ? "@" + x.tg.username : "Клиент");
+  const d = sheet("Связать с аккаунтом", `<div class="form"><div class="hint">Клиент без приложения: <b>${esc(nm(c))}</b>${c.insta ? " · IG @" + esc(c.insta) : ""} · заказов: ${(c.leads || []).length}. Выберите его аккаунт Telegram — все заказы перейдут туда. Сама система никого не объединяет.</div>
+    <input type="search" id="mgQ" placeholder="Имя или @ник Telegram"><div id="mgL"></div></div>`);
+  const draw = () => { const q = d.querySelector("#mgQ").value.toLowerCase().replace(/^@/, ""); d.querySelector("#mgL").innerHTML = L.filter(x => !q || [nm(x), x.tg?.username, x.profile?.phone].join(" ").toLowerCase().includes(q)).slice(0, 30).map(x => `<div class="oitem" data-mg="${esc(x.id)}" style="cursor:pointer"><div class="tx"><b>${esc(nm(x))}</b><span>${esc([x.tg?.username && "@" + x.tg.username, x.profile?.phone, x.orders ? x.orders + " заказ." : ""].filter(Boolean).join(" · "))}</span></div><span class="hint">выбрать ›</span></div>`).join("") || `<div class="hint">Не нашли</div>`; };
+  draw(); d.querySelector("#mgQ").oninput = draw;
+  d.querySelector("#mgL").onclick = async e => { const r = e.target.closest("[data-mg]"); if (!r) return; const x = L.find(y => y.id === r.dataset.mg);
+    if (!(await confirmBox("Объединить?", `Все заказы (${(c.leads || []).length}) клиента «${nm(c)}» перейдут в аккаунт ${nm(x)}${x.tg?.username ? " @" + x.tg.username : ""}. Отменить это потом нельзя.`, "Объединить"))) return;
+    try { const res = await api("clientMerge", { method: "POST", body: { off: c.id, target: x.id } }); toast("Готово — перенесено заказов: " + res.moved); d.close(); done(); } catch (err) { toast(err.message); } };
+}
 function offlineSheet(c, dlv, reload) {
   const p = c.profile || {}, z = c.sizes || {};
   const d = sheet(p.name || c.tg?.name || "Клиент", `<div class="form">
@@ -3359,6 +3372,7 @@ function offlineSheet(c, dlv, reload) {
     <div class="oitem"><div class="tx"><b>Контакты и доставка</b><span>${esc([p.phone, dlv(p)].filter(Boolean).join(" · ")) || "не заполнено"}</span></div><button type="button" class="btn ghost sm" data-ncedit>Изменить</button></div>
     <label class="f">Заметка о клиенте (видите только вы)<textarea id="cuNote" style="min-height:60px" placeholder="размеры, любимые бренды, пожелания">${esc(c.note || "")}</textarea></label>
     <button type="button" class="btn lg" data-addord>+ Добавить заказ</button>
+    <button type="button" class="btn soft" data-merge>Связать с аккаунтом Telegram</button>
     ${c.leads.map(l => `<div class="oitem"><span class="othumb">${ordThumbAdm(l.items?.[0])}</span><div class="tx"><b>${esc(l.number)}${l.items?.[0] ? " · " + esc([l.items[0].brand, l.items[0].title].filter(Boolean).join(" ")) : ""}</b><span>${dt(l.createdAt)} · ${esc(ORD_ST[l.status] || l.status)}${l.items?.[0]?.size ? " · " + esc(l.items[0].size) : ""}</span></div>${l.total ? `<b class="num">${eur(l.total)}</b>` : ""}</div>`).join("")}
     <button type="button" class="btn ghost" data-cudel style="color:#b23a48">Удалить карточку</button></div>`,
     `<button class="btn ghost lg" data-cusave>Сохранить заметку</button>`);
@@ -3366,6 +3380,7 @@ function offlineSheet(c, dlv, reload) {
   d.querySelector("[data-inv]").onclick = async () => { if (!c.invite) return; try { await navigator.clipboard.writeText(c.invite); toast("Ссылка скопирована — отправьте клиенту"); } catch { prompt("Скопируйте ссылку", c.invite); } };
   d.querySelector("[data-ncedit]").onclick = () => clientFormSheet(c, () => { d.close(); reload(); });
   d.querySelector("[data-addord]").onclick = () => manualOrderSheet(c, () => { d.close(); reload(); });
+  d.querySelector("[data-merge]").onclick = () => mergeSheet(c, () => { d.close(); reload(); });
   d.querySelector("[data-cudel]").onclick = async () => { if (!(await confirmBox("Удалить карточку?", "Карточка и личная ссылка исчезнут. Заказы останутся в «Заказах» и «Финансах».", "Удалить"))) return;
     try { await api("customerDelete", { method: "POST", body: { customer: c.id } }); toast("Удалено"); d.close(); reload(); } catch (err) { toast(err.message); } };
 }
@@ -3462,7 +3477,9 @@ async function vFinance(period) {
     <div class="seg" style="margin:10px 0 14px">${[["week", "Неделя"], ["month", "Месяц"], ["quarter", "Квартал"], ["year", "Год"]].map(([k, v]) => `<button data-per="${k}" aria-pressed="${k === per}">${v}</button>`).join("")}</div>
     <div class="fin"><span>Выручка · оплаченные заказы</span><b class="num">${eur(f.revenue)}</b><span>маржа ≈ ${eur(f.margin)} · ${f.orders} ${plural(f.orders, ["заказ", "заказа", "заказов"])} · средний чек ${eur(f.avg)}</span>
       <div class="bars">${f.series.map(v => `<i style="height:${Math.round(v / max * 100)}%" title="${eur(v)}"></i>`).join("")}</div></div>
-    <p class="hint">Маржа считается по вашим правилам цен (наценка Украина / Европа / Дубай), без учёта доставки и комиссий.</p>
+    <p class="hint">Заработок точный там, где известна закупка: вы вписали её в заказе или вещь из нашего каталога (цена закупки / бутика). Иначе — оценка по наценке направления. Точно посчитано: ${f.exact || 0} из ${f.orders}.</p>
+    <div class="h2">Клиенты</div>
+    ${(f.clients || []).length ? `<div class="fcl"><div class="fcl-h"><span>Клиент</span><span>Заказы</span><span>Сумма</span><span>Заработок</span></div>${f.clients.map(c => `<div class="fcl-r"><span><b>${esc(c.name)}</b><small>последний ${new Date(c.last).toLocaleDateString("ru")}</small></span><span class="num">${c.orders}</span><span class="num">${eur(c.total)}</span><span class="num" style="color:#1f9459;font-weight:700">${c.est ? "≈" : ""}${eur(c.profit)}</span></div>`).join("")}</div>` : `<p class="hint">Пока нет оплаченных заказов за период</p>`}
     <div class="h2">Деньги в пути</div>
     <div class="kvs"><div><span>Ждут оплаты клиентом</span><b class="num">${eur(f.pipeline.awaiting)}</b></div><div><span>Оплачено, ещё не выкуплено</span><b class="num">${eur(f.pipeline.paid)}</b></div><div><span>Выкуплено, в пути к клиенту</span><b class="num">${eur(f.pipeline.moving)}</b></div></div>
     <div class="h2">По брендам</div>

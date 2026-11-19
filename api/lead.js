@@ -7,7 +7,7 @@ import { getStore } from "../lib/store.js";
 import { addBannerStats } from "../lib/cms.js";
 import { createHash } from "node:crypto";
 import { userFrom } from "../lib/tgauth.js";
-import { nextOrderNo, verifyItems, cleanProfile, touchCustomer } from "../lib/customers.js";
+import { nextOrderNo, verifyItems, cleanProfile, touchCustomer, fillCosts } from "../lib/customers.js";
 import { toAdmins } from "../lib/access.js";
 import { allow, tooMany } from "../lib/ratelimit.js";
 
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
     if (body.delivery) lead.delivery = cleanProfile(body.delivery);
     if (lead.kind === "order") {
       lead.number = await nextOrderNo(store);
-      if (lead.items.length) { const v = await verifyItems(store, lead.items, lead.dest || "ua"); lead.items = v.items; if (v.total) lead.total = v.total; }
+      if (lead.items.length) { const v = await verifyItems(store, lead.items, lead.dest || "ua"); lead.items = v.items; if (v.total) lead.total = v.total; try { await fillCosts(store, lead.items); const c = lead.items.reduce((a, i) => a + (i.cost || 0), 0); if (c && lead.items.every(i => i.cost)) lead.cost = c; } catch {} }
     }
     // защита от спама: не больше 20 заявок в час с одного устройства
     const recent = await store.list("lead", { client: lead.client }, { order: "createdAt desc", limit: 20, fields: "createdAt" });

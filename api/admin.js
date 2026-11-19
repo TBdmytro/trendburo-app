@@ -1019,6 +1019,7 @@ export default async function handler(req, res) {
         const { createOfflineClient } = await import("../lib/customers.js");
         try { const c = await createOfflineClient(store, body, me.name); return send(res, 200, { id: c._id }); } catch (e) { return send(res, 400, { error: e.message }); }
       }
+      case "clientMerge": { const { opMerge } = await import("../lib/staffops.js"); const r = await opMerge(store, body, me.name); return send(res, r.code, r.body); }
       case "clientEdit": { // данные клиента без приложения (имя, ник, телефон, размеры)
         const c = await store.get(String(body.customer || ""));
         if (!c || c._type !== "customer" || !c.offline) return send(res, 404, { error: "Клиент не найден" });
@@ -1120,18 +1121,24 @@ export default async function handler(req, res) {
       case "finance": {
         const days = { week: 7, month: 31, quarter: 92, year: 366 }[req.query.period] || 31;
         const since = new Date(Date.now() - days * 864e5).toISOString();
-        const all = (await store.list("lead", { kind: "order" }, { order: "createdAt desc", limit: 5000, fields: "createdAt, status, total, cost, dest, items[]{brand, price}" })).filter(l => l.status !== "cancelled");
+        const all = (await store.list("lead", { kind: "order" }, { order: "createdAt desc", limit: 5000, fields: "createdAt, status, total, cost, dest, tgId, cust, tg, delivery, items[]{brand, price, cost}" })).filter(l => l.status !== "cancelled");
         const inPeriod = all.filter(l => l.createdAt >= since);
         const done = inPeriod.filter(l => ["paid", "bought", "received", "packed", "ready", "shipping", "inua", "np", "delivered"].includes(l.status));
         const mk = mergeConfig(pricingCfg).official.markup;
-        const margin = l => l.cost ? (l.total || 0) - l.cost : (l.total || 0) - (l.total || 0) / (1 + (l.dest === "ua" || !l.dest ? mk.ua : l.dest === "eu" ? mk.eu : mk.dxb));
+        // заработок: точный, если знаем закупку (вписана или из каталога), иначе — оценка по наценке направления
+        const costOf = l => l.cost || ((l.items || []).length && (l.items || []).every(i => i.cost) ? l.items.reduce((a, i) => a + i.cost, 0) : 0);
+        const margin = l => costOf(l) ? (l.total || 0) - costOf(l) : (l.total || 0) - (l.total || 0) / (1 + (l.dest === "ua" || !l.dest ? mk.ua : l.dest === "eu" ? mk.eu : mk.dxb));
+        // клиенты: кто сколько заказал и сколько мы с него заработали
+        const cl = {}; done.forEach(l => { const k = String(l.tgId || l.cust || ""); if (!k) return; const x = cl[k] = cl[k] || { name: "", orders: 0, total: 0, profit: 0, est: 0, last: "" };
+          x.name = x.name || l.tg?.name || (l.tg?.username ? "@" + l.tg.username : "") || l.delivery?.name || "Клиент"; x.orders++; x.total += l.total || 0; x.profit += margin(l); if (!costOf(l)) x.est++; if (l.createdAt > x.last) x.last = l.createdAt; });
         const sum = (a, f) => Math.round(a.reduce((s, x) => s + (f(x) || 0), 0));
         const byBrand = {};
         done.forEach(l => (l.items || []).forEach(i => { if (i.brand) byBrand[i.brand] = (byBrand[i.brand] || 0) + (i.price || 0); }));
         const buckets = 6, step = days * 864e5 / buckets, start = Date.now() - days * 864e5;
         const series = Array.from({ length: buckets }, (_, k) => sum(done.filter(l => { const t = Date.parse(l.createdAt); return t >= start + k * step && t < start + (k + 1) * step; }), l => l.total));
         return send(res, 200, {
-          revenue: sum(done, l => l.total), margin: sum(done, margin), orders: done.length, avg: done.length ? Math.round(sum(done, l => l.total) / done.length) : 0, series,
+          revenue: sum(done, l => l.total), margin: sum(done, margin), exact: done.filter(l => costOf(l)).length, orders: done.length,
+          clients: Object.values(cl).sort((a, b) => b.total - a.total).slice(0, 50).map(x => ({ ...x, total: Math.round(x.total), profit: Math.round(x.profit) })), avg: done.length ? Math.round(sum(done, l => l.total) / done.length) : 0, series,
           pipeline: { awaiting: sum(all.filter(l => ["new", "work"].includes(l.status)), l => l.total), paid: sum(all.filter(l => l.status === "paid"), l => l.total), moving: sum(all.filter(l => ["bought", "received", "packed", "ready", "shipping", "inua", "np"].includes(l.status)), l => l.total) },
           brands: Object.entries(byBrand).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([brand, total]) => ({ brand, total: Math.round(total) }))
         });
