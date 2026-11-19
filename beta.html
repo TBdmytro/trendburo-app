@@ -4433,7 +4433,8 @@ function r2Make(card,C,list,opt={}){const id="r2"+Math.random().toString(36).sli
   const near=(x,y)=>{let b=0,bd=1e9;for(let j=0;j<=600;j++){const p=pt(j/600),d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;b=j/600}}return b};
   const NF=C.nodes.map((n,j)=>j===0?0:j===last?1:near(n[0],n[1]));
   C.steps.forEach(s=>{const a=Math.min(NF.length-2,Math.floor(s.u));s.f=lerp(NF[a],NF[a+1],s.u-a)});
-  const vehOf=f=>C.hand&&!C.ua?(f<.995?"walk":"check"):f<NF[1]+.004?"walk":f<.995?(C.ua?"truck":"plane"):"check";
+  // лично в руки по Украине: человечек → машинка до «Передачі» → снова человечек несёт в руки → галочка
+  const vehOf=f=>C.hand&&!C.ua?(f<.995?"walk":"check"):C.hand?(f<NF[1]+.004?"walk":f<NF[2]-.004?"truck":f<.995?"walk":"check"):f<NF[1]+.004?"walk":f<.995?(C.ua?"truck":"plane"):"check";
   svg.querySelector("linearGradient").innerHTML=C.nodes.map((n,j)=>`<stop offset="${NF[j]}" stop-color="${n[3]}"/>`).join("");
   svg.querySelector(".nds").innerHTML=C.nodes.map((n,j)=>{const q=pt(NF[j]),r=(j===0||j===last)?8:6.5;return`<g transform="translate(${q.x} ${q.y})" class="r2n"><circle class="pr" r="${r}" fill="none" stroke="${n[3]}" stroke-width="2" opacity="0"/><circle class="b" r="${r}" fill="#26282c" stroke="rgba(255,255,255,.32)" stroke-width="1.6"/><text text-anchor="middle" x="0" y="-21" fill="rgba(255,255,255,.5)">${esc(n[2])}</text></g>`}).join("");
   const ND=[...svg.querySelectorAll(".r2n")],veh=svg.querySelector(".veh"),vb=svg.querySelector(".vb"),vg=svg.querySelector(".vg"),fx=svg.querySelector(".fx"),act=svg.querySelector(".act"),asp=svg.querySelector(".act .sp");
