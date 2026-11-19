@@ -1310,11 +1310,11 @@ input[type=tel]{width:100%;background:var(--soft);border:1px solid transparent;b
 .olv .nd text{fill:rgba(255,255,255,.5);font-size:10.5px;font-weight:600;font-family:var(--f)}.olv .nd.on text{fill:#fff}
 .olv .cm .bob{transform-box:fill-box}.olv .cm.walk .bob{animation:olvbob .42s ease-in-out infinite alternate}@keyframes olvbob{from{transform:translateY(-1.2px) rotate(-4deg)}to{transform:translateY(1.2px) rotate(4deg)}}
 .olv .cm.done .body{fill:#26b06a}.olv .cm.done .glow{fill:#86f0b6}.olv .cm.done .cmi{stroke:#fff;stroke-width:2.6}
-.olv-lbl:empty{display:none}.olv .nd.pz circle.o{fill:#2a2c30;stroke:rgba(255,255,255,.35);stroke-width:1.6}.olv .nd.pz .pi{stroke:rgba(255,255,255,.55);stroke-width:2}
-.olv .nd.pz.cur circle.o{fill:#fff;stroke:var(--c);stroke-width:3}.olv .nd.pz.cur .pi{stroke:#1f2125;stroke-width:2}
-.olv .nd.pz.dn circle.o{fill:var(--c);stroke:#fff;stroke-width:1.6}.olv .nd.pz.dn .pi{stroke:#fff}
+.olv-lbl:empty{display:none}.olv .nd.pz circle.o{fill:rgba(255,255,255,.13);stroke:rgba(255,255,255,.18);stroke-width:1}.olv .nd.pz .pi{fill:rgba(255,255,255,.62);stroke:none}.olv .nd.pz .pi .k{stroke:#3a3c40;fill:none}
+.olv .nd.pz[data-m="cen"] circle.o,.olv .nd.pz.cur circle.o{fill:var(--g);stroke:rgba(255,255,255,.22);stroke-width:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}.olv .nd.pz[data-m="cen"] .pi,.olv .nd.pz.cur .pi{fill:#fff}.olv .nd.pz[data-m="cen"] .pi .k{stroke:var(--c)}
+.olv .nd.pz.dn circle.o{fill:var(--g);stroke:#1d1f22;stroke-width:2}.olv .nd.pz.dn .pi{fill:#fff}.olv .nd.pz.dn .pi .k{stroke:var(--c)}.olv .nd.pz[data-m="road"].dn circle.o{fill:var(--c);stroke:#fff;stroke-width:2}
 .olv .nd.pz[data-m="road"] circle.o{stroke-width:2}.olv .nd.pz.cur text{fill:#fff;font-size:11px;font-weight:800}
-.olv .nd.pz[data-m="slot"]{filter:drop-shadow(1px 0 2px rgba(0,0,0,.45))}.olv .cm{transition:opacity .3s}.olv .nd.cur text{fill:#fff;font-size:11px;font-weight:800}.olv .mrg rect{fill:#fff;transition:fill .3s}.olv .mrg text{fill:#fff;font-size:10px;font-weight:800;font-family:var(--f)}.olv .mrg{transition:opacity .3s}.olv .nd .rp{transform-box:fill-box}.olv .nd text{font-size:9.5px;letter-spacing:-.01em}.olv-route{height:112px}.olv-route svg{top:8px;height:96px}
+.olv .nd.pz[data-m="slot"]{filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}.olv .nd.pz.cur .rp{stroke:var(--c);fill:none;stroke-width:1.5}.olv .cm{transition:opacity .3s}.olv .nd.cur text{fill:#fff;font-size:11px;font-weight:800}.olv .mrg rect{fill:#fff;transition:fill .3s}.olv .mrg text{fill:#fff;font-size:10px;font-weight:800;font-family:var(--f)}.olv .mrg{transition:opacity .3s}.olv .nd .rp{transform-box:fill-box}.olv .nd text{font-size:9.5px;letter-spacing:-.01em}.olv-route{height:112px}.olv-route svg{top:8px;height:96px}
 .olv .cm{will-change:transform}.olv .cm .glow{fill:var(--acc2);opacity:.45;filter:blur(6px)}.olv .cm .body{fill:#fff}
 .olv-lbl{display:grid;gap:8px;margin:-14px 2px 0}
 .olv-lbl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.5);transition:color .4s;text-align:center}
@@ -4203,11 +4203,23 @@ const RT_LB={paid:"Оплата",bought:"Викуп",received:"У нас",packed
 function routeNodes(o){return rtKeys(o).map(k=>RT_LB[k])}
 function routePos(o){const K=rtKeys(o),i=K.indexOf(o.status);if(i<0)return 0;return o.status==="shipping"||o.status==="np"?i+.5:i}
 const RT_ON=["paid","bought","received","packed","ready","shipping","inua","np","delivered"];
-const RT_IC={walk:'<circle cx="13.5" cy="4.2" r="2"/><path d="M12.6 8l-1.4 5.2M12.4 9l3 2.2h2.4M12.4 9l-3.2 2.6M11.2 13.2l-2.2 3.6-2.4 3M11.2 13.2l3 2.8.8 4"/>',
-  box:'<path d="M3.5 8L12 4l8.5 4v8.2L12 20.4l-8.5-4.2z"/><path d="M3.5 8L12 12.2 20.5 8M12 12.2v8.2M7.8 6l8.4 4.1"/>',
-  truck:'<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/>',
-  plane:'<path transform="rotate(90 12 12)" d="M21 15.5v-1.8l-7.5-4.6V4a1.5 1.5 0 0 0-3 0v5.1L3 13.7v1.8l7.5-2.3v4.9l-2 1.5V21l3.5-1 3.5 1v-1.4l-2-1.5v-4.9z"/>',
-  done:'<path d="M5.5 12.5l4.2 4.2L18.5 8"/>'};
+/* иконки маршрута в стиле Apple (как SF Symbols .fill): белый заливной глиф в цветном круге с мягким градиентом */
+const RT_SF={paid:'<path fill-rule="evenodd" d="M5 4.5h14a3 3 0 0 1 3 3V9H2V7.5a3 3 0 0 1 3-3zM2 11.5h20v5a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3zm3.6 3.4a.9.9 0 0 0 0 1.8h4a.9.9 0 0 0 0-1.8z"/>',
+  bought:'<path fill-rule="evenodd" d="M8.2 7.5V7a3.8 3.8 0 0 1 7.6 0v.5h2.3a1.5 1.5 0 0 1 1.5 1.4l.8 10.4a2 2 0 0 1-2 2.2H5.6a2 2 0 0 1-2-2.2l.8-10.4a1.5 1.5 0 0 1 1.5-1.4zm1.8 0h4V7a2 2 0 0 0-4 0z"/>',
+  received:'<path d="M11.3 3.3a1 1 0 0 1 1.4 0l8 7.2c.6.6.2 1.5-.6 1.5H19v7.5a1.5 1.5 0 0 1-1.5 1.5h-3v-5h-5v5h-3A1.5 1.5 0 0 1 5 19.5V12H3.9c-.8 0-1.2-.9-.6-1.5z"/>',
+  packed:'<path d="M12.4 2.6l7.8 3.5L12 9.8 3.8 6.1l7.8-3.5a1 1 0 0 1 .8 0zM2.8 7.7l8.3 3.7v9.7l-7.6-3.6a1.2 1.2 0 0 1-.7-1.1zM21.2 7.7v8.7a1.2 1.2 0 0 1-.7 1.1l-7.6 3.6v-9.7z"/>',
+  ready:'<path d="M12 1.8l2.5 1.9 3.1-.3 1 3 2.6 1.7-1 3 1 2.9-2.6 1.7-1 3-3.1-.3L12 22.2l-2.5-1.9-3.1.3-1-3-2.6-1.7 1-2.9-1-3 2.6-1.7 1-3 3.1.3z"/><path class="k" d="M8 12.2l2.7 2.7L16.2 9.4" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  shipping:'<path d="M2 6.5A1.5 1.5 0 0 1 3.5 5h9A1.5 1.5 0 0 1 14 6.5V8h3.3a1.5 1.5 0 0 1 1.2.6l2.7 3.5c.2.3.3.6.3.9v3.5a1.5 1.5 0 0 1-1.5 1.5h-.4a2.9 2.9 0 0 0-5.6 0H9.9a2.9 2.9 0 0 0-5.6 0h-.8A1.5 1.5 0 0 1 2 16.5z"/><circle cx="7.1" cy="18.2" r="2"/><circle cx="16.8" cy="18.2" r="2"/>',
+  inua:'<path fill-rule="evenodd" d="M12 2a7 7 0 0 1 7 7c0 5-5.6 11.2-6.3 12a1 1 0 0 1-1.4 0C10.6 20.2 5 14 5 9a7 7 0 0 1 7-7zm0 4.4a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2z"/>',
+  np:'<path fill-rule="evenodd" d="M3 4.5h18a1 1 0 0 1 1 1V8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1zM3.5 10.5h17v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2zm6 2.5a.9.9 0 0 0 0 1.8h5a.9.9 0 0 0 0-1.8z"/>',
+  delivered:'<circle cx="12" cy="12" r="9.5"/><path class="k" d="M7.8 12.3l2.8 2.8 5.6-5.8" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'};
+RT_SF.new=RT_SF.paid;RT_SF.work=RT_SF.paid;
+const rtLight=(hex,a)=>{const n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255,m=x=>Math.round(x+(255-x)*a);return`rgb(${m(r)},${m(g)},${m(b)})`};
+const RT_IC={walk:'<circle cx="13.6" cy="3.9" r="2.3" fill="#1f2125" stroke="none"/><path d="M12.7 8.2l-1.5 5.3M12.5 9.3l3 2.1h2.3M12.5 9.3l-3.3 2.5M11.2 13.5l-2.2 3.7-2.4 3M11.2 13.5l3 2.8.8 4" stroke-width="2.6"/>',
+  box:'<g fill="#1f2125" stroke="none">'+RT_SF.packed+'</g>',
+  truck:'<g fill="#1f2125" stroke="none">'+RT_SF.shipping+'</g>',
+  plane:'<path fill="#1f2125" stroke="none" transform="rotate(90 12 12)" d="M21 15.5v-1.8l-7.5-4.6V4a1.5 1.5 0 0 0-3 0v5.1L3 13.7v1.8l7.5-2.3v4.9l-2 1.5V21l3.5-1 3.5 1v-1.4l-2-1.5v-4.9z"/>',
+  done:'<path d="M5.5 12.5l4.2 4.2L18.5 8" stroke-width="2.8"/>'};
 function rtIcon(o,f){const K=rtKeys(o),n=K.length-1,u=f*n;if(o.status==="delivered"&&u>n-.01)return"done";if(u<K.indexOf("packed")-.1)return"walk";if(u<K.indexOf("shipping")-.1)return"box";return(o.dest||"ua")==="ua"?"truck":"plane"}
 function rtSetIcon(cm,o,f){const k=rtIcon(o,f);if(cm.dataset.ic===k)return;cm.dataset.ic=k;cm.classList.toggle("walk",k==="walk");cm.classList.toggle("done",k==="done");const g=cm.querySelector(".cmi");if(g)g.innerHTML=RT_IC[k]}
 const rtGrad=o=>{const K=rtKeys(o);return K.map((k,i)=>`<stop offset="${(i/(K.length-1)).toFixed(3)}" stop-color="${OST[k][0]}"/>`).join("")};
@@ -4221,7 +4233,8 @@ function rtEngine(root,o){const rf=root.querySelector(".rf"),cm=root.querySelect
   const K=rtKeys(o),n=K.length-1,Ks=Math.max(1,K.indexOf("shipping")),L=rf.getTotalLength(),act=RT_ON.includes(o.status);
   const pt=f=>rf.getPointAtLength(L*Math.max(0,Math.min(1,f))),lerp=(a,b,t)=>a+(b-a)*t,cl=x=>Math.max(0,Math.min(1,x));
   const SL=j=>.025+j*.047,FS=SL(Ks-1)+.075,CEN=.5,NXT=.83,P2=j=>FS+(1-FS)*(j-Ks+1)/(n-Ks+1);
-  nds.innerHTML=K.map((k,j)=>`<g class="nd pz${j<Ks?" pre":""}" style="--c:${OST[k][0]}"><circle class="rp" r="12"/><circle class="o" r="10"/><g class="pi" fill="none" stroke-linecap="round" stroke-linejoin="round">${OST[k][2]}</g><text>${esc(RT_LB[k])}</text></g>`).join("");
+  const gid="rtg"+Math.random().toString(36).slice(2,7);
+  nds.innerHTML=`<defs>${K.map(k=>`<linearGradient id="${gid}${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${rtLight(OST[k][0],.32)}"/><stop offset="1" stop-color="${OST[k][0]}"/></linearGradient>`).join("")}</defs>`+K.map((k,j)=>`<g class="nd pz${j<Ks?" pre":""}" style="--c:${OST[k][0]};--g:url(#${gid}${k})"><circle class="rp" r="12"/><circle class="o" r="10"/><g class="pi"><g transform="translate(12 12) scale(.64) translate(-12 -12)">${RT_SF[k]||""}</g></g><text>${esc(RT_LB[k])}</text></g>`).join("");
   const G=[...nds.querySelectorAll(".nd")];rf.style.strokeDasharray=L;
   const set=(p,icon=true)=>{const t2=cl(p-(Ks-1)),cur=Math.floor(p+1e-6);let fill=0;
     G.forEach((g,j)=>{const d=j-p,o1=g.querySelector("circle.o"),rp=g.querySelector(".rp"),pi=g.querySelector(".pi"),tx=g.querySelector("text");let f,r,op=1,mode;
