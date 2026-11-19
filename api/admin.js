@@ -19,7 +19,7 @@ import { priceOffer, mergeConfig, PRICING_DEFAULTS } from "../lib/pricing.js";
 import { toStorefront, genderOf } from "../lib/catalog.js";
 import { saveManualProduct, updateWebProduct, markWebGone } from "../lib/manual.js";
 import { LEAD_STATUS, notifyClient } from "./lead.js";
-import { setStage, sweep, deliveryLine, flowOf } from "../lib/orderflow.js";
+import { opLeads, opLeadSave, opLeadBulk, opDriverList } from "../lib/staffops.js";
 import { makeManualOrder, clientStats, customerId } from "../lib/customers.js";
 import { accessSettings, accessOf, setClosed, setAccess, adminLinkCode, adminUnlink, NOTIFY_ID, adminBotToken } from "../lib/access.js";
 import { allSourceIds, detectSupplier, addSupplier, updateSupplier, removeSupplier, listCollections, saveCollections } from "../lib/suppliers.js";
@@ -1000,62 +1000,10 @@ export default async function handler(req, res) {
         await store.put(w);
         return send(res, 200, { code: w.code, tiles: w.tiles });
       }
-      case "leads": {
-        try { await sweep(store, notifyClient); } catch (e) { console.log("[sweep]", e.message); }
-        const where = LEAD_STATUS.includes(req.query.status) ? { status: req.query.status } : {};
-        const [leads, fresh] = await Promise.all([store.list("lead", where, { order: "createdAt desc", limit: 300 }), store.count("lead", { status: "new" })]);
-        return send(res, 200, { leads, fresh });
-      }
-      case "leadSave": {
-        const l = await store.get(body.id); if (!l || l._type !== "lead") return send(res, 404, { error: "Заявка не найдена" });
-        const now = new Date().toISOString();
-        if (body.buyMode !== undefined) l.buyMode = body.buyMode === "online" ? "online" : "boutique";
-        const changed = body.status && LEAD_STATUS.includes(body.status) && setStage(l, body.status, me.name);
-        // откуда поедет посылка (подпись точки у клиента) и адрес доставки
-        if (body.origin !== undefined) l.origin = String(body.origin).replace(/\s+/g, " ").trim().slice(0, 40);
-        if (body.delivery && typeof body.delivery === "object") { const { cleanProfile } = await import("../lib/customers.js"); l.delivery = cleanProfile({ ...(l.delivery || {}), ...body.delivery }); }
-        if (body.note !== undefined) l.note = String(body.note).slice(0, 2000);
-        if (body.track !== undefined) l.track = String(body.track).replace(/[^\w\- ]/g, "").slice(0, 40);
-        // маршрут заказа для клиента: где выкупили, когда отправка в Украину, когда Новая почта
-        if (body.payLater !== undefined) l.payLater = !!body.payLater;
-        if (body.paid !== undefined) l.paidAt = body.paid ? (l.paidAt || now) : "";
-        for (const k of ["buyCity", "buyDate", "shipDate", "npDate", "uaCity"]) if (body[k] !== undefined) l[k] = String(body[k]).replace(/\s+/g, " ").trim().slice(0, 40);
-        if (changed && body.notify !== false) l.clientNotified = await notifyClient(l, l.status);
-        l.updatedAt = now; l.manager = me.name;
-        return send(res, 200, { lead: await store.put(l) });
-      }
-      case "leadBulk": {
-        // пачкой: выбранные заказы → этап (выкуплено с местом выкупа, отправлено, Новая почта, получено)
-        // body.next — каждый заказ на ОДИН свой следующий этап (выкуплено → запаковано, запаковано → отправлено), без перескоков
-        const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).slice(0, 300), fixed = String(body.status || "");
-        if (!body.next && !LEAD_STATUS.includes(fixed)) return send(res, 400, { error: "Неизвестный этап" });
-        let n = 0, sent = 0; const by = {};
-        for (const id of ids) {
-          const l = await store.get(id); if (!l || l._type !== "lead" || l.status === "cancelled") continue;
-          let st = fixed;
-          if (body.next) { const F = flowOf(l), i = F.indexOf(l.status); st = i >= 0 && i < F.length - 1 ? F[i + 1] : ""; if (!st) continue; }
-          if (st === "bought") { // место выкупа ставим только тем, кто сейчас выкупается
-            if (body.buyMode) l.buyMode = body.buyMode === "online" ? "online" : "boutique";
-            if (body.origin) l.origin = String(body.origin).trim().slice(0, 40);
-            if (body.buyCity) l.buyCity = String(body.buyCity).trim().slice(0, 40); }
-          if (!setStage(l, st, me.name)) continue;
-          if (body.notify !== false && await notifyClient(l, st)) { l.clientNotified = true; sent++; }
-          l.manager = me.name; await store.put(l); n++; by[st] = (by[st] || 0) + 1;
-        }
-        return send(res, 200, { n, sent, by });
-      }
-      case "driverList": {
-        // список для водителя: что отправлено в Украину (за последние N дней) — товар, кому, куда
-        const days = Math.min(30, Math.max(1, Number(req.query.days) || 7)), since = Date.now() - days * 864e5;
-        const ls = await store.list("lead", {}, { limit: 3000, order: "createdAt desc" });
-        const rows = ls.filter(l => (l.dest || "ua") === "ua" && ["shipping", "np"].includes(l.status)).map(l => {
-          const at = [...(l.history || [])].reverse().find(h => h.status === "shipping")?.at || l.updatedAt;
-          if (Date.parse(at || 0) < since) return null;
-          const d = deliveryLine(l);
-          return { id: l._id, number: l.number, at, status: l.status, client: d.name || l.tg?.name || "", phone: d.phone || "", city: l.delivery?.city || "", place: d.place, items: (l.items || []).map(i => [i.brand, i.title, i.size].filter(Boolean).join(" ")).join("; "), payLater: !!l.payLater && !l.paidAt, total: l.total || 0 };
-        }).filter(Boolean).sort((a, b) => a.city.localeCompare(b.city, "uk"));
-        return send(res, 200, { rows, days });
-      }
+      case "leads": { const r = await opLeads(store, req.query.status); return send(res, r.code, r.body); }
+      case "leadSave": { const r = await opLeadSave(store, body, me.name); return send(res, r.code, r.body); }
+      case "leadBulk": { const r = await opLeadBulk(store, body, me.name); return send(res, r.code, r.body); }
+      case "driverList": { const r = await opDriverList(store, req.query.days); return send(res, r.code, r.body); }
       case "customers": {
         // клиенты из Telegram: профиль, заказы с сайта и через менеджера, оплачено, заработок, лояльность
         const [cs, ls] = await Promise.all([store.list("customer", {}, { order: "lastSeen desc", limit: 1000 }), store.list("lead", {}, { limit: 5000, fields: "_id, tgId, cust, number, kind, source, status, total, cost, dest, createdAt, items[]{brand, title, price, size, photo, icon}" })]);
