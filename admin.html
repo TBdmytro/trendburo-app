@@ -3088,9 +3088,9 @@ async function vProducts2(pre) {
 const ORD_FLOW = ["new", "work", "paid", "bought", "received", "packed", "shipping", "np", "delivered"];
 /* этапы конкретного заказа: постоянный клиент — выкупаем до оплаты (этапа «Оплачен» нет); Европа/Дубай — без «В Украине» и Новой почты */
 /* выкуп в бутике: без «Получен нами»; заказ на сайте бренда: с ним. Этапы идут строго по очереди */
-const ordFlow = l => ORD_FLOW.filter(s => !(l.payLater && s === "paid") && !(l.buyMode !== "online" && s === "received") && !((l.dest || "ua") !== "ua" && s === "np"));
-const ORD_ST = { new: "Новая", work: "Принят", paid: "Оплачен", bought: "Выкуплен", received: "Получен нами", packed: "Запакован", shipping: "Отправлен", np: "Новая почта", delivered: "Получен", cancelled: "Отменён" };
-const ORD_OLD = { ready: "Запакован", inua: "Отправлен" }; /* старые этапы — показываем как ближайшие новые */
+const ordFlow = l => l.handover ? ["new", "work", ...(l.payLater ? [] : ["paid"]), "bought", ...(l.buyMode === "online" ? ["received"] : []), "packed", ...((l.dest || "ua") === "ua" ? ["shipping"] : []), "ready", "delivered"] : ORD_FLOW.filter(s => !(l.payLater && s === "paid") && !(l.buyMode !== "online" && s === "received") && !((l.dest || "ua") !== "ua" && s === "np"));
+const ORD_ST = { new: "Новая", work: "Принят", paid: "Оплачен", bought: "Выкуплен", received: "Получен нами", packed: "Запакован", ready: "Готов к передаче", shipping: "Отправлен", np: "Новая почта", delivered: "Получен", cancelled: "Отменён" };
+const ORD_OLD = { inua: "Отправлен" }; /* старые этапы — показываем как ближайшие новые */
 const ORIGINS = ["Франція", "Італія", "Німеччина", "Австрія", "Іспанія", "Париж", "Мілан", "Дюссельдорф", "Відень", "Дубай"];
 const ORD_NEXT = (cur, next) => cur === "new" ? "Принять заказ" : next === "shipping" ? "Отправить" : "Отметить «" + ORD_ST[next] + "»";
 async function vOrders(st) {

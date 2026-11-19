@@ -18,11 +18,20 @@ export const CLIENT_TEXT = {
   work: n => `Замовлення ${n} прийняв менеджер. Скоро напишемо деталі.`,
   paid: n => `Оплату за замовлення ${n} отримали, дякуємо! Викуповуємо.`,
   bought: (n, l) => l?.buyMode === "online" ? `Замовлення ${n} оформили на сайті бренду. Чекаємо посилку в нас.` : `Замовлення ${n} викуплено${l?.buyCity ? " · " + l.buyCity : ""}. Пакуємо та готуємо до відправки.`,
-  shipping: (n, l) => l?.dest && l.dest !== "ua" ? `Замовлення ${n} відправлено${l?.dest === "dxb" ? " в Дубай" : ""}.${l?.track ? " Трек DHL: " + l.track : ""}` : `Замовлення ${n} вже їде в Україну.${l?.payLater && !l?.paidAt ? " Нагадуємо про оплату — реквізити у менеджера." : ""}`,
+  shipping: (n, l) => l?.handover ? `Замовлення ${n} вже їде в Україну — передамо вам особисто, без пошти.` : l?.dest && l.dest !== "ua" ? `Замовлення ${n} відправлено${l?.dest === "dxb" ? " в Дубай" : ""}.${l?.track ? " Трек DHL: " + l.track : ""}` : `Замовлення ${n} вже їде в Україну.${l?.payLater && !l?.paidAt ? " Нагадуємо про оплату — реквізити у менеджера." : ""}`,
   np: n => `Замовлення ${n} відправлено Новою поштою — скоро буде у вас.`, /* ТТН Новой почты клиенту не даём */
-  delivered: n => `Замовлення ${n} отримано. Дякуємо, що обрали Trend Büro!`,
+  ready: (n, l) => l?.handover ? `Замовлення ${n} готове до передачі — передамо вам особисто. Менеджер напише, коли й де зустрінемось.` : "",
+  delivered: (n, l) => l?.handover ? `Замовлення ${n} передали вам у руки. Дякуємо, що обрали Trend Büro!` : `Замовлення ${n} отримано. Дякуємо, що обрали Trend Büro!`,
   cancelled: n => `Замовлення ${n} скасовано. Якщо це помилка — напишіть менеджеру.`
 }; /* «Отримали ми», «Запаковано» — без сообщения, видно только в заказе */
+/** Новый заказ, оформленный менеджером, — клиенту в Telegram: что заказано и ссылка, где следить. */
+export async function notifyNewOrder(lead, link) {
+  const token = process.env.TELEGRAM_BOT_TOKEN, chat = lead.tg?.id; if (!token || !chat) return false;
+  const n = lead.code || lead.number, it = (lead.items || []).map(i => [i.brand, i.title].filter(Boolean).join(" ")).join(", ");
+  const st = { paid: "Оплату отримали — викуповуємо.", bought: "Вже викуплено — готуємо до відправки.", received: "Вже у нас.", packed: "Вже запаковано." }[lead.status] || "Менеджер напише деталі.";
+  const text = `Ми оформили для вас замовлення ${n}${it ? ": " + it : ""}.\n${st}\n\nДе зараз посилка — у застосунку, «Мої замовлення»${link ? ":\n" + link : "."}`;
+  try { const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat, text }) }); return r.ok; } catch { return false; }
+}
 /** Сообщение клиенту в Telegram от бота (если клиент открывал мини-апп из бота и токен задан). */
 export async function notifyClient(lead, status) {
   const token = process.env.TELEGRAM_BOT_TOKEN, chat = lead.tg?.id;

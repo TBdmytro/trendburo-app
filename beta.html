@@ -4393,8 +4393,9 @@ const R2SO={
  plane:'<path transform="rotate(90 12 12)" d="M21 15.6v-1.9l-7.6-4.8V3.9a1.4 1.4 0 0 0-2.8 0v5L3 13.7v1.9l7.6-2.4v5l-2 1.5V21l3.4-1 3.4 1v-1.3l-2-1.5v-5z"/>',
  np:'<path fill-rule="evenodd" d="M3 4.5h18a1 1 0 0 1 1 1V8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1zM3.5 10.5h17v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2zm6 2.5a.9.9 0 0 0 0 1.8h5a.9.9 0 0 0 0-1.8z"/>',
  check:'<path class="ck" pathLength="1" d="M5.4 12.6l4.3 4.3L18.7 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'};
-const R2D={walk:"#a8344a",card:"#b07a22",bag:"#9c3446",home:"#3f58b8",box:"#6e54c4",truck:"#2a6fb8",plane:"#2a6fb8",np:"#b5333f",check:"#1f9459"};
-const R2C={walk:"#d0475c",card:"#d39a35",bag:"#c2465a",home:"#5a74d6",box:"#9a7cf2",truck:"#3a8de4",plane:"#3a8de4",np:"#e2374a",check:"#2bb673"};
+R2SO.hand='<path d="M3 9.5A1.5 1.5 0 0 1 4.5 8h15A1.5 1.5 0 0 1 21 9.5V11H3zM4 12.5h7.2V21H5.5A1.5 1.5 0 0 1 4 19.5zM12.8 12.5H20v7a1.5 1.5 0 0 1-1.5 1.5h-5.7zM11.2 8h1.6v3h-1.6zM12 7.6C10.6 5 7.4 4.4 7.4 6.2 7.4 7.4 9.6 7.8 12 7.6zM12 7.6c1.4-2.6 4.6-3.2 4.6-1.4 0 1.2-2.2 1.6-4.6 1.4z"/>';
+const R2D={walk:"#a8344a",hand:"#1d8a7a",card:"#b07a22",bag:"#9c3446",home:"#3f58b8",box:"#6e54c4",truck:"#2a6fb8",plane:"#2a6fb8",np:"#b5333f",check:"#1f9459"};
+const R2C={walk:"#d0475c",hand:"#25a892",card:"#d39a35",bag:"#c2465a",home:"#5a74d6",box:"#9a7cf2",truck:"#3a8de4",plane:"#3a8de4",np:"#e2374a",check:"#2bb673"};
 const r2Badge=(k,r)=>`<circle r="${r}" fill="${R2D[k]}"/><circle r="${r-.5}" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="1"/><g transform="scale(${r/20*.8}) translate(-12 -12)" fill="#fff" color="#fff">${k==="walk"?'<g class="r2bob">'+R2SO.walk+"</g>":R2SO[k]}</g>`;
 const R2RM=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
 function r2Spring(d,bounce,on,done){if(R2RM()){on(1);done&&done();return()=>{}}const k=Math.pow(2*Math.PI/d,2),c=4*Math.PI*(1-bounce)/d;let x=0,v=0,last=performance.now(),id,stop=false;
@@ -4402,22 +4403,23 @@ function r2Spring(d,bounce,on,done){if(R2RM()){on(1);done&&done();return()=>{}}c
 const r2dm=s=>{if(!s)return"";const d=new Date(String(s).length===10?s+"T12:00":s);return isNaN(d)?"":String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")};
 /* из заказа — всё, что нужно картке: этапы, точки, подписи */
 function r2Cfg(o){const ua=(o.dest||"ua")==="ua",R=o.route||{},online=R.buyMode==="online",at=k=>{const h=(o.history||[]).filter(x=>x.status===k).pop();return h?h.at:""};
-  const st={ready:"packed",inua:"shipping"}[o.status]||o.status;
-  const K=["paid","bought",...(online?["received"]:[]),"packed","shipping",...(ua?["np"]:[]),"delivered"];
-  const U={paid:0,bought:online?.33:.5,received:.66,packed:1,shipping:1.5,np:2,delivered:ua?3:2};
-  const IC={paid:"card",bought:"bag",received:"home",packed:"box",shipping:ua?"truck":"plane",np:"np",delivered:"check"};
-  const T={paid:"Оплачено",bought:online?"Замовлено на сайті бренду":"Викуплено в бутику",received:"Отримали ми",packed:"Запаковано",shipping:ua?"Відправлено в Україну":o.dest==="dxb"?"Летить у Дубай":"Летить до вас",np:"Відправлено Новою поштою",delivered:"Отримано"};
-  const W={paid:"Оплачено",bought:online?"Замовлено":"Викуплено",received:"Отримали",packed:"Запаковано",shipping:ua?"В дорозі":"Летить",np:"Нова пошта",delivered:"Отримано"};
+  const st=(o.handover?{inua:"shipping",np:"ready"}:{ready:"packed",inua:"shipping"})[o.status]||o.status;
+  const hand=!!o.handover; // лично в руки: без отправки и Новой почты
+  const K=["paid","bought",...(online?["received"]:[]),"packed",...(hand?[...(ua?["shipping"]:[]),"ready"]:["shipping",...(ua?["np"]:[])]),"delivered"];
+  const U={paid:0,bought:online?.33:.5,received:.66,packed:1,shipping:1.5,np:2,ready:hand&&!ua?1.5:2,delivered:ua?3:2};
+  const IC={paid:"card",bought:"bag",received:"home",packed:"box",shipping:ua?"truck":"plane",np:"np",ready:"hand",delivered:"check"};
+  const T={paid:"Оплачено",bought:online?"Замовлено на сайті бренду":"Викуплено в бутику",received:"Отримали ми",packed:"Запаковано",ready:"Готово до передачі",shipping:hand&&ua?"Їде в Україну — передамо особисто":ua?"Відправлено в Україну":o.dest==="dxb"?"Летить у Дубай":"Летить до вас",np:"Відправлено Новою поштою",delivered:hand?"Передано вам у руки":"Отримано"};
+  const W={paid:"Оплачено",bought:online?"Замовлено":"Викуплено",received:"Отримали",packed:"Запаковано",ready:"Готово до передачі",shipping:ua?"В дорозі":"Летить",np:"Нова пошта",delivered:hand?"Передано":"Отримано"};
   const D={bought:R.buyDate,shipping:R.shipDate,np:R.npDate};
   const steps=K.map(k=>({k,ic:IC[k],u:U[k],t:T[k],w:W[k],d:r2dm(D[k]||at(k))}));
   let i=K.indexOf(st);if(st==="cancelled")i=-1;
   const pend=o.payLater?!o.paidAt:i<0;if(o.payLater&&o.paidAt&&!steps[0].d)steps[0].d=r2dm(o.paidAt);
   const disp=o.origin||(!ua&&R.buyCity)||"Відправка";
-  const nodes=ua?[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[238.1,26,"Нова пошта","#b5333f"],[320,66,"У вас","#1f9459"]]:[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[320,66,"У вас","#1f9459"]];
+  const nodes=hand?(ua?[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[238.1,26,"Передача","#1d8a7a"],[320,66,"У ваших руках","#1f9459"]]:[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#1d8a7a"],[320,66,"У ваших руках","#1f9459"]]):ua?[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[238.1,26,"Нова пошта","#b5333f"],[320,66,"У вас","#1f9459"]]:[[36,84,"Оплачено","#a8344a"],[147.1,86,disp,"#2a6fb8"],[320,66,"У вас","#1f9459"]];
   // прибуде: від Нової пошти ~2 дні, від відправки ~4 дні в Україну (3 — Європа/Дубай)
   const iNp=K.indexOf("np"),iSh=K.indexOf("shipping"),npAt=R.npDate||at("np"),shAt=R.shipDate||at("shipping"),pl=(s,d)=>{const t=Date.parse(String(s).length===10?s+"T12:00":s);return isNaN(t)?"":r2dm(new Date(t+d*864e5).toISOString())};
-  const eta=iNp>=0&&i>=iNp&&npAt?pl(npAt,2):i>=iSh&&shAt?pl(shAt,ua?4:3):"";
-  return{ua,online,steps,i,pend,first:online?"Замовлено":"Викуплено",nodes,eta,done:st==="delivered",doneD:r2dm(at("delivered")),cancelled:o.status==="cancelled",word0:{new:"Оформлено",work:"Підтверджено"}[st]||"Оформлено"}}
+  const eta=hand?"":iNp>=0&&i>=iNp&&npAt?pl(npAt,2):i>=iSh&&shAt?pl(shAt,ua?4:3):"";
+  return{ua,hand,online,steps,i,pend,first:online?"Замовлено":"Викуплено",nodes,eta,done:st==="delivered",doneD:r2dm(at("delivered")),cancelled:o.status==="cancelled",word0:{new:"Оформлено",work:"Підтверджено"}[st]||"Оформлено"}}
 /* картка: шапка (значок + слово + «прибуде»), хвиля з точками */
 function r2CardHTML(o,{thumb="",name="",tag="div",attrs=""}={}){
   return `<${tag} class="r2c${tag==="button"?" press":""}" ${attrs}><span class="r2g"></span>
@@ -4431,7 +4433,7 @@ function r2Make(card,C,list,opt={}){const id="r2"+Math.random().toString(36).sli
   const near=(x,y)=>{let b=0,bd=1e9;for(let j=0;j<=600;j++){const p=pt(j/600),d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;b=j/600}}return b};
   const NF=C.nodes.map((n,j)=>j===0?0:j===last?1:near(n[0],n[1]));
   C.steps.forEach(s=>{const a=Math.min(NF.length-2,Math.floor(s.u));s.f=lerp(NF[a],NF[a+1],s.u-a)});
-  const vehOf=f=>f<NF[1]+.004?"walk":f<.995?(C.ua?"truck":"plane"):"check";
+  const vehOf=f=>C.hand&&!C.ua?(f<.995?"walk":"check"):f<NF[1]+.004?"walk":f<.995?(C.ua?"truck":"plane"):"check";
   svg.querySelector("linearGradient").innerHTML=C.nodes.map((n,j)=>`<stop offset="${NF[j]}" stop-color="${n[3]}"/>`).join("");
   svg.querySelector(".nds").innerHTML=C.nodes.map((n,j)=>{const q=pt(NF[j]),r=(j===0||j===last)?8:6.5;return`<g transform="translate(${q.x} ${q.y})" class="r2n"><circle class="pr" r="${r}" fill="none" stroke="${n[3]}" stroke-width="2" opacity="0"/><circle class="b" r="${r}" fill="#26282c" stroke="rgba(255,255,255,.32)" stroke-width="1.6"/><text text-anchor="middle" x="0" y="-21" fill="rgba(255,255,255,.5)">${esc(n[2])}</text></g>`}).join("");
   const ND=[...svg.querySelectorAll(".r2n")],veh=svg.querySelector(".veh"),vb=svg.querySelector(".vb"),vg=svg.querySelector(".vg"),fx=svg.querySelector(".fx"),act=svg.querySelector(".act"),asp=svg.querySelector(".act .sp");
@@ -4442,7 +4444,7 @@ function r2Make(card,C,list,opt={}){const id="r2"+Math.random().toString(36).sli
     a.animate([{opacity:1,transform:"scale(1)",filter:"blur(0)"},{opacity:0,transform:"scale(.82)",filter:"blur(1.5px)"}],{duration:520,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"});
     b.animate([{opacity:0,transform:"scale(1.12)",filter:"blur(1.5px)"},{opacity:1,transform:"scale(1)",filter:"blur(0)"}],{duration:620,easing:"cubic-bezier(.2,.8,.2,1)",fill:"forwards"}).onfinish=()=>{if(vk===k)vb.innerHTML=html}};
   // значок «чим зараз зайняті» над человечком (як у Sims); у Нової пошти — червона коробка над машинкою
-  const setAct=()=>{const s=C.steps[si],show=!opt.empty&&C.i>=0&&(vk==="walk"||(vk==="truck"&&s.k==="np"&&F>s.f-.03));act.style.transition="opacity .5s";act.setAttribute("opacity",show?1:0);if(!show)return;const k=s.ic;if(k===actK)return;actK=k;
+  const setAct=()=>{const s=C.steps[si],show=!opt.empty&&C.i>=0&&(vk==="walk"||(vk==="truck"&&(s.k==="np"||s.k==="ready")&&F>s.f-.03));act.style.transition="opacity .5s";act.setAttribute("opacity",show?1:0);if(!show)return;const k=s.ic;if(k===actK)return;actK=k;
     const html=`<g transform="translate(0 -28)">${r2Badge(k,8)}<path d="M-3 9.8l3 3.2 3-3.2z" fill="${R2D[k]}"/></g>`;
     if(R2RM()||!asp.innerHTML){asp.innerHTML=html;return}asp.innerHTML=`<g class="xo">${asp.innerHTML}</g><g class="xn">${html}</g>`;
     asp.querySelector(".xo").animate([{opacity:1},{opacity:0,transform:"translateY(-6px)"}],{duration:380,easing:"ease-in",fill:"forwards"});
@@ -4462,7 +4464,7 @@ function r2Make(card,C,list,opt={}){const id="r2"+Math.random().toString(36).sli
     ND.forEach((g,j)=>{const on=!opt.empty&&C.i>=0&&f>=NF[j]-.004,b=g.querySelector(".b"),tx=g.querySelector("text"),pd=j===0&&C.pend&&!opt.empty;
       b.setAttribute("fill",pd?"#d9a441":on?C.nodes[j][3]:"#26282c");b.setAttribute("stroke",on||pd?"#fff":"rgba(255,255,255,.32)");tx.setAttribute("fill",on?"#fff":"rgba(255,255,255,.5)");
       if(j===0&&!opt.empty)tx.textContent=si>=1&&C.i>=1?C.first:"Оплачено";
-      const nr=Math.abs(f-NF[j])<.03&&(vk==="walk"||C.steps[si].k==="np");tx.style.transform=nr?"translateY(-20px)":""});
+      const nr=Math.abs(f-NF[j])<.03&&(vk==="walk"||C.steps[si].k==="np"||C.steps[si].k==="ready");tx.style.transform=nr?"translateY(-20px)":""});
     setAct()};
   // шапка: значок + одне слово; «прибуде дд.мм»
   const head=anim=>{const row=card.querySelector(".r2row");let k,w;
@@ -4558,7 +4560,7 @@ function openOrder(o,opt={}){const C=r2Cfg(o),ua=C.ua,R=o.route||{};const mineO=
     ${PAR.length?`<div class="r2par"><div class="h"><b>${PAR.length} ${plural(PAR.length,["посилка","посилки","посилок"])} в замовленні</b><span>кожна — своїм маршрутом</span></div><div class="t">${PAR.map((p,i)=>{const c=r2Cfg(p),w=c.i<0?c.word0:c.steps[c.i].w,ic=c.i<0?"card":c.steps[c.i].ic;return `<button class="${p.number===o.number?"on":""}" data-par="${i}"><span class="th">${r2Thumb(p)}</span><span class="tx"><b>Посилка ${i+1}</b><small>${esc((p.items[0]||{}).brand||"")}${p.origin?" · "+esc(p.origin):""}</small><i style="--c:${R2D[ic]}">${esc(w)}</i></span></button>`}).join("")}</div></div>`:""}
     ${r2CardHTML(o,{thumb:r2Thumb(o),name:r2Name(o)})}
     ${C.cancelled?`<div class="olv-done" style="background:var(--ink-grad);box-shadow:none;margin:12px 12px 0"><b>Замовлення скасовано</b><p>Якщо це помилка — напишіть менеджеру.</p></div>`:`<div class="r2tl"></div>`}
-    ${dv?`<div class="r2dl"><span class="r2i" style="background:${dv.carrier==="np"?"#b5333f":"#d4a72c"}"><svg viewBox="0 0 24 24" fill="#fff">${dv.carrier==="np"?R2SO.np:R2SO.plane}</svg></span><div><b>${dv.carrier==="np"?"Нова пошта":"DHL"}${dv.city?" · "+esc(dv.city):""}</b><small>${esc([dvt,dv.name,dv.phone].filter(Boolean).join(" · "))}</small></div></div>`:""}
+    ${o.handover?`<div class="r2dl"><span class="r2i" style="background:#1d8a7a"><svg viewBox="0 0 24 24" fill="#fff">${R2SO.hand}</svg></span><div><b>Особисто в руки</b><small>${esc([dv&&dv.city,dv&&dv.address].filter(Boolean).join(" · ")||"менеджер домовиться з вами про зустріч")}</small></div></div>`:dv?`<div class="r2dl"><span class="r2i" style="background:${dv.carrier==="np"?"#b5333f":"#d4a72c"}"><svg viewBox="0 0 24 24" fill="#fff">${dv.carrier==="np"?R2SO.np:R2SO.plane}</svg></span><div><b>${dv.carrier==="np"?"Нова пошта":"DHL"}${dv.city?" · "+esc(dv.city):""}</b><small>${esc([dvt,dv.name,dv.phone].filter(Boolean).join(" · "))}</small></div></div>`:""}
     ${R.track&&!ua?`<div class="ot-ttn"><div><span class="cap">Трек-номер DHL</span><b class="num">${esc(R.track)}</b></div><button class="btn sm soft" data-cpt>Скопіювати</button><a class="btn sm" href="https://www.dhl.com/global-en/home/tracking.html?tracking-id=${encodeURIComponent(R.track)}" target="_blank" rel="noopener">Відстежити</a></div>`:""}
     <div class="sec"><div class="sech"><h2>У замовленні</h2></div><div class="pad">${(o.items||[]).map(it=>{const p=findItem(it.id);return `<button class="cartrow" ${p?`data-act="product" data-id="${p.id}"`:""}><span class="th">${p?shapeSVG(p.shape,p.c,""):itThumb(it)}</span><div class="tx"><span class="b">${esc(it.brand||"")}</span><span class="n">${esc(it.title||"")}</span><span class="z">${[it.size&&"розмір "+it.size,it.color].filter(Boolean).map(esc).join(" · ")}</span></div>${it.price?`<b class="num">${eur(it.price)}</b>`:""}</button>`}).join("")}
       ${o.total?`<div class="group" style="margin-top:12px"><div class="row tot"><span>Разом</span><span class="num">${eur(o.total)}</span></div></div>`:""}</div></div>
@@ -4572,15 +4574,15 @@ function openOrder(o,opt={}){const C=r2Cfg(o),ua=C.ua,R=o.route||{};const mineO=
   const c=s.querySelector("[data-cpt]");if(c)c.onclick=()=>copy(R.track)}
 
 /* ===== Заказы для сотрудника прямо в приложении (роль «сотрудник»): список, «Следующий этап» пачкой, новый заказ, список для водителя ===== */
-const SO_ST={new:"Новая",work:"Принят",paid:"Оплачен",bought:"Выкуплен",received:"Получен нами",packed:"Запакован",shipping:"Отправлен",np:"Новая почта",delivered:"Получен",cancelled:"Отменён"};
-const SO_OLD={ready:"packed",inua:"shipping"},soSt=l=>SO_OLD[l.status]||l.status;
+const SO_ST={new:"Новая",work:"Принят",paid:"Оплачен",bought:"Выкуплен",received:"Получен нами",packed:"Запакован",shipping:"Отправлен",np:"Новая почта",ready:"Готов к передаче",delivered:"Получен",cancelled:"Отменён"};
+const SO_OLD={ready:"packed",inua:"shipping"},soSt=l=>l.handover&&l.status==="ready"?"ready":SO_OLD[l.status]||l.status;
 const SO_ORIG=["Франція","Італія","Німеччина","Австрія","Іспанія","Париж","Мілан","Дюссельдорф","Відень","Дубай"];
-const soFlow=l=>["new","work",...(l.payLater?[]:["paid"]),"bought",...(l.buyMode==="online"?["received"]:[]),"packed","shipping",...((l.dest||"ua")==="ua"?["np"]:[]),"delivered"];
+const soFlow=l=>["new","work",...(l.payLater?[]:["paid"]),"bought",...(l.buyMode==="online"?["received"]:[]),"packed",...(l.handover?[...((l.dest||"ua")==="ua"?["shipping"]:[]),"ready"]:["shipping",...((l.dest||"ua")==="ua"?["np"]:[])]),"delivered"];
 const soCall=async(op,d)=>{const r=await meCall({a:"st",op,d:d||{}});if(r.error)throw new Error(r.error);return r};
 const soFlag=d=>({ua:"🇺🇦",eu:"🇪🇺",dxb:"🇦🇪"}[d||"ua"]||"");
 const soName=l=>(l.tg&&l.tg.name)||(l.delivery&&l.delivery.name)||(l.tg&&l.tg.username?"@"+l.tg.username:"")||"Клиент";
 /* цвет и значок этапа — те же, что на маршруте у клиента */
-const SO_IC={new:"card",work:"card",paid:"card",bought:"bag",received:"home",packed:"box",shipping:"truck",np:"np",delivered:"check",cancelled:"card"};
+const SO_IC={new:"card",work:"card",paid:"card",bought:"bag",received:"home",packed:"box",shipping:"truck",np:"np",ready:"hand",delivered:"check",cancelled:"card"};
 const soCol=k=>k==="new"||k==="work"?"#6b6d72":k==="cancelled"?"#9a9da3":R2D[SO_IC[k]]||"#6b6d72";
 const soPill=k=>`<em class="so-st" style="--c:${soCol(k)}">${SO_ST[k]||k}</em>`;
 /* наш номер (#1001) и код для клиента (7KQ4) */
@@ -4602,11 +4604,11 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="
     s.querySelector(".so-tiles").innerHTML=[["paid","card","Выкупить",cnt("paid")],["bought","box",packAt?"Упакуются "+new Date(packAt).toLocaleString("ru",{weekday:"short",hour:"2-digit",minute:"2-digit"}):"Ждут упаковки",cnt("bought")+cnt("received")],["packed","truck","К отправке",cnt("packed")],["shipping","np","В дороге → НП",all.filter(l=>l.status==="shipping"&&ua(l)).length]].map(([k,ic,t,n])=>`<button class="so-tile press${st===k?" on":""}" data-sost="${k}" style="--c:${R2D[ic]}"><svg viewBox="-14 -14 28 28" width="30" height="30">${r2Badge(ic,13)}</svg><b class="num">${n}</b><span>${t}</span></button>`).join("");
     s.querySelector(".so-ch").innerHTML=`<button class="so-chip${!st?" on":""}" data-sost="">Активные · ${act.length}</button>`+Object.entries(SO_ST).filter(([k])=>cnt(k)).map(([k,v])=>`<button class="so-chip${st===k?" on":""}" data-sost="${k}" style="--c:${soCol(k)}"><i></i>${v} · ${cnt(k)}</button>`).join("");
     const V=st?all.filter(l=>soSt(l)===st):act;
-    L.innerHTML=V.length?`<div class="so-grp">${V.map(l=>{const it=(l.items||[])[0]||{},k=soSt(l),m=soMoney(l),na=(l.noAddress||!(l.delivery&&(l.delivery.city||l.delivery.address)))&&!["delivered","cancelled"].includes(l.status);
+    L.innerHTML=V.length?`<div class="so-grp">${V.map(l=>{const it=(l.items||[])[0]||{},k=soSt(l),m=soMoney(l),na=!l.handover&&(l.noAddress||!(l.delivery&&(l.delivery.city||l.delivery.address)))&&!["delivered","cancelled"].includes(l.status);
       return `<div class="so-row${sel.has(l._id)?" on":""}"><label class="so-ck"><input type="checkbox" data-sopk="${esc(l._id)}" ${sel.has(l._id)?"checked":""} aria-label="Вибрати"><i></i></label>
       <button class="so-tx" data-soopen="${esc(l._id)}"><span class="so-th" style="--c:${soCol(k)}">${it.photo?`<img src="${esc(it.photo)}" alt="" loading="lazy">`:`<b>${esc(((it.brand||soName(l)||"?").replace(/^@/,"")[0]||"?").toUpperCase())}</b>`}</span>
         <span class="so-m"><b>${esc(soName(l))}</b><small>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")).join(", ")||"Заявка")}</small>
-        <span class="so-tags"><span>${soFlag(l.dest)} ${esc(soNo(l))}</span>${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}${l.group?'<span>📦 посылка</span>':""}</span></span>
+        <span class="so-tags"><span>${soFlag(l.dest)} ${esc(soNo(l))}</span>${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}${l.group?'<span>📦 посылка</span>':""}${l.handover?'<span>🤝 в руки</span>':""}</span></span>
         <span class="so-rr"><b class="num">${l.total?eur(l.total):""}</b>${m.p?`<small class="num">+${eur(m.p)}</small>`:""}${soPill(k)}</span></button></div>`}).join("")}</div>`
       :`<div class="so-empty"><svg viewBox="-14 -14 28 28" width="44" height="44">${r2Badge("check",13)}</svg><b>${st?"С этим этапом заказов нет":"Активных заказов нет"}</b><span>Нажмите «Новый заказ», чтобы добавить</span></div>`;
     upBar()};
@@ -4679,7 +4681,7 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
   const whoSub=()=>S.pick?[S.pick.insta&&"IG @"+S.pick.insta,S.pick.username&&"TG @"+S.pick.username].filter(Boolean).join(" · ")||"уже есть":"новый · "+KN[S.kind];
   const total=()=>S.items.reduce((a,i)=>a+snNum(i.price),0),costT=()=>S.items.reduce((a,i)=>a+snNum(i.cost),0),profT=()=>costT()?total()-costT():0;
   const money=()=>`<div class="sn-money"><div><small>Продажа</small><b>${eur(total())}</b></div><div><small>Закупка</small><b>${costT()?eur(costT()):"—"}</b></div><div class="p"><small>Заработок</small><b>${costT()?eur(profT()):"—"}</b></div></div>`;
-  const dlv=()=>{const dv=S.dv;return S.noAddr?"адрес пришлёт позже":[({ua:"🇺🇦",eu:"🇪🇺",dxb:"🇦🇪"})[S.dest],dv.name,dv.city,S.dest==="ua"?(dv.npType==="courier"?"курʼєр":dv.npPoint&&(dv.npType==="locker"?"поштомат ":"НП № ")+dv.npPoint):dv.address].filter(Boolean).join(" · ")};
+  const dlv=()=>{const dv=S.dv;if(S.hand)return "🤝 лично в руки"+(dv.city||dv.address?" · "+[dv.city,dv.address].filter(Boolean).join(", "):"");return S.noAddr?"адрес пришлёт позже":[({ua:"🇺🇦",eu:"🇪🇺",dxb:"🇦🇪"})[S.dest],dv.name,dv.city,S.dest==="ua"?(dv.npType==="courier"?"курʼєр":dv.npPoint&&(dv.npType==="locker"?"поштомат ":"НП № ")+dv.npPoint):dv.address].filter(Boolean).join(" · ")};
   // сводка сверху: что уже собрано
   const sum=()=>step===0?"":`<div class="sn-top">
     <button class="r" data-go="0"><i>👤</i><span><b>${esc(who())}</b><small>${esc(whoSub())}</small></span><em>изм.</em></button>
@@ -4708,13 +4710,14 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
     if(step===1){B.innerHTML=steps()+sum()+`<div class="sn-items"></div><div class="fl" style="margin-top:6px">Добавить ${S.items.length?"ещё":"вещь"}</div>`+snPickHTML(S.C,S.dest);items1();
       FT.innerHTML=`<button class="btn soft" data-bk>Назад</button><button class="btn" data-nx ${S.items.length?"":"disabled"}>Дальше — доставка</button>`;return}
     if(step===2){h.textContent="Доставка";const ua=S.dest==="ua",self=S.rc==="self";
-      B.innerHTML=steps()+sum()+`<div class="so-chs">${[["ua","🇺🇦 Украина"],["eu","🇪🇺 Европа"],["dxb","🇦🇪 Дубай"]].map(([k,v])=>`<button class="so-ch2${S.dest===k?" on":""}" data-ds="${k}">${v}</button>`).join("")}</div>
+      B.innerHTML=steps()+sum()+`<div class="sn-seg"><button class="${S.hand?"":"on"}" data-hd="0">📦 Доставка</button><button class="${S.hand?"on":""}" data-hd="1">🤝 Лично в руки</button></div>
+        ${S.hand?`<div class="hint">Без Новой почты. Украина: Запакован → Отправлен в Украину → <b>Готов к передаче</b> → Получен. Европа (на месте): Запакован → Готов к передаче → Получен. Клиент вместо «Нова пошта» видит «Готово до передачі» и «Передано вам у руки».</div><input type="text" id="dC" value="${esc(S.dv.city)}" placeholder="Город (необязательно)"><input type="text" id="dA" value="${esc(S.dv.address)}" placeholder="Где / когда передать (необязательно)">`:`<div class="so-chs">${[["ua","🇺🇦 Украина"],["eu","🇪🇺 Европа"],["dxb","🇦🇪 Дубай"]].map(([k,v])=>`<button class="so-ch2${S.dest===k?" on":""}" data-ds="${k}">${v}</button>`).join("")}</div>
         <label class="so-tg"><input type="checkbox" id="snNo" ${S.noAddr?"checked":""}> Данных пока нет — клиент пришлёт позже</label>
         ${S.noAddr?`<div class="sn-w">Заказ создастся с меткой «нет адреса». Данные добавите потом в карточке заказа.</div>`:`<div class="fl">Получатель</div><div class="sn-seg"><button class="${self?"on":""}" data-rc="self">Сам клиент</button><button class="${self?"":"on"}" data-rc="other">Другой человек</button></div>
         <input type="text" id="dN" value="${esc(S.dv.name)}" placeholder="Імʼя та прізвище"><input type="tel" id="dP" data-ua="${ua?1:0}" value="${esc(S.dv.phone?snPhone(S.dv.phone,ua):"")}" placeholder="Телефон" inputmode="tel">
         ${ua?`<div class="frow"><input type="text" id="dC" value="${esc(S.dv.city)}" placeholder="Місто"><input type="text" id="dB" value="${esc(S.dv.npPoint)}" placeholder="${S.dv.npType==="courier"?"—":S.dv.npType==="locker"?"Поштомат №":"Відділення №"}" inputmode="numeric" ${S.dv.npType==="courier"?"disabled":""}></div>
           <div class="so-chs">${[["branch","Відділення"],["locker","Поштомат"],["courier","Курʼєр"]].map(([k,v])=>`<button class="so-ch2${S.dv.npType===k?" on":""}" data-nt="${k}">${v}</button>`).join("")}</div>${S.dv.npType==="courier"?`<input type="text" id="dA" value="${esc(S.dv.address)}" placeholder="Адреса">`:""}`
-        :`<input type="text" id="dC" value="${esc(S.dv.city)}" placeholder="Країна, місто"><input type="text" id="dA" value="${esc(S.dv.address)}" placeholder="Адреса, індекс">`}`}`;
+        :`<input type="text" id="dC" value="${esc(S.dv.city)}" placeholder="Країна, місто"><input type="text" id="dA" value="${esc(S.dv.address)}" placeholder="Адреса, індекс">`}`}`}`;
       FT.innerHTML=`<button class="btn soft" data-bk>Назад</button><button class="btn" data-nx>Дальше — итог</button>`;return}
     h.textContent="Итог — проверьте";
     B.innerHTML=steps()+sum()+`<div class="sn-items2">${S.items.map(i=>`<div class="sn-it"><span class="im">${i.photo?`<img src="${esc(i.photo)}" alt="">`:""}</span><div><b>${esc([i.brand,i.title].filter(Boolean).join(" · "))}</b><small>${esc([i.size,i.color,i.note].filter(Boolean).join(" · "))}</small></div><b class="num">${eur(snNum(i.price))}</b></div>`).join("")}</div>
@@ -4725,7 +4728,8 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
       ${S.pay==="prepay"?`<div class="frow"><input type="text" id="snPp" value="${esc(S.prepaid)}" placeholder="Предоплата, €" inputmode="decimal"><div class="sn-rest">остаток <b>${eur(Math.max(0,total()-snNum(S.prepaid)))}</b></div></div>`:""}
       <div class="fl">Этап сейчас</div><div class="so-chs">${["work","paid","bought"].map(k=>`<button class="so-ch2${S.status===k?" on":""}" data-sx="${k}">${SO_ST[k]}</button>`).join("")}</div>
       <input type="text" id="snO" value="${esc(S.origin)}" list="soOrL2" placeholder="Откуда поедет: Франція / Мілан (можно потом)"><datalist id="soOrL2">${SO_ORIG.map(o=>`<option>${o}</option>`).join("")}</datalist>
-      <textarea id="snNt" placeholder="Заметка — только для нас" style="min-height:56px">${esc(S.note)}</textarea>`;
+      <textarea id="snNt" placeholder="Заметка — только для нас" style="min-height:56px">${esc(S.note)}</textarea>
+      ${S.pick&&S.pick.app?`<label class="so-tg"><input type="checkbox" id="snNf" ${S.notify!==false?"checked":""}> Сообщить клиенту в Telegram о новом заказе</label><div class="hint">Клиент в приложении — заказ сразу появится у него в «Мої замовлення».</div>`:""}`;
     FT.innerHTML=`<button class="btn soft" data-bk>Назад</button><button class="btn" data-mk>Создать заказ</button><button class="btn soft sn-lk" data-mkl>Создать и получить ссылку для клиента</button>`};
   const keep=()=>{const v=id=>{const x=B.querySelector(id);return x?x.value:undefined};
     if(step===0){["#snN","#snT","#snP"].forEach((id,i)=>{const x=v(id);if(x!==undefined)S[["name","tgu","phone"][i]]=x})}
@@ -4736,7 +4740,7 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
   const create=async btn=>{keep();const miss=S.items.findIndex(i=>i.sizes&&i.sizes.length>1&&!i.size);if(miss>=0){toast("Выберите размер: "+(S.items[miss].title||S.items[miss].brand));return}
     btn.disabled=true;try{let id=S.pick&&S.pick.id;
       if(!id){const k=S.kind,q=S.q;const r=await soCall("client",{insta:k==="ig"?clean("ig",q):"",username:k==="tg"?clean("tg",q):S.tgu,phone:k==="ph"?q:S.phone,name:k==="nm"?q.trim():S.name});id=r.id;S.pick={id,name:who()}}
-      const base={customer:id,dest:S.dest,delivery:S.noAddr?null:{...S.dv,...(S.dest==="ua"?{}:{npType:"courier"})},noAddress:S.noAddr,pay:S.pay,status:S.status,origin:S.origin,note:S.note,date:new Date().toISOString().slice(0,10)};
+      const base={customer:id,dest:S.dest,handover:!!S.hand,notify:S.notify!==false,delivery:S.hand?{city:S.dv.city,address:S.dv.address,npType:"courier"}:S.noAddr?null:{...S.dv,...(S.dest==="ua"?{}:{npType:"courier"})},noAddress:S.hand?false:S.noAddr,pay:S.pay,status:S.status,origin:S.origin,note:S.note,date:new Date().toISOString().slice(0,10)};
       const it=i=>({id:i.id,brand:i.brand,title:i.title,size:i.size,color:i.color,price:i.price,cost:i.cost,photo:i.photo,url:i.url,note:i.note});
       let r;if(S.split&&S.items.length>1){let left=snNum(S.prepaid);base.group="g"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);for(const i of S.items){const pp=Math.min(left,snNum(i.price));left-=pp;r=await soCall("order",{...base,origin:i.origin||base.origin,items:[it(i)],prepaid:pp})}}
       else r=await soCall("order",{...base,items:S.items.map(it),prepaid:S.prepaid});
@@ -4757,6 +4761,7 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
         if(S.C.mode==="man")B.querySelectorAll(".mB,.mT,.mS,.mC,.mP,.mU,.mN").forEach(i=>i.value="");{const sb=d.querySelector(".sh-b");if(sb)sb.scrollTo({top:0,behavior:"smooth"})}setTimeout(()=>{hl=-1},1600)}
       if(t.closest("[data-md],[data-pid],[data-madd]"))return}
     if(x=t.closest("[data-ds]")){keep();S.dest=x.dataset.ds;draw();return}
+    if(x=t.closest("[data-hd]")){keep();S.hand=x.dataset.hd==="1";draw();return}
     if(x=t.closest("[data-rc]")){keep();S.rc=x.dataset.rc;if(S.rc==="self")fillSelf();else S.dv={name:"",phone:"",city:"",npType:"branch",npPoint:"",address:""};draw();return}
     if(x=t.closest("[data-nt]")){keep();S.dv.npType=x.dataset.nt;draw();return}
     if(x=t.closest("[data-py]")){keep();S.pay=x.dataset.py;draw();return}
@@ -4768,7 +4773,7 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
     if(t.closest("[data-close2]")){closeSheet();return}
     if(t.closest("[data-drc]")){S={...blank(),...dr};step=dr.step||0;draw();return}
     if(t.closest("[data-drn]")){drop();draw();return}});
-  d.addEventListener("change",e=>{if(e.target.id==="snNo"){keep();S.noAddr=e.target.checked;draw()}if(e.target.id==="snSp"){keep();S.split=e.target.checked;save();draw()}});
+  d.addEventListener("change",e=>{if(e.target.id==="snNo"){keep();S.noAddr=e.target.checked;draw()}if(e.target.id==="snNf"){S.notify=e.target.checked;save()}if(e.target.id==="snSp"){keep();S.split=e.target.checked;save();draw()}});
   d.addEventListener("input",e=>{const ds=e.target.dataset||{};if(ds.ip!==undefined||ds.ic!==undefined){if(ds.ip!==undefined)S.items[+ds.ip].price=e.target.value;else S.items[+ds.ic].cost=e.target.value;save();const m=B.querySelector(".sn-money");if(m)m.outerHTML=money()}
     if(e.target.dataset&&e.target.dataset.io!==undefined){S.items[+e.target.dataset.io].origin=e.target.value;save()}
     if(e.target.id==="snPp"){S.prepaid=e.target.value;const r=B.querySelector(".sn-rest b");if(r)r.textContent=eur(Math.max(0,total()-snNum(S.prepaid)))}
@@ -4788,7 +4793,8 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
     ${l.payLater?`<label class="so-tg"><input type="checkbox" id="soPaid" ${l.paidAt?"checked":""}> Клиент оплатил${l.prepaid?" (предоплата "+eur(l.prepaid)+")":""}</label>`:""}
     <div class="field"><label for="soOr">Откуда поедет — клиент видит на маршруте</label><input type="text" id="soOr" list="soOrL" value="${esc(l.origin||"")}" placeholder="${ua?"Франція / Італія":"Мілан"}"><datalist id="soOrL">${SO_ORIG.map(o=>`<option>${o}</option>`).join("")}</datalist></div>
     <div class="so-chs">${[["boutique","Бутик"],["online","Сайт бренда"]].map(([k,v])=>`<button class="so-ch2${bm===k?" on":""}" data-bm="${k}">${v}</button>`).join("")}</div>
-    <div class="fl">Доставка · ${ua?"Нова пошта":"DHL"}${l.noAddress?' · <b style="color:#a8343a">нет адреса</b>':""}</div>
+    <label class="so-tg"><input type="checkbox" id="soHd" ${l.handover?"checked":""}> 🤝 Лично в руки (без почты)</label>
+    <div class="fl">Доставка · ${l.handover?"место передачи":ua?"Нова пошта":"DHL"}${l.noAddress?' · <b style="color:#a8343a">нет адреса</b>':""}</div>
     <div class="frow"><input type="text" id="soDn" value="${esc(dv.name||"")}" placeholder="Отримувач"><input type="tel" id="soDp" data-ua="${ua?1:0}" value="${esc(snPhone(dv.phone||"",ua))}" placeholder="Телефон" inputmode="tel"></div>
     <div class="frow"><input type="text" id="soDc" value="${esc(dv.city||"")}" placeholder="Місто">${ua?`<input type="text" id="soDb" value="${esc(dv.npPoint||"")}" placeholder="Відділення №" inputmode="numeric">`:`<input type="text" id="soTr" value="${esc(l.track||"")}" placeholder="Трек DHL">`}</div>
     <input type="text" id="soDa" value="${esc(dv.address||"")}" placeholder="Адреса (якщо курʼєр)">
@@ -4820,7 +4826,7 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
     if(x=t.closest("[data-stg]")){stage=x.dataset.stg;d.querySelectorAll("[data-stg]").forEach(y=>y.classList.toggle("on",y===x));return}
     if(x=t.closest("[data-bm]")){bm=x.dataset.bm;d.querySelectorAll("[data-bm]").forEach(y=>y.classList.toggle("on",y===x));return}
     const sv=t.closest("[data-sosave]");if(!sv)return;sv.disabled=true;const v=id=>{const y=d.querySelector(id);return y?y.value.trim():undefined};
-    const body={id:l._id,items:items.map(i=>({id:i.id,brand:i.brand,title:i.title,size:i.size,color:i.color,price:i.price,cost:i.cost,photo:i.photo,icon:i.icon,url:i.url,note:i.note})),origin:v("#soOr"),buyMode:bm,note:v("#soNo"),notify:d.querySelector("#soNt").checked,delivery:{name:v("#soDn"),phone:v("#soDp"),city:v("#soDc"),address:v("#soDa"),...(ua?{npPoint:v("#soDb")}:{})},...(ua?{}:{track:v("#soTr")}),...(stage!==soSt(l)?{status:stage}:{}),...(d.querySelector("#soPaid")?{paid:d.querySelector("#soPaid").checked}:{})};
+    const body={id:l._id,items:items.map(i=>({id:i.id,brand:i.brand,title:i.title,size:i.size,color:i.color,price:i.price,cost:i.cost,photo:i.photo,icon:i.icon,url:i.url,note:i.note})),origin:v("#soOr"),buyMode:bm,note:v("#soNo"),notify:d.querySelector("#soNt").checked,delivery:{name:v("#soDn"),phone:v("#soDp"),city:v("#soDc"),address:v("#soDa"),...(ua?{npPoint:v("#soDb")}:{})},...(ua?{}:{track:v("#soTr")}),...(stage!==soSt(l)?{status:stage}:{}),...(d.querySelector("#soPaid")?{paid:d.querySelector("#soPaid").checked}:{}),handover:d.querySelector("#soHd").checked};
     try{await soCall("save",body);toast("Сохранено");closeSheet();reload()}catch(y){toast(y.message);sv.disabled=false}})}
 
 /* водителю: что отправлено в Украину — скопировать таблицей (Excel / Telegram) */

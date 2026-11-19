@@ -133,7 +133,9 @@ export default async function handler(req, res) {
       // новый заказ — ссылка для клиента: по личной ссылке он войдёт и увидит свой заказ с маршрутом
       if (body.op === "link" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} } const inv = r.body.invite; r.body = inv ? { link: BOT ? `https://t.me/${BOT}?startapp=c_${inv}` : `https://trendburo.com.ua/?client=${inv}`, web: `https://trendburo.com.ua/?client=${inv}`, all: true } : { link: BOT ? `https://t.me/${BOT}?startapp=o_${r.body.view}` : `https://trendburo.com.ua/?order=${r.body.view}`, web: `https://trendburo.com.ua/?order=${r.body.view}`, linked: r.body.linked, renewed: r.body.renewed }; }
       if (body.op === "order" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
-        const v = r.body.lead?.view || ""; r.body.link = v ? (BOT ? `https://t.me/${BOT}?startapp=o_${v}` : `https://trendburo.com.ua/?order=${v}`) : ""; }
+        const v = r.body.lead?.view || ""; r.body.link = v ? (BOT ? `https://t.me/${BOT}?startapp=o_${v}` : `https://trendburo.com.ua/?order=${v}`) : "";
+        // клиент уже в приложении — сразу сообщение в Telegram о новом заказе
+        if (d.notify !== false && r.body.lead?.tgId) { try { const { notifyNewOrder } = await import("./lead.js"); r.body.sent = await notifyNewOrder(r.body.lead, BOT ? `https://t.me/${BOT}?startapp` : ""); } catch {} } }
       return send(res, r.code, r.body);
     }
     if (body.a === "sel") { // сотрудник (роль из админки) сохраняет подборку для клиента → ссылка
