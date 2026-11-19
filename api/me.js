@@ -105,10 +105,11 @@ export default async function handler(req, res) {
     if (body.a === "st") { // сотрудник в приложении: заказы (как в админке, без закупочных цен)
       if (!c.staff) return send(res, 403, { error: "Только для сотрудников Trend Büro" });
       const S = await import("../lib/staffops.js"), d = body.d && typeof body.d === "object" ? body.d : {}, by = (c.profile?.name || user.name || "сотрудник") + " · приложение";
-      const r = body.op === "leads" ? await S.opLeads(store, d.status, { lite: true }) : body.op === "save" ? await S.opLeadSave(store, d, by) : body.op === "bulk" ? await S.opLeadBulk(store, d, by)
+      const r = body.op === "link" ? await (async () => { const l = await store.get(String(d.id || "")); if (!l || l._type !== "lead") return { code: 404, body: { error: "Заказ не найден" } }; const cu = l.cust ? await store.get(l.cust).catch(() => null) : null; return { code: 200, body: { cust: l.cust || "", offline: !!cu?.offline, invite: cu?.offline ? cu.invite || "" : "" } }; })()
+        : body.op === "leads" ? await S.opLeads(store, d.status) : body.op === "save" ? await S.opLeadSave(store, d, by) : body.op === "bulk" ? await S.opLeadBulk(store, d, by)
         : body.op === "driver" ? await S.opDriverList(store, d.days) : body.op === "clients" ? await S.opClientsLite(store) : body.op === "order" ? await S.opManualOrder(store, d, by) : body.op === "client" ? await S.opClientCreate(store, d, by) : { code: 400, body: { error: "Неизвестное действие" } };
-      if (r.body && r.body.lead) { const { cost, ...l } = r.body.lead; r.body.lead = l; }
       // новый заказ — ссылка для клиента: по личной ссылке он войдёт и увидит свой заказ с маршрутом
+      if (body.op === "link" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} } r.body = { link: BOT ? `https://t.me/${BOT}?startapp${r.body.invite ? "=c_" + r.body.invite : ""}` : "https://trendburo.com.ua", offline: r.body.offline }; }
       if (body.op === "order" && r.code === 200) { if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
         const cu = await store.get(String(d.customer || "")).catch(() => null);
         r.body.link = BOT ? `https://t.me/${BOT}?startapp${cu?.offline && cu.invite ? "=c_" + cu.invite : ""}` : "https://trendburo.com.ua"; }
