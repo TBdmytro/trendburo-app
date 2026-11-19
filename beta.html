@@ -4534,6 +4534,7 @@ const soName=l=>(l.delivery&&l.delivery.name)||(l.tg&&l.tg.name)||(l.tg&&l.tg.us
 async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="boutique",origin="";
   const s=push("Заказы",`<div class="so"><div class="so-top"><button class="btn soft so-sm" data-sonew>+ Заказ</button><button class="btn soft so-sm" data-sodrv>Водителю</button></div><div class="so-tiles"></div><div class="chips so-ch"></div><div class="so-list"><p class="ace">Завантажуємо…</p></div><div style="height:150px"></div></div>
     <div class="so-bar" hidden><div class="so-bt"><b></b><span></span></div><div class="so-opt"></div><div class="so-ba"><button class="btn soft" data-soclr>Снять</button><button class="btn" data-sogo>Следующий этап</button></div></div>`);
+  {const f=s.querySelector("footer.cft");if(f)f.remove()} // рабочий экран — без блока «Ми на звʼязку» внизу
   const L=s.querySelector(".so-list"),bar=s.querySelector(".so-bar");
   const draw=()=>{const cnt=k=>all.filter(l=>soSt(l)===k).length,ua=l=>(l.dest||"ua")==="ua";
     const packAt=all.filter(l=>["bought","received"].includes(l.status)&&l.packAt).map(l=>l.packAt).sort()[0];
