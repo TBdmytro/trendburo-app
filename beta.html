@@ -391,7 +391,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .sn-brs{display:flex;flex-wrap:wrap;gap:6px}.sn-br{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:8px 12px;font:inherit;font-size:13.5px;display:flex;gap:6px;align-items:baseline;cursor:pointer}.sn-br span{font-size:11.5px;color:var(--g2)}
 .sn-bh{display:flex;align-items:center;gap:10px;margin-bottom:8px}.sn-bh b{font-size:16px}.sn-bh span{font-size:12.5px;color:var(--g2)}.sn-cs{display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;scrollbar-width:none}.sn-cs .so-ch2{flex:none}
 .sn-pc .im{background:var(--soft)!important;padding:0}.sn-pc .im img{object-fit:cover!important}.sn-pc{padding:0 0 8px;overflow:hidden}.sn-pc .im{border-radius:14px 14px 10px 10px}.sn-pc b,.sn-pc small,.sn-pc .pr{padding:0 8px}
-.sn-it .im img{object-fit:cover!important}
+.sn-it .im img{object-fit:contain!important;background:#fff}
 .sn-cc{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);background:var(--bg);border-radius:16px;padding:12px;text-align:left;font:inherit;color:inherit;cursor:pointer}.sn-cc.on{border-color:var(--ink);background:var(--soft)}
 .sn-cc .av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3d4046,#1d1f22);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}.sn-cc .tx{display:flex;flex-direction:column;gap:3px;min-width:0}.sn-cc b{font-size:15px}.sn-cc .ok{font-style:normal;font-size:11.5px;color:#1f9459;font-weight:700}
 .sn-cc .hd{font-size:13px}.sn-cc .hd em{font-style:normal;font-size:10px;font-weight:700;background:var(--soft);border-radius:5px;padding:1px 5px;color:var(--g2);margin-left:4px}.sn-cc .hd em:first-child{margin-left:0}.sn-cc .st{font-size:12.5px;color:var(--g2)}
@@ -420,7 +420,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so-scr .so-ck{padding:10px 6px;display:flex;cursor:pointer}.so-scr .so-ck input{position:absolute;opacity:0;width:1px;height:1px}.so-scr .so-ck i{width:22px;height:22px;border-radius:50%;border:1.6px solid #c7c7cc;display:grid;place-items:center;transition:all .2s}
 .so-scr .so-ck input:checked+i{background:#2a6fb8;border-color:#2a6fb8}.so-scr .so-ck input:checked+i::after{content:"";width:6px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
 .so-scr .so-tx{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:12px 14px 12px 0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
-.so-th{width:48px;height:48px;border-radius:12px;flex:none;overflow:hidden;background:color-mix(in srgb,var(--c) 14%,#fff);display:grid;place-items:center}.so-th img{width:100%;height:100%;object-fit:cover}.so-th b{color:var(--c);font-size:18px;font-weight:800}
+.so-th{width:48px;height:48px;border-radius:12px;flex:none;overflow:hidden;background:color-mix(in srgb,var(--c) 14%,#fff);display:grid;place-items:center}.so-th img{width:100%;height:100%;object-fit:contain;background:#fff}.so-th b{color:var(--c);font-size:18px;font-weight:800}
 .so-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.so-m b{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.so-m small{font-size:13px;color:var(--g2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .so-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}.so-tags span{font-size:11px;font-weight:600;color:#6b6d72;background:#f2f2f7;border-radius:6px;padding:2px 6px}.so-tags .t-am{color:#8a5c12;background:#fbf1de}.so-tags .t-rd{color:#a8343a;background:#fde8e8}
 .so-rr{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}.so-rr b{font-size:14.5px;font-weight:700}.so-rr small{font-size:11.5px;font-weight:700;color:#1f9459}
@@ -452,7 +452,7 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so-del{border:0;background:none;color:#a8343a;font:inherit;font-size:14px;font-weight:600;padding:10px 0;cursor:pointer;align-self:flex-start}.so-del.on{background:#a8343a;color:#fff;border-radius:99px;padding:9px 14px}
 .so-mrg .so-sp small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .so-sp{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:14px;padding:8px;font:inherit;cursor:pointer}.so-sp:disabled{opacity:1;cursor:default}
-.so-spi{width:44px;height:55px;border-radius:10px;background:#e9e9ee;overflow:hidden;flex:none}.so-spi img{width:100%;height:100%;object-fit:cover}.so-spt{display:flex;flex-direction:column;min-width:0}.so-spt b{font-size:14px}.so-spt small{font-size:12.5px;color:var(--g2)}
+.so-spi{width:44px;height:55px;border-radius:10px;background:#e9e9ee;overflow:hidden;flex:none}.so-spi img{width:100%;height:100%;object-fit:contain;background:#fff}.so-spt{display:flex;flex-direction:column;min-width:0}.so-spt b{font-size:14px}.so-spt small{font-size:12.5px;color:var(--g2)}
 .so-sib{display:flex;flex-direction:column;gap:6px;background:var(--bg);border-radius:12px;padding:10px}.so-sib small{display:block;font-size:12.5px;color:var(--g2)}.so-sib .so-ch2{align-self:flex-start}
 /* ── маршрут заказа v2 ── */
 .r2c{position:relative;display:block;width:calc(100% - 24px);margin:0 12px;border:0;font:inherit;text-align:left;color:#fff;border-radius:28px;background:linear-gradient(160deg,#34373d,#1d1f22 60%,#141517);padding:16px 14px 6px;overflow:hidden;box-shadow:0 18px 40px rgba(29,31,34,.28);isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);clip-path:inset(0 round 28px)}
@@ -4698,7 +4698,7 @@ function snPickHTML(C,dest){return `<div class="sn-seg"><button class="${C.mode=
   ${C.mode==="cat"?`<input type="search" class="snC" value="${esc(C.cq)}" placeholder="Поиск: прада рюкзак, lv сумка" autocomplete="off"><div class="sn-res">${snCatRes(C,dest)}</div>`
   :`<div class="frow"><input type="text" class="mB" placeholder="Бренд" list="nBL"><input type="text" class="mS" placeholder="Размер"></div><datalist id="nBL">${[...new Set(P.map(p=>p.brand))].sort().map(b=>`<option>${esc(b)}</option>`).join("")}</datalist>
     <input type="text" class="mT" placeholder="Модель: Re-Edition 2005, чёрный"><div class="frow"><input type="text" class="mC" placeholder="Цвет"><input type="text" class="mP" placeholder="Цена, €" inputmode="decimal"></div>
-    <label class="sn-ph${C.mph?" on":""}"><input type="file" accept="image/*" class="mF" hidden><span>${C.mph?`<img src="${esc(C.mph)}" alt="">Фото добавлено · заменить`:"📷 Добавить фото вещи — скрин из Instagram или фото из бутика"}</span></label><input type="text" class="mU" placeholder="Ссылка на вещь (необязательно)" inputmode="url"><input type="text" class="mN" placeholder="Заметка к вещи: как на скрине, нужен чек…"><button class="btn soft" data-madd>+ Добавить в заказ</button>`}`}
+    <label class="sn-ph${C.mph?" on":""}"><input type="file" accept="image/*" class="mF" hidden><span>${C.mph?`<img src="${esc(C.mph)}" alt="">Фото добавлено · заменить`:"📷 Добавить фото вещи — скрин из Instagram или фото из бутика"}</span></label><input type="text" class="mU" placeholder="Ссылка на вещь (необязательно)" inputmode="url"><input type="text" class="mN" placeholder="Заметка к вещи: как на скрине, нужен чек…"><button class="btn" data-madd>+ Добавить эту вещь в заказ</button><div class="hint">Нажмите — вещь появится в списке заказа</div>`}`}
 /* обработчик выбора: вернёт вещь (или null), сам перерисует результаты поиска */
 function snPickClick(t,C,root,dest,redraw){let x;
   if(x=t.closest("[data-md]")){C.mode=x.dataset.md;redraw();return null}
@@ -4936,9 +4936,13 @@ function soOrder(l,reload,all=[]){if(!l)return;let dst=l.dest||"ua";const ua=dst
     if(x=t.closest("[data-stg]")){stage=x.dataset.stg;d.querySelectorAll("[data-stg]").forEach(y=>y.classList.toggle("on",y===x));return}
     if(x=t.closest("[data-opy]")){pay=x.dataset.opy;d.querySelectorAll("[data-opy]").forEach(y=>y.classList.toggle("on",y===x));d.querySelector(".so-ppw").hidden=pay!=="prepay";return}
     if(x=t.closest("[data-bm]")){bm=x.dataset.bm;d.querySelectorAll("[data-bm]").forEach(y=>y.classList.toggle("on",y===x));return}
-    const sv=t.closest("[data-sosave]");if(!sv)return;sv.disabled=true;const v=id=>{const y=d.querySelector(id);return y?y.value.trim():undefined};
+    const sv=t.closest("[data-sosave]");if(!sv)return;
+    if(adding&&C.mode==="man"){const r=B.querySelector(".sn-add"),mv=c=>{const y=r.querySelector(c);return y?y.value.trim():""};if(mv(".mB")||mv(".mT")){const ph=C.mph||"";C.mph="";items.push({brand:mv(".mB"),title:mv(".mT"),size:mv(".mS"),color:mv(".mC"),price:mv(".mP"),photo:ph,url:/^https:\/\//.test(mv(".mU"))?mv(".mU"):"",note:mv(".mN")});adding=false;drawI()}}
+    sv.disabled=true;const v=id=>{const y=d.querySelector(id);return y?y.value.trim():undefined};
     const body={id:l._id,items:items.map(i=>({id:i.id,brand:i.brand,title:i.title,size:i.size,color:i.color,price:i.price,cost:i.cost,qty:i.qty,photo:i.photo,icon:i.icon,url:i.url,note:i.note})),origin:v("#soOr"),buyMode:bm,note:v("#soNo"),notify:d.querySelector("#soNt").checked,delivery:{name:v("#soDn"),phone:v("#soDp"),city:v("#soDc"),address:v("#soDa"),...(dst==="ua"?{npPoint:v("#soDb")}:{})},...(dst==="ua"?{}:{track:v("#soTr")}),...(dst!==(l.dest||"ua")?{dest:dst}:{}),...(stage!==soSt(l)?{status:stage}:{}),...(pay&&(pay!==pay0||(pay==="prepay"&&v("#soPp")!==String(l.prepaid||"")))?{pay,prepaid:v("#soPp")}:{}),handover:d.querySelector("#soHd").checked,test:d.querySelector("#soTs").checked};
-    try{await soCall("save",body);toast("Сохранено");closeSheet();reload()}catch(y){toast(y.message);sv.disabled=false}})}
+    try{const r=await soCall("save",body),got=r&&r.lead&&r.lead.items?r.lead.items.length:body.items.length;
+      if(got<body.items.length){toast("Сохранилось вещей: "+got+" из "+body.items.length+" — у вещи нужен бренд или модель");sv.disabled=false;return}
+      const n=body.items.reduce((a,i)=>a+(+i.qty||1),0);toast("Сохранено · в заказе "+n+" "+(n===1?"вещь":n<5?"вещи":"вещей"));closeSheet();reload()}catch(y){toast(y.message);sv.disabled=false}})}
 
 /* водителю: что отправлено в Украину — скопировать таблицей (Excel / Telegram) */
 async function soDriver(){let days=7,rows=[];
