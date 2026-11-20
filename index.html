@@ -1022,6 +1022,8 @@ details.calc .rows2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .dlv-line{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:12px;margin-top:14px;font-size:13.5px;color:rgba(255,255,255,.6)}
 .dlv-pill{font-weight:700;font-size:13px;padding:5px 11px;border-radius:99px;white-space:nowrap;background:rgba(255,255,255,.1);color:#fff}
 .dlv-pill.ok{background:rgba(127,209,164,.16);color:#7fd1a4}
+.dlv-sr{display:flex;flex-direction:column;gap:7px;padding:0 4px 2px;margin-top:-4px}.dlv-sr .bar{display:block;height:5px;border-radius:5px;background:rgba(255,255,255,.12);overflow:hidden}
+.dlv-sr .bar i{display:block;height:100%;border-radius:5px;background:#cdbb9c;transition:width .5s}.dlv-sr small{font-size:12.5px;color:rgba(255,255,255,.66)}
 .tkw{display:flex;filter:drop-shadow(0 10px 22px rgba(0,0,0,.35))}
 .tk{position:relative;background:#f5f4f0;color:#1f2125;overflow:hidden}
 .tk-main{flex:1;min-width:0;border-radius:16px 4px 4px 16px;padding:15px 16px 16px;
@@ -2857,10 +2859,27 @@ function popAll(){while(stack.length){const s=stack.pop();s.remove()}$$(".behind
 const MULTI_DISC={min:2,brand:/^stone\s*island$/i,pct:0.10,base:40,per:10};
 const multiDisc=items=>{const L=items.filter(x=>x.p&&MULTI_DISC.brand.test(x.p.brand||"")&&+x.p.mk>0&&+x.p.price>+x.p.mk);if(L.length<MULTI_DISC.min)return 0;
   const mk=L.reduce((a,x)=>a+(+x.p.mk),0),S=L.reduce((a,x)=>a+(+x.p.price),0)-mk,t=Math.max(S*MULTI_DISC.pct,MULTI_DISC.base+MULTI_DISC.per*L.length);return Math.max(0,Math.floor((mk-t)/5)*5)};
-function quote(base,d,disc=0){const rows=[["Вартість",base]];let t=base;if(disc>0){rows.push(["Знижка за 2+ речі Stone Island","−"+eur(disc)]);t=base-disc}
-  if(d==="ua")rows.push(["Доставка в Україну","безкоштовно"]);
+// Sporty & Rich (власник, 20.11): 2+ речі за цінами бутика до 400 € — −10 € за кожну річ (наша наценка на замовлення не менше 40 €, і замовлення не дорожче 440 € — як замовлення на 400 €);
+// від 400 € за цінами бутика — все замовлення = бутик +10%, вгору до 5 €. Доставка в Україну +10 €, якщо речей S&R у кошику менше ніж на 300 € (після знижки).
+const SR_RE=/^sporty\s*&\s*rich$/i,SR_SHIP=10,SR_FREE=300,isSR=p=>!!p&&SR_RE.test(p.brand||""),up5=v=>Math.ceil(v/5-1e-9)*5;
+function srCart(items){const L=items.filter(x=>isSR(x.p)),shelf=L.reduce((a,x)=>a+(+x.p.price||0),0);if(!L.length)return{n:0,shelf:0,disc:0,t:0};
+  let t=shelf;if(L.length>=2&&L.every(x=>+x.p.mk>0&&+x.p.price>+x.p.mk)){const B=L.reduce((a,x)=>a+(+x.p.price-+x.p.mk),0);
+    t=B>=400?up5(B*1.1):Math.min(440,Math.max(shelf-10*L.length,up5(B+40)));t=Math.min(t,shelf)}
+  return{n:L.length,shelf,disc:Math.max(0,shelf-t),t}}
+const cartDiscs=items=>{const sr=srCart(items);return{sr,ds:[["Знижка за 2+ речі Stone Island",multiDisc(items)],["Знижка за кошик Sporty & Rich",sr.disc]],ship:sr.n&&sr.t<SR_FREE?SR_SHIP:0}};
+/* карточка товару S&R: «+10 €» і шкала «Ще N € — і доставка безкоштовна» (кошик разом із цією річчю) */
+function srDl(box,k,it){const pl=box.querySelector("[data-pl]"),w=box.querySelector(".dlv-line");if(!pl||!w)return;let el=box.querySelector(".dlv-sr");
+  if(!el){el=document.createElement("div");el.className="dlv-sr";w.after(el)}
+  if(k!=="ua"){el.hidden=true;return}
+  const L=cart.map(c=>({...c,p:findItem(c.id)})).filter(x=>x.p);if(!L.some(x=>x.id===it.id))L.push({id:it.id,p:it});
+  const t=srCart(L).t,rem=SR_FREE-t;el.hidden=false;
+  if(rem>0){pl.className="dlv-pill";pl.textContent="+"+eur(SR_SHIP);el.innerHTML=`<span class="bar"><i style="width:${Math.max(4,Math.min(100,Math.round(t/SR_FREE*100)))}%"></i></span><small>Ще ${eur(rem)} — і доставка безкоштовна</small>`}
+  else{pl.className="dlv-pill ok";pl.textContent="безкоштовно";el.innerHTML=`<small>Кошик від ${eur(SR_FREE)} — доставка безкоштовна</small>`}}
+function quote(base,d,disc=0,o={}){const rows=[["Вартість",base]];const ds=Array.isArray(disc)?disc:[["Знижка за 2+ речі Stone Island",disc]];let dd=0;
+  ds.forEach(([l,v])=>{if(v>0){rows.push([l,"−"+eur(v)]);dd+=v}});let t=base-dd,ship=0;
+  if(d==="ua"){ship=+o.ship||0;rows.push(["Доставка в Україну",ship>0?"+"+eur(ship):"безкоштовно"]);t+=ship}
   if(d==="eu")rows.push(["Доставка по Європі","за тарифом"]);
-  if(d==="dxb")rows.push(["Доставка в Дубай","за запитом"]);return{rows,t}}
+  if(d==="dxb")rows.push(["Доставка в Дубай","за запитом"]);return{rows,t,disc:dd,ship}}
 const rowsHTML=q=>q.rows.map(r=>`<div class="row"><span>${r[0]}</span><span class="num">${typeof r[1]==="number"?eur(r[1]):r[1]}</span></div>`).join("");
 const SIZES={shoes:{w:["35","36","37","38","39","40","41"],m:["40","41","42","43","44","45"]},clothing:{w:["XS","S","M","L","XL"],m:["S","M","L","XL","XXL"]}};
 const TONES=[["Noir","#1f1f1f"],["Gold","#a0522d"],["Craie","#dccfbb"],["Etoupe","#8d7c6b"],["Bleu","#5b6b7a"],["Rouge","#a3172d"],["Vert","#3b5a3a"],["Rose","#c98f9c"],["Argent","#8e9297"]];
@@ -2952,7 +2971,7 @@ function dlvMount(root,k,onChange){
     $q(".dlv-seg").style.setProperty("--i",Object.keys(DLZ()).indexOf(k));
     root.querySelectorAll("[data-dz]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.dz===k)));
     $q("[data-v]").innerHTML=z.free?svgVan():svgPlane();$q("[data-sd]").innerHTML="Відправка<br>"+z.st;$q("[data-to]").textContent=z.to;
-    const pl=$q("[data-pl]");pl.className="dlv-pill"+(z.free?" ok":"");pl.textContent=z.free?"безкоштовно":"+ доставка";
+    const pl=$q("[data-pl]");pl.className="dlv-pill"+(z.free?" ok":"");pl.textContent=z.free?"безкоштовно":"+ доставка";if(root._sr)root._sr(k);
     $q("[data-nm]").textContent=z.name;
     if(back){drive(z,false);setTimeout(()=>flap(z.code),RMo()?0:180);setTimeout(()=>{roll($q("[data-days]"),"<span>"+esc(z.days)+"</span>");roll($q("[data-cost]"),z.free?'<span class="tk-free">безкоштовно</span>':"<span>+ доставка</span>")},RMo()?0:260);if(!RMo()){restart($q(".tk-stub"),"tear");setTimeout(()=>restart(sh,"go"),330)}}
     else{setCode(z.code);veh.innerHTML=z.free?svgVan("#1f2125"):svgPlane("#1f2125");$q("[data-days]").innerHTML="<span>"+esc(z.days)+"</span>";$q("[data-cost]").innerHTML=z.free?'<span class="tk-free">безкоштовно</span>':"<span>+ доставка</span>"}
@@ -3251,7 +3270,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   if(showDl){const box=s.querySelector("#pvd");box.innerHTML=dlvHTML(d);
     {const dl=box.querySelector(".dlv"),sc=s.querySelector(".scroll"),open=()=>dl.classList.add("open"),
        onSc=()=>{const y=sc.scrollTop;if(y>24)open();else if(y<6&&!dl.querySelector(".dlv-in.on"))dl.classList.remove("open")};
-     sc.addEventListener("scroll",onSc,{passive:true});dl.addEventListener("click",e=>{if(!e.target.closest(".dlv-fb,.dlv-seg"))open()})}dlvMount(box,d,k=>{d=k;prefs.dest=k;store.set("tb_prefs",prefs);draw();if(!ob.dataset.added)setLbl(btnLabel())})}
+     sc.addEventListener("scroll",onSc,{passive:true});dl.addEventListener("click",e=>{if(!e.target.closest(".dlv-fb,.dlv-seg"))open()})}if(isSR(it)){box._sr=k=>srDl(box,k,it);box._sr(d)}dlvMount(box,d,k=>{d=k;prefs.dest=k;store.set("tb_prefs",prefs);draw();if(!ob.dataset.added)setLbl(btnLabel())})}
   {const hb=s.querySelector("[data-how]");if(hb)hb.onclick=howSheet}
   // рамка фото: от верхней плашки до панели; панель на первом экране видна целиком — до конца блока доставки, над кнопкой
   {const hero=s.querySelector(".pv-hero.ph");if(hero){const pan=s.querySelector(".pv-panel"),ft=s.querySelector(".foot");
@@ -4206,18 +4225,18 @@ function openCart(){let d=prefs.dest||"ua",done=null;
     if(done){foot.hidden=true;box.innerHTML=`<div class="bigtitle" style="padding-top:12px"><h1>Кошик</h1></div><div class="done"><span class="cap">Замовлення ${done.no}</span><h3>Передано менеджеру</h3><p>Менеджер перевірить наявність і розмір і напише вам у Telegram з реквізитами для оплати. Маршрут посилки — у «Моїх замовленнях».</p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn sm" data-act="account">Мої замовлення</button><a class="btn sm soft" href="${esc((CONTACTS.find(c=>/менеджер/i.test(c.label))||CONTACTS[0]).url)}" target="_blank" rel="noopener">Написати менеджеру</a></div></div><div class="cbwrap after"><div class="cbstack">${bnFor("after").map(cbHTML).join("")}${AFTER_SOON}</div></div>`;return}
     const items=cart.map(c=>({...c,p:findItem(c.id)})).filter(x=>x.p);
     if(!items.length){foot.hidden=true;box.innerHTML=`<div class="bigtitle" style="padding-top:12px"><h1>Кошик</h1></div><div class="empty"><h3>Кошик порожній</h3><p>Додавайте речі з каталогу — оформимо одним замовленням.</p><button class="btn sm" data-act="gocat" style="margin-top:8px">До каталогу</button></div>`;return}
-    foot.hidden=false;const sum=items.reduce((a,x)=>a+priceFor(x.p,d),0),q=quote(sum,d,multiDisc(items));
+    foot.hidden=false;const sum=items.reduce((a,x)=>a+priceFor(x.p,d),0),cd=cartDiscs(items),q=quote(sum,d,cd.ds,{ship:cd.ship});
     box.innerHTML=`<div class="bigtitle" style="padding-top:12px"><div><div class="sub num">${items.length} ${plural(items.length,["річ","речі","речей"])}</div><h1>Кошик</h1></div></div>
      <div class="pad">${items.map((x,i)=>`<div class="cartrow"><button class="th" data-act="product" data-id="${x.p.id}" aria-label="${esc(x.p.name)}">${shapeSVG(x.p.shape,x.hex||x.p.c,"")}</button><div class="tx"><span class="b">${esc(x.p.brand)}</span><span class="n">${esc(x.p.name)}</span><span class="z">${[x.p.st?"в наявності · "+x.p.st.city:"",x.color?x.color+(x.ok===false?" (під замовлення)":""):"",x.size?(x.size==="?"?"розмір підберемо":"розмір "+x.size):""].filter(Boolean).join(" · ")||CATS[x.p.cat]}</span><span class="p num">${eur(priceFor(x.p,d))}</span></div><button class="rm" data-rm="${i}" aria-label="Прибрати">×</button></div>`).join("")}</div>
      ${bnFor("cart").length?`<div class="cbwrap" style="margin-top:14px"><div class="cbstack">${bnFor("cart").slice(0,2).map(cbHTML).join("")}</div></div>`:""}
      <div class="sec"><div class="sech"><h2>Доставка</h2></div><div class="pad"><div class="seg" role="group" aria-label="Доставка">${[["ua","Україна"],["eu","Європа"],["dxb","Дубай"]].map(([k,v])=>`<button data-d="${k}" aria-pressed="${k===d}">${dIcon(k,15)}${v}</button>`).join("")}</div></div></div>
      <div class="pad" style="margin-top:14px"><div class="group">${rowsHTML(q)}<div class="row tot"><span>Разом</span><span class="num">${eur(q.t)}${d!=="ua"?" +":""}</span></div></div>
-     <p class="muted" style="font-size:13px;margin-top:10px">${d==="ua"?"Доставка в Україну безкоштовна, відправка "+SHIPF()+" — точну дату менеджер вкаже в замовленні. ":d==="eu"?"Доставка по Європі — за тарифом перевізника, розрахує менеджер. ":"Вартість доставки в Дубай менеджер назве до викупу. "}Менеджер підтвердить наявність і розміри до викупу.</p><button class="btn soft block" data-tgord style="margin-top:12px;width:100%">Оформити через менеджера в Telegram</button></div><div style="height:100px"></div>`;
+     <p class="muted" style="font-size:13px;margin-top:10px">${d==="ua"?(q.ship?"Речі Sporty & Rich: доставка "+eur(SR_SHIP)+", від "+eur(SR_FREE)+" — безкоштовно. Відправка ":"Доставка в Україну безкоштовна, відправка ")+SHIPF()+" — точну дату менеджер вкаже в замовленні. ":d==="eu"?"Доставка по Європі — за тарифом перевізника, розрахує менеджер. ":"Вартість доставки в Дубай менеджер назве до викупу. "}Менеджер підтвердить наявність і розміри до викупу.</p><button class="btn soft block" data-tgord style="margin-top:12px;width:100%">Оформити через менеджера в Telegram</button></div><div style="height:100px"></div>`;
     s.querySelector("#cft").textContent=eur(q.t)+(d!=="ua"?" +":"");
     box.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{d=b.dataset.d;draw()});
     // заказ не через приложение: открываем чат менеджера с готовым текстом заказа (товары, размеры, цены, доставка)
     {const tb=box.querySelector("[data-tgord]");if(tb)tb.onclick=()=>{const dn={ua:"Україна",eu:"Європа",dxb:"Дубай"}[d];
-      const txt="Вітаю! Хочу оформити замовлення:\n"+items.map((x,i)=>`${i+1}. ${x.p.brand} — ${x.p.name}${x.color?", "+x.color:""}${x.size?", розмір "+(x.size==="?"?"підібрати":x.size):""} — ${eur(priceFor(x.p,d))}`).join("\n")+`${q.t<sum?"\nЗнижка за 2+ речі: −"+eur(sum-q.t):""}\nРазом: ${eur(q.t)}${d!=="ua"?" + доставка":""}\nДоставка: ${dn}`;
+      const txt="Вітаю! Хочу оформити замовлення:\n"+items.map((x,i)=>`${i+1}. ${x.p.brand} — ${x.p.name}${x.color?", "+x.color:""}${x.size?", розмір "+(x.size==="?"?"підібрати":x.size):""} — ${eur(priceFor(x.p,d))}`).join("\n")+`${q.rows.filter(r=>/^Знижка/.test(r[0])||(r[0]==="Доставка в Україну"&&q.ship)).map(r=>"\n"+r[0]+": "+r[1]).join("")}\nРазом: ${eur(q.t)}${d!=="ua"?" + доставка":""}\nДоставка: ${dn}`;
       const mg=(CONTACTS.find(c=>/менеджер/i.test(c.label))||{url:"https://t.me/trendburomanager"}).url,u=mg+(mg.includes("?")?"&":"?")+"text="+encodeURIComponent(txt);
       try{if(TGW&&TGW.openTelegramLink){TGW.openTelegramLink(u);return}}catch(e){}open(u,"_blank")}}
     box.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{const it=items[+b.dataset.rm];cart=cart.filter(c=>!(c.id===it.id&&c.size===it.size&&(c.color||"")===(it.color||"")));store.set("tb_cart",cart);updateCounts();draw()});
@@ -4886,8 +4905,8 @@ function checkoutSheet(items,d,q,done){const v=myDelivery();
     if(pr){const el=sh.querySelector(pr[0]);if(el){el.focus();el.classList.add("bad");setTimeout(()=>el.classList.remove("bad"),1200)}toast(pr[1]);return}
     const b=e.currentTarget;b.disabled=true;b.textContent="Надсилаємо…";await saveDelivery(val).catch(()=>{});
     const lines=items.map((x,i)=>`${i+1}. ${x.p.brand} — ${x.p.name}${x.color?", колір "+x.color:""}${x.size?", розмір "+(x.size==="?"?"допомогти підібрати":x.size):""} — ${eur(priceFor(x.p,d))}`).join("\n");
-    const qd=q.rows.find(r=>/Знижка/.test(r[0]));const msg=`Вітаю! Нове замовлення:\n${lines}${qd?"\n"+qd[0]+": "+qd[1]:""}\nРазом: ${eur(q.t)}${d!=="ua"?" + доставка":""}\n\n${deliveryText(val,d)}`;
-    const meta={kind:"order",items:items.map(x=>({id:x.id,brand:x.p.brand,title:x.p.name,price:priceFor(x.p,d),size:x.size,color:x.color})),total:q.t,disc:qd?Math.round(q.rows[0][1]-q.t):0,dest:d,delivery:val};
+    const qx=q.rows.filter(r=>/^Знижка/.test(r[0])||(r[0]==="Доставка в Україну"&&q.ship));const msg=`Вітаю! Нове замовлення:\n${lines}${qx.map(r=>"\n"+r[0]+": "+r[1]).join("")}\nРазом: ${eur(q.t)}${d!=="ua"?" + доставка":""}\n\n${deliveryText(val,d)}`;
+    const meta={kind:"order",items:items.map(x=>({id:x.id,brand:x.p.brand,title:x.p.name,price:priceFor(x.p,d),size:x.size,color:x.color})),total:q.t,disc:Math.round(q.disc||0),ship:q.ship||0,dest:d,delivery:val};
     const r=LIVE?await sendLead(meta,msg):{number:"TB-"+String(1000+Math.floor(Math.random()*9000))};
     if(!r){b.disabled=false;b.textContent="Підтвердити замовлення";toast("Не вдалося надіслати — перевірте інтернет");return}
     closeSheet();done(r.number,msg);if(LIVE)loadMe()}}
