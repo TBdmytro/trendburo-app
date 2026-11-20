@@ -448,6 +448,9 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .r2par .tx{display:flex;flex-direction:column;gap:1px}.r2par .tx b{font-size:13.5px}.r2par .tx small{font-size:11.5px;color:var(--muted)}.r2par .tx i{font-style:normal;font-size:11px;font-weight:700;color:var(--c)}
 .sn-orig{display:flex;flex-direction:column;gap:6px}.sn-orig label{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center;font-size:13.5px;font-weight:600}
 .so-split{display:flex;flex-direction:column;gap:6px;background:#f2f2f7;border-radius:16px;padding:12px}.so-split b{font-size:14px}.so-split small{font-size:12.5px;color:var(--g2)}
+.so-sp{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:14px;padding:8px;font:inherit;cursor:pointer}.so-sp:disabled{opacity:1;cursor:default}
+.so-spi{width:44px;height:55px;border-radius:10px;background:#e9e9ee;overflow:hidden;flex:none}.so-spi img{width:100%;height:100%;object-fit:cover}.so-spt{display:flex;flex-direction:column;min-width:0}.so-spt b{font-size:14px}.so-spt small{font-size:12.5px;color:var(--g2)}
+.so-sib{display:flex;flex-direction:column;gap:6px;background:var(--bg);border-radius:12px;padding:10px}.so-sib small{display:block;font-size:12.5px;color:var(--g2)}.so-sib .so-ch2{align-self:flex-start}
 /* ── маршрут заказа v2 ── */
 .r2c{position:relative;display:block;width:calc(100% - 24px);margin:0 12px;border:0;font:inherit;text-align:left;color:#fff;border-radius:28px;background:linear-gradient(160deg,#34373d,#1d1f22 60%,#141517);padding:16px 14px 6px;overflow:hidden;box-shadow:0 18px 40px rgba(29,31,34,.28);isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);clip-path:inset(0 round 28px)}
 button.r2c{cursor:pointer}
@@ -4667,7 +4670,7 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="
     if(t.closest("[data-soclr]")){sel.clear();draw();return}
     if(t.closest("[data-sogo]")){const b=t.closest("[data-sogo]");b.disabled=true;
       try{const r=await soCall("bulk",{ids:[...sel],next:true,buyMode:mode,origin});toast(`Обновлено ${r.n}${r.sent?" · клиентам: "+r.sent:""}`);hap("medium");sel.clear();await load()}catch(x){toast(x.message)}b.disabled=false;return}
-    const o=t.closest("[data-soopen]");if(o){soOrder(all.find(l=>l._id===o.dataset.soopen),load);return}
+    const o=t.closest("[data-soopen]");if(o){soOrder(all.find(l=>l._id===o.dataset.soopen),load,all);return}
     if(t.closest("[data-sonew]")){soNew(load);return}
     if(t.closest("[data-sodrv]")){soDriver();return}});
   load()}
@@ -4851,7 +4854,8 @@ async function soNew(reload,fresh){let cl=[],step=0,link=false,hl=-1;
   else draw()}
 
 /* карточка заказа: вещи (добавить, убрать, размер, цена), этап вручную, откуда поедет, доставка, оплата */
-function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.delivery||{},F=soFlow(l);let stage=soSt(l),bm=l.buyMode||"boutique",adding=false;
+function soOrder(l,reload,all=[]){if(!l)return;let dst=l.dest||"ua";const ua=dst==="ua",dv=l.delivery||{},F=soFlow(l);let stage=soSt(l),bm=l.buyMode||"boutique",adding=false,spl=-1;
+  const sibs=l.group?all.filter(x=>x.group===l.group&&x._id!==l._id&&x.status!=="cancelled"):[];
   const items=(l.items||[]).map(i=>({...i})),C={mode:"cat",cq:"",br:"",ct:""};
   const pay0=l.payLater?(l.paidAt?"paid":l.prepaid?"prepay":"later"):(["new","work"].includes(l.status)?"":"paid");let pay=pay0;
   const k0=soSt(l),it0=(l.items||[])[0]||{};
@@ -4864,16 +4868,27 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
     <div class="so-chs">${[["boutique","Бутик"],["online","Сайт бренда"]].map(([k,v])=>`<button class="so-ch2${bm===k?" on":""}" data-bm="${k}">${v}</button>`).join("")}</div>
     <label class="so-tg"><input type="checkbox" id="soHd" ${l.handover?"checked":""}> 🤝 Лично в руки (без почты)</label>
     <label class="so-tg"><input type="checkbox" id="soTs" ${l.test?"checked":""}> 🧪 Тестовый заказ — проходит все этапы, но не считается в продажах и заработке</label>
-    <div class="fl">Доставка · ${l.handover?"место передачи":ua?"Нова пошта":"DHL"}${l.noAddress?' · <b style="color:#a8343a">нет адреса</b>':""}</div>
-    <div class="frow"><input type="text" id="soDn" value="${esc(dv.name||"")}" placeholder="Отримувач"><input type="tel" id="soDp" data-ua="${ua?1:0}" value="${esc(snPhone(dv.phone||"",ua))}" placeholder="Телефон" inputmode="tel"></div>
-    <div class="frow"><input type="text" id="soDc" value="${esc(dv.city||"")}" placeholder="Місто">${ua?`<input type="text" id="soDb" value="${esc(dv.npPoint||"")}" placeholder="Відділення №" inputmode="numeric">`:`<input type="text" id="soTr" value="${esc(l.track||"")}" placeholder="Трек DHL">`}</div>
-    <input type="text" id="soDa" value="${esc(dv.address||"")}" placeholder="Адреса (якщо курʼєр)">
+    <div class="fl">Куда едет эта посылка</div><div class="sn-seg so-dst">${[["ua","🇺🇦 Україна"],["eu","🇪🇺 Європа"],["dxb","🇦🇪 Дубай"]].map(([k,v])=>`<button class="${dst===k?"on":""}" data-odst="${k}">${v}</button>`).join("")}</div>
+    <div class="so-dv"></div>
     <label class="so-tg"><input type="checkbox" id="soNt" checked> Сообщить клиенту о смене этапа</label>
     <textarea id="soNo" placeholder="Заметка — только для нас" style="min-height:60px">${esc(l.note||"")}</textarea></div>`,`<button class="btn" data-sosave style="flex:1">Сохранить</button>`);
   const B=d.querySelector(".sn");snNoJump(d);
+  const dvVal=id=>{const y=B.querySelector(id);return y?y.value:undefined};
+  const drawDv=()=>{const u=dst==="ua",o={n:dvVal("#soDn")??dv.name??"",p:dvVal("#soDp")??dv.phone??"",c:dvVal("#soDc")??dv.city??"",b:dvVal("#soDb")??dv.npPoint??"",t:dvVal("#soTr")??l.track??"",a:dvVal("#soDa")??dv.address??""};
+    B.querySelector(".so-dv").innerHTML=`<div class="fl">Получатель и адрес · ${l.handover?"место передачи":u?"Нова пошта":"DHL"}${l.noAddress?' · <b style="color:#a8343a">нет адреса</b>':""}</div>
+    <div class="frow"><input type="text" id="soDn" value="${esc(o.n)}" placeholder="Отримувач"><input type="tel" id="soDp" data-ua="${u?1:0}" value="${esc(snPhone(o.p,u))}" placeholder="Телефон" inputmode="tel"></div>
+    <div class="frow"><input type="text" id="soDc" value="${esc(o.c)}" placeholder="${u?"Місто":"Місто, країна"}">${u?`<input type="text" id="soDb" value="${esc(o.b)}" placeholder="Відділення №" inputmode="numeric">`:`<input type="text" id="soTr" value="${esc(o.t)}" placeholder="Трек DHL">`}</div>
+    <input type="text" id="soDa" value="${esc(o.a)}" placeholder="${u?"Адреса (якщо курʼєр)":"Адреса: вулиця, будинок, індекс"}">`};
+  drawDv();
+  const iTxt=i=>[i.title&&i.title!==i.brand?i.title:"",i.size?"р. "+i.size:"",i.color||"",snNum(i.price)?eur(snNum(i.price)):""].filter(Boolean).join(" · ");
+  const iRow=(i,attr)=>`<button class="so-sp" ${attr}><span class="so-spi">${i.photo?`<img src="${esc(i.photo)}" alt="">`:""}</span><span class="so-spt"><b>${esc(i.brand||"Вещь")}</b><small>${esc(iTxt(i))}</small></span></button>`;
+  const splitHTML=()=>{if(items.length<2||adding)return "";
+    if(spl>=0){const i=items[spl];return `<div class="so-split"><b>Отделить в отдельную посылку?</b>${iRow(i,"disabled")}<small>У посылки будет свой номер, адрес и этап. Ошиблись — потом можно вернуть вещь обратно.</small><span class="so-chs"><button class="so-ch2" data-splx>Отмена</button><button class="so-ch2 on" data-sply="${spl}">Отделить</button></span></div>`}
+    return `<div class="so-split"><b>Едет отдельно?</b><small>Выберите вещь, которая поедет своей посылкой (другой бутик, город или адрес). Клиент увидит «Посилка 1 · 2» в одном заказе.</small>${items.map((i,j)=>iRow(i,`data-spl="${j}"`)).join("")}</div>`};
+  const sibHTML=()=>sibs.length?`<div class="so-split"><b>Посылки этого заказа · ${sibs.length+1}</b>${sibs.map(x=>`<div class="so-sib"><span>${soFlag(x.dest)} <b>${esc(soNo(x))}</b> · ${(x.items||[]).length} ${(x.items||[]).length===1?"вещь":"вещи"}<small>${esc((x.items||[]).map(i=>[i.brand,i.size&&"р. "+i.size].filter(Boolean).join(" ")).join(", "))}</small></span><button class="so-ch2" data-join="${esc(x._id)}">↩ Вернуть эти вещи в этот заказ</button></div>`).join("")}</div>`:"";
   const mny=()=>{const t=items.reduce((a,i)=>a+snNum(i.price),0),c=items.reduce((a,i)=>a+snNum(i.cost),0)||(l.cost||0);return `<div class="sn-money"><div><small>Продажа</small><b>${eur(t)}</b></div><div><small>Закупка</small><b>${c?eur(c):"—"}</b></div><div class="p"><small>Заработок</small><b>${c?eur(t-c):"—"}</b></div></div>`};
   const drawI=()=>{B.querySelector(".sn-items").innerHTML=`<div class="fl">Вещи · ${items.length}</div>${items.map((i,j)=>snItemRow(i,j,false)).join("")}${mny()}`;
-    B.querySelector(".sn-add").innerHTML=(items.length>1&&!adding?`<div class="so-split"><b>Едет отдельно?</b><small>Вещь из другого бутика / города — отделите в свою посылку со своим маршрутом. Клиент увидит «Посилка 1 · 2» в одном заказе.</small><div class="so-chs">${items.map((i,j)=>`<button class="so-ch2" data-spl="${j}">⇢ ${esc(i.brand||i.title||"вещь")}</button>`).join("")}</div></div>`:"")+(adding?`<div class="sn-pick">${snPickHTML(C,l.dest||"ua")}<button class="so-ch2" data-addx style="align-self:flex-start">Свернуть</button></div>`:`<button class="so-ch2" data-addo style="align-self:flex-start">+ Добавить вещь в этот заказ</button>`)};
+    B.querySelector(".sn-add").innerHTML=sibHTML()+splitHTML()+(adding?`<div class="sn-pick">${snPickHTML(C,l.dest||"ua")}<button class="so-ch2" data-addx style="align-self:flex-start">Свернуть</button></div>`:`<button class="so-ch2" data-addo style="align-self:flex-start">+ Добавить вещь в этот заказ</button>`)};
   drawI();
   d.addEventListener("change",async e=>{await snFile(e,C,items,drawI)});
   d.addEventListener("input",e=>{const ds=e.target.dataset||{};if(ds.ip!==undefined||ds.ic!==undefined){if(ds.ip!==undefined)items[+ds.ip].price=e.target.value;else items[+ds.ic].cost=e.target.value;const m=B.querySelector(".sn-money");if(m)m.outerHTML=mny();snPf(B,items,+(ds.ip??ds.ic))}if(adding)snPickInput(e,C,B.querySelector(".sn-add"),l.dest||"ua")});
@@ -4893,7 +4908,12 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
     if(x=t.closest("[data-mgy]")){x.disabled=true;try{const r=await soCall("merge",{off:l.cust,target:x.dataset.mgy});toast("Готово — перенесено заказов: "+r.moved);closeSheet();reload()}catch(y){toast(y.message);x.disabled=false}return}
     if(x=t.closest("[data-lkk]")){B.querySelectorAll("[data-lkk]").forEach(y=>y.classList.toggle("on",y===x));B.querySelector("#soL").textContent=x.dataset.lkk;return}
     if(t.closest("[data-socp]")){copy(B.querySelector("#soL").textContent,B.querySelector("#soL"));return}
-    if(x=t.closest("[data-spl]")){const j=+x.dataset.spl;if(items.length!==(l.items||[]).length)return toast("Сначала сохраните изменения в вещах");x.disabled=true;try{await soCall("split",{id:l._id,idx:[j]});toast("Готово — «"+(items[j].brand||"вещь")+"» теперь отдельная посылка");closeSheet();reload()}catch(y){toast(y.message);x.disabled=false}return}
+    if(x=t.closest("[data-spl]")){if(items.length!==(l.items||[]).length)return toast("Сначала сохраните изменения в вещах");spl=+x.dataset.spl;drawI();return}
+    if(t.closest("[data-splx]")){spl=-1;drawI();return}
+    if(x=t.closest("[data-sply]")){const j=+x.dataset.sply;x.disabled=true;try{await soCall("split",{id:l._id,idx:[j]});toast("Готово — «"+(items[j].brand||"вещь")+(items[j].size?" р. "+items[j].size:"")+"» теперь отдельная посылка");closeSheet();reload()}catch(y){toast(y.message);x.disabled=false}return}
+    if(x=t.closest("[data-join]")){const to=sibs.find(y=>y._id===x.dataset.join);if(!x.dataset.ok){x.dataset.ok=1;x.classList.add("on");x.textContent="Точно? Посылка "+soNo(to)+" исчезнет, её вещи будут здесь. Нажмите ещё раз";return}
+      if(items.length!==(l.items||[]).length)return toast("Сначала сохраните изменения в вещах");x.disabled=true;try{await soCall("join",{id:to._id,into:l._id});toast("Готово — вещи из "+soNo(to)+" вернулись в этот заказ");closeSheet();reload()}catch(y){toast(y.message);x.disabled=false}return}
+    if(x=t.closest("[data-odst]")){dst=x.dataset.odst;d.querySelectorAll("[data-odst]").forEach(y=>y.classList.toggle("on",y===x));drawDv();return}
     if(t.closest("[data-addo]")){adding=true;drawI();return}if(t.closest("[data-addx]")){adding=false;drawI();return}
     if(adding){const it=snPickClick(t,C,B.querySelector(".sn-add"),l.dest||"ua",drawI);if(it){items.push(it);snCost(it,drawI);toast("Добавлено — не забудьте «Сохранить»");adding=false;drawI();return}if(t.closest("[data-md],[data-br],[data-ct],[data-pid],[data-madd]"))return}
     if(x=t.closest("[data-sz]")){items[+x.dataset.sz].size=x.dataset.v;drawI();return}
@@ -4902,7 +4922,7 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
     if(x=t.closest("[data-opy]")){pay=x.dataset.opy;d.querySelectorAll("[data-opy]").forEach(y=>y.classList.toggle("on",y===x));d.querySelector(".so-ppw").hidden=pay!=="prepay";return}
     if(x=t.closest("[data-bm]")){bm=x.dataset.bm;d.querySelectorAll("[data-bm]").forEach(y=>y.classList.toggle("on",y===x));return}
     const sv=t.closest("[data-sosave]");if(!sv)return;sv.disabled=true;const v=id=>{const y=d.querySelector(id);return y?y.value.trim():undefined};
-    const body={id:l._id,items:items.map(i=>({id:i.id,brand:i.brand,title:i.title,size:i.size,color:i.color,price:i.price,cost:i.cost,photo:i.photo,icon:i.icon,url:i.url,note:i.note})),origin:v("#soOr"),buyMode:bm,note:v("#soNo"),notify:d.querySelector("#soNt").checked,delivery:{name:v("#soDn"),phone:v("#soDp"),city:v("#soDc"),address:v("#soDa"),...(ua?{npPoint:v("#soDb")}:{})},...(ua?{}:{track:v("#soTr")}),...(stage!==soSt(l)?{status:stage}:{}),...(pay&&(pay!==pay0||(pay==="prepay"&&v("#soPp")!==String(l.prepaid||"")))?{pay,prepaid:v("#soPp")}:{}),handover:d.querySelector("#soHd").checked,test:d.querySelector("#soTs").checked};
+    const body={id:l._id,items:items.map(i=>({id:i.id,brand:i.brand,title:i.title,size:i.size,color:i.color,price:i.price,cost:i.cost,photo:i.photo,icon:i.icon,url:i.url,note:i.note})),origin:v("#soOr"),buyMode:bm,note:v("#soNo"),notify:d.querySelector("#soNt").checked,delivery:{name:v("#soDn"),phone:v("#soDp"),city:v("#soDc"),address:v("#soDa"),...(dst==="ua"?{npPoint:v("#soDb")}:{})},...(dst==="ua"?{}:{track:v("#soTr")}),...(dst!==(l.dest||"ua")?{dest:dst}:{}),...(stage!==soSt(l)?{status:stage}:{}),...(pay&&(pay!==pay0||(pay==="prepay"&&v("#soPp")!==String(l.prepaid||"")))?{pay,prepaid:v("#soPp")}:{}),handover:d.querySelector("#soHd").checked,test:d.querySelector("#soTs").checked};
     try{await soCall("save",body);toast("Сохранено");closeSheet();reload()}catch(y){toast(y.message);sv.disabled=false}})}
 
 /* водителю: что отправлено в Украину — скопировать таблицей (Excel / Telegram) */
