@@ -3365,15 +3365,29 @@ const SX=[[/сумк|сумоч/,/\bbags?\b|tote|pouch|clutch|backpack|crossbody
 const QSTOP=/^(для|и|в|на|с|со|из|по|до|от|под|мне|хочу|ищу|нужн\w*|какие|какой|есть|the|for|and|a|an|in|of|with|купить|цена)$/;
 const QM_MEMO={};
 // матчер запроса: каждое слово должно найтись — в бренде (в т.ч. по-русски/украински), в названии (прямо или через перевод), в категории/подразделе/цвете
+const RUK={lv:"louisvuitton",bv:"bottegaveneta",ysl:"saintlaurent",lp:"loropiana",bc:"brunellocucinelli"};
+const qComp=s=>uaN(s).replace(/[^a-zа-я0-9]/g,"");
+function lev(a,b,max){if(Math.abs(a.length-b.length)>max)return max+1;let p=Array.from({length:b.length+1},(_,j)=>j);for(let i=1;i<=a.length;i++){const c=[i];let lo=i;for(let j=1;j<=b.length;j++){c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));if(c[j]<lo)lo=c[j]}if(lo>max)return max+1;p=c}return p[b.length]}
+let BWM=null,BWN=0;
+// слова брендов: латиница (loro, piana, loropiana) и русские/украинские написания из RU (лоро, пиана, лоропиана)
+function brandWords(){if(BWM&&BWN===BRANDS.length)return BWM;BWN=BRANDS.length;const out=[],add=(bk,v,full)=>{v=qComp(v);if(v.length>=4&&!out.some(o=>o.bk===bk&&o.s===v))out.push({bk,s:v,full})};
+  BRANDS.forEach(([bk,name])=>{add(bk,name,true);uaN(name).split(/[\s&-]+/).forEach(w=>add(bk,w,false));
+    Object.keys(RU).forEach(k=>{if((RUK[k]||k)!==bk&&k!==bk)return;const w=uaN(RU[k]).split(/\s+/).filter(Boolean);w.forEach((x,i)=>{add(bk,x,false);if(w[i+1])add(bk,x+w[i+1],true);if(w[i+2])add(bk,x+w[i+1]+w[i+2],true)})})});
+  return BWM=out}
 function qMatcher(raw){const key=raw;if(QM_MEMO[key])return QM_MEMO[key];
-  const q=ruQ(raw),toks=q.split(/[\s,.;:!?/]+/).filter(t=>t&&!QSTOP.test(t)&&!/^\d/.test(t)&&t.length>1);
+  const q=ruQ(raw);let toks=q.split(/[\s,.;:!?/]+/).filter(t=>t&&!QSTOP.test(t)&&!/^\d/.test(t)&&t.length>1);
   const g=/женск/.test(q)?"w":/мужск/.test(q)?"m":/детск/.test(q)?"k":"";
-  const RUK={lv:"louisvuitton",bv:"bottegaveneta",ysl:"saintlaurent",lp:"loropiana",bc:"brunellocucinelli"};
+  const BW=brandWords(),btk=[],used=new Set();
+  for(let i=0;i<toks.length;i++){if(used.has(i))continue;for(let n=Math.min(3,toks.length-i);n>=1;n--){const v=qComp(toks.slice(i,i+n).join(""));if(v.length<4)continue;
+    const hit=[...new Set(BW.filter(w=>{if(w.s===v)return true;if(n>1&&!w.full)return false;const d=w.s.length>=8?2:w.s.length>=5?1:0;return d>0&&v.length>=5&&lev(v,w.s,d)<=d||(n===1&&w.full&&v.length>=4&&w.s.startsWith(v))}).map(w=>w.bk))];
+    if(hit.length){for(let k=i;k<i+n;k++)used.add(k);btk.push({t:v,en:[],cat:[],col:false,bk:hit,brand:true});break}}}
+  toks=toks.filter((t,i)=>!used.has(i));
   const aliasK=t=>Object.keys(RU).filter(k=>uaN(RU[k]).split(" ").some(w=>w&&(w.startsWith(t)||t.startsWith(w)&&w.length>3))).map(k=>RUK[k]||k);
   const tk=toks.filter(t=>!/^(женск|мужск|детск)/.test(t)).map(t=>{const sx=SX.filter(([re])=>re.test(t));return {t,en:sx.map(x=>x[1]),cat:sx.map(x=>x[2]).filter(c=>c&&c!=="col"),col:sx.length&&sx.every(x=>x[2]==="col"),bk:[...BRANDS.filter(b=>uaN(b[1]).includes(t)).map(b=>b[0]),...aliasK(t)]}});
+  tk.forEach(x=>{x.re=new RegExp("(^|[^a-zа-я0-9])"+x.t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"))});tk.push(...btk);
   const bkOf=p=>String(p.brand||"").toLowerCase().replace(/[^a-z0-9]/g,"");
   const hay=p=>p._hay||(p._hay=uaN(p.brand+" "+p.name+" "+(CATS[p.cat]||"")+" "+(typeof subTypeOf==="function"?subName(p.cat,subTypeOf(p)):"")+" "+(p.colors||[]).map(c=>c.name||"").join(" ")));
-  const one=(x,p)=>hay(p).includes(x.t)||x.bk.includes(p.bk)||x.bk.includes(bkOf(p))||(x.cat.length?x.cat.includes(p.cat)&&(x.en.some(re=>re.test(hay(p)))||x.cat.length===1&&/обув|сумк|одежд|аксесс|украш|^очк|^часы|^духи/.test(x.t)):x.en.some(re=>re.test(hay(p))))||(x.col&&!(p.colors||[]).some(c=>c&&c.name));
+  const one=(x,p)=>x.brand?x.bk.includes(p.bk)||x.bk.includes(bkOf(p)):x.re.test(hay(p))||x.bk.includes(p.bk)||x.bk.includes(bkOf(p))||(x.cat.length?x.cat.includes(p.cat)&&(x.en.some(re=>re.test(hay(p)))||x.cat.length===1&&/обув|сумк|одежд|аксесс|украш|^очк|^часы|^духи/.test(x.t)):x.en.some(re=>re.test(hay(p))))||(x.col&&!(p.colors||[]).some(c=>c&&c.name));
   const m={toks:tk,g,test:p=>(!g||p.g===g||p.g==="u")&&tk.every(x=>one(x,p))};
   if(Object.keys(QM_MEMO).length>50)for(const k in QM_MEMO)delete QM_MEMO[k];return QM_MEMO[key]=m}
 const sortKey=n=>norm(n).toUpperCase();
@@ -3574,13 +3588,18 @@ function runSearch(raw){const q=norm(raw.trim());const box=$("#sres"),body=$("#h
   box.hidden=false;body.hidden=true;
   const QX=qMatcher(raw),uq=uaN(raw.trim());
   const brands=BRANDS.map(b=>b[0]).filter(bk=>uaN(bname(bk)).includes(uq)||uaN(RU[bk]||"").includes(uq)||(QX.toks.length===1&&QX.toks[0].bk.includes(bk)));
-  const HS=hotIds(),items=twinOne(P.filter(p=>QX.toks.length||QX.g?QX.test(p):norm(p.brand+" "+p.name).includes(q)).sort((a,b)=>HS.has(b.id)-HS.has(a.id))).slice(0,8); // в поиске ходовая коллекция — первой
+  // размер («кросівки гермес 42», «bouncing 42») — только где этот размер есть в наличии или можно уточнить; сначала «в наличии». Цена «до 500»
+  const SF=smartParse(raw),szSt=p=>{if(!SF.size)return "";const z=(p.sizes||[]).find(z=>String(z.size).toUpperCase()===SF.size);return z?z.status||"ask":"none"};
+  const HS=hotIds(),RK={online:0,boutique:1,preorder:2,ask:3,unknown:3},all=twinOne(P.filter(p=>(QX.toks.length||QX.g?QX.test(p):norm(p.brand+" "+p.name).includes(q))&&(!SF.max||p.price<=SF.max)&&(!SF.min||p.price>=SF.min)&&(!SF.size||!["none","out"].includes(szSt(p))))
+    .sort((a,b)=>(SF.size?(RK[szSt(a)]??4)-(RK[szSt(b)]??4):0)||HS.has(b.id)-HS.has(a.id))),items=all.slice(0,8); // в поиске ходовая коллекция — первой
+  SRCH={ids:all.map(p=>p.id),t:raw.trim().slice(0,40)};
   const icons=ICONS.filter(ic=>norm(bname(ic.bk)+" "+ic.name).includes(q)||ic.ru.includes(q)||(RU[ic.bk]||"").includes(q)).slice(0,8);
   const resale=RESALE.filter(r=>norm(r.brand+" "+r.name).includes(q)||ICONS.some(ic=>ic.ru.includes(q)&&norm(r.name).includes(norm(ic.name.split(" ")[0])))).slice(0,4);
   let h="";
   if(brands.length)h+=`<div class="sgroup"><h4>Бренди</h4>${brands.map(bk=>{const n=bItems(bk).length;return `<button class="srow" data-act="brand" data-bk="${bk}"><span class="th mono">${initials(bname(bk))}</span><span class="tx"><b>${hl(bname(bk),q)}</b><span class="num">${n} ${plural(n,["товар","товари","товарів"])} у вітрині</span></span><span class="rt">›</span></button>`}).join("")}</div>`;
   if(icons.length)h+=`<div class="sgroup"><h4>Моделі під замовлення</h4>${icons.map(ic=>`<button class="srow" data-act="icon" data-id="${ic.id}"><span class="th" style="--c:${ic.c}">${shapeSVG(ic.shape,ic.c,"")}</span><span class="tx"><b>${esc(bname(ic.bk))} ${hl(ic.name,q)}</b><span>${ic.wait?"Лист очікування":"Під замовлення"} · ${CATS[ic.cat]}</span></span><span class="rt num">від ${eur(ic.from)}</span></button>`).join("")}</div>`;
-  if(items.length)h+=`<div class="sgroup"><h4>У вітрині</h4>${items.map(p=>`<button class="srow" data-act="product" data-id="${p.id}"><span class="th" style="--c:${p.c}">${shapeSVG(p.shape,p.c,"")}</span><span class="tx"><b>${hl(p.brand+" "+p.name,q)}</b><span>${CATS[p.cat]} · ${CITIES[p.city]}</span></span><span class="rt num">${eur(p.price)}</span></button>`).join("")}</div>`;
+  const SZT={online:"є в наявності",boutique:"є в бутику",preorder:"передзамовлення",ask:"уточнити"};
+  if(items.length)h+=`<div class="sgroup"><h4>У вітрині · ${all.length}${SF.size?" · розмір "+esc(SF.size):""}${SF.max?" · до "+eur(SF.max):""}</h4>${items.map(p=>`<button class="srow" data-act="product" data-id="${p.id}"><span class="th" style="--c:${p.c}">${shapeSVG(p.shape,p.c,"")}</span><span class="tx"><b>${esc(p.brand+" "+p.name)}</b><span>${[CATS[p.cat],(p.colors||[])[0]&&p.colors[0].name,SF.size?"р. "+SF.size+" · "+(SZT[szSt(p)]||"уточнити"):""].filter(Boolean).map(esc).join(" · ")}</span></span><span class="rt num">${eur(p.price)}</span></button>`).join("")}${all.length>items.length?`<button class="btn sm block" data-act="srchall" style="margin-top:10px">Показати всі ${all.length}</button>`:""}</div>`;
   if(resale.length)h+=`<div class="sgroup"><h4>У ресейлі</h4>${resale.map(r=>`<button class="srow" data-act="product" data-id="${r.id}"><span class="th" style="--c:${r.c}">${shapeSVG(r.shape,r.c,"")}</span><span class="tx"><b>${hl(r.brand+" "+r.name,q)}</b><span>${esc(r.cond)} · перевірено</span></span><span class="rt num">${eur(r.price)}</span></button>`).join("")}</div>`;
   if(!h)h=`<div class="empty" style="margin-top:16px"><h3>Нічого не знайшли</h3><p>Напишіть, що шукаєте, — знайдемо в бутиках Європи.</p><button class="btn sm" data-act="askany" style="margin-top:8px">Написати менеджеру</button></div>`;
   box.innerHTML=h}
@@ -3670,16 +3689,8 @@ function smartMatch(f,brands){const colOk=p=>{const names=(p.colors||[]).map(c=>
 function smartChips(f,brands){const c=[];brands.forEach(b=>c.push(bname(b)));f.cats.forEach(k=>c.push(CATS[k]));if(f.g)c.push(f.g==="w"?"Для неї":"Для нього");
   const CN={black:"Чорний",white:"Білий",beige:"Бежевий",brown:"Коричневий",grey:"Сірий",green:"Зелений",pink:"Рожевий",blue:"Синій",red:"Червоний",ivory:"Молочний"};f.cols.forEach(k=>c.push(CN[k]));
   if(f.size)c.push("Розмір "+f.size);if(f.min)c.push("від "+eur(f.min));if(f.max)c.push("до "+eur(f.max));if(f.nw)c.push("Новинки");return c}
-let SQ=null;
-$("#uq").addEventListener("input",e=>{const raw=e.target.value.trim(),box=$("#sres");$("#smartBox")&&$("#smartBox").remove();if(!raw)return;const f=smartParse(raw);if(!f.any)return;
-  const nq=norm(raw),brands=BRANDS.map(b=>b[0]).filter(bk=>nq.includes(norm(bname(bk)).split(" ")[0])||(RU[bk]&&nq.includes(RU[bk])));
-  const L=smartMatch(f,brands);SQ={f,brands,ids:L.map(p=>p.id),t:smartChips(f,brands).join(" · ")};
-  const h=`<div class="sgroup" id="smartBox"><h4>Підбір за запитом</h4><div class="smartq">${smartChips(f,brands).map(c=>`<span class="c">${esc(c)}</span>`).join("")}</div>
-    ${L.slice(0,4).map(p=>`<button class="srow" data-act="product" data-id="${p.id}"><span class="th" style="--c:${p.c}">${shapeSVG(p.shape,p.c,"")}</span><span class="tx"><b>${esc(p.brand+" "+p.name)}</b><span>${CATS[p.cat]}${p.isNew?" · новинка":""}</span></span><span class="rt num">${eur(p.price)}</span></button>`).join("")}
-    ${L.length?`<button class="btn sm block" data-act="smartall" style="margin-top:10px">Показати всі ${L.length}</button>`:`<p class="muted" style="font-size:14px;margin:6px 0">За таким запитом поки нічого немає.</p><button class="btn sm" data-act="askany">Знайти під замовлення</button>`}</div>`;
-  box.hidden=false;$("#homeBody").hidden=true;
-  const empty=box.querySelector(".empty");if(empty)empty.remove();
-  box.insertAdjacentHTML("afterbegin",h)});
+let SQ=null,SRCH=null;
+
 
 
 /* Все бренды A–Z */
@@ -5395,6 +5406,7 @@ $("#app").addEventListener("click",e=>{
   else if(a==="allnew")nwOpenAll("");
   else if(a==="gifts"){clearFilters();["accessories","jewelry","bags"].forEach(c=>F.cats.add(c));showItems("Подарунки коханим")}
   else if(a==="smartall"&&SQ){clearFilters();F.ids=new Set(SQ.ids);showItems("Підбір");}
+  else if(a==="srchall"&&SRCH){clearFilters();F.ids=new Set(SRCH.ids);showItems(SRCH.t);}
   else if(a==="cathome")showCatHome();
   else if(a==="askany")orderSheet("Запит менеджеру",`Вітаю! Шукаю: ${$("#uq").value.trim()}\nКолір / розмір: \nБюджет: \nДоставка: Україна`);
   else if(a==="tab")goTab(t.dataset.tab,e);
