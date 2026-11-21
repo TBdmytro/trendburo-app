@@ -5529,7 +5529,7 @@ function applyLive(list,fresh){PV++;CMXV++;
     const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn&&x.oldPrice?x.oldPrice:x.price;if(!pr)return; /* без цены — не роняем весь каталог из-за одной вещи */
     P.push({id:x.id,kit:x.kit||null,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,mk:+x.mk||0,por:Math.max(+pr.ua||0,+pr.eu||0,+pr.dxb||0)>POR_EUR,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
       shape:(()=>{const u=x.im?x.im[0]&&szU(XU(x.im[0]),400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),imn:x.imn||0,get imgs(){return this._im||(this._im=imgsOf(x))},colors:(x.colors||[]).map(c=>c.image&&c.image[0]==="~"?{...c,image:XU(c.image)}:c),sizes:x.sizes||szX(x.sz),
-      orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0,na:x.na?Date.parse(x.na):0,fam:x.fam||null,col:x.col||""})});FAMS=null;
+      orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0,na:x.na?Date.parse(x.na):0,fam:x.fam||null,col:x.col||"",ct:x.ct||""})});FAMS=null;
   NEWS.length=0;RESALE.length=0;ICONS.length=0;
   BRANDS=[...new Map(P.map(p=>[p.bk,p.brand])).entries()];
   STORY_BRANDS.length=0;STORY_BRANDS.push(...BRANDS.map(b=>b[0]).slice(0,12));
