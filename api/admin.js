@@ -1036,7 +1036,7 @@ export default async function handler(req, res) {
         }
         if (Array.isArray(body.news)) cur.news = body.news.slice(0, 30).map(n => ({ tag: clip(n.tag, 30), title: clip(n.title, 120), text: clip(n.text, 400), url: /^https:\/\//.test(n.url || "") ? clip(n.url, 400) : "" }));
         if (body.window) cur.window = clip(body.window, 40);
-        cur.updatedAt = new Date().toISOString(); await store.put(cur);
+        cur.updatedAt = new Date().toISOString(); { const c = (await store.get("agent.config")) || { _id: "agent.config", _type: "agentConfig" }; c.last = new Date().toISOString(); await store.put(c); } await store.put(cur);
         return send(res, 200, { ok: true, id, brands: cur.brands.length });
       }
       case "agentReports": { const L = await store.list("areport", {}, { limit: 60, fields: "_id, date, brands, decisions, updatedAt" });
@@ -1053,7 +1053,9 @@ export default async function handler(req, res) {
         r.decisions = { ...(r.decisions || {}), [pid]: { act, at: new Date().toISOString() } }; await store.put(r);
         return send(res, 200, { ok: true, act });
       }
-      case "agentKeep": { const k = await store.get("agent.keep"), sk = await store.get("agent.skip"); return send(res, 200, { ids: (k && k.ids) || [], skip: (sk && sk.ids) || [] }); }
+      case "agentConfig": { const c = await store.get("agent.config"); return send(res, 200, { enabled: !(c && c.enabled === false), last: (c && c.last) || "" }); }
+      case "agentToggle": { const b = body; const c = (await store.get("agent.config")) || { _id: "agent.config", _type: "agentConfig" }; c.enabled = !!(b && b.enabled); c.updatedAt = new Date().toISOString(); await store.put(c); return send(res, 200, { enabled: c.enabled }); }
+      case "agentKeep": { const k = await store.get("agent.keep"), sk = await store.get("agent.skip"), c = await store.get("agent.config"); return send(res, 200, { enabled: !(c && c.enabled === false), ids: (k && k.ids) || [], skip: (sk && sk.ids) || [] }); }
 
       case "leadSave": { const r = await opLeadSave(store, body, me.name); return send(res, r.code, r.body); }
       case "leadBulk": { const r = await opLeadBulk(store, body, me.name); return send(res, r.code, r.body); }

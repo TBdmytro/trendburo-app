@@ -688,6 +688,7 @@ body:has(.sv) .tglogo,body:has(.splash) .tglogo{opacity:0}
 .ag-nb{display:flex;gap:4px}.ag-nb button{flex:1;border-radius:99px;padding:5px 0;font:inherit;font-size:11.5px;font-weight:600;border:1px solid #e3e4e7;background:#fff;cursor:pointer;color:#26282c}.ag-nb button.dk{background:#26282c;color:#fff;border-color:#26282c}
 .ag-news{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.ag-nw{background:#fff;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:4px;color:inherit;text-decoration:none}.ag-nw .tg{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9a6b17}.ag-nw b{font-size:14px}.ag-nw small{color:#6b6e74;font-size:12.5px}
 .ag-err{color:#a8343a;font-size:12.5px}
+.ag-ctl{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line,#e6e6ea);border-radius:18px;padding:12px 14px;margin:0 0 14px}.ag-ctl .tx{flex:1;min-width:0}.ag-ctl b{display:block;font-size:15px}.ag-ctl small{display:block;color:#8e8e93;font-size:12.5px;line-height:1.35}.ag-bot{width:40px;height:40px;border-radius:12px;background:#1c1c1e;color:#fff;display:grid;place-items:center;flex:none}.ag-bot svg{width:22px;height:22px;stroke:#fff}.ag-sw{flex:none;width:52px;height:32px;border-radius:16px;border:0;background:#d1d1d6;position:relative;cursor:pointer;transition:background .2s}.ag-sw i{position:absolute;left:2px;top:2px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:left .2s}.ag-sw.on{background:#34c759}.ag-sw.on i{left:22px}
 </style>
 </head>
 <body>
@@ -795,6 +796,7 @@ async function api_(a, { method, body, query }) {
 
 /* ---------- Словари ---------- */
 const IC = {
+  bot: '<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4"/><circle cx="12" cy="3.5" r="1"/><circle cx="9" cy="14" r="1.2"/><circle cx="15" cy="14" r="1.2"/><path d="M2 13v3M22 13v3"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
   home: '<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>',
   load: '<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 19h14"/>',
@@ -2627,8 +2629,8 @@ Object.assign(IC, {
   send: '<path d="M21 4L3 11l7 2.5L12.5 21z"/><path d="M10 13.5l4.5-4.5"/>',
   out: '<path d="M14 4h5v16h-5"/><path d="M10 16l4-4-4-4M14 12H4"/>'
 });
-const NAV_MAIN = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"]];
-const NAV_MORE = [["agent", "Отчёт агента", "star", "ночные обновления брендов: новинки, распродано, решения"], ["customers", "Клиенты", "users", "статистика, заказы через менеджера, лояльность"], ["loyalty", "Лояльность", "users", "программа для клиентов · скоро"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["collections", "Коллекции", "star", "Cruise 2027, Winter 26… — витрина и сроки"], ["sites", "Сайты брендов", "link", "разделы для проверки наличия кнопкой"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["stock", "В наличии", "van", "уже выкуплено: Украина и Европа · блок в приложении"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
+const NAV_MAIN = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"], ["agent", "Агент", "bot"]];
+const NAV_MORE = [["customers", "Клиенты", "users", "статистика, заказы через менеджера, лояльность"], ["loyalty", "Лояльность", "users", "программа для клиентов · скоро"], ["finance", "Финансы", "finance", "выручка, маржа, деньги в пути"], ["sources", "Поставщики", "link", "магазины по ссылке: Kith, The Row…"], ["collections", "Коллекции", "star", "Cruise 2027, Winter 26… — витрина и сроки"], ["sites", "Сайты брендов", "link", "разделы для проверки наличия кнопкой"], ["screens", "Со скриншотов", "screens", "карточки из скриншотов"], ["stock", "В наличии", "van", "уже выкуплено: Украина и Европа · блок в приложении"], ["add", "Новый товар", "add", "вручную: фото, название, цена"], ["load", "Загрузка из файла", "load", "CSV и сайты брендов"], ["jobs", "Задачи загрузки", "jobs", "ход и история загрузок"], ["prices", "Цены и курсы", "prices", "наценки и курсы валют"], ["watch", "Мониторинг", "watch", "личные плитки в мини-аппе"], ["bot", "Telegram-бот", "send", "кнопка витрины, уведомления"]];
 const chevSvg = '<svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
 const backSvg = '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>';
 const isMainView = v => { const [k, s] = v.split(":"); return ["home", "products", "leads", "more"].includes(k) || (k === "show" && (!s || s === "feed")); };
@@ -3234,8 +3236,10 @@ function orderSheet(l, reload) {
 
 /* Клиенты: зашли через Telegram в мини-апп. Статистика, заказы через менеджера, лояльность (правила — позже) */
 async function vAgent(date) {
-  const L = (await api("agentReports")).reports || [];
-  if (!L.length) { $("#main").innerHTML = head("Отчёт агента", "Каждую ночь агент проходит бренды по кругу и пишет сюда: новинки, распродано, обновления и что ждёт вашего решения.") + `<div class="empty">Отчётов пока нет — первый появится утром после ночного прогона.</div>`; return; }
+  const [L0, cfg] = await Promise.all([api("agentReports"), api("agentConfig").catch(() => ({}))]); const L = L0.reports || [];
+  const ON = cfg.enabled !== false, ctl = `<div class="ag-ctl"><span class="ag-bot">${svg("bot")}</span><div class="tx"><b>Агент брендов ${ON ? "включён" : "выключен"}</b><small>${ON ? "Каждую ночь в 02:37: обновляет цены и размеры, новинки и «пропало с сайта» — сюда, на ваше решение." : "Ночью ничего не проверяет. Включите — и он начнёт со следующей ночи."}${cfg.last ? " · последний прогон " + new Date(cfg.last).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</small></div><button class="ag-sw${ON ? " on" : ""}" data-agsw aria-pressed="${ON}" aria-label="Включить агента"><i></i></button></div>`;
+  setTimeout(() => { const b = document.querySelector("[data-agsw]"); if (b) b.onclick = async () => { b.disabled = true; await api("agentToggle", { method: "POST", body: { enabled: !ON } }); vAgent(date); }; }, 0);
+  if (!L.length) { $("#main").innerHTML = head("Агент", "Каждую ночь агент проходит бренды по кругу и пишет сюда: новинки, распродано, обновления и что ждёт вашего решения.") + ctl + `<div class="empty">Отчётов пока нет — первый появится утром после ночного прогона.</div>`; return; }
   const d = date && L.some(r => r.date === date) ? date : L[0].date, R = (await api("agentReport", { query: { date: d } })).report, DEC = R.decisions || {};
   const B = R.brands || [], sum = k => B.reduce((a, b) => a + (k === "updated" || k === "checked" ? (b[k] || 0) : (b[k] || []).length), 0);
   const open = B.reduce((a, b) => a + (b.decide || []).filter(x => !DEC[x.id]).length, 0), chk = sum("checked") || B.reduce((a, b) => a + (b.total || 0), 0);
@@ -3244,8 +3248,8 @@ async function vAgent(date) {
   const nCard = x => { const dd = DEC[x.id]; return `<div class="ag-it">${card(x, false).replace(/^<a class="ag-it">|<\/a>$/g, "")}${dd ? `<small class="done" style="color:#2f7d5b;font-weight:600">${dd.act === "add" ? "Добавлено в «Новые с сайтов»" : "Не берём"}</small>` : x.item ? `<span class="ag-nb"><button class="dk" data-aga="${esc(x.id)}">Добавить</button><button data-ags="${esc(x.id)}">Не брать</button></span>` : ""}</div>`; };
   const card = (x, o) => `<a class="ag-it"><span class="ag-ph">${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy">` : ""}<i class="${o ? "o" : ""}">${o ? "OUT" : "NEW"}</i></span><small>${esc(x.t)}${x.note ? " · " + esc(x.note) : ""}</small></a>`;
   const dec = x => { const dd = DEC[x.id]; return `<div class="ag-row">${x.img ? `<img src="${esc(x.img)}" alt="">` : ""}<span class="nm">${esc(x.t)}<small>${esc(x.note || "нет на сайте бренда")}</small></span>${dd ? `<span class="done">${dd.act === "hide" ? "Скрыто" : "Оставлено на сайте"}</span>` : `<button class="dk" data-agk="${esc(x.id)}">Оставить (купим в бутике)</button><button data-agh="${esc(x.id)}">Скрыть</button>`}</div>`; };
-  $("#main").innerHTML = `<div class="ag">${head("Отчёт агента", "Ночные обновления брендов. Агент сам только обновляет размеры и цены у того, что уже есть. Добавить, скрыть или убрать — решаете вы здесь.")}
-    <div class="ag-days">${L.slice(0, 14).map(r => `<button data-agd="${r.date}" aria-pressed="${r.date === d}">${fd(r.date)}${r.decide ? `<i>${r.decide}</i>` : ""}</button>`).join("")}</div>
+  $("#main").innerHTML = `<div class="ag">${head("Агент", "Ночные обновления брендов. Агент сам только обновляет размеры и цены у того, что уже есть. Добавить, скрыть или убрать — решаете вы здесь.")}
+    ${ctl}<div class="ag-days">${L.slice(0, 14).map(r => `<button data-agd="${r.date}" aria-pressed="${r.date === d}">${fd(r.date)}${r.decide ? `<i>${r.decide}</i>` : ""}</button>`).join("")}</div>
     <div class="ag-hd"><h2>Ночь на ${fd(d)}</h2><small>${B.length} ${plural(B.length, ["бренд", "бренда", "брендов"])} · ${chk.toLocaleString("ru-RU")} вещей${R.window ? " · " + esc(R.window) : ""}</small></div>
     <div class="ag-k"><div class="n"><b>+${nN}</b><span>новинок — предлагаю добавить</span></div><div class="u"><b>${nU}</b><span>обновлены размеры и цены</span></div><div class="o"><b>${nO}</b><span>распродано на сайте</span></div><div class="a"><b>${open}</b><span>ждут вашего решения</span></div></div>
     <div class="ag-sum"><div class="tr"><i style="width:${pc(rest)}%;background:#d7d9dd"></i><i style="width:${pc(nU)}%;background:#3d5fa8"></i><i style="width:${pc(nN)}%;background:#2f7d5b"></i><i style="width:${pc(nO)}%;background:#a8343a"></i></div>
