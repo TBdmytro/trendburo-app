@@ -589,7 +589,7 @@ textarea{min-height:110px}
   .head .btn{width:auto}
   .mtop{display:flex;align-items:center;gap:8px;padding:12px 14px 0}
   .mtop[hidden]{display:none}
-  .mnav2{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;justify-items:center;position:fixed;left:12px;right:12px;bottom:calc(12px + var(--sb));height:64px;border-radius:24px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 28px rgba(31,33,37,.12);z-index:36}
+  .mnav2{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:center;justify-items:center;position:fixed;left:12px;right:12px;bottom:calc(12px + var(--sb));height:64px;border-radius:24px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 28px rgba(31,33,37,.12);z-index:36}
   .mnav2 button{width:46px;height:46px;border-radius:15px;border:0;background:none;display:grid;place-items:center;position:relative;color:#8a8d93}
   .mnav2 button svg.i{width:23px;height:23px}
   .mnav2 button.on{background:var(--soft);color:var(--fg)}
@@ -2638,7 +2638,7 @@ const isMainView = v => { const [k, s] = v.split(":"); return ["home", "products
 function renderNav() {
   $("#nav").innerHTML = NAV_MAIN.map(([k, v, ic]) => `<button data-v="${k}">${svg(ic)}<span>${v}</span>${k === "leads" ? '<span class="cnt red" id="leadCnt" hidden></span>' : ""}</button>`).join("");
   $("#nav2").innerHTML = NAV_MORE.map(([k, v, ic]) => `<button data-v="${k}">${svg(ic)}<span>${v}</span>${k === "jobs" ? '<span class="cnt" id="jobCnt" hidden></span>' : k === "customers" ? '<span class="cnt red" id="accCnt" hidden></span>' : ""}</button>`).join("");
-  $("#mnav2").innerHTML = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["plus", "Добавить", "add"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"]]
+  $("#mnav2").innerHTML = [["home", "Обзор", "home"], ["show", "Витрина", "show"], ["plus", "Добавить", "add"], ["products", "Товары", "products"], ["leads", "Заказы", "orders"], ["agent", "Агент", "bot"]]
     .map(([k, v, ic]) => `<button data-m="${k}" class="${k === "plus" ? "plus" : ""}" aria-label="${v}">${svg(ic)}${k === "leads" ? '<i class="cnt" id="mLeadCnt" hidden></i>' : ""}</button>`).join("");
 }
 function navSync() {
