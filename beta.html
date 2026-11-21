@@ -3386,7 +3386,7 @@ function qMatcher(raw){const key=raw;if(QM_MEMO[key])return QM_MEMO[key];
   const tk=toks.filter(t=>!/^(женск|мужск|детск)/.test(t)).map(t=>{const sx=SX.filter(([re])=>re.test(t));return {t,en:sx.map(x=>x[1]),cat:sx.map(x=>x[2]).filter(c=>c&&c!=="col"),col:sx.length&&sx.every(x=>x[2]==="col"),bk:[...BRANDS.filter(b=>uaN(b[1]).includes(t)).map(b=>b[0]),...aliasK(t)]}});
   tk.forEach(x=>{x.re=new RegExp("(^|[^a-zа-я0-9])"+x.t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"))});tk.push(...btk);
   const bkOf=p=>String(p.brand||"").toLowerCase().replace(/[^a-z0-9]/g,"");
-  const hay=p=>p._hay||(p._hay=uaN(p.brand+" "+p.name+" "+(CATS[p.cat]||"")+" "+(typeof subTypeOf==="function"?subName(p.cat,subTypeOf(p)):"")+" "+(p.colors||[]).map(c=>c.name||"").join(" ")));
+  const hay=p=>p._hay||(p._hay=ruQ(p.brand+" "+p.name+" "+(CATS[p.cat]||"")+" "+(typeof subTypeOf==="function"?subName(p.cat,subTypeOf(p)):"")+" "+(p.colors||[]).map(c=>c.name||"").join(" ")));
   const one=(x,p)=>x.brand?x.bk.includes(p.bk)||x.bk.includes(bkOf(p)):x.re.test(hay(p))||x.bk.includes(p.bk)||x.bk.includes(bkOf(p))||(x.cat.length?x.cat.includes(p.cat)&&(x.en.some(re=>re.test(hay(p)))||x.cat.length===1&&/обув|сумк|одежд|аксесс|украш|^очк|^часы|^духи/.test(x.t)):x.en.some(re=>re.test(hay(p))))||(x.col&&!(p.colors||[]).some(c=>c&&c.name));
   const m={toks:tk,g,test:p=>(!g||p.g===g||p.g==="u")&&tk.every(x=>one(x,p))};
   if(Object.keys(QM_MEMO).length>50)for(const k in QM_MEMO)delete QM_MEMO[k];return QM_MEMO[key]=m}
