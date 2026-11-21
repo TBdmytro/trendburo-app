@@ -3379,7 +3379,7 @@ function qMatcher(raw){const key=raw;if(QM_MEMO[key])return QM_MEMO[key];
   const g=/женск/.test(q)?"w":/мужск/.test(q)?"m":/детск/.test(q)?"k":"";
   const BW=brandWords(),btk=[],used=new Set();
   for(let i=0;i<toks.length;i++){if(used.has(i))continue;for(let n=Math.min(3,toks.length-i);n>=1;n--){const v=qComp(toks.slice(i,i+n).join(""));if(v.length<4)continue;
-    const hit=[...new Set(BW.filter(w=>{if(w.s===v)return true;if(n>1&&!w.full)return false;const d=w.s.length>=8?2:w.s.length>=5?1:0;return d>0&&v.length>=5&&lev(v,w.s,d)<=d||(n===1&&w.full&&v.length>=4&&w.s.startsWith(v))}).map(w=>w.bk))];
+    const hit=[...new Set(BW.filter(w=>{if(w.s===v)return true;if(n>1&&!w.full)return false;const d=w.s.length>=8?2:w.s.length>=5?1:0;return d>0&&v.length>=4&&lev(v,w.s,d)<=d||(n===1&&w.full&&v.length>=4&&w.s.startsWith(v))}).map(w=>w.bk))];
     if(hit.length){for(let k=i;k<i+n;k++)used.add(k);btk.push({t:v,en:[],cat:[],col:false,bk:hit,brand:true});break}}}
   toks=toks.filter((t,i)=>!used.has(i));
   const aliasK=t=>Object.keys(RU).filter(k=>uaN(RU[k]).split(" ").some(w=>w&&(w.startsWith(t)||t.startsWith(w)&&w.length>3))).map(k=>RUK[k]||k);
