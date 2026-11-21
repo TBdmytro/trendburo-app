@@ -3681,7 +3681,7 @@ function openBrand(bk){if(!bItems(bk).length)return; /* бренд без вещ
   if(!JH&&gs.length>1&&(CV.g==="w"||CV.g==="m")&&all.some(p=>p.g===CV.g))st.g=CV.g; // зашли из «Для неё»/«Для него» — сразу эта половина бренда
   const FRB=freshIds(),nwAll=all.filter(p=>p.isNew||FRB.has(p.id)).sort((a,b)=>(FRB.has(b.id)-FRB.has(a.id))||((b.na||0)-(a.na||0))),nwN=nwAll.length,nwPic=p=>{const i=p.imgs&&p.imgs[0];return (i&&(i.src||i.thumb))||String(p.shape).replace(/^img:/,"")},nwPics=showOnly(nwAll,3).slice().sort((a,b)=>(FRB.has(b.id)-FRB.has(a.id))||((a.best??1e9)-(b.best??1e9))).slice(0,6).map(nwPic).filter(u=>/^https?:/.test(u));st.nw=false;
   const s=push(bn,`<div class="bhero" style="--c:${lead.c}">
-     <span class="cap">${BRAND_META[bk]||""}</span><h1>${esc(bn)}</h1>
+     <h1>${esc(bn)}</h1>
      <div class="meta num"><span>${all.length} ${plural(all.length,["товар","товари","товарів"])}</span>${ICONS.some(ic=>ic.bk===bk)?`<span>${ICONS.filter(ic=>ic.bk===bk).length} моделей під замовлення</span>`:""}</div>
      <div class="acts"><button class="btn sm follow" data-follow aria-pressed="${follows.has(bk)}" style="flex:1">${follows.has(bk)?"Ви стежите":"Стежити"}</button></div></div>
    ${(()=>{const L=COLL.filter(c=>c.ids.some(id=>all.some(p=>p.id===id)));if(JH)return "";return L.length?`<div class="sec"><div class="sech"><h2>Колекції</h2><span class="muted" style="font-size:13px">${L.length}</span></div><div class="collmr">${L.map(c=>collCardHTML(c,false)).join("")}</div></div>`:""})()}
