@@ -415,6 +415,27 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so-scr .so-tile::after{content:"";position:absolute;inset:0;background:var(--c);opacity:0;transition:opacity .25s}.so-scr .so-tile.on{box-shadow:0 0 0 2px var(--c)}.so-scr .so-tile.on::after{opacity:.06}
 .so-ch{display:flex;gap:6px;overflow-x:auto;margin:0 -16px;padding:0 16px;scrollbar-width:none}
 .so-chip{flex:none;border:0;background:#fff;border-radius:99px;padding:8px 13px;font:inherit;font-size:13.5px;font-weight:600;color:#3a3c41;display:flex;align-items:center;gap:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05)}.so-chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}.so-chip.on{background:#1f2125;color:#fff}.so-chip.on i{box-shadow:0 0 0 2px rgba(255,255,255,.6)}
+.so-att{margin-top:10px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.so-atth{width:100%;border:0;background:#fdecea;color:#b3261e;font:inherit;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.so-atth i{width:22px;height:22px;border-radius:50%;background:#d1453b;color:#fff;font-style:normal;font-weight:800;display:grid;place-items:center;font-size:13px}
+.so-atth b{font-size:14.5px}.so-atth em{font-style:normal;font-weight:800;margin-left:auto;font-size:15px}.so-atth span{font-size:13px}
+.so-atl{display:flex;flex-direction:column}
+.so-atr{border:0;background:none;font:inherit;color:inherit;text-align:left;display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid #f0e3e1;cursor:pointer}
+.so-atr .so-th{width:38px;height:38px;border-radius:10px}
+.so-atr em{font-style:normal;color:#b3261e;font-size:12px;font-weight:700;text-align:right;max-width:42%}
+.so-vw{display:grid;grid-template-columns:1fr 1fr;background:#e6e7ea;border-radius:13px;padding:3px;margin:2px 0 10px}
+.so-vw button{border:0;background:none;font:inherit;font-size:13.5px;font-weight:600;color:#6b6d72;height:32px;border-radius:10px;cursor:pointer}
+.so-vw button.on{background:#fff;color:#1f2125;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.so-sec{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#3a3c41;padding:14px 4px 6px;position:sticky;top:0;z-index:2;background:var(--bg,#f2f3f4)}
+.so-sec i{width:8px;height:8px;border-radius:50%;background:var(--c)}.so-sec em{font-style:normal;margin-left:auto;color:#8a8d93}
+.so-cmp .so-cr{width:100%;border:0;background:none;font:inherit;color:inherit;text-align:left;display:flex;align-items:center;gap:9px;padding:6px 12px 6px 8px;cursor:pointer;position:relative}
+.so-cmp .so-cr+.so-cr::before{content:"";position:absolute;left:56px;right:0;top:0;height:1px;background:#e9e9ee}
+.so-cr .so-th{width:38px;height:38px;border-radius:10px}
+.so-cn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}.so-cn small{color:var(--g2);font-size:12.5px}
+.so-cr>b{font-size:13.5px;font-weight:700;white-space:nowrap}
+.so-w{font-style:normal;color:#b3261e;font-size:11px;font-weight:700;white-space:nowrap}
+.so-acts2{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.so-act{background:color-mix(in srgb,var(--c) 16%,#fff);color:var(--c);white-space:nowrap}
 .so-grp{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .so-scr .so-row{display:flex;align-items:center;gap:4px;padding:0 0 0 6px;border:0;position:relative;transition:background .2s}.so-scr .so-row+.so-row::before{content:"";position:absolute;left:92px;right:0;top:0;height:1px;background:#e9e9ee}.so-scr .so-row.on{background:#eef4fd}
 .so-scr .so-ck{padding:10px 6px;display:flex;cursor:pointer}.so-scr .so-ck input{position:absolute;opacity:0;width:1px;height:1px}.so-scr .so-ck i{width:22px;height:22px;border-radius:50%;border:1.6px solid #c7c7cc;display:grid;place-items:center;transition:all .2s}
@@ -4678,11 +4699,21 @@ const soPill=k=>`<em class="so-st" style="--c:${soCol(k)}">${SO_ST[k]||k}</em>`;
 /* наш номер (#1001) и код для клиента (7KQ4) */
 const soNo=l=>"#"+String(l.number||"").replace(/^TB-/,"")+(l.code?" · "+l.code:"");
 const soMoney=l=>{const t=l.total||0,c=l.cost||0;return{t,c,p:c?t-c:0}};
-async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new Set();let mode="boutique",origin="";
+/* вид списка заказов v2 (пробный, ?so=2): пульт «Требует внимания», режим «Коротко», действия вместо «N этапа», фото из каталога вместо буквы */
+const SO2=(()=>{try{if(/[?&]so=2/.test(location.search))localStorage.so2="1";return localStorage.so2==="1"}catch(e){return /[?&]so=2/.test(location.search)}})();
+const SO_ACT={new:"принять",work:"ждём оплату",paid:"выкупить",bought:"упаковать",received:"упаковать",packed:"отправить",shipping:"в дороге",np:"на почте",ready:"отдать",delivered:"получен",cancelled:"отменён"};
+const SO_AORD=["принять","ждём оплату","выкупить","упаковать","отправить","на почте","отдать","в дороге"];
+const soIdle=l=>{const h=(l.history||[]).map(x=>x.at).filter(Boolean).sort().pop()||l.updatedAt||l.createdAt;return h?Math.floor((Date.now()-new Date(h))/864e5):0};
+const soNA=l=>!l.handover&&(l.noAddress||!(l.delivery&&(l.delivery.city||l.delivery.address)))&&!["delivered","cancelled"].includes(l.status);
+const soWhy=l=>{if(["delivered","cancelled"].includes(l.status))return[];const r=[];if(soNA(l))r.push("нет адреса");if(l.payLater&&!l.paidAt)r.push("ждём оплату");if((l.claims||[]).length||(l.custClaims||[]).length)r.push("🙋 запрос");const d=soIdle(l),lim={shipping:10,np:5}[soSt(l)]||7;if(d>=lim)r.push(d+" дн. без движения");return r};
+const soPh=i=>{if(i.photo)return i.photo;const t=String(i.title||"").toLowerCase(),b=String(i.brand||"").toLowerCase();const p=(i.id&&P.find(x=>x.id===i.id))||(t&&P.find(x=>String(x.brand).toLowerCase()===b&&String(x.name||"").toLowerCase()===t));const im=p&&p.imgs&&p.imgs[0];return im?(im.thumb||im.src):""};
+const soActs=g=>{const c=new Map();g.forEach(x=>{const k=soSt(x),a=SO_ACT[k]||k;if(!c.has(a))c.set(a,{n:0,k});c.get(a).n++});return [...c].sort((a,b)=>SO_AORD.indexOf(a[0])-SO_AORD.indexOf(b[0]))};
+const soActH=g=>soActs(g).map(([a,{n,k}])=>`<em class="so-st so-act" style="--c:${soCol(k)}">${g.length>1?n+" ":""}${a}</em>`).join("");
+async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new Set();let mode="boutique",origin="",vw=(()=>{try{return localStorage.soVw||"full"}catch(e){return "full"}})(),attOpen=false;
   const s=push("Заказы",`<div class="so">
     <div class="so-hd"><div><h1>Заказы</h1><p class="so-sub"></p></div></div>
     <div class="so-acts"><button class="so-new press" data-sonew><span>＋</span>Новый заказ</button><button class="so-drv press" data-sodrv><svg viewBox="-14 -14 28 28" width="26" height="26">${r2Badge("truck",13)}</svg>Водителю</button></div>
-    <div class="so-tiles"></div><div class="so-ch"></div><div class="so-list"><p class="ace">Завантажуємо…</p></div><div style="height:170px"></div></div>
+    <div class="so-tiles"></div><div class="so-att" hidden></div><div class="so-ch"></div><div class="so-vw" hidden></div><div class="so-list"><p class="ace">Завантажуємо…</p></div><div style="height:170px"></div></div>
     <div class="so-bar" hidden><div class="so-bt"><b></b><span></span></div><div class="so-opt"></div><div class="so-ba"><button class="btn soft" data-soclr>Снять</button><button class="btn" data-sogo>Следующий этап →</button></div></div>`);
   {const f=s.querySelector("footer.cft");if(f)f.remove()} // рабочий экран — без блока «Ми на звʼязку» внизу
   s.classList.add("so-scr");
@@ -4694,17 +4725,26 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new 
     s.querySelector(".so-tiles").innerHTML=[["paid","card","Выкупить",cnt("paid")],["bought","box",packAt?"Упакуются "+new Date(packAt).toLocaleString("ru",{weekday:"short",hour:"2-digit",minute:"2-digit"}):"Ждут упаковки",cnt("bought")+cnt("received")],["packed","truck","К отправке",cnt("packed")],["shipping","np","В дороге → НП",all.filter(l=>l.status==="shipping"&&ua(l)).length]].map(([k,ic,t,n])=>`<button class="so-tile press${st===k?" on":""}" data-sost="${k}" style="--c:${R2D[ic]}"><svg viewBox="-14 -14 28 28" width="30" height="30">${r2Badge(ic,13)}</svg><b class="num">${n}</b><span>${t}</span></button>`).join("");
     s.querySelector(".so-ch").innerHTML=`<button class="so-chip${!st?" on":""}" data-sost="">Активные · ${act.length}</button>`+Object.entries(SO_ST).filter(([k])=>cnt(k)).map(([k,v])=>`<button class="so-chip${st===k?" on":""}" data-sost="${k}" style="--c:${soCol(k)}"><i></i>${v} · ${cnt(k)}</button>`).join("");
     const V=st?all.filter(l=>soSt(l)===st):act;
+    if(SO2){const bad=act.filter(l=>soWhy(l).length),A=s.querySelector(".so-att");A.hidden=!bad.length;
+      A.innerHTML=bad.length?`<button class="so-atth" data-soatt><i>!</i><b>Требует внимания</b><em class="num">${bad.length}</em><span>${attOpen?"⌃":"⌄"}</span></button>`+(attOpen?`<div class="so-atl">${bad.map(l=>{const it=(l.items||[])[0]||{};return `<button class="so-atr" data-soopen="${esc(l._id)}"><span class="so-th" style="--c:${soCol(soSt(l))}">${soPh(it)?`<img src="${esc(soPh(it))}" alt="" loading="lazy">`:`<b>${esc((it.brand||"?")[0])}</b>`}</span><span class="so-m"><b>${esc(soName(l))}</b><small>${esc([it.brand,it.title].filter(Boolean).join(" "))}</small></span><em>${soWhy(l).map(esc).join(" · ")}</em></button>`}).join("")}</div>`:""):"";
+      const W=s.querySelector(".so-vw");W.hidden=false;W.innerHTML=`<button class="${vw==="full"?"on":""}" data-sovw="full">Подробно</button><button class="${vw==="short"?"on":""}" data-sovw="short">Коротко</button>`}
+    if(SO2&&vw==="short"){const sec=new Map();V.forEach(l=>{const a=SO_ACT[soSt(l)]||soSt(l);if(!sec.has(a))sec.set(a,[]);sec.get(a).push(l)});
+      const secs=[...sec].sort((a,b)=>SO_AORD.indexOf(a[0])-SO_AORD.indexOf(b[0]));
+      L.innerHTML=secs.length?secs.map(([a,ls])=>{const by=new Map();ls.forEach(l=>{const k=soCliKey(l);if(!by.has(k))by.set(k,[]);by.get(k).push(l)});const k0=soSt(ls[0]);
+        return `<div class="so-sec" style="--c:${soCol(k0)}"><i></i>${esc(a[0].toUpperCase()+a.slice(1))}<em class="num">${ls.length}</em></div><div class="so-grp so-cmp">${[...by.values()].map(g=>{const its=g.flatMap(x=>x.items||[]),it=its[0]||{},ph=soPh(it),why=[...new Set(g.flatMap(soWhy))],tot=g.reduce((a,x)=>a+(x.total||0),0);
+          return `<button class="so-cr" ${g.length>1?`data-socli="${esc(g[0]._id)}"`:`data-soopen="${esc(g[0]._id)}"`}><span class="so-th" style="--c:${soCol(soSt(g[0]))}">${ph?`<img src="${esc(ph)}" alt="" loading="lazy">`:`<b>${esc((it.brand||"?")[0])}</b>`}</span><span class="so-cn"><b>${esc(soName(g[0]))}</b> <small>${esc([it.brand,it.title].filter(Boolean).join(" "))}${its.length>1?" +"+(its.length-1):""}</small></span>${why.length?`<em class="so-w">${esc(why[0])}</em>`:""}<b class="num">${tot?eur(tot):""}</b></button>`}).join("")}</div>`}).join("")
+        :`<div class="so-empty"><b>Заказов нет</b></div>`;upBar();return}
     // владелец 21.11: один человек — одна строка («@ssoffiaa0 · 2 позиции»), внутри свёрнуты его заказы и посылки; галочка на человеке — выбрать все его заказы
     const blocks=[],bi=new Map();V.forEach(l=>{const k=soCliKey(l);if(!bi.has(k)){bi.set(k,blocks.length);blocks.push([])}blocks[bi.get(k)].push(l)});
     const grpH=g=>{const key=soCliKey(g[0]),op=openG.has(key),allS=g.every(x=>sel.has(x._id)),someS=!allS&&g.some(x=>sel.has(x._id)),its=g.flatMap(x=>x.items||[]),q=its.reduce((a,i)=>a+(+i.qty||1),0),tot=g.reduce((a,x)=>a+(x.total||0),0),pr=g.reduce((a,x)=>a+soMoney(x).p,0),ks=[...new Set(g.map(soSt))],grp=new Set(g.map(x=>x.group||x._id)).size;
       return `<div class="so-cg${op?" open":""}"><div class="so-row so-cgh${allS?" on":""}"><label class="so-ck"><input type="checkbox" data-sopg="${esc(key)}" ${allS?"checked":""} aria-label="Вибрати всі"><i${someS?' class="part"':""}></i></label>
-        <button class="so-tx" data-sotg="${esc(key)}"><span class="so-th3">${its.slice(0,3).map(i=>`<i>${i.photo?`<img src="${esc(i.photo)}" alt="" loading="lazy">`:`<b>${esc((i.brand||"?")[0])}</b>`}</i>`).join("")}</span>
-          <span class="so-m"><b>${esc(soName(g[0]))}</b><small>${q} ${plural(q,["позиция","позиции","позиций"])} · ${grp>1?grp+" "+plural(grp,["заказ","заказа","заказов"])+" · ":""}${g.length} ${plural(g.length,["посылка","посылки","посылок"])}</small><span class="so-tags">${[...new Set(g.map(x=>x.dest||"ua"))].map(d=>`<span>${soFlag(d)}</span>`).join("")}${[...new Set(g.map(x=>x.origin).filter(Boolean))].map(o=>`<span>${esc(o)}</span>`).join("")}</span></span>
-          <span class="so-rr"><b class="num">${tot?eur(tot):""}</b>${pr?`<small class="num">+${eur(pr)}</small>`:""}${ks.length===1?soPill(ks[0]):`<em class="so-st">${ks.length} этапа</em>`}<span class="so-chev">${op?"Свернуть ⌃":"Открыть ⌄"}</span></span></button></div>
+        <button class="so-tx" data-sotg="${esc(key)}"><span class="so-th3">${its.slice(0,3).map(i=>{const ph=SO2?soPh(i):i.photo;return `<i>${ph?`<img src="${esc(ph)}" alt="" loading="lazy">`:`<b>${esc((i.brand||"?")[0])}</b>`}</i>`}).join("")}</span>
+          <span class="so-m"><b>${esc(soName(g[0]))}</b><small>${q} ${plural(q,["позиция","позиции","позиций"])} · ${grp>1?grp+" "+plural(grp,["заказ","заказа","заказов"])+" · ":""}${g.length} ${plural(g.length,["посылка","посылки","посылок"])}</small><span class="so-tags">${[...new Set(g.map(x=>x.dest||"ua"))].map(d=>`<span>${soFlag(d)}</span>`).join("")}${[...new Set(g.map(x=>x.origin).filter(Boolean))].map(o=>`<span>${esc(o)}</span>`).join("")}${SO2?(()=>{const n=g.filter(soNA).length;return n?`<span class="t-rd">нет адреса${g.length>1?" · "+n+" из "+g.length:""}</span>`:""})():""}</span></span>
+          <span class="so-rr"><b class="num">${tot?eur(tot):""}</b>${pr?`<small class="num">+${eur(pr)}</small>`:""}${SO2?`<span class="so-acts2">${soActH(g)}</span>`:ks.length===1?soPill(ks[0]):`<em class="so-st">${ks.length} этапа</em>`}<span class="so-chev">${op?"Свернуть ⌃":"Открыть ⌄"}</span></span></button></div>
         ${op?`<div class="so-cgb">${g.map((x,i)=>rowH(x,i+1,g.length)).join("")}</div>`:""}</div>`};
     const rowH=(l,gi,gn)=>{const it=(l.items||[])[0]||{},k=soSt(l),m=soMoney(l),na=!l.handover&&(l.noAddress||!(l.delivery&&(l.delivery.city||l.delivery.address)))&&!["delivered","cancelled"].includes(l.status);
       return `<div class="so-row${sel.has(l._id)?" on":""}"><label class="so-ck"><input type="checkbox" data-sopk="${esc(l._id)}" ${sel.has(l._id)?"checked":""} aria-label="Вибрати"><i></i></label>
-      <button class="so-tx" data-soopen="${esc(l._id)}"><span class="so-th" style="--c:${soCol(k)}">${it.photo?`<img src="${esc(it.photo)}" alt="" loading="lazy">`:`<b>${esc(((it.brand||soName(l)||"?").replace(/^@/,"")[0]||"?").toUpperCase())}</b>`}</span>
+      <button class="so-tx" data-soopen="${esc(l._id)}"><span class="so-th" style="--c:${soCol(k)}">${(SO2?soPh(it):it.photo)?`<img src="${esc(SO2?soPh(it):it.photo)}" alt="" loading="lazy">`:`<b>${esc(((it.brand||soName(l)||"?").replace(/^@/,"")[0]||"?").toUpperCase())}</b>`}</span>
         <span class="so-m">${gn?`<b>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")+(+i.qty>1?" ×"+i.qty:"")).join(", ")||"Заявка")}</b><small>Посылка ${gi} из ${gn}</small>`:`<b>${esc(soName(l))}</b><small>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")).join(", ")||"Заявка")}</small>`}
         <span class="so-tags"><span>${soFlag(l.dest)} ${esc(soNo(l))}</span>${l.test?'<span class="t-ts">🧪 тест</span>':""}${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}${l.group&&!gn?'<span>📦 посылка</span>':""}${l.handover?'<span>🤝 в руки</span>':""}</span></span>
         <span class="so-rr"><b class="num">${l.total?eur(l.total):""}</b>${m.p?`<small class="num">+${eur(m.p)}</small>`:""}${soPill(k)}</span></button></div>`};
@@ -4725,6 +4765,9 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new 
     if(t.closest("[data-soclr]")){sel.clear();draw();return}
     if(t.closest("[data-sogo]")){const b=t.closest("[data-sogo]");b.disabled=true;
       try{const r=await soCall("bulk",{ids:[...sel],next:true,buyMode:mode,origin});toast(`Обновлено ${r.n}${r.sent?" · клиентам: "+r.sent:""}`);hap("medium");sel.clear();await load()}catch(x){toast(x.message)}b.disabled=false;return}
+    if(t.closest("[data-soatt]")){attOpen=!attOpen;hap("light");draw();return}
+    const vv=t.closest("[data-sovw]");if(vv){vw=vv.dataset.sovw;try{localStorage.soVw=vw}catch(x){}hap("light");draw();return}
+    const cc=t.closest("[data-socli]");if(cc){const l0=all.find(l=>l._id===cc.dataset.socli);if(typeof soClient==="function")soClient(l0,all,load);return}
     const tg=t.closest("[data-sotg]");if(tg){const k=tg.dataset.sotg;openG.has(k)?openG.delete(k):openG.add(k);hap("light");draw();return}
     const o=t.closest("[data-soopen]");if(o){soOrder(all.find(l=>l._id===o.dataset.soopen),load,all);return}
     if(t.closest("[data-sonew]")){soNew(load);return}
