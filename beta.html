@@ -454,6 +454,41 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so-sqb>b{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
 .so-sqb>small{font-size:11.5px;color:var(--g2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
 .so-sq .so-nx{width:100%;height:30px;font-size:12px;padding:0 4px}
+.so-scr .so-hd{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.so-rep{border:0;height:46px;padding:0 18px 0 14px;border-radius:23px;background:#34c759;color:#fff;font:inherit;font-size:15.5px;font-weight:800;display:flex;align-items:center;gap:7px;box-shadow:0 6px 16px rgba(52,199,89,.32);cursor:pointer;flex:none;margin-bottom:2px}
+.so-wsum{border:0;font:inherit;color:inherit;text-align:left;background:#fff;border-radius:18px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;column-gap:10px;align-items:end;box-shadow:0 1px 2px rgba(0,0,0,.05);cursor:pointer}
+.so-wl{grid-column:1/-1;color:#8e8e93;font-size:13px;font-weight:600}
+.so-we{font-size:30px;font-weight:800;color:#248a3d;letter-spacing:-.02em;line-height:1.15}
+.so-wr{text-align:right;font-size:13px;color:#3c3c43;line-height:1.45}.so-wr b{font-weight:700}
+.so-scr .so-new{background:#1c1c1e;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.so-strips{display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.so-sp+.so-sp{border-top:.5px solid #d1d1d6}
+.so-sph{width:100%;border:0;background:#fff;font:inherit;color:inherit;text-align:left;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
+.so-sp:first-child .so-sph{border-radius:18px 18px 0 0}.so-sp:last-child:not(.open) .so-sph{border-radius:0 0 18px 18px}
+.so-sp.open .so-sph{position:sticky;top:0;z-index:4;background:color-mix(in srgb,var(--c) 9%,#fff);box-shadow:0 6px 14px rgba(0,0,0,.07)}
+.so-spi{width:36px;height:36px;border-radius:10px;background:var(--c);color:#fff;display:grid;place-items:center;flex:none}
+.so-spt{flex:1;min-width:0}.so-spt b{display:block;font-size:16px;font-weight:700}.so-spt small{display:block;color:#8e8e93;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.so-spn{text-align:right}.so-spn b{display:block;font-size:20px;font-weight:800;line-height:1.1}.so-spn small{font-size:12px;color:#8e8e93}
+.so-sph u{text-decoration:none;color:#c7c7cc;font-size:20px}
+.so-spx{border-radius:99px;background:color-mix(in srgb,var(--c) 18%,#fff);color:var(--c);font-weight:700;font-size:13px;padding:6px 11px;white-space:nowrap}
+.so-spl{border-top:.5px solid #e5e5ea}.so-sp:last-child .so-spl{border-radius:0 0 18px 18px;overflow:hidden}
+.so-spe{color:#8e8e93;font-size:14px;text-align:center;padding:16px}
+.so-allh{display:flex;justify-content:space-between;align-items:baseline;margin:10px 2px -4px}.so-allh b{font-size:20px;font-weight:800}.so-allh span{color:#8e8e93;font-size:13px;font-weight:600}
+.so-wkh{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#8e8e93;letter-spacing:.04em;text-transform:uppercase;margin:14px 4px 6px}
+.so-tags .t-wk{background:none!important;color:#aeaeb2!important;padding-left:2px!important;font-weight:500}
+.sr-seg{display:flex;background:#e4e4e9;border-radius:10px;padding:2px}.sr-seg button{flex:1;border:0;background:none;font:inherit;font-size:13.5px;font-weight:600;padding:7px 0;border-radius:8px;color:#3c3c43;cursor:pointer}.sr-seg button.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.sr-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.sr-kpi div{background:#fff;border-radius:14px;padding:10px 11px;min-width:0}.sr-kpi small{display:block;color:#8e8e93;font-size:12px;font-weight:600}.sr-kpi b{font-size:18px;font-weight:800;white-space:nowrap}.sr-kpi b.g{color:#248a3d}
+.sr-mo{width:100%;border:0;background:#fff;font:inherit;color:inherit;text-align:left;display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;border-top:.5px solid #e5e5ea}.sr-mo:first-child{border-top:0}
+.sr-mo span{flex:1}.sr-mo b{font-size:16px}.sr-mo small{display:block;color:#8e8e93;font-size:12.5px}.sr-mo em{font-style:normal;color:#248a3d;font-weight:700;font-size:14.5px}.sr-mo u{text-decoration:none;color:#c7c7cc}
+.sr-wk{width:100%;border:0;background:#fafafa;font:inherit;color:inherit;text-align:left;display:grid;grid-template-columns:62px 1fr auto;gap:10px;align-items:center;padding:10px 14px 10px 24px;cursor:pointer;border-top:.5px solid #eee}
+.sr-wn{font-weight:800;font-size:15px}.sr-wn small{display:block;font-weight:600;color:#8e8e93;font-size:11px}
+.sr-wb i{display:block;height:8px;border-radius:4px;background:#e5e5ea;overflow:hidden}.sr-wb s{display:block;height:100%;background:#34c759;border-radius:4px}.sr-wb small{display:block;color:#8e8e93;font-size:11.5px;margin-top:4px}
+.sr-wk em{font-style:normal;color:#248a3d;font-weight:700;font-size:14px}
+.sr-note{color:#8e8e93;font-size:12.5px;line-height:1.45;margin:4px 4px 0}
+.sr-days{display:flex;gap:6px;align-items:flex-end;height:78px;background:#fff;border-radius:14px;padding:10px 12px}.sr-days div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;color:#8e8e93}.sr-days i{width:100%;background:#34c759;border-radius:4px}
+.sr-tw{background:#fff;border-radius:14px;overflow:hidden}.sr-t{width:100%;border-collapse:collapse;font-size:12.5px}.sr-t th{font-size:10.5px;color:#8e8e93;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:8px 6px;font-weight:700;border-bottom:.5px solid #d1d1d6}.sr-t td{padding:6px;border-bottom:.5px solid #eee;vertical-align:middle}.sr-t tr[data-soopen]{cursor:pointer}
+.sr-t .r{text-align:right;white-space:nowrap}.sr-t .g{color:#248a3d;font-weight:700}
+.sr-ti{display:flex;align-items:center;gap:7px;min-width:0}.sr-ti span{width:30px;height:30px;border-radius:7px;overflow:hidden;border:.5px solid #e5e5ea;flex:none;background:#fff}.sr-ti img{width:100%;height:100%;object-fit:contain}.sr-ti b{font-weight:700;display:block}.sr-ti small{display:block;color:#8e8e93;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
 .so-grp{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .so-scr .so-row{display:flex;align-items:center;gap:4px;padding:0 0 0 6px;border:0;position:relative;transition:background .2s}.so-scr .so-row+.so-row::before{content:"";position:absolute;left:92px;right:0;top:0;height:1px;background:#e9e9ee}.so-scr .so-row.on{background:#eef4fd}
 .so-scr .so-ck{padding:10px 6px;display:flex;cursor:pointer}.so-scr .so-ck input{position:absolute;opacity:0;width:1px;height:1px}.so-scr .so-ck i{width:22px;height:22px;border-radius:50%;border:1.6px solid #c7c7cc;display:grid;place-items:center;transition:all .2s}
@@ -4730,18 +4765,36 @@ const soWhy=l=>{if(["delivered","cancelled"].includes(l.status))return[];const r
 const soPh=i=>{if(i.photo)return i.photo;const t=String(i.title||"").toLowerCase(),b=String(i.brand||"").toLowerCase();const p=(i.id&&P.find(x=>x.id===i.id))||(t&&P.find(x=>String(x.brand).toLowerCase()===b&&String(x.name||"").toLowerCase()===t));const im=p&&p.imgs&&p.imgs[0];return im?(im.thumb||im.src):""};
 const soActs=g=>{const c=new Map();g.forEach(x=>{const k=soSt(x),a=soAct(x);if(!c.has(a))c.set(a,{n:0,k});c.get(a).n++});return [...c].sort((a,b)=>SO_AORD.indexOf(a[0])-SO_AORD.indexOf(b[0]))};
 const soActH=g=>soActs(g).map(([a,{n,k}])=>`<em class="so-st so-act" style="--c:${soCol(k)}">${g.length>1?n+" ":""}${a}</em>`).join("");
-async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new Set();let mode="boutique",origin="",vw=(()=>{try{return localStorage.soVw||"grid"}catch(e){return "grid"}})(),attOpen=false;
+/* учёт по неделям (владелец 21.11): заказ — в неделю, когда его приняли; заработок — в неделю, когда пришли деньги */
+const soIsoW=d=>{const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())),dy=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-dy);const y=t.getUTCFullYear();return{y,w:Math.ceil(((t-Date.UTC(y,0,1))/864e5+1)/7)}};
+const soWkMon=(y,w)=>{const j4=new Date(y,0,4),d=j4.getDay()||7;return new Date(y,0,4-d+1+(w-1)*7)};
+const SO_MON=["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"],SO_MONF=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"],SO_DOW=["вс","пн","вт","ср","чт","пт","сб"];
+const soWkRange=(y,w)=>{const a=soWkMon(y,w),b=new Date(a);b.setDate(a.getDate()+6);return a.getMonth()===b.getMonth()?`${a.getDate()}–${b.getDate()} ${SO_MON[b.getMonth()]}`:`${a.getDate()} ${SO_MON[a.getMonth()]}–${b.getDate()} ${SO_MON[b.getMonth()]}`};
+const soAt=l=>new Date(l.createdAt||l._createdAt||Date.now());
+const soWkOf=l=>soIsoW(soAt(l));
+const soPaidAt=l=>l.status==="cancelled"?null:l.paidAt?new Date(l.paidAt):(!l.payLater&&!["new","work"].includes(l.status)?soAt(l):null);
+const soDay=d=>`${SO_DOW[d.getDay()]} ${d.getDate()} ${SO_MON[d.getMonth()]}`;
+const SO_IC2={wait:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',bag:'<path d="M5.5 8.5h13l-1 11.5h-11z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/>',box:'<path d="M3.5 7.8 12 3.5l8.5 4.3v8.4L12 20.5l-8.5-4.3z"/><path d="M3.5 7.8 12 12l8.5-4.2M12 12v8.5"/>',send:'<path d="M20.5 3.5 3.5 10.8l6.8 2.9 2.9 6.8z"/><path d="m10.3 13.7 10.2-10.2"/>',done:'<circle cx="12" cy="12" r="8.5"/><path d="m8.3 12.3 2.6 2.6 5-5.4"/>'};
+const soIco=(k,sz=21,sw=2)=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${SO_IC2[k]}</svg>`;
+const SO_STRIP=[["unpaid","Не оплачены","ждём деньги от клиента","#e0a526","wait",l=>["new","work"].includes(l.status)],
+  ["paid","Оплачены — выкупить","деньги у нас, нужно купить","#c08a2d","bag",l=>l.status==="paid"],
+  ["bought","Выкуплены","вещь у нас, готовим к отправке","#8e6cd8","box",l=>["bought","received","packed","ready"].includes(l.status)],
+  ["sent","Отправлены","в пути, ждём получения","#2f7fd8","send",l=>["shipping","np"].includes(l.status)]];
+async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new Set();let mode="boutique",origin="",vw=(()=>{try{return localStorage.soVw||"grid"}catch(e){return "grid"}})(),attOpen=false,openS="";
   const s=push("Заказы",`<div class="so">
-    <div class="so-hd"><div><h1>Заказы</h1><p class="so-sub"></p></div></div>
+    <div class="so-hd"><div><h1>Заказы</h1><p class="so-sub"></p></div><button class="so-rep press" data-sorep aria-label="Отчёт">${soIco("done",22,2.2)}<span>Отчёт</span></button></div>
+    <button class="so-wsum press" data-sorepw></button>
     <div class="so-acts"><button class="so-new press" data-sonew><span>＋</span>Новый заказ</button><button class="so-drv press" data-sodrv><svg viewBox="-14 -14 28 28" width="26" height="26">${r2Badge("truck",13)}</svg>Водителю</button></div>
-    <div class="so-tiles"></div><div class="so-att" hidden></div><div class="so-ch"></div><div class="so-vw" hidden></div><div class="so-list"><p class="ace">Завантажуємо…</p></div><div style="height:170px"></div></div>
+    <div class="so-tiles"></div><div class="so-strips"></div><div class="so-att" hidden></div><div class="so-ch"></div><div class="so-vw" hidden></div><div class="so-list"><p class="ace">Завантажуємо…</p></div><div style="height:170px"></div></div>
     <div class="so-bar" hidden><div class="so-bt"><b></b><span></span></div><div class="so-opt"></div><div class="so-ba"><button class="btn soft" data-soclr>Снять</button><button class="btn" data-sogo>Следующий этап →</button></div></div>`);
   {const f=s.querySelector("footer.cft");if(f)f.remove()} // рабочий экран — без блока «Ми на звʼязку» внизу
   s.classList.add("so-scr");
   const L=s.querySelector(".so-list"),bar=s.querySelector(".so-bar");
   const draw=()=>{const cnt=k=>all.filter(l=>soSt(l)===k).length,ua=l=>(l.dest||"ua")==="ua",act=all.filter(l=>!["delivered","cancelled"].includes(l.status)),real=act.filter(l=>!l.test);
     const sum=real.reduce((a,l)=>a+(l.total||0),0),prof=real.reduce((a,l)=>a+soMoney(l).p,0);
-    s.querySelector(".so-sub").textContent=`${act.length} ${plural(act.length,["активный","активных","активных"])}${sum?" · "+eur(sum):""}${prof?" · заработок "+eur(prof):""}`;
+    s.querySelector(".so-sub").textContent=`${act.length} в работе`;
+    {const now=soIsoW(new Date()),inW=d=>{const x=soIsoW(d);return x.y===now.y&&x.w===now.w},okL=all.filter(l=>!l.test&&l.status!=="cancelled"),wl=okL.filter(l=>inW(soAt(l))),earn=okL.filter(l=>{const p=soPaidAt(l);return p&&inW(p)}).reduce((a,l)=>a+soMoney(l).p,0),turn=wl.reduce((a,l)=>a+(l.total||0),0);
+      s.querySelector(".so-wsum").innerHTML=`<span class="so-wl">Неделя ${now.w} · ${soWkRange(now.y,now.w)}</span><span class="so-we num">${earn?"+"+eur(earn):"0 €"}</span><span class="so-wr"><b class="num">${wl.length}</b> ${plural(wl.length,["заказ","заказа","заказов"])}<br><b class="num">${eur(turn)}</b> оборот</span>`}
     const packAt=all.filter(l=>["bought","received"].includes(l.status)&&l.packAt).map(l=>l.packAt).sort()[0];
     s.querySelector(".so-tiles").innerHTML=[["paid","card","Выкупить",cnt("paid")],["bought","box",packAt?"Упакуются "+new Date(packAt).toLocaleString("ru",{weekday:"short",hour:"2-digit",minute:"2-digit"}):"Ждут упаковки",cnt("bought")+cnt("received")],["packed","truck","К отправке",cnt("packed")],["shipping","np","В дороге → НП",all.filter(l=>l.status==="shipping"&&ua(l)).length]].map(([k,ic,t,n])=>`<button class="so-tile press${st===k?" on":""}" data-sost="${k}" style="--c:${R2D[ic]}"><svg viewBox="-14 -14 28 28" width="30" height="30">${r2Badge(ic,13)}</svg><b class="num">${n}</b><span>${t}</span></button>`).join("");
     s.querySelector(".so-ch").innerHTML=`<button class="so-chip${!st?" on":""}" data-sost="">Активные · ${act.length}</button>`+Object.entries(SO_ST).filter(([k])=>cnt(k)).map(([k,v])=>`<button class="so-chip${st===k?" on":""}" data-sost="${k}" style="--c:${soCol(k)}"><i></i>${v} · ${cnt(k)}</button>`).join("");
@@ -4770,8 +4823,13 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new 
       return `<div class="so-row${sel.has(l._id)?" on":""}"><label class="so-ck"><input type="checkbox" data-sopk="${esc(l._id)}" ${sel.has(l._id)?"checked":""} aria-label="Вибрати"><i></i></label>
       <button class="so-tx" data-soopen="${esc(l._id)}"><span class="so-th" style="--c:${soCol(k)}">${(SO2?soPh(it):it.photo)?`<img src="${esc(SO2?soPh(it):it.photo)}" alt="" loading="lazy">`:`<b>${esc(((it.brand||soName(l)||"?").replace(/^@/,"")[0]||"?").toUpperCase())}</b>`}</span>
         <span class="so-m">${gn?`<b>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")+(+i.qty>1?" ×"+i.qty:"")).join(", ")||"Заявка")}</b><small>Посылка ${gi} из ${gn}</small>`:`<b>${esc(soName(l))}</b><small>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")).join(", ")||"Заявка")}</small>`}
-        <span class="so-tags"><span>${soFlag(l.dest)} ${esc(soNo(l))}</span>${l.test?'<span class="t-ts">🧪 тест</span>':""}${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}${l.group&&!gn?'<span>📦 посылка</span>':""}${l.handover?'<span>🤝 в руки</span>':""}</span></span>
+        <span class="so-tags"><span>${soFlag(l.dest)} ${esc(soNo(l))}</span>${SO2?"":`<span class="t-wk">нед. ${soWkOf(l).w} · ${soDay(soAt(l))}</span>`}${l.test?'<span class="t-ts">🧪 тест</span>':""}${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}${l.group&&!gn?'<span>📦 посылка</span>':""}${l.handover?'<span>🤝 в руки</span>':""}</span></span>
         <span class="so-rr"><b class="num">${l.total?eur(l.total):""}</b>${m.p?`<small class="num">+${eur(m.p)}</small>`:""}${soPill(k)}</span></button></div>`};
+    if(!SO2){const SR=s.querySelector(".so-strips");SR.innerHTML=SO_STRIP.map(S=>{const ls=act.filter(S[5]),sm=ls.reduce((a,l)=>a+(l.total||0),0),op=openS===S[0];
+        return `<div class="so-sp${op?" open":""}" style="--c:${S[3]}"><button class="so-sph" data-sostrip="${S[0]}"><span class="so-spi">${soIco(S[4])}</span><span class="so-spt"><b>${S[1]}</b><small>${S[2]}</small></span>${op?`<span class="so-spx">Закрыть ✕</span>`:`<span class="so-spn"><b class="num">${ls.length}</b><small class="num">${sm?eur(sm):""}</small></span><u>›</u>`}</button>${op?`<div class="so-spl">${ls.length?ls.map(l=>rowH(l,0,0)).join(""):`<p class="so-spe">Здесь пусто</p>`}</div>`:""}</div>`}).join("");
+      s.querySelector(".so-tiles").hidden=true;s.querySelector(".so-ch").hidden=true}
+    if(!SO2&&V.length){const wk=new Map();blocks.forEach(g=>{const x=soWkOf(g[0]),k=x.y*100+x.w;if(!wk.has(k))wk.set(k,{x,gs:[]});wk.get(k).gs.push(g)});
+      L.innerHTML=`<div class="so-allh"><b>Все заказы</b><span>по неделям</span></div>`+[...wk].sort((a,b)=>b[0]-a[0]).map(([k,{x,gs}])=>{const n=gs.reduce((a,g)=>a+g.length,0);return `<div class="so-wkh"><span>Неделя ${x.w} · ${soWkRange(x.y,x.w)}</span><span>${n} ${plural(n,["заказ","заказа","заказов"])}</span></div><div class="so-grp">${gs.map(g=>g.length<2?rowH(g[0],0,0):grpH(g)).join("")}</div>`}).join("");upBar();return}
     L.innerHTML=V.length?`<div class="so-grp">${blocks.map(g=>g.length<2?rowH(g[0],0,0):grpH(g)).join("")}</div>`
       :`<div class="so-empty"><svg viewBox="-14 -14 28 28" width="44" height="44">${r2Badge("check",13)}</svg><b>${st?"С этим этапом заказов нет":"Активных заказов нет"}</b><span>Нажмите «Новый заказ», чтобы добавить</span></div>`;
     upBar()};
@@ -4784,6 +4842,9 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new 
   s.addEventListener("change",e=>{const pg=e.target.closest("[data-sopg]");if(pg){all.filter(l=>soCliKey(l)===pg.dataset.sopg&&(!st?!["delivered","cancelled"].includes(l.status):soSt(l)===st)).forEach(l=>pg.checked?sel.add(l._id):sel.delete(l._id));hap("light");draw();upBar();return}
     const c=e.target.closest("[data-sopk]");if(c){c.checked?sel.add(c.dataset.sopk):sel.delete(c.dataset.sopk);c.closest(".so-row").classList.toggle("on",c.checked);hap("light");upBar()}if(e.target.matches("[data-soorig]"))origin=e.target.value});
   s.addEventListener("click",async e=>{const t=e.target;
+    const sp=t.closest("[data-sostrip]");if(sp){const k=sp.dataset.sostrip;openS=openS===k?"":k;hap("light");draw();if(openS){const el=s.querySelector(".so-sp.open");el&&el.scrollIntoView({block:"start",behavior:"smooth"})}return}
+    if(t.closest("[data-sorep]")){soReport(all);return}
+    if(t.closest("[data-sorepw]")){const x=soIsoW(new Date());soWeek(all,x.y,x.w);return}
     const f=t.closest("[data-sost]");if(f){st=st===f.dataset.sost?"":f.dataset.sost;draw();return}
     const m=t.closest("[data-somode]");if(m){mode=m.dataset.somode;upBar();return}
     if(t.closest("[data-soclr]")){sel.clear();draw();return}
@@ -4800,6 +4861,41 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new 
     if(t.closest("[data-sodrv]")){soDriver();return}});
   load()}
 
+/* Отчёт: год → месяц → неделя → таблица. Заказ — в неделю приёма, заработок — в неделю оплаты */
+function soReport(all){const L0=all.filter(l=>!l.test&&l.status!=="cancelled");const years=[...new Set(L0.map(l=>soAt(l).getFullYear()))].sort((a,b)=>b-a);let yr=years[0]||new Date().getFullYear();const openM=new Set([new Date().getFullYear()*100+new Date().getMonth()]);
+  const s=push("Отчёт",`<div class="so sr"><div class="so-hd"><div><h1>Отчёт</h1><p class="so-sub"></p></div></div><div class="sr-body"></div><div style="height:60px"></div></div>`);s.classList.add("so-scr");{const f=s.querySelector("footer.cft");if(f)f.remove()}
+  const B=s.querySelector(".sr-body");
+  const draw=()=>{const Ly=L0.filter(l=>soAt(l).getFullYear()===yr),paidY=L0.filter(l=>{const p=soPaidAt(l);return p&&p.getFullYear()===yr}),done=Ly.filter(l=>l.status==="delivered").length;
+    s.querySelector(".so-sub").textContent=`${Ly.length} ${plural(Ly.length,["заказ","заказа","заказов"])} · выполнено ${done}`;
+    const earnY=paidY.reduce((a,l)=>a+soMoney(l).p,0),turnY=Ly.reduce((a,l)=>a+(l.total||0),0);
+    // недели: заказы по дате приёма, заработок по дате оплаты
+    const W=new Map(),wk=(y,w)=>{const k=y*100+w;if(!W.has(k))W.set(k,{y,w,n:0,t:0,p:0});return W.get(k)};
+    Ly.forEach(l=>{const x=soWkOf(l),o=wk(x.y,x.w);o.n++;o.t+=l.total||0});paidY.forEach(l=>{const x=soIsoW(soPaidAt(l));wk(x.y,x.w).p+=soMoney(l).p});
+    const M=new Map();[...W.values()].forEach(o=>{const th=soWkMon(o.y,o.w);th.setDate(th.getDate()+3);if(th.getFullYear()!==yr)return;const m=th.getMonth();if(!M.has(m))M.set(m,[]);M.get(m).push(o)});
+    B.innerHTML=(years.length>1?`<div class="sr-seg">${years.map(y=>`<button class="${y===yr?"on":""}" data-sry="${y}">${y}</button>`).join("")}</div>`:"")+
+      `<div class="sr-kpi"><div><small>Заказов</small><b class="num">${Ly.length}</b></div><div><small>Оборот</small><b class="num">${eur(turnY)}</b></div><div><small>Заработок</small><b class="num g">+${eur(earnY)}</b></div></div>
+      <div class="so-allh"><b>Месяцы</b><span>нажмите — откроются недели</span></div>
+      <div class="so-grp">${[...M].sort((a,b)=>b[0]-a[0]).map(([m,ws])=>{const k=yr*100+m,op=openM.has(k),n=ws.reduce((a,o)=>a+o.n,0),t=ws.reduce((a,o)=>a+o.t,0),p=ws.reduce((a,o)=>a+o.p,0),mx=Math.max(1,...ws.map(o=>o.p));
+        return `<button class="sr-mo" data-srm="${k}"><span><b>${SO_MONF[m]}</b><small>${n} ${plural(n,["заказ","заказа","заказов"])} · ${eur(t)}</small></span><em class="num">+${eur(p)}</em><u>${op?"⌃":"⌄"}</u></button>`+
+        (op?ws.sort((a,b)=>b.w-a.w).map(o=>`<button class="sr-wk" data-srw="${o.y}-${o.w}"><span class="sr-wn">Н${o.w}<small>${soWkRange(o.y,o.w)}</small></span><span class="sr-wb"><i><s style="width:${Math.round(o.p/mx*100)}%"></s></i><small>${o.n} ${plural(o.n,["заказ","заказа","заказов"])} · ${eur(o.t)}</small></span><em class="num">+${eur(o.p)}</em></button>`).join(""):"")}).join("")||`<p class="so-spe">Пока нет заказов</p>`}</div>
+      <p class="sr-note">Заказ попадает в неделю, когда его приняли. Заработок — в неделю, когда пришли деньги: отправили позже — заработок всё равно в своей неделе.</p>`};
+  s.addEventListener("click",e=>{const t=e.target;let x;
+    if(x=t.closest("[data-sry]")){yr=+x.dataset.sry;draw();return}
+    if(x=t.closest("[data-srm]")){const k=+x.dataset.srm;openM.has(k)?openM.delete(k):openM.add(k);hap("light");draw();return}
+    if(x=t.closest("[data-srw]")){const [y,w]=x.dataset.srw.split("-").map(Number);soWeek(all,y,w)}});
+  draw()}
+function soWeek(all,y,w){const L0=all.filter(l=>!l.test&&l.status!=="cancelled"),same=d=>{const x=soIsoW(d);return x.y===y&&x.w===w};
+  const Lw=L0.filter(l=>same(soAt(l))).sort((a,b)=>soAt(a)-soAt(b)),paid=L0.filter(l=>{const p=soPaidAt(l);return p&&same(p)});
+  const earn=paid.reduce((a,l)=>a+soMoney(l).p,0),turn=Lw.reduce((a,l)=>a+(l.total||0),0),days=[0,0,0,0,0,0,0];paid.forEach(l=>{days[(soPaidAt(l).getDay()+6)%7]+=soMoney(l).p});const mx=Math.max(1,...days);
+  const later=Lw.filter(l=>{const p=soPaidAt(l);return !p||!same(p)}).length;
+  const s=push("Неделя "+w,`<div class="so sr"><div class="so-hd"><div><h1>Неделя ${w}</h1><p class="so-sub">${soWkRange(y,w)} ${y}</p></div></div>
+    <div class="sr-kpi"><div><small>Заказов</small><b class="num">${Lw.length}</b></div><div><small>Оборот</small><b class="num">${eur(turn)}</b></div><div><small>Заработок</small><b class="num g">+${eur(earn)}</b></div></div>
+    <div class="so-allh"><b>Заработок по дням</b></div><div class="sr-days">${["пн","вт","ср","чт","пт","сб","вс"].map((d,i)=>`<div><i style="height:${Math.max(3,Math.round(days[i]/mx*46))}px;opacity:${days[i]?1:.25}"></i>${d}</div>`).join("")}</div>
+    <div class="so-allh"><b>Заказы недели</b><span>${Lw.length}</span></div>
+    ${Lw.length?`<div class="sr-tw"><table class="sr-t"><tr><th>Дата</th><th>Клиент · вещь</th><th class="r">Сумма</th><th class="r">+</th></tr>${Lw.map(l=>{const it=(l.items||[])[0]||{},ph=soPh(it),d=soAt(l),m=soMoney(l);return `<tr data-soopen="${esc(l._id)}"><td>${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}</td><td><div class="sr-ti"><span>${ph?`<img src="${esc(ph)}" alt="" loading="lazy">`:""}</span><div><b>${esc(soName(l))}</b><small>${esc([it.brand,it.title].filter(Boolean).join(" "))}${(l.items||[]).length>1?" +"+((l.items||[]).length-1):""}</small></div></div></td><td class="r num">${eur(l.total||0)}</td><td class="r g num">${m.p?Math.round(m.p):"—"}</td></tr>`}).join("")}</table></div>`:`<p class="so-spe">В эту неделю заказов не было</p>`}
+    ${later?`<p class="sr-note">${later} ${plural(later,["заказ","заказа","заказов"])} этой недели ещё не оплачен${later>1?"ы":""} — их заработок попадёт в неделю оплаты.</p>`:""}<div style="height:60px"></div></div>`);
+  s.classList.add("so-scr");{const f=s.querySelector("footer.cft");if(f)f.remove()}
+  s.addEventListener("click",e=>{const r=e.target.closest("[data-soopen]");if(r){const l=all.find(x=>x._id===r.dataset.soopen);l&&soOrder(l,()=>{},all)}})}
 /* общий выбор вещей: умный поиск по каталогу / бренд → раздел / вручную. C — состояние {mode,cq,br,ct}, dest — для цены */
 const snImg=p=>{const im=p.imgs&&p.imgs[0];return im?`<img src="${esc(im.thumb||im.src)}" alt="" loading="lazy">`:shapeSVG(p.shape,p.c,"")};
 function snCatRes(C,dest){const q=C.cq.trim();let R,head="";
