@@ -462,17 +462,17 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so-wr{text-align:right;font-size:13px;color:#3c3c43;line-height:1.45}.so-wr b{font-weight:700}
 .so-scr .so-new{background:#1c1c1e;box-shadow:0 6px 16px rgba(0,0,0,.18)}
 .so-strips{display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
-.so-sp+.so-sp{border-top:.5px solid #d1d1d6}
-.so-sph{width:100%;border:0;background:#fff;font:inherit;color:inherit;text-align:left;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
-.so-sp:first-child .so-sph{border-radius:18px 18px 0 0}.so-sp:last-child:not(.open) .so-sph{border-radius:0 0 18px 18px}
-.so-sp.open .so-sph{position:sticky;top:0;z-index:4;background:color-mix(in srgb,var(--c) 9%,#fff);box-shadow:0 6px 14px rgba(0,0,0,.07)}
-.so-spi{width:36px;height:36px;border-radius:10px;background:var(--c);color:#fff;display:grid;place-items:center;flex:none}
-.so-spt{flex:1;min-width:0}.so-spt b{display:block;font-size:16px;font-weight:700}.so-spt small{display:block;color:#8e8e93;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.so-spn{text-align:right}.so-spn b{display:block;font-size:20px;font-weight:800;line-height:1.1}.so-spn small{font-size:12px;color:#8e8e93}
-.so-sph u{text-decoration:none;color:#c7c7cc;font-size:20px}
-.so-spx{border-radius:99px;background:color-mix(in srgb,var(--c) 18%,#fff);color:var(--c);font-weight:700;font-size:13px;padding:6px 11px;white-space:nowrap}
-.so-spl{border-top:.5px solid #e5e5ea}.so-sp:last-child .so-spl{border-radius:0 0 18px 18px;overflow:hidden}
-.so-spe{color:#8e8e93;font-size:14px;text-align:center;padding:16px}
+.ost+.ost{border-top:.5px solid #d1d1d6}
+.ost-h{width:100%;border:0;background:#fff;font:inherit;color:inherit;text-align:left;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
+.ost:first-child .ost-h{border-radius:18px 18px 0 0}.ost:last-child:not(.open) .ost-h{border-radius:0 0 18px 18px}
+.ost.open .ost-h{position:sticky;top:0;z-index:4;background:color-mix(in srgb,var(--c) 9%,#fff);box-shadow:0 6px 14px rgba(0,0,0,.07)}
+.ost-i{width:36px;height:36px;border-radius:10px;background:var(--c);color:#fff;display:grid;place-items:center;flex:none}
+.ost-t{flex:1;min-width:0}.ost-t b{display:block;font-size:16px;font-weight:700}.ost-t small{display:block;color:#8e8e93;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ost-n{text-align:right}.ost-n b{display:block;font-size:20px;font-weight:800;line-height:1.1}.ost-n small{font-size:12px;color:#8e8e93}
+.ost-h u{text-decoration:none;color:#c7c7cc;font-size:20px}
+.ost-x{border-radius:99px;background:color-mix(in srgb,var(--c) 18%,#fff);color:var(--c);font-weight:700;font-size:13px;padding:6px 11px;white-space:nowrap}
+.ost-l{border-top:.5px solid #e5e5ea}.ost:last-child .ost-l{border-radius:0 0 18px 18px;overflow:hidden}
+.ost-e{color:#8e8e93;font-size:14px;text-align:center;padding:16px}
 .so-allh{display:flex;justify-content:space-between;align-items:baseline;margin:10px 2px -4px}.so-allh b{font-size:20px;font-weight:800}.so-allh span{color:#8e8e93;font-size:13px;font-weight:600}
 .so-wkh{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#8e8e93;letter-spacing:.04em;text-transform:uppercase;margin:14px 4px 6px}
 .so-tags .t-wk{background:none!important;color:#aeaeb2!important;padding-left:2px!important;font-weight:500}
@@ -4826,7 +4826,7 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new 
         <span class="so-tags"><span>${soFlag(l.dest)} ${esc(soNo(l))}</span>${SO2?"":`<span class="t-wk">нед. ${soWkOf(l).w} · ${soDay(soAt(l))}</span>`}${l.test?'<span class="t-ts">🧪 тест</span>':""}${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}${l.group&&!gn?'<span>📦 посылка</span>':""}${l.handover?'<span>🤝 в руки</span>':""}</span></span>
         <span class="so-rr"><b class="num">${l.total?eur(l.total):""}</b>${m.p?`<small class="num">+${eur(m.p)}</small>`:""}${soPill(k)}</span></button></div>`};
     if(!SO2){const SR=s.querySelector(".so-strips");SR.innerHTML=SO_STRIP.map(S=>{const ls=act.filter(S[5]),sm=ls.reduce((a,l)=>a+(l.total||0),0),op=openS===S[0];
-        return `<div class="so-sp${op?" open":""}" style="--c:${S[3]}"><button class="so-sph" data-sostrip="${S[0]}"><span class="so-spi">${soIco(S[4])}</span><span class="so-spt"><b>${S[1]}</b><small>${S[2]}</small></span>${op?`<span class="so-spx">Закрыть ✕</span>`:`<span class="so-spn"><b class="num">${ls.length}</b><small class="num">${sm?eur(sm):""}</small></span><u>›</u>`}</button>${op?`<div class="so-spl">${ls.length?ls.map(l=>rowH(l,0,0)).join(""):`<p class="so-spe">Здесь пусто</p>`}</div>`:""}</div>`}).join("");
+        return `<div class="ost${op?" open":""}" style="--c:${S[3]}"><button class="ost-h" data-sostrip="${S[0]}"><span class="ost-i">${soIco(S[4])}</span><span class="ost-t"><b>${S[1]}</b><small>${S[2]}</small></span>${op?`<span class="ost-x">Закрыть ✕</span>`:`<span class="ost-n"><b class="num">${ls.length}</b><small class="num">${sm?eur(sm):""}</small></span><u>›</u>`}</button>${op?`<div class="ost-l">${ls.length?ls.map(l=>rowH(l,0,0)).join(""):`<p class="ost-e">Здесь пусто</p>`}</div>`:""}</div>`}).join("");
       s.querySelector(".so-tiles").hidden=true;s.querySelector(".so-ch").hidden=true}
     if(!SO2&&V.length){const wk=new Map();V.forEach(l=>{const x=soWkOf(l),k=x.y*100+x.w;if(!wk.has(k))wk.set(k,{x,m:new Map()});const m=wk.get(k).m,c=soCliKey(l);if(!m.has(c))m.set(c,[]);m.get(c).push(l)});wk.forEach(o=>o.gs=[...o.m.values()]);
       L.innerHTML=`<div class="so-allh"><b>Все заказы</b><span>по неделям</span></div>`+[...wk].sort((a,b)=>b[0]-a[0]).map(([k,{x,gs}])=>{const n=gs.reduce((a,g)=>a+g.length,0);return `<div class="so-wkh"><span>Неделя ${x.w} · ${soWkRange(x.y,x.w)}</span><span>${n} ${plural(n,["заказ","заказа","заказов"])}</span></div><div class="so-grp">${gs.map(g=>g.length<2?rowH(g[0],0,0):grpH(g)).join("")}</div>`}).join("");upBar();return}
@@ -4842,7 +4842,7 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new 
   s.addEventListener("change",e=>{const pg=e.target.closest("[data-sopg]");if(pg){all.filter(l=>soCliKey(l)===pg.dataset.sopg&&(!st?!["delivered","cancelled"].includes(l.status):soSt(l)===st)).forEach(l=>pg.checked?sel.add(l._id):sel.delete(l._id));hap("light");draw();upBar();return}
     const c=e.target.closest("[data-sopk]");if(c){c.checked?sel.add(c.dataset.sopk):sel.delete(c.dataset.sopk);c.closest(".so-row").classList.toggle("on",c.checked);hap("light");upBar()}if(e.target.matches("[data-soorig]"))origin=e.target.value});
   s.addEventListener("click",async e=>{const t=e.target;
-    const sp=t.closest("[data-sostrip]");if(sp){const k=sp.dataset.sostrip;openS=openS===k?"":k;hap("light");draw();if(openS){const el=s.querySelector(".so-sp.open");el&&el.scrollIntoView({block:"start",behavior:"smooth"})}return}
+    const sp=t.closest("[data-sostrip]");if(sp){const k=sp.dataset.sostrip;openS=openS===k?"":k;hap("light");draw();if(openS){const el=s.querySelector(".ost.open");el&&el.scrollIntoView({block:"start",behavior:"smooth"})}return}
     if(t.closest("[data-sorep]")){soReport(all);return}
     if(t.closest("[data-sorepw]")){const x=soIsoW(new Date());soWeek(all,x.y,x.w);return}
     const f=t.closest("[data-sost]");if(f){st=st===f.dataset.sost?"":f.dataset.sost;draw();return}
@@ -4877,7 +4877,7 @@ function soReport(all){const L0=all.filter(l=>!l.test&&l.status!=="cancelled");c
       <div class="so-allh"><b>Месяцы</b><span>нажмите — откроются недели</span></div>
       <div class="so-grp">${[...M].sort((a,b)=>b[0]-a[0]).map(([m,ws])=>{const k=yr*100+m,op=openM.has(k),n=ws.reduce((a,o)=>a+o.n,0),t=ws.reduce((a,o)=>a+o.t,0),p=ws.reduce((a,o)=>a+o.p,0),mx=Math.max(1,...ws.map(o=>o.p));
         return `<button class="sr-mo" data-srm="${k}"><span><b>${SO_MONF[m]}</b><small>${n} ${plural(n,["заказ","заказа","заказов"])} · ${eur(t)}</small></span><em class="num">+${eur(p)}</em><u>${op?"⌃":"⌄"}</u></button>`+
-        (op?ws.sort((a,b)=>b.w-a.w).map(o=>`<button class="sr-wk" data-srw="${o.y}-${o.w}"><span class="sr-wn">Н${o.w}<small>${soWkRange(o.y,o.w)}</small></span><span class="sr-wb"><i><s style="width:${Math.round(o.p/mx*100)}%"></s></i><small>${o.n} ${plural(o.n,["заказ","заказа","заказов"])} · ${eur(o.t)}</small></span><em class="num">+${eur(o.p)}</em></button>`).join(""):"")}).join("")||`<p class="so-spe">Пока нет заказов</p>`}</div>
+        (op?ws.sort((a,b)=>b.w-a.w).map(o=>`<button class="sr-wk" data-srw="${o.y}-${o.w}"><span class="sr-wn">Н${o.w}<small>${soWkRange(o.y,o.w)}</small></span><span class="sr-wb"><i><s style="width:${Math.round(o.p/mx*100)}%"></s></i><small>${o.n} ${plural(o.n,["заказ","заказа","заказов"])} · ${eur(o.t)}</small></span><em class="num">+${eur(o.p)}</em></button>`).join(""):"")}).join("")||`<p class="ost-e">Пока нет заказов</p>`}</div>
       <p class="sr-note">Заказ попадает в неделю, когда его приняли. Заработок — в неделю, когда пришли деньги: отправили позже — заработок всё равно в своей неделе.</p>`};
   s.addEventListener("click",e=>{const t=e.target;let x;
     if(x=t.closest("[data-sry]")){yr=+x.dataset.sry;draw();return}
@@ -4892,7 +4892,7 @@ function soWeek(all,y,w){const L0=all.filter(l=>!l.test&&l.status!=="cancelled")
     <div class="sr-kpi"><div><small>Заказов</small><b class="num">${Lw.length}</b></div><div><small>Оборот</small><b class="num">${eur(turn)}</b></div><div><small>Заработок</small><b class="num g">+${eur(earn)}</b></div></div>
     <div class="so-allh"><b>Заработок по дням</b></div><div class="sr-days">${["пн","вт","ср","чт","пт","сб","вс"].map((d,i)=>`<div><i style="height:${Math.max(3,Math.round(days[i]/mx*46))}px;opacity:${days[i]?1:.25}"></i>${d}</div>`).join("")}</div>
     <div class="so-allh"><b>Заказы недели</b><span>${Lw.length}</span></div>
-    ${Lw.length?`<div class="sr-tw"><table class="sr-t"><tr><th>Дата</th><th>Клиент · вещь</th><th class="r">Сумма</th><th class="r">+</th></tr>${Lw.map(l=>{const it=(l.items||[])[0]||{},ph=soPh(it),d=soAt(l),m=soMoney(l);return `<tr data-soopen="${esc(l._id)}"><td>${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}</td><td><div class="sr-ti"><span>${ph?`<img src="${esc(ph)}" alt="" loading="lazy">`:""}</span><div><b>${esc(soName(l))}</b><small>${esc([it.brand,it.title].filter(Boolean).join(" "))}${(l.items||[]).length>1?" +"+((l.items||[]).length-1):""}</small></div></div></td><td class="r num">${eur(l.total||0)}</td><td class="r g num">${m.p?Math.round(m.p):"—"}</td></tr>`}).join("")}</table></div>`:`<p class="so-spe">В эту неделю заказов не было</p>`}
+    ${Lw.length?`<div class="sr-tw"><table class="sr-t"><tr><th>Дата</th><th>Клиент · вещь</th><th class="r">Сумма</th><th class="r">+</th></tr>${Lw.map(l=>{const it=(l.items||[])[0]||{},ph=soPh(it),d=soAt(l),m=soMoney(l);return `<tr data-soopen="${esc(l._id)}"><td>${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}</td><td><div class="sr-ti"><span>${ph?`<img src="${esc(ph)}" alt="" loading="lazy">`:""}</span><div><b>${esc(soName(l))}</b><small>${esc([it.brand,it.title].filter(Boolean).join(" "))}${(l.items||[]).length>1?" +"+((l.items||[]).length-1):""}</small></div></div></td><td class="r num">${eur(l.total||0)}</td><td class="r g num">${m.p?Math.round(m.p):"—"}</td></tr>`}).join("")}</table></div>`:`<p class="ost-e">В эту неделю заказов не было</p>`}
     ${later?`<p class="sr-note">${later} ${plural(later,["заказ","заказа","заказов"])} этой недели ещё не оплачен${later>1?"ы":""} — их заработок попадёт в неделю оплаты.</p>`:""}<div style="height:60px"></div></div>`);
   s.classList.add("so-scr");{const f=s.querySelector("footer.cft");if(f)f.remove()}
   s.addEventListener("click",e=>{const r=e.target.closest("[data-soopen]");if(r){const l=all.find(x=>x._id===r.dataset.soopen);l&&soOrder(l,()=>{},all)}})}
