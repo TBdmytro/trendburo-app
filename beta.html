@@ -463,8 +463,8 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so-scr .so-new{background:#1c1c1e;box-shadow:0 6px 16px rgba(0,0,0,.18)}
 .so-strips{display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .ost+.ost{border-top:.5px solid #d1d1d6}
-.ost-h{width:100%;border:0;background:#fff;font:inherit;color:inherit;text-align:left;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
-.ost:first-child .ost-h{border-radius:18px 18px 0 0}.ost:last-child:not(.open) .ost-h{border-radius:0 0 18px 18px}
+.ost-h{width:100%;border:0!important;box-shadow:none!important;margin:0!important;border-radius:0!important;background:#fff;font:inherit;color:inherit;text-align:left;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
+.ost:first-child .ost-h{border-radius:18px 18px 0 0!important}.ost:last-child:not(.open) .ost-h{border-radius:0 0 18px 18px!important}
 .ost.open .ost-h{position:sticky;top:0;z-index:4;background:color-mix(in srgb,var(--c) 9%,#fff);box-shadow:0 6px 14px rgba(0,0,0,.07)}
 .ost-i{width:36px;height:36px;border-radius:10px;background:var(--c);color:#fff;display:grid;place-items:center;flex:none}
 .ost-t{flex:1;min-width:0}.ost-t b{display:block;font-size:16px;font-weight:700}.ost-t small{display:block;color:#8e8e93;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
