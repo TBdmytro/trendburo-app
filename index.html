@@ -4346,7 +4346,7 @@ function rtKeys(o){const ua=(o.dest||"ua")==="ua";return["paid","bought","receiv
 function orderSteps(o){const ua=(o.dest||"ua")==="ua",R=o.route||{},at=k=>{const h=(o.history||[]).filter(x=>x.status===k).pop();return h?h.at:""};
   const T={new:{t:"Замовлення оформлено",d:fmtD(o.createdAt)},work:{t:"Менеджер підтвердив наявність",d:fmtD(at("work"))},paid:{t:"Оплачено",d:fmtD(at("paid"))},
     bought:{t:R.buyMode==="online"?"Замовлено на сайті бренду":"Викуплено в бутику"+(R.buyCity?" · "+R.buyCity:""),d:fmtD(R.buyDate||at("bought"))},
-    received:{t:"Отримали ми"+(R.buyMode==="online"&&R.buyCity?" · "+R.buyCity:""),d:fmtD(at("received"))},
+    received:{t:"Отримано нами"+(R.buyMode==="online"&&R.buyCity?" · "+R.buyCity:""),d:fmtD(at("received"))},
     packed:{t:"Перевірено й запаковано",d:fmtD(at("packed"))},ready:{t:"Коробка готова до відправки",d:fmtD(at("ready"))},
     shipping:{t:ua?"Відправлено в Україну":"Відправлено "+(o.dest==="dxb"?"в Дубай":"по Європі"),d:R.shipDate?fmtD(R.shipDate):fmtD(at("shipping"))},
     inua:{t:"В Україні"+(R.uaCity?" · "+R.uaCity:""),d:fmtD(at("inua"))},np:{t:"Нова пошта",d:R.npDate?fmtD(R.npDate):fmtD(at("np"))},delivered:{t:"Отримано",d:fmtD(at("delivered"))}};
@@ -4378,7 +4378,7 @@ function rtSetIcon(cm,o,f){const k=rtIcon(o,f);if(cm.dataset.ic===k)return;cm.da
 const rtGrad=o=>{const K=rtKeys(o);return K.map((k,i)=>`<stop offset="${(i/(K.length-1)).toFixed(3)}" stop-color="${OST[k][0]}"/>`).join("")};
 /* подписи этапов прямо у точек: через одну сверху и снизу, чтобы 7–9 пунктов не налезали */
 const rtLbl=(p,i,last,n,on)=>`<text x="${Math.max(4,Math.min(350,p.x))}" y="${i%2?p.y-13:p.y+21}" text-anchor="${i===0?"start":i===last?"end":"middle"}">${esc(n)}</text>`;
-const LEAD_ST2={new:"Оформлено",work:"Підтверджено",paid:"Оплачено",bought:"Викуплено",received:"Отримали ми",packed:"Запаковано",ready:"Готово до відправки",inua:"В Україні",shipping:"У дорозі",np:"Нова пошта",delivered:"Отримано",cancelled:"Скасовано"};
+const LEAD_ST2={new:"Оформлено",work:"Підтверджено",paid:"Оплачено",bought:"Викуплено",received:"Отримано нами",packed:"Запаковано",ready:"Готово до відправки",inua:"В Україні",shipping:"У дорозі",np:"Нова пошта",delivered:"Отримано",cancelled:"Скасовано"};
 /* маршрут «пазл»: до отправки дорога стоит; текущий этап — крупный кружок с иконкой по центру, следующий справа.
    Пройденный этап улетает влево и пристёгивается к началу дороги рядом с предыдущими — собирается «пазл» (оплата, викуп, у нас, пакування, готово).
    С «Відправки» всё замирает и едет только машинка / літачок по оставшимся точкам. p — позиция в этапах (дробная = в пути) */
@@ -4439,8 +4439,8 @@ function r2Cfg(o){const ua=(o.dest||"ua")==="ua",R=o.route||{},online=R.buyMode=
   const K=["paid","bought",...(online?["received"]:[]),"packed",...(hand?[...(ua?["shipping"]:[]),"ready"]:["shipping",...(ua?["np"]:[])]),"delivered"];
   const U={paid:0,bought:online?.33:.5,received:.66,packed:1,shipping:1.5,np:2,ready:hand&&!ua?1.5:2,delivered:ua?3:2};
   const IC={paid:"card",bought:"bag",received:"home",packed:"box",shipping:ua?"truck":"plane",np:"np",ready:"hand",delivered:"check"};
-  const T={paid:"Оплачено",bought:online?"Замовлено на сайті бренду":"Викуплено в бутику",received:"Отримали ми",packed:"Запаковано",ready:"Готово до передачі",shipping:hand&&ua?"Їде в Україну — передамо особисто":ua?"Відправлено в Україну":o.dest==="dxb"?"Летить у Дубай":"Летить до вас",np:"Відправлено Новою поштою",delivered:hand?"Передано вам у руки":"Отримано"};
-  const W={paid:"Оплачено",bought:online?"Замовлено":"Викуплено",received:"Отримали",packed:"Запаковано",ready:"Готово до передачі",shipping:ua?"В дорозі":"Летить",np:"Нова пошта",delivered:hand?"Передано":"Отримано"};
+  const T={paid:"Оплачено",bought:online?"Замовлено на сайті бренду":"Викуплено в бутику",received:"Отримано нами",packed:"Запаковано",ready:"Готово до передачі",shipping:hand&&ua?"Їде в Україну — передамо особисто":ua?"Відправлено в Україну":o.dest==="dxb"?"Летить у Дубай":"Летить до вас",np:"Відправлено Новою поштою",delivered:hand?"Передано вам у руки":"Отримано"};
+  const W={paid:"Оплачено",bought:online?"Замовлено":"Викуплено",received:"Отримано нами",packed:"Запаковано",ready:"Готово до передачі",shipping:ua?"В дорозі":"Летить",np:"Нова пошта",delivered:hand?"Передано":"Отримано"};
   const D={bought:R.buyDate,shipping:R.shipDate,np:R.npDate};
   const steps=K.map(k=>({k,ic:IC[k],u:U[k],t:T[k],w:W[k],d:r2dm(D[k]||at(k))}));
   let i=K.indexOf(st);if(st==="cancelled")i=-1;
@@ -5406,7 +5406,7 @@ const CLIENT=(()=>{let k=store.get("tb_client","");if(!/^[a-z0-9]{16,48}$/i.test
 const tgUser=()=>{try{const u=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;return u?{id:u.id,username:u.username||"",first_name:u.first_name||"",last_name:u.last_name||""}:null}catch(e){return null}};
 const kindFor=t=>/Уточнить|Уточнити/.test(t)?"availability":/ресейл|с фото|з фото/i.test(t)?"resale":/консьерж|консьєрж/i.test(t)?"concierge":/поездк|подорож/i.test(t)?"travel":/^Заказ|^Замовл|^Замовит/.test(t)?"order":"request";
 async function sendLead(meta,msg){try{const r=await fetch("/api/lead",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...meta,message:msg,client:CLIENT,tg:tgUser(),...(authBody()||{})})});const j=await r.json().catch(()=>({}));return r.ok?j:null}catch(e){return null}}
-const LEAD_ST={new:"Надіслано",work:"У роботі",paid:"Оплачено",bought:"Викуплено",received:"Отримали ми",packed:"Запаковано",ready:"Готово до відправки",inua:"В Україні",shipping:"У дорозі",delivered:"Доставлено",cancelled:"Закрито"};
+const LEAD_ST={new:"Надіслано",work:"У роботі",paid:"Оплачено",bought:"Викуплено",received:"Отримано нами",packed:"Запаковано",ready:"Готово до відправки",inua:"В Україні",shipping:"У дорозі",delivered:"Доставлено",cancelled:"Закрито"};
 const LEAD_KIND={order:"Замовлення",availability:"Наявність",concierge:"Консьєрж",travel:"Подорож",resale:"Ресейл",request:"Запит",optix:"OPTIX"};
 async function syncOrders(){if(!LIVE)return null;try{const r=await fetch("/api/lead?client="+CLIENT,{cache:"no-store"});if(!r.ok)return null;const{leads}=await r.json();
   let ch=false;(leads||[]).forEach(l=>{const o=orders.find(x=>x.no===l.number);if(!o)return;const st={new:0,work:0,paid:0,bought:1,received:1,packed:1,ready:1,inua:2,shipping:2,delivered:3,cancelled:-1}[l.status];if(st!==undefined&&o.st!==st){o.st=st;ch=true}});
