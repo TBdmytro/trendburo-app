@@ -1022,6 +1022,36 @@ export default async function handler(req, res) {
         return send(res, 200, { code: w.code, tiles: w.tiles });
       }
       case "leads": { const r = await opLeads(store, req.query.status); return send(res, r.code, r.body); }
+      // ---- Отчёт ночного агента ассортимента (владелец, 21.11: вариант A — лента по брендам + одна сводка; решения «оставить / скрыть» — только владелец)
+      case "agentReportSave": { // агент присылает отчёт за ночь; несколько прогонов за ночь — бренды дописываются / заменяются
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || "")) ? body.date : new Date().toISOString().slice(0, 10), id = "areport." + date;
+        const cur = (await store.get(id)) || { _id: id, _type: "areport", date, brands: [], news: [], decisions: {} };
+        const clip = (v, n) => String(v || "").slice(0, n), it = x => ({ id: clip(x.id, 140), t: clip(x.t || x.title, 120), img: /^https:\/\//.test(x.img || "") ? clip(x.img, 600) : "", note: clip(x.note, 160), price: Number(x.price) || undefined });
+        for (const b of (Array.isArray(body.brands) ? body.brands : []).slice(0, 20)) {
+          const nb = { name: clip(b.name, 60), sub: clip(b.sub, 120), total: Number(b.total) || 0, checked: Number(b.checked) || 0, updated: Number(b.updated) || 0, at: new Date().toISOString(),
+            news: (b.newItems || b.news || []).slice(0, 200).map(it), sold: (b.sold || []).slice(0, 200).map(it), decide: (b.decide || []).slice(0, 200).map(it), errors: (b.errors || []).slice(0, 20).map(e => clip(e, 300)) };
+          cur.brands = [...cur.brands.filter(x => x.name !== nb.name), nb];
+        }
+        if (Array.isArray(body.news)) cur.news = body.news.slice(0, 30).map(n => ({ tag: clip(n.tag, 30), title: clip(n.title, 120), text: clip(n.text, 400), url: /^https:\/\//.test(n.url || "") ? clip(n.url, 400) : "" }));
+        if (body.window) cur.window = clip(body.window, 40);
+        cur.updatedAt = new Date().toISOString(); await store.put(cur);
+        return send(res, 200, { ok: true, id, brands: cur.brands.length });
+      }
+      case "agentReports": { const L = await store.list("areport", {}, { limit: 60, fields: "_id, date, brands, decisions, updatedAt" });
+        return send(res, 200, { reports: L.sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 30).map(r => ({ date: r.date, brands: (r.brands || []).map(b => b.name),
+          news: (r.brands || []).reduce((a, b) => a + (b.news || []).length, 0), sold: (r.brands || []).reduce((a, b) => a + (b.sold || []).length, 0), decide: (r.brands || []).reduce((a, b) => a + (b.decide || []).filter(x => !(r.decisions || {})[x.id]).length, 0) })) }); }
+      case "agentReport": { const d = String(req.query.date || ""); const r = await store.get("areport." + d); return r ? send(res, 200, { report: r }) : send(res, 404, { error: "Отчёта за эту дату нет" }); }
+      case "agentDecide": { // «Оставить» — вещь остаётся на сайте и агент её больше не предлагает убрать; «Скрыть» — в скрытые (не удаление)
+        const d = String(body.date || ""), pid = String(body.id || ""), act = body.act === "hide" ? "hide" : "keep";
+        if (!/^product\.[a-z0-9._-]+$/.test(pid)) return send(res, 400, { error: "Нет товара" });
+        const r = await store.get("areport." + d); if (!r) return send(res, 404, { error: "Отчёт не найден" });
+        if (act === "hide") await setStatus(store, [pid], "draft", "agent-report");
+        else { const k = (await store.get("agent.keep")) || { _id: "agent.keep", _type: "agentcfg", ids: [] }; if (!k.ids.includes(pid)) k.ids.push(pid); await store.put(k); }
+        r.decisions = { ...(r.decisions || {}), [pid]: { act, at: new Date().toISOString() } }; await store.put(r);
+        return send(res, 200, { ok: true, act });
+      }
+      case "agentKeep": { const k = await store.get("agent.keep"); return send(res, 200, { ids: (k && k.ids) || [] }); }
+
       case "leadSave": { const r = await opLeadSave(store, body, me.name); return send(res, r.code, r.body); }
       case "leadBulk": { const r = await opLeadBulk(store, body, me.name); return send(res, r.code, r.body); }
       case "driverList": { const r = await opDriverList(store, req.query.days); return send(res, r.code, r.body); }

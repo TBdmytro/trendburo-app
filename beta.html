@@ -3683,7 +3683,7 @@ const SQ_COL=[[/чёрн|черн|black/,"black"],[/бел|white/,"white"],[/б�
 const SQ_ITEM=[[/леггин|легин/,/legging|tight/],[/худи/,/hood/],[/свитш/,/sweat|crew/],[/футболк/,/t-?shirt|tee/],[/кроссов/,/sneak|trainer|runner|cloud/],[/лофер/,/loafer/],[/ботин|сапог/,/boot/],[/шопер|тоут/,/tote|shopper/],[/рюкзак/,/backpack/],[/кепк/,/cap\b|hat/],[/юбк/,/skirt/],[/плать/,/dress/],[/брюк|штан/,/pant|trouser|jogger/],[/куртк/,/jacket|puffer|coat/],[/шорт/,/short/],[/бра\b|топ\b/,/bra|tank|top/]];
 function smartParse(raw){const q=ruQ(raw),f={max:0,min:0,cats:[],cols:[],size:"",g:"",nw:false,any:false,item:null};SQ_ITEM.forEach(([re,en])=>{if(!f.item&&re.test(q))f.item=en});
   const num=(a,k)=>+String(a).replace(/\s/g,"")*(k?1000:1);
-  const rg=q.match(/(\d[\d\s]*)\s*(к|k|тыс)?\s*(?:-|–|—|до)\s*(\d[\d\s]*)\s*(к|k|тыс)?\s*(?:€|евро|eur|euro|e)\b/)||q.match(/(?:от|from)\s*€?\s*(\d[\d\s]*)\s*(к|k|тыс)?\s*(?:-|–|—|до)\s*€?\s*(\d[\d\s]*)\s*(к|k|тыс)?/);
+  const rg=q.match(/(\d[\d\s]*)\s*(к|k|тыс)?\s*(?:-|–|—|до)\s*(\d[\d\s]*)\s*(к|k|тыс)?\s*(?:€|евро|эвро|eur|euro)(?![a-zа-я])/)||q.match(/(?:от|from)\s*€?\s*(\d[\d\s]*)\s*(к|k|тыс)?\s*(?:-|–|—|до)\s*€?\s*(\d[\d\s]*)\s*(к|k|тыс)?/);
   if(rg){f.min=num(rg[1],rg[2]);f.max=num(rg[3],rg[4]);f.rng=true}else{
   const m=q.match(/(?:до|не дороже|under|<|за|бюджет|budget)\s*€?\s*(\d[\d\s]*)\s*(к|k|тыс)?/);if(m){f.max=num(m[1],m[2])}
   const n=q.match(/(?:от|from|дороже)\s*€?\s*(\d[\d\s]*)\s*(к|k|тыс)?/);if(n)f.min=num(n[1],n[2])}
