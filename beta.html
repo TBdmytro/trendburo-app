@@ -447,6 +447,9 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .r2par .t button.on{border-color:#25272b;box-shadow:0 4px 14px rgba(0,0,0,.08)}.r2par .th{width:40px;height:40px;border-radius:10px;background:var(--soft);overflow:hidden;flex:none;display:grid;place-items:center}.r2par .th img,.r2par .th svg{width:100%;height:100%;object-fit:cover}
 .r2par .tx{display:flex;flex-direction:column;gap:1px}.r2par .tx b{font-size:13.5px}.r2par .tx small{font-size:11.5px;color:var(--muted)}.r2par .tx i{font-style:normal;font-size:11px;font-weight:700;color:var(--c)}
 .sn-orig{display:flex;flex-direction:column;gap:6px}.sn-orig label{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center;font-size:13.5px;font-weight:600}
+.so-cg{border-bottom:1px solid var(--line)}.so-cg.open{background:color-mix(in srgb,#cdbb9c 7%,transparent)}.so-cgb{border-left:3px solid #cdbb9c;margin:0 0 8px 12px;border-radius:0 0 0 12px}.so-cgb .so-row .so-m b{font-size:14px}
+.so-th3{display:grid;grid-template-columns:1fr 1fr;gap:2px;width:52px;height:52px;flex:none;border-radius:12px;overflow:hidden;background:#fff}.so-th3 i{background:#f4f4f6;display:grid;place-items:center;overflow:hidden;font-style:normal}.so-th3 i:only-child{grid-column:1/-1;grid-row:1/-1}.so-th3 i:first-child:nth-last-child(2),.so-th3 i:first-child:nth-last-child(2)~i{grid-row:1/-1}.so-th3 i:first-child:nth-last-child(3){grid-row:1/-1}.so-th3 img{width:100%;height:100%;object-fit:contain;background:#fff}.so-th3 b{font-size:12px;color:var(--g2)}
+.so-chev{font-size:11.5px;color:var(--g2);white-space:nowrap}.so-ck i.part{background:#26282c55}
 .so-gw{border-left:3px solid #cdbb9c;margin:4px 0;background:color-mix(in srgb,#cdbb9c 7%,transparent);border-radius:0 14px 14px 0}.so-gh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:10px 14px 2px}.so-gh b{font-size:14.5px}.so-gh span{font-size:12.5px;color:var(--g2)}.so-gh em{font-style:normal;color:#2f8f5b;font-weight:600}
 .so-clb{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;border:0;background:#f2f3f4;border-radius:14px;padding:11px 14px;font:inherit;color:inherit;cursor:pointer;text-align:left}.so-clb span{font-weight:600;font-size:14.5px}.so-clb small{color:var(--g2);font-size:13px;white-space:nowrap}
 .so-dv{display:flex;flex-direction:column;gap:8px}.so-dv .fl{margin-top:4px}.so-car{margin-bottom:2px}
@@ -4671,7 +4674,7 @@ const soPill=k=>`<em class="so-st" style="--c:${soCol(k)}">${SO_ST[k]||k}</em>`;
 /* наш номер (#1001) и код для клиента (7KQ4) */
 const soNo=l=>"#"+String(l.number||"").replace(/^TB-/,"")+(l.code?" · "+l.code:"");
 const soMoney=l=>{const t=l.total||0,c=l.cost||0;return{t,c,p:c?t-c:0}};
-async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="boutique",origin="";
+async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new Set();let mode="boutique",origin="";
   const s=push("Заказы",`<div class="so">
     <div class="so-hd"><div><h1>Заказы</h1><p class="so-sub"></p></div></div>
     <div class="so-acts"><button class="so-new press" data-sonew><span>＋</span>Новый заказ</button><button class="so-drv press" data-sodrv><svg viewBox="-14 -14 28 28" width="26" height="26">${r2Badge("truck",13)}</svg>Водителю</button></div>
@@ -4687,15 +4690,21 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="
     s.querySelector(".so-tiles").innerHTML=[["paid","card","Выкупить",cnt("paid")],["bought","box",packAt?"Упакуются "+new Date(packAt).toLocaleString("ru",{weekday:"short",hour:"2-digit",minute:"2-digit"}):"Ждут упаковки",cnt("bought")+cnt("received")],["packed","truck","К отправке",cnt("packed")],["shipping","np","В дороге → НП",all.filter(l=>l.status==="shipping"&&ua(l)).length]].map(([k,ic,t,n])=>`<button class="so-tile press${st===k?" on":""}" data-sost="${k}" style="--c:${R2D[ic]}"><svg viewBox="-14 -14 28 28" width="30" height="30">${r2Badge(ic,13)}</svg><b class="num">${n}</b><span>${t}</span></button>`).join("");
     s.querySelector(".so-ch").innerHTML=`<button class="so-chip${!st?" on":""}" data-sost="">Активные · ${act.length}</button>`+Object.entries(SO_ST).filter(([k])=>cnt(k)).map(([k,v])=>`<button class="so-chip${st===k?" on":""}" data-sost="${k}" style="--c:${soCol(k)}"><i></i>${v} · ${cnt(k)}</button>`).join("");
     const V=st?all.filter(l=>soSt(l)===st):act;
-    // одна покупка из нескольких посылок (разные города/бутики) — одним блоком: клиент, сумма, внутри каждая посылка
-    const blocks=[],bi=new Map();V.forEach(l=>{const k=l.group||l._id;if(!bi.has(k)){bi.set(k,blocks.length);blocks.push([])}blocks[bi.get(k)].push(l)});
+    // владелец 21.11: один человек — одна строка («@ssoffiaa0 · 2 позиции»), внутри свёрнуты его заказы и посылки; галочка на человеке — выбрать все его заказы
+    const blocks=[],bi=new Map();V.forEach(l=>{const k=soCliKey(l);if(!bi.has(k)){bi.set(k,blocks.length);blocks.push([])}blocks[bi.get(k)].push(l)});
+    const grpH=g=>{const key=soCliKey(g[0]),op=openG.has(key),allS=g.every(x=>sel.has(x._id)),someS=!allS&&g.some(x=>sel.has(x._id)),its=g.flatMap(x=>x.items||[]),q=its.reduce((a,i)=>a+(+i.qty||1),0),tot=g.reduce((a,x)=>a+(x.total||0),0),pr=g.reduce((a,x)=>a+soMoney(x).p,0),ks=[...new Set(g.map(soSt))],grp=new Set(g.map(x=>x.group||x._id)).size;
+      return `<div class="so-cg${op?" open":""}"><div class="so-row so-cgh${allS?" on":""}"><label class="so-ck"><input type="checkbox" data-sopg="${esc(key)}" ${allS?"checked":""} aria-label="Вибрати всі"><i${someS?' class="part"':""}></i></label>
+        <button class="so-tx" data-sotg="${esc(key)}"><span class="so-th3">${its.slice(0,3).map(i=>`<i>${i.photo?`<img src="${esc(i.photo)}" alt="" loading="lazy">`:`<b>${esc((i.brand||"?")[0])}</b>`}</i>`).join("")}</span>
+          <span class="so-m"><b>${esc(soName(g[0]))}</b><small>${q} ${plural(q,["позиция","позиции","позиций"])} · ${grp>1?grp+" "+plural(grp,["заказ","заказа","заказов"])+" · ":""}${g.length} ${plural(g.length,["посылка","посылки","посылок"])}</small><span class="so-tags">${[...new Set(g.map(x=>x.dest||"ua"))].map(d=>`<span>${soFlag(d)}</span>`).join("")}${[...new Set(g.map(x=>x.origin).filter(Boolean))].map(o=>`<span>${esc(o)}</span>`).join("")}</span></span>
+          <span class="so-rr"><b class="num">${tot?eur(tot):""}</b>${pr?`<small class="num">+${eur(pr)}</small>`:""}${ks.length===1?soPill(ks[0]):`<em class="so-st">${ks.length} этапа</em>`}<span class="so-chev">${op?"Свернуть ⌃":"Открыть ⌄"}</span></span></button></div>
+        ${op?`<div class="so-cgb">${g.map((x,i)=>rowH(x,i+1,g.length)).join("")}</div>`:""}</div>`};
     const rowH=(l,gi,gn)=>{const it=(l.items||[])[0]||{},k=soSt(l),m=soMoney(l),na=!l.handover&&(l.noAddress||!(l.delivery&&(l.delivery.city||l.delivery.address)))&&!["delivered","cancelled"].includes(l.status);
       return `<div class="so-row${sel.has(l._id)?" on":""}"><label class="so-ck"><input type="checkbox" data-sopk="${esc(l._id)}" ${sel.has(l._id)?"checked":""} aria-label="Вибрати"><i></i></label>
       <button class="so-tx" data-soopen="${esc(l._id)}"><span class="so-th" style="--c:${soCol(k)}">${it.photo?`<img src="${esc(it.photo)}" alt="" loading="lazy">`:`<b>${esc(((it.brand||soName(l)||"?").replace(/^@/,"")[0]||"?").toUpperCase())}</b>`}</span>
-        <span class="so-m"><b>${gn?`Посылка ${gi} из ${gn}`:esc(soName(l))}</b><small>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")).join(", ")||"Заявка")}</small>
+        <span class="so-m">${gn?`<b>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")+(+i.qty>1?" ×"+i.qty:"")).join(", ")||"Заявка")}</b><small>Посылка ${gi} из ${gn}</small>`:`<b>${esc(soName(l))}</b><small>${esc((l.items||[]).map(i=>[i.brand,i.title].filter(Boolean).join(" ")).join(", ")||"Заявка")}</small>`}
         <span class="so-tags"><span>${soFlag(l.dest)} ${esc(soNo(l))}</span>${l.test?'<span class="t-ts">🧪 тест</span>':""}${l.origin?`<span>${esc(l.origin)}</span>`:""}${l.payLater&&!l.paidAt?'<span class="t-am">ждём оплату</span>':""}${na?'<span class="t-rd">нет адреса</span>':""}${(l.claims||[]).length||(l.custClaims||[]).length?'<span class="t-bl">🙋 запрос</span>':""}${l.group&&!gn?'<span>📦 посылка</span>':""}${l.handover?'<span>🤝 в руки</span>':""}</span></span>
         <span class="so-rr"><b class="num">${l.total?eur(l.total):""}</b>${m.p?`<small class="num">+${eur(m.p)}</small>`:""}${soPill(k)}</span></button></div>`};
-    L.innerHTML=V.length?`<div class="so-grp">${blocks.map(g=>g.length<2?rowH(g[0],0,0):`<div class="so-gw"><div class="so-gh"><b>${esc(soName(g[0]))}</b><span>Один заказ · ${g.length} ${plural(g.length,["посылка","посылки","посылок"])}${g.some(x=>x.total)?" · "+eur(g.reduce((a,x)=>a+(x.total||0),0)):""}${g.some(x=>soMoney(x).p)?` · <em>+${eur(g.reduce((a,x)=>a+soMoney(x).p,0))}</em>`:""}</span></div>${g.map((x,i)=>rowH(x,i+1,g.length)).join("")}</div>`).join("")}</div>`
+    L.innerHTML=V.length?`<div class="so-grp">${blocks.map(g=>g.length<2?rowH(g[0],0,0):grpH(g)).join("")}</div>`
       :`<div class="so-empty"><svg viewBox="-14 -14 28 28" width="44" height="44">${r2Badge("check",13)}</svg><b>${st?"С этим этапом заказов нет":"Активных заказов нет"}</b><span>Нажмите «Новый заказ», чтобы добавить</span></div>`;
     upBar()};
   const upBar=()=>{const ids=[...sel],Ls=all.filter(l=>sel.has(l._id));bar.hidden=!ids.length;if(!ids.length)return;
@@ -4704,13 +4713,15 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="
     const buying=Ls.some(l=>["new","work","paid"].includes(l.status));
     bar.querySelector(".so-opt").innerHTML=buying?`${[["boutique","Бутик"],["online","Сайт бренда"]].map(([k,v])=>`<button class="so-ch2${mode===k?" on":""}" data-somode="${k}">${v}</button>`).join("")}<select data-soorig aria-label="Откуда поедет"><option value="">Откуда поедет…</option>${SO_ORIG.map(o=>`<option ${o===origin?"selected":""}>${o}</option>`).join("")}</select>`:""};
   const load=async()=>{try{all=(await soCall("leads")).leads||[];draw()}catch(e){L.innerHTML=`<p class="ace">${esc(e.message)}</p>`}};
-  s.addEventListener("change",e=>{const c=e.target.closest("[data-sopk]");if(c){c.checked?sel.add(c.dataset.sopk):sel.delete(c.dataset.sopk);c.closest(".so-row").classList.toggle("on",c.checked);hap("light");upBar()}if(e.target.matches("[data-soorig]"))origin=e.target.value});
+  s.addEventListener("change",e=>{const pg=e.target.closest("[data-sopg]");if(pg){all.filter(l=>soCliKey(l)===pg.dataset.sopg&&(!st?!["delivered","cancelled"].includes(l.status):soSt(l)===st)).forEach(l=>pg.checked?sel.add(l._id):sel.delete(l._id));hap("light");draw();upBar();return}
+    const c=e.target.closest("[data-sopk]");if(c){c.checked?sel.add(c.dataset.sopk):sel.delete(c.dataset.sopk);c.closest(".so-row").classList.toggle("on",c.checked);hap("light");upBar()}if(e.target.matches("[data-soorig]"))origin=e.target.value});
   s.addEventListener("click",async e=>{const t=e.target;
     const f=t.closest("[data-sost]");if(f){st=st===f.dataset.sost?"":f.dataset.sost;draw();return}
     const m=t.closest("[data-somode]");if(m){mode=m.dataset.somode;upBar();return}
     if(t.closest("[data-soclr]")){sel.clear();draw();return}
     if(t.closest("[data-sogo]")){const b=t.closest("[data-sogo]");b.disabled=true;
       try{const r=await soCall("bulk",{ids:[...sel],next:true,buyMode:mode,origin});toast(`Обновлено ${r.n}${r.sent?" · клиентам: "+r.sent:""}`);hap("medium");sel.clear();await load()}catch(x){toast(x.message)}b.disabled=false;return}
+    const tg=t.closest("[data-sotg]");if(tg){const k=tg.dataset.sotg;openG.has(k)?openG.delete(k):openG.add(k);hap("light");draw();return}
     const o=t.closest("[data-soopen]");if(o){soOrder(all.find(l=>l._id===o.dataset.soopen),load,all);return}
     if(t.closest("[data-sonew]")){soNew(load);return}
     if(t.closest("[data-sodrv]")){soDriver();return}});
