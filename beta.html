@@ -416,14 +416,14 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so-ch{display:flex;gap:6px;overflow-x:auto;margin:0 -16px;padding:0 16px;scrollbar-width:none}
 .so-chip{flex:none;border:0;background:#fff;border-radius:99px;padding:8px 13px;font:inherit;font-size:13.5px;font-weight:600;color:#3a3c41;display:flex;align-items:center;gap:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05)}.so-chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}.so-chip.on{background:#1f2125;color:#fff}.so-chip.on i{box-shadow:0 0 0 2px rgba(255,255,255,.6)}
 .so-att{margin-top:10px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05)}
-.so-atth{width:100%;border:0;background:#fdecea;color:#b3261e;font:inherit;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
-.so-atth i{width:22px;height:22px;border-radius:50%;background:#d1453b;color:#fff;font-style:normal;font-weight:800;display:grid;place-items:center;font-size:13px}
+.so-atth{width:100%;border:0;background:#fdf3dc;color:#8a5a00;font:inherit;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.so-atth i{width:22px;height:22px;border-radius:50%;background:#e0a526;color:#fff;font-style:normal;font-weight:800;display:grid;place-items:center;font-size:13px}
 .so-atth b{font-size:14.5px}.so-atth em{font-style:normal;font-weight:800;margin-left:auto;font-size:15px}.so-atth span{font-size:13px}
 .so-atl{display:flex;flex-direction:column}
-.so-atr{border:0;background:none;font:inherit;color:inherit;text-align:left;display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid #f0e3e1;cursor:pointer}
+.so-atr{border:0;background:none;font:inherit;color:inherit;text-align:left;display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid #f3ead6;cursor:pointer}
 .so-atr .so-th{width:38px;height:38px;border-radius:10px}
-.so-atr em{font-style:normal;color:#b3261e;font-size:12px;font-weight:700;text-align:right;max-width:42%}
-.so-vw{display:grid;grid-template-columns:1fr 1fr;background:#e6e7ea;border-radius:13px;padding:3px;margin:2px 0 10px}
+.so-atr em{font-style:normal;color:#9a6a00;font-size:12px;font-weight:700;text-align:right;max-width:42%}
+.so-vw{display:grid;grid-template-columns:repeat(4,1fr);background:#e6e7ea;border-radius:13px;padding:3px;margin:2px 0 10px}
 .so-vw button{border:0;background:none;font:inherit;font-size:13.5px;font-weight:600;color:#6b6d72;height:32px;border-radius:10px;cursor:pointer}
 .so-vw button.on{background:#fff;color:#1f2125;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .so-sec{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#3a3c41;padding:14px 4px 6px;position:sticky;top:0;z-index:2;background:var(--bg,#f2f3f4)}
@@ -436,9 +436,24 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so-cr .so-th{width:38px;height:38px;border-radius:10px}
 .so-cn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}.so-cn small{color:var(--g2);font-size:12.5px}
 .so-crb>b{font-size:13px;font-weight:700;white-space:nowrap;color:var(--g2)}
-.so-w{font-style:normal;color:#b3261e;font-size:11px;font-weight:700;white-space:nowrap}
+.so-w{font-style:normal;color:#9a6a00;font-size:11px;font-weight:700;white-space:nowrap}
 .so-acts2{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
 .so-act{background:color-mix(in srgb,var(--c) 16%,#fff);color:var(--c);white-space:nowrap}
+.so-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.so-shelf{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none}
+.so-shelf::-webkit-scrollbar{display:none}
+.so-shelf .so-sq{flex:0 0 31%;scroll-snap-align:start}
+.so-sq{background:#fff;border-radius:16px;padding:6px;display:flex;flex-direction:column;gap:6px;box-shadow:0 1px 2px rgba(0,0,0,.05);min-width:0}
+.so-sq.warn{box-shadow:0 0 0 2px #f0c35a}
+.so-sqb{border:0;background:none;font:inherit;color:inherit;text-align:left;padding:0;display:flex;flex-direction:column;gap:2px;cursor:pointer;min-width:0}
+.so-sqi{position:relative;aspect-ratio:1;border-radius:11px;overflow:hidden;background:#fff;display:grid;place-items:center;margin-bottom:3px}
+.so-sqi img{width:100%;height:100%;object-fit:contain}
+.so-sqi>b{font-size:26px;font-weight:800;color:#b9bbc0}
+.so-sqi em{position:absolute;right:4px;bottom:4px;font-style:normal;font-size:11px;font-weight:800;background:#1f2125;color:#fff;border-radius:99px;padding:1px 6px}
+.so-sqi i{position:absolute;left:4px;top:4px;width:20px;height:20px;border-radius:50%;background:#e0a526;color:#fff;font-style:normal;font-weight:800;font-size:12px;display:grid;place-items:center}
+.so-sqb>b{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.so-sqb>small{font-size:11.5px;color:var(--g2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.so-sq .so-nx{width:100%;height:30px;font-size:12px;padding:0 4px}
 .so-grp{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .so-scr .so-row{display:flex;align-items:center;gap:4px;padding:0 0 0 6px;border:0;position:relative;transition:background .2s}.so-scr .so-row+.so-row::before{content:"";position:absolute;left:92px;right:0;top:0;height:1px;background:#e9e9ee}.so-scr .so-row.on{background:#eef4fd}
 .so-scr .so-ck{padding:10px 6px;display:flex;cursor:pointer}.so-scr .so-ck input{position:absolute;opacity:0;width:1px;height:1px}.so-scr .so-ck i{width:22px;height:22px;border-radius:50%;border:1.6px solid #c7c7cc;display:grid;place-items:center;transition:all .2s}
@@ -4715,7 +4730,7 @@ const soWhy=l=>{if(["delivered","cancelled"].includes(l.status))return[];const r
 const soPh=i=>{if(i.photo)return i.photo;const t=String(i.title||"").toLowerCase(),b=String(i.brand||"").toLowerCase();const p=(i.id&&P.find(x=>x.id===i.id))||(t&&P.find(x=>String(x.brand).toLowerCase()===b&&String(x.name||"").toLowerCase()===t));const im=p&&p.imgs&&p.imgs[0];return im?(im.thumb||im.src):""};
 const soActs=g=>{const c=new Map();g.forEach(x=>{const k=soSt(x),a=soAct(x);if(!c.has(a))c.set(a,{n:0,k});c.get(a).n++});return [...c].sort((a,b)=>SO_AORD.indexOf(a[0])-SO_AORD.indexOf(b[0]))};
 const soActH=g=>soActs(g).map(([a,{n,k}])=>`<em class="so-st so-act" style="--c:${soCol(k)}">${g.length>1?n+" ":""}${a}</em>`).join("");
-async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new Set();let mode="boutique",origin="",vw=(()=>{try{return localStorage.soVw||"short"}catch(e){return "short"}})(),attOpen=false;
+async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new Set();let mode="boutique",origin="",vw=(()=>{try{return localStorage.soVw||"grid"}catch(e){return "grid"}})(),attOpen=false;
   const s=push("Заказы",`<div class="so">
     <div class="so-hd"><div><h1>Заказы</h1><p class="so-sub"></p></div></div>
     <div class="so-acts"><button class="so-new press" data-sonew><span>＋</span>Новый заказ</button><button class="so-drv press" data-sodrv><svg viewBox="-14 -14 28 28" width="26" height="26">${r2Badge("truck",13)}</svg>Водителю</button></div>
@@ -4733,12 +4748,15 @@ async function openStaffOrders(){let st="",all=[];const sel=new Set(),openG=new 
     const V=st?all.filter(l=>soSt(l)===st):act;
     if(SO2){const bad=act.filter(l=>soWhy(l).length),A=s.querySelector(".so-att");A.hidden=!bad.length;
       A.innerHTML=bad.length?`<button class="so-atth" data-soatt><i>!</i><b>Требует внимания</b><em class="num">${bad.length}</em><span>${attOpen?"⌃":"⌄"}</span></button>`+(attOpen?`<div class="so-atl">${bad.map(l=>{const it=(l.items||[])[0]||{};return `<button class="so-atr" data-soopen="${esc(l._id)}"><span class="so-th" style="--c:${soCol(soSt(l))}">${soPh(it)?`<img src="${esc(soPh(it))}" alt="" loading="lazy">`:`<b>${esc((it.brand||"?")[0])}</b>`}</span><span class="so-m"><b>${esc(soName(l))}</b><small>${esc([it.brand,it.title].filter(Boolean).join(" "))}</small></span><em>${soWhy(l).map(esc).join(" · ")}</em></button>`}).join("")}</div>`:""):"";
-      const W=s.querySelector(".so-vw");W.hidden=false;W.innerHTML=`<button class="${vw==="full"?"on":""}" data-sovw="full">Подробно</button><button class="${vw==="short"?"on":""}" data-sovw="short">Коротко</button>`}
-    if(SO2&&vw==="short"){const sec=new Map();V.forEach(l=>{const a=soAct(l);if(!sec.has(a))sec.set(a,[]);sec.get(a).push(l)});
+      const W=s.querySelector(".so-vw");W.hidden=false;W.innerHTML=[["grid","Квадраты"],["shelf","Полки"],["short","Строки"],["full","Подробно"]].map(([k,t])=>`<button class="${vw===k?"on":""}" data-sovw="${k}">${t}</button>`).join("")}
+    if(SO2&&vw!=="full"){const sec=new Map();V.forEach(l=>{const a=soAct(l);if(!sec.has(a))sec.set(a,[]);sec.get(a).push(l)});
       const secs=[...sec].sort((a,b)=>SO_AORD.indexOf(a[0])-SO_AORD.indexOf(b[0]));
-      L.innerHTML=secs.length?secs.map(([a,ls])=>{const by=new Map();ls.forEach(l=>{const k=soCliKey(l);if(!by.has(k))by.set(k,[]);by.get(k).push(l)});const k0=soSt(ls[0]);
-        return `<div class="so-sec" style="--c:${soCol(k0)}"><i></i>${esc(a[0].toUpperCase()+a.slice(1))}<em class="num">${ls.length}</em></div><div class="so-grp so-cmp">${[...by.values()].map(g=>{const its=g.flatMap(x=>x.items||[]),it=its[0]||{},ph=soPh(it),why=[...new Set(g.flatMap(soWhy))],tot=g.reduce((a,x)=>a+(x.total||0),0);
-          const nx=soNext(g[0]);return `<div class="so-cr"><button class="so-crb" ${g.length>1?`data-socli="${esc(g[0]._id)}"`:`data-soopen="${esc(g[0]._id)}"`}><span class="so-th" style="--c:${soCol(soSt(g[0]))}">${ph?`<img src="${esc(ph)}" alt="" loading="lazy">`:`<b>${esc((it.brand||"?")[0])}</b>`}</span><span class="so-cn"><b>${esc(soName(g[0]))}</b> <small>${esc([it.brand,it.title].filter(Boolean).join(" "))}${its.length>1?" +"+(its.length-1):""}</small></span>${why.length?`<em class="so-w">${esc(why[0])}</em>`:`<b class="num">${tot?eur(tot):""}</b>`}</button>${nx?`<button class="so-nx press" data-sonx="${esc(g.map(x=>x._id).join(","))}" style="--c:${soCol(nx)}">${SO_NXV[nx]||SO_ST[nx]} ✓</button>`:""}</div>`}).join("")}</div>`}).join("")
+      const cell=g=>{const its=g.flatMap(x=>x.items||[]),it=its[0]||{},ph=soPh(it),why=[...new Set(g.flatMap(soWhy))],tot=g.reduce((a,x)=>a+(x.total||0),0),nx=soNext(g[0]),op=g.length>1?`data-socli="${esc(g[0]._id)}"`:`data-soopen="${esc(g[0]._id)}"`,
+          nb=nx?`<button class="so-nx press" data-sonx="${esc(g.map(x=>x._id).join(","))}" style="--c:${soCol(nx)}">${SO_NXV[nx]||SO_ST[nx]} ✓</button>`:"",img=ph?`<img src="${esc(ph)}" alt="" loading="lazy">`:`<b>${esc((it.brand||"?")[0])}</b>`;
+        if(vw==="short")return `<div class="so-cr"><button class="so-crb" ${op}><span class="so-th" style="--c:${soCol(soSt(g[0]))}">${img}</span><span class="so-cn"><b>${esc(soName(g[0]))}</b> <small>${esc([it.brand,it.title].filter(Boolean).join(" "))}${its.length>1?" +"+(its.length-1):""}</small></span>${why.length?`<em class="so-w">${esc(why[0])}</em>`:`<b class="num">${tot?eur(tot):""}</b>`}</button>${nb}</div>`;
+        return `<div class="so-sq${why.length?" warn":""}"><button class="so-sqb" ${op}><span class="so-sqi">${img}${its.length>1?`<em>+${its.length-1}</em>`:""}${why.length?`<i title="${esc(why.join(", "))}">!</i>`:""}</span><b>${esc(soName(g[0]))}</b><small>${why.length?`<span class="so-w">${esc(why[0])}</span>`:esc(it.brand||"")}</small></button>${nb}</div>`};
+      L.innerHTML=secs.length?secs.map(([a,ls])=>{const by=new Map();ls.forEach(l=>{const k=soCliKey(l);if(!by.has(k))by.set(k,[]);by.get(k).push(l)});const k0=soSt(ls[0]),gs=[...by.values()];
+        return `<div class="so-sec" style="--c:${soCol(k0)}"><i></i>${esc(a[0].toUpperCase()+a.slice(1))}<em class="num">${ls.length}${vw==="shelf"&&gs.length>3?" · листать →":""}</em></div><div class="${vw==="short"?"so-grp so-cmp":vw==="shelf"?"so-shelf":"so-grid"}">${gs.map(cell).join("")}</div>`}).join("")
         :`<div class="so-empty"><b>Заказов нет</b></div>`;upBar();return}
     // владелец 21.11: один человек — одна строка («@ssoffiaa0 · 2 позиции»), внутри свёрнуты его заказы и посылки; галочка на человеке — выбрать все его заказы
     const blocks=[],bi=new Map();V.forEach(l=>{const k=soCliKey(l);if(!bi.has(k)){bi.set(k,blocks.length);blocks.push([])}blocks[bi.get(k)].push(l)});
