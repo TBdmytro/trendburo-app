@@ -2894,6 +2894,21 @@ async function vBrandBoard() {
   };
 }
 let SUBC = null;
+/* коллекции брендов в админке (владелец 22.11): не листать тысячу вещей — Cartier Love/Clash, Van Cleef Alhambra, Bulgari Serpenti… */
+const COLL = {
+  cartier: ["Love", "Clash", "Juste un Clou", "Trinity", "Panthère", "Santos", "Tank", "Ballon Bleu", "Ecrou", "Étincelle", "C de Cartier", "Grain de Café"],
+  vancleefarpels: ["Vintage Alhambra", "Sweet Alhambra", "Magic Alhambra", "Alhambra", "Perlée", "Frivole", "Fleurette", "Lucky Spring", "Between the Finger", "Bouton d'or", "Lucky Animals"],
+  bulgari: ["Serpenti", "B.zero1", "Divas' Dream", "Bulgari Bulgari", "Fiorever", "Tubogas", "Octo", "Allegra"],
+  hermes: ["Oran", "Bouncing", "Izmir", "Chypre", "Jumping", "Kelly", "Birkin", "Evelyne", "Picotin", "Constance", "Clic H", "Twilly", "Chaîne d'Ancre", "Collier de Chien", "Kelly"],
+  goldengoose: ["Super-Star", "Ball Star", "Hi Star", "Mid Star", "V-Star", "Stardan", "Purestar", "Marathon", "Francy", "Space-Star", "Slide"],
+  loropiana: ["Open Walk", "Summer Walk", "Summer Charms", "Tennis Walk", "Week End Walk", "Extra Bag", "Bale", "Sesia", "Loom"],
+  louisvuitton: ["Neverfull", "Speedy", "Alma", "Capucines", "Pochette Métis", "Keepall", "Twist", "OnTheGo", "Petite Malle", "Side Trunk", "Coussin", "Nano"],
+  dior: ["Lady Dior", "Book Tote", "Saddle", "Bobby", "30 Montaigne", "Caro", "J'Adior", "B23", "B27", "Toujours"],
+  chanel: ["11.12", "2.55", "Boy", "22", "25", "Coco Handle", "Deauville", "Gabrielle", "Wallet on Chain"],
+  bottegaveneta: ["Jodie", "Andiamo", "Cassette", "Sardine", "Hop", "Kalimero", "Arco", "Pouch", "Loop", "Gemelli"],
+  prada: ["Galleria", "Cleo", "Re-Edition", "Re-Nylon", "Arqué", "Buckle", "Monolith"]
+};
+const collKey = b => String(b || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, "");
 async function vProducts2(pre) {
   if (!pre) return vBrandBoard();
   if (!SUBC) api("subcats", { silent: true }).then(r => { SUBC = r.subcats; }).catch(() => {});
@@ -2908,6 +2923,7 @@ async function vProducts2(pre) {
     <div id="hub"></div>
     <div class="ptabs" id="ptabs" role="tablist" aria-label="Разделы магазина"></div>
     <div class="ptabs sm" id="pcats" aria-label="Категории"></div>
+    ${F.brand && COLL[collKey(F.brand)] ? `<div class="ptabs sm" id="pcoll" aria-label="Коллекции"><button data-collq="" aria-pressed="${!F.q}">Все коллекции</button>${COLL[collKey(F.brand)].map(c => `<button data-collq="${esc(c)}" aria-pressed="${F.q === c}">${esc(c)}</button>`).join("")}</div>` : ""}
     <input type="search" id="pq" placeholder="Бренд, модель, артикул" value="${esc(F.q)}" aria-label="Поиск">
     <div class="fchips" id="pf"></div>
     <div class="plist" id="plist"></div><div class="more" id="pmore"></div><div class="pbar" id="pbar"></div>`;
@@ -3042,6 +3058,7 @@ async function vProducts2(pre) {
     const s = e.target.closest("[data-st]"); if (s) { F.status = s.dataset.st; return load(); }
     const sc = e.target.closest("[data-sec]"); if (sc) { F.sec = sc.dataset.sec; sel.clear(); return load(); }
     const cq = e.target.closest("[data-catq]"); if (cq) { F.cat = cq.dataset.catq; sel.clear(); return load(); }
+    const co = e.target.closest("[data-collq]"); if (co) { F.q = F.q === co.dataset.collq ? "" : co.dataset.collq; const qi = $("#pq"); if (qi) qi.value = F.q; document.querySelectorAll("#pcoll [data-collq]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.collq === F.q))); sel.clear(); return load(); }
     const gq = e.target.closest("[data-gq]"); if (gq) { F.g = gq.dataset.gq; sel.clear(); return load(); }
     if (e.target.closest("[data-avail]")) { F.avail = F.avail ? "" : "1"; return load(); }
     if (e.target.closest("[data-pre]")) { F.pre = F.pre ? "" : "1"; return load(); }
