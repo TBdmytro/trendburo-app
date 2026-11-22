@@ -2661,13 +2661,17 @@ const DH={d:"",m:new Map()};
 const dayHash=id=>{const d=new Date().toISOString().slice(0,10);if(DH.d!==d){DH.d=d;DH.m.clear()}let h=DH.m.get(id);if(h===undefined){h=+d.replace(/-/g,"");for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;DH.m.set(id,h)}return h};
 /* украшения (правило владельца): сначала главные коллекции дома (Van Cleef — Alhambra; Cartier — Love, Clash, Juste un Clou),
    внутри — браслеты, кольца, серьги, потом колье, подвески и остальное; часы — после украшений */
-const JPRIO={"van cleef":["Alhambra"],cartier:["Love","Clash","Juste un Clou"]},JTYPE={brac:0,ring:1,earr:2,neck:3,brooch:4};
+const JPRIO={"van cleef":["Alhambra"],cartier:["Love","Clash","Juste un Clou"],bulgari:["Serpenti","B.zero1","Divas' Dream","Bvlgari Bvlgari"],bvlgari:["Serpenti","B.zero1","Divas' Dream","Bvlgari Bvlgari"]},JTYPE={brac:0,ring:1,earr:2,neck:3,brooch:4};
 function jRank(p){const b=String(p.brand||"").toLowerCase(),pr=Object.keys(JPRIO).find(k=>b.includes(k)),L=pr?JPRIO[pr]:[],c=typeof jColl==="function"?jColl(p):"",ci=L.indexOf(c),st=subOf(p);
   return (ci<0?L.length:ci)*10+(st in JTYPE?JTYPE[st]:5)}
 /* свежие поступления (правило владельца): вещи, добавленные за последние 4 дня из новинок или коллекции бренда (Dior Cruise 2027) — первыми в каталоге, в «Новинках» бренда и на баннере */
 let FRESH_C=null;const freshIds=()=>{if(FRESH_C&&FRESH_C.n===P.length)return FRESH_C.s;const cut=Date.now()-4*864e5,inC=new Set((typeof COLL!=="undefined"?COLL:[]).flatMap(c=>c.ids||[]));const st=new Set(P.filter(p=>p.na&&+p.na>=cut&&(p.isNew||inC.has(p.id))&&!/cartier|van cleef|bulgari|bvlgari|tiffany|chaumet|boucheron|graff|chopard|messika|piaget|pomellato|rolex|patek|audemars/i.test(p.brand||"")).map(p=>p.id)); /* ювелирные дома (Cartier, Van Cleef) — без этого: их загружают сотнями разом */FRESH_C={n:P.length,s:st};return st};
 let NA_C=null;const collFresh=c=>{if(!NA_C||NA_C.n!==P.length)NA_C={n:P.length,m:new Map(P.map(p=>[p.id,+p.na||0]))};let m=0;for(const id of c.ids||[]){const v=NA_C.m.get(id)||0;if(v>m)m=v}return m};
 const hotIds=()=>new Set((typeof COLL!=="undefined"?COLL:[]).filter(c=>c.pinned).flatMap(c=>c.ids||[])); // ходовая коллекция (закреплённая: сейчас Van Cleef Alhambra)
+/* «интересно смотреть» (владелец 22.11): самое дорогое у бренда — в конце, не сверху (дороже 3 медиан бренда и от 15 000 €);
+   одна и та же модель разных цветов не идёт подряд — между ними другие вещи */
+function soExp(b){const pr=b.map(p=>p.price||0).filter(Boolean).sort((x,y)=>x-y),med=pr.length?pr[pr.length>>1]:0,lim=Math.max(15000,med*3);return new Set(b.filter(p=>(p.price||0)>lim))}
+function spreadFam(b){const key=p=>p.fam||((p.name||"").toLowerCase().split(/[ ,-]/).slice(0,2).join(" "));for(let i=1;i<b.length;i++){if(key(b[i])!==key(b[i-1]))continue;let j=i+1;while(j<b.length&&j<i+12&&key(b[j])===key(b[i-1]))j++;if(j<b.length&&j<i+12){const [x]=b.splice(j,1);b.splice(i,0,x)}}return b}
 function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best);
   // ходовая коллекция — в самом начале «Популярного»: первые 12 её вещей открывают каталог, остальные — первыми у своего бренда
   const FR=freshIds(),fg=c=>c==="bags"?0:c==="shoes"?1:c==="clothing"?2:3;
@@ -2683,7 +2687,7 @@ function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort
     // ходовые коллекции (закреплённая на главной, например Van Cleef Alhambra) — первыми у своего бренда; остальное — для ассортимента
     const HOT=new Set([...H0,...FR]);
     const JR=c==="jewelry"?jRank:null;
-    bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)]));b.sort((x,y)=>(HOT.has(y.id)-HOT.has(x.id))||(JR?JR(x)-JR(y):0)||(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)))});
+    bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)])),XP=soExp(b);b.sort((x,y)=>(XP.has(x)-XP.has(y))||(HOT.has(y.id)-HOT.has(x.id))||(JR?JR(x)-JR(y):0)||(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)));spreadFam(b)});
     bs.sort((a,b)=>(HOT.has(b[0].id)-HOT.has(a[0].id))||(dayHash(a[0].bk)-dayHash(b[0].bk)));const o=[];for(let i=0;o.length<G[c].length;i++)for(const b of bs)if(i<b.length)o.push(b[i]);G[c]=o});
   // порядок ленты: сначала сумки и обувь (по очереди), потом одежда, потом всё остальное (по очереди; «Другое» — реже)
   const turn=[...CAT_TURN.filter(c=>G[c]),...Object.keys(G).filter(c=>!CAT_TURN.includes(c))],at={},out=[];
@@ -5053,7 +5057,7 @@ $("#oTabbar").addEventListener("click",e=>{const b=e.target.closest("button");if
   if(n===oCur){const sc=$("#o-"+n+" .scroll");sc&&sc.scrollTo({top:0,behavior:"smooth"})}else oTab(n)});
 $("#oDest").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;OF.dest=b.dataset.d;renderOptix()});
 /* ===== ÉCRIN — украшения: отдельный раздел (как OPTIX) на товарах категории «Украшения» ===== */
-const JCOLL=[["Alhambra",/alhambra/i],["Perlée",/perl[eé]e/i],["Frivole",/frivole/i],["Lucky",/lucky/i],["Fleurette",/fleurette/i],["Flowerlace",/flowerlace/i],["Love",/\blove\b/i],["Juste un Clou",/juste un clou/i],["Trinity",/trinity/i],["Panthère",/panth[eè]re/i],["Clash",/\bclash\b/i],["Serpenti",/serpenti/i],["B.zero1",/b\.?zero ?1/i],["Possession",/possession/i],["Quatre",/quatre/i]];
+const JCOLL=[["Alhambra",/alhambra/i],["Perlée",/perl[eé]e/i],["Frivole",/frivole/i],["Lucky",/lucky/i],["Fleurette",/fleurette/i],["Flowerlace",/flowerlace/i],["Love",/\blove\b/i],["Juste un Clou",/juste un clou/i],["Trinity",/trinity/i],["Panthère",/panth[eè]re/i],["Clash",/\bclash\b/i],["Serpenti",/serpenti/i],["B.zero1",/b\.?zero ?1/i],["Divas' Dream",/divas.? ?dream/i],["Bvlgari Bvlgari",/bvlgari bvlgari|bulgari bulgari/i],["Tubogas",/tubogas/i],["Fiorever",/fiorever/i],["Possession",/possession/i],["Quatre",/quatre/i]];
 const JTYPES=[["ring","Каблучки",'<circle cx="12" cy="14" r="6"/><path d="M9.5 7.5L12 5l2.5 2.5"/>'],["earr","Сережки",'<path d="M9 4v4a3 3 0 1 0 6 0V4"/><circle cx="12" cy="17" r="3"/>'],["brac","Браслети",'<ellipse cx="12" cy="12" rx="8" ry="5"/><ellipse cx="12" cy="12" rx="5" ry="2.5"/>'],["neck","Кольє",'<path d="M5 5c0 6 3 10 7 10s7-4 7-10"/><path d="M12 15l2.5 2.5L12 20l-2.5-2.5z"/>'],["brooch","Брошки",'<circle cx="12" cy="12" r="3"/><path d="M12 4v5M12 15v5M4 12h5M15 12h5"/>']];
 const JF={type:"",coll:"",brand:"",mine:false};let jCur="home",jRing=String(store.get("tb_ring","")||"");
 const jList=()=>P.filter(p=>p.cat==="jewelry");
