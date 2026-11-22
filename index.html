@@ -2670,6 +2670,10 @@ let NA_C=null;const collFresh=c=>{if(!NA_C||NA_C.n!==P.length)NA_C={n:P.length,m
 const hotIds=()=>new Set((typeof COLL!=="undefined"?COLL:[]).filter(c=>c.pinned).flatMap(c=>c.ids||[])); // ходовая коллекция (закреплённая: сейчас Van Cleef Alhambra)
 /* «интересно смотреть» (владелец 22.11): самое дорогое у бренда — в конце, не сверху (дороже 3 медиан бренда и от 15 000 €);
    одна и та же модель разных цветов не идёт подряд — между ними другие вещи */
+/* «порядок у бренда» (владелец 23.11): иконы бренда — первыми, мелочь (обложки, органайзеры, футболки) — в конце */
+const BPRIO={louisvuitton:[/neverfull/i,/\bspeedy/i,/\balma\b/i,/pochette m[eé]tis/i,/onthego|on the go/i,/capucines/i,/keepall/i,/\bno[eé]\b/i,/\btwist\b/i,/petite malle/i,/side trunk/i,/coussin/i,/multi pochette|f[eé]licie/i,/\bdiane\b/i,/lv trainer/i,/sneakerina/i,/archlight/i,/\bmajor loafer/i]},
+  BLOW={louisvuitton:/passport|pocket organi|taschenorgani|key pouch|dopp kit|t-shirt|crewneck|key holder|schl[üu]ssel|card holder|kartenetui|bandeau|socks|socken/i};
+function bRank(p){const L=BPRIO[p.bk];if(!L)return 0;const t=String(p.name||"");if(BLOW[p.bk]&&BLOW[p.bk].test(t))return 99;const i=L.findIndex(r=>r.test(t));return i<0?L.length:i}
 function soExp(b){const pr=b.map(p=>p.price||0).filter(Boolean).sort((x,y)=>x-y),med=pr.length?pr[pr.length>>1]:0,lim=Math.max(15000,med*3);return new Set(b.filter(p=>(p.price||0)>lim))}
 function spreadFam(b){const key=p=>p.fam||((p.name||"").toLowerCase().split(/[ ,-]/).slice(0,2).join(" "));for(let i=1;i<b.length;i++){if(key(b[i])!==key(b[i-1]))continue;let j=i+1;while(j<b.length&&j<i+12&&key(b[j])===key(b[i-1]))j++;if(j<b.length&&j<i+12){const [x]=b.splice(j,1);b.splice(i,0,x)}}return b}
 function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort((a,b)=>a.best-b.best);
@@ -2687,7 +2691,7 @@ function popOrder(list){const H0=hotIds(),best=list.filter(p=>p.best!=null).sort
     // ходовые коллекции (закреплённая на главной, например Van Cleef Alhambra) — первыми у своего бренда; остальное — для ассортимента
     const HOT=new Set([...H0,...FR]);
     const JR=c==="jewelry"?jRank:null;
-    bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)])),XP=soExp(b);b.sort((x,y)=>(XP.has(x)-XP.has(y))||(HOT.has(y.id)-HOT.has(x.id))||(JR?JR(x)-JR(y):0)||(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)));spreadFam(b)});
+    bs.forEach(b=>{const k=new Map(b.map(p=>[p,dayHash(p.id)])),XP=soExp(b);b.sort((x,y)=>(XP.has(x)-XP.has(y))||(HOT.has(y.id)-HOT.has(x.id))||(JR?JR(x)-JR(y):bRank(x)-bRank(y))||(!!y.st-!!x.st)||((y.pop||0)-(x.pop||0))||(k.get(x)-k.get(y)));spreadFam(b)});
     bs.sort((a,b)=>(HOT.has(b[0].id)-HOT.has(a[0].id))||(dayHash(a[0].bk)-dayHash(b[0].bk)));const o=[];for(let i=0;o.length<G[c].length;i++)for(const b of bs)if(i<b.length)o.push(b[i]);G[c]=o});
   // порядок ленты: сначала сумки и обувь (по очереди), потом одежда, потом всё остальное (по очереди; «Другое» — реже)
   const turn=[...CAT_TURN.filter(c=>G[c]),...Object.keys(G).filter(c=>!CAT_TURN.includes(c))],at={},out=[];
