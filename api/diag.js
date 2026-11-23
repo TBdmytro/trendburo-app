@@ -2,6 +2,17 @@
  *  Без личных данных: только техника устройства и замеры. Включается вводом «#diag» в поиске каталога. */
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+  // всё, кроме кода кнопки («bm») и замеров витрины (POST), — только администратору (вход в админку) или по служебному ключу:
+  // раньше любой мог открыть ссылку с apply=1 и поменять товары
+  if (req.method === "GET" && !(req.query && req.query.probe === "bm")) {
+    let adm = null; try { const { readSession } = await import("../lib/auth.js"); adm = readSession(req); } catch {}
+    const k = String((req.query && req.query.k) || (String(req.url || "").match(/[?&]k=([^&#]+)/) || [])[1] || ""), key = process.env.DIAG_KEY || "";
+    let okKey = false; if (key && k.length === key.length) { const { timingSafeEqual } = await import("node:crypto"); okKey = timingSafeEqual(Buffer.from(k), Buffer.from(key)); }
+    if (!adm && !okKey) { res.statusCode = 404; res.setHeader("Content-Type", "application/json; charset=utf-8"); return res.end('{"error":"not found"}'); }
+  }
+  // поручения, одобрения и агенты на пульте сотрудника — пишет Claude после работы
+  if (req.method === "GET" && /[?&]probe=pultset\b/.test(String(req.url || ""))) return (async () => { const { setPult } = await import("../lib/pult.js"); let d = {}; try { d = JSON.parse(decodeURIComponent((String(req.url).match(/[?&]d=([^&]+)/) || [])[1] || "{}")); } catch { res.statusCode = 400; return res.end('{"error":"bad json"}'); }
+    const r = await setPult(getStore(), d); res.setHeader("Content-Type", "application/json; charset=utf-8"); res.statusCode = 200; res.end(JSON.stringify({ ok: true, tasks: (r.tasks || []).length, agents: (r.agents || []).length, approvals: (r.approvals || []).length })); })();
   // свежий код кнопки «В Trend Büro»: закладка сначала грузит его отсюда — новые версии работают без перетаскивания закладки заново
   if (req.query && req.query.probe === "bm") {
     try { const host = req.headers["x-forwarded-host"] || req.headers.host; const t = await fetch(`https://${host}/mt.html`, { cache: "no-store" }).then(r => r.text());

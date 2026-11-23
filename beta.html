@@ -360,6 +360,66 @@ body{margin:0}img{max-width:100%}/* ===== Наполнение из админк
 .so{padding:4px 16px 0;display:flex;flex-direction:column;gap:12px}.so .chips{padding:0;margin:0 -16px;padding:0 16px}
 .so-top{display:flex;gap:8px}.so-sm{height:40px;font-size:14px;padding:0 14px;flex:1}
 .so-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}.so-tile{border:0;background:var(--soft);border-radius:18px;padding:12px 14px;text-align:left;font:inherit;color:inherit;display:flex;flex-direction:column;gap:4px;cursor:pointer}.so-tile span{font-size:12.5px;color:var(--g2)}.so-tile b{font-size:24px;font-weight:700}.so-tile.on{background:var(--ink);color:#fff}.so-tile.on span{color:rgba(255,255,255,.7)}
+/* ===== Пульт сотрудника (отдельный экран-отчёт) ===== */
+.pu{padding:12px 14px 0;display:grid;gap:12px;--pb:#2f6fd6;--pbb:#e7effc;--pg:#2e8b57;--pgb:#e5f4ec;--pa:#b7791f;--pab:#fbf0dc;--pv:#7056c9;--pvb:#efebfb}
+.pu-hd{display:flex;justify-content:space-between;align-items:baseline;padding:2px 2px 0}.pu-hd h1{font-size:26px;font-weight:700}.pu-hd span{font-size:12.5px;color:var(--muted)}
+.pu-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pu-k{border:0;border-radius:14px;padding:9px 9px 8px;text-align:left;font:inherit;display:grid;cursor:pointer}.pu-k b{font-size:20px;line-height:1.1;font-weight:700}.pu-k span{font-size:11px;font-weight:500}
+.pu-k.k1{background:var(--pbb);color:var(--pb)}.pu-k.k2{background:var(--pgb);color:var(--pg)}.pu-k.k3{background:var(--pvb);color:var(--pv)}.pu-k.k4{background:var(--pab);color:var(--pa)}
+.pu-alert{background:var(--pab);color:var(--pa);border-radius:14px;padding:10px 12px;font-size:13px;font-weight:500;display:flex;gap:8px;align-items:center}.pu-alert i{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--pa);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+.pu-sec{background:var(--bg);border-radius:20px;padding:12px 12px 4px;display:grid}
+.pu-sh{display:flex;justify-content:space-between;align-items:center;padding:0 2px 6px}.pu-sh b{font-size:16px;font-weight:600}.pu-sh span{font-size:12px;color:var(--muted)}
+.pu-add{border:0;background:var(--ink);color:#fff;font:600 13px var(--f);border-radius:11px;padding:7px 12px;cursor:pointer}
+.pu-req{border:0;background:none;font:inherit;color:inherit;text-align:left;padding:11px 2px;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;gap:4px 10px;cursor:pointer;width:100%}
+.pu-req:first-child{border-top:0}
+.pu-req .ph{grid-row:span 3;width:48px;height:48px;border-radius:11px;background:var(--soft) center/cover no-repeat;display:grid;place-items:center;color:var(--faint)}
+.pu-req .ph svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7}
+.pu-r1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.pu-r1 b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pu-r1 small{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.pu-r2{font-size:12px;color:var(--muted);margin-top:-3px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pu-tag{font-size:10.5px;font-weight:600;border-radius:8px;padding:1px 7px;white-space:nowrap}.pu-tag.a{background:var(--pab);color:var(--pa)}.pu-tag.g{background:var(--pgb);color:var(--pg)}.pu-tag.b{background:var(--pbb);color:var(--pb)}.pu-tag.v{background:var(--pvb);color:var(--pv)}
+.pu-tr{display:grid;grid-template-columns:repeat(5,1fr);position:relative;margin-top:3px}
+.pu-tr::before{content:"";position:absolute;left:10%;right:10%;top:7px;height:2px;background:var(--line)}
+.pu-tr .pu-fill{position:absolute;left:10%;top:7px;height:2px;background:var(--c)}
+.pu-tr div{display:grid;justify-items:center;gap:3px;position:relative;font-size:10px;color:var(--muted);text-align:center;line-height:1.15}
+.pu-tr div::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--bg);border:2px solid #c9ccd1;box-sizing:border-box}
+.pu-tr div.d::before{background:var(--c);border-color:var(--c)}.pu-tr div.now::before{border:4px solid var(--c)}.pu-tr div.now{color:var(--c);font-weight:700}
+.pu-tr.cb{--c:var(--pb)}.pu-tr.cg{--c:var(--pg)}.pu-tr.cv{--c:var(--pv)}.pu-tr.ca{--c:var(--pa)}
+.pu-more{border:0;background:none;font:500 13px var(--f);color:var(--muted);padding:10px 2px;text-align:left;cursor:pointer;border-top:1px solid var(--line)}
+.pu-empty{font-size:13.5px;color:var(--muted);padding:6px 2px 12px}
+.pu-appr{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}.pu-appr::-webkit-scrollbar{display:none}
+.pu-ap{flex:none;width:128px;border-radius:14px;background:var(--soft);padding:8px;display:grid;gap:3px;font-size:12px;text-decoration:none;color:inherit}
+.pu-ap .im{height:70px;border-radius:10px;background:#fff center/contain no-repeat}.pu-ap b{font-size:12.5px;font-weight:600}.pu-ap span{color:var(--muted)}
+.pu-task{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line);font-size:13.5px}.pu-task:first-child{border-top:0}
+.pu-task .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:700}.pu-task small{display:block;color:var(--muted);font-size:11.5px}
+.pu-ag{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-bottom:10px}.pu-ag div{background:var(--soft);border-radius:12px;padding:7px 9px;font-size:12px;display:flex;gap:7px;align-items:center}.pu-ag i{width:8px;height:8px;border-radius:50%;flex:none}.pu-ag small{color:var(--muted);margin-left:auto;white-space:nowrap}
+/* новая заявка */
+.pq{display:grid;gap:12px;--pb:#2f6fd6;--pbb:#e7effc;--pg:#2e8b57;--pgb:#e5f4ec;--pa:#b7791f;--pab:#fbf0dc;--pv:#7056c9;--pvb:#efebfb}
+.pq-ph{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:7px}
+.pq-t{border:0;border-radius:16px;display:grid;place-items:center;gap:4px;font:600 11.5px var(--f);min-height:90px;align-content:center;cursor:pointer;position:relative;overflow:hidden;padding:0}
+.pq-t .rg{width:38px;height:38px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.pq-t svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.pq-t.ps{background:linear-gradient(160deg,#f1f2f4,#e6e8eb);color:var(--fg)}.pq-t.cm{background:var(--pbb);color:var(--pb)}.pq-t.gl{background:var(--pvb);color:var(--pv)}
+.pq-t.has{background:#fff center/contain no-repeat;box-shadow:inset 0 0 0 1px var(--line)}
+.pq-t .x{position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:12px;display:grid;place-items:center}
+.pq-t .ai{position:absolute;left:6px;bottom:6px;right:6px;font-size:10.5px;font-weight:600;background:rgba(255,255,255,.94);border-radius:8px;padding:2px 6px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pq-t.read::after{content:"";position:absolute;left:0;right:0;height:2px;top:45%;background:linear-gradient(90deg,transparent,var(--pb),transparent);box-shadow:0 0 12px var(--pb);animation:pqscan 1.2s ease-in-out infinite alternate}
+@keyframes pqscan{from{top:15%}to{top:85%}}
+@media (prefers-reduced-motion:reduce){.pq-t.read::after{animation:none}}
+.pq-l{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:flex;justify-content:space-between}
+.pq-l em{font-style:normal;text-transform:none;letter-spacing:0;font-size:10.5px;font-weight:700;color:var(--pb);background:var(--pbb);border-radius:7px;padding:0 6px}
+.pq-in{width:100%;border:0;background:var(--soft);border-radius:12px;padding:10px 12px;font:15px var(--f);color:var(--fg);outline:none}
+.pq-in:focus{box-shadow:inset 0 0 0 1.5px var(--fg)}
+.pq-in.g{box-shadow:inset 0 0 0 1.5px var(--pbb)}
+.pq-ch{display:flex;flex-wrap:wrap;gap:5px}
+.pq-c{border:0;border-radius:11px;padding:6px 11px;background:var(--soft);font:500 13px var(--f);color:var(--fg);cursor:pointer}
+.pq-c.on{background:var(--ink);color:#fff}.pq-c.nw{background:none;box-shadow:inset 0 0 0 1px #c9ccd1;color:var(--g2)}
+.pq-row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pq-m{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pq-mi{border:0;background:var(--soft);border-radius:12px;padding:6px;display:grid;gap:3px;font:11px var(--f);color:inherit;text-align:left;cursor:pointer}
+.pq-mi .im{aspect-ratio:1;border-radius:9px;background:#fff center/contain no-repeat}.pq-mi b{font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pq-st{display:flex;gap:6px;flex-wrap:wrap}
+.pq-big{width:100%;border-radius:16px;background:#fff center/contain no-repeat;aspect-ratio:4/3;box-shadow:inset 0 0 0 1px var(--line)}
+.pq-kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:14px}.pq-kv span{color:var(--muted)}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .so-list{display:flex;flex-direction:column}.so-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
 .so-ck{padding:6px;display:flex}.so-ck input{width:20px;height:20px;accent-color:#25272b}
@@ -4766,6 +4826,151 @@ const SO_OLD={ready:"packed",inua:"shipping"},soSt=l=>l.handover&&l.status==="re
 const SO_ORIG=["Франція","Італія","Німеччина","Австрія","Іспанія","Париж","Мілан","Дюссельдорф","Відень","Дубай"];
 const soFlow=l=>["new","work",...(l.payLater?[]:["paid"]),"bought",...(l.buyMode==="online"?["received"]:[]),"packed",...(l.handover?[...((l.dest||"ua")==="ua"?["shipping"]:[]),"ready"]:["shipping",...((l.dest||"ua")==="ua"?["np"]:[])]),"delivered"];
 const soCall=async(op,d)=>{const r=await meCall({a:"st",op,d:d||{}});if(r.error)throw new Error(r.error);return r};
+/* ===== Пульт сотрудника: заявки схемой этапов, «Одобрить», поручения, агенты — отдельный экран-отчёт, заказы не трогает ===== */
+const PU_ST=[["new","Новая"],["taken","Взял"],["found","Нашли"],["offered","Предложили"],["order","Заказ"]];
+const PU_T={bag:"сумка",shoes:"обувь",clothing:"одежда",jewelry:"украшение",accessory:"аксессуар",watch:"часы",other:"другое"};
+const PU_CAT={bag:"bags",shoes:"shoes",clothing:"clothing",jewelry:"jewelry",accessory:"accessories",watch:"watches"};
+const PU_BR=["Chanel","Dior","Louis Vuitton","Hermès","Cartier","Prada","Miu Miu","Bottega Veneta","Saint Laurent","Loro Piana","Van Cleef & Arpels","Bulgari","Tiffany & Co.","Golden Goose"];
+const PU_I={cam:'<svg viewBox="0 0 24 24"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.2-1.6A1.5 1.5 0 0 1 10.5 4h3a1.5 1.5 0 0 1 1.2.6L15.9 6h1.6A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.4" r="3.4"/></svg>',
+  gal:'<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="9.5" r="1.2"/><path d="M4 17l4.6-4.6a1.5 1.5 0 0 1 2.1 0L14 15.7l1.8-1.8a1.5 1.5 0 0 1 2.1 0L20.5 16.5"/></svg>',
+  paste:'<svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="16" rx="3"/><path d="M9 5V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V5M9 11h6M9 15h4"/></svg>'};
+let PU=null;
+const puAgo=iso=>{const m=(Date.now()-Date.parse(iso))/6e4;return m<60?Math.max(1,Math.round(m))+" мин":m<1440?Math.round(m/60)+" ч":Math.round(m/1440)+" д"};
+const puHM=iso=>{try{return new Date(iso).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"})}catch(e){return ""}};
+const puTitle=r=>{const w=r.want||{};return [w.brand,w.model||PU_T[w.type]||"",w.size].filter(Boolean).join(" · ")||"Заявка "+r.code};
+const puWho=r=>{const w=r.who||{};return w.nick?"@"+w.nick:w.name||"без клиента"};
+const puLate=r=>r.stage==="new"&&Date.now()-Date.parse(r.createdAt)>2*3600e3;
+function puTrack(r){const i=Math.max(0,PU_ST.findIndex(x=>x[0]===r.stage)),c=r.stage==="new"?(puLate(r)?"ca":"cb"):r.stage==="offered"?"cv":"cg";
+  return `<div class="pu-tr ${c}"><span class="pu-fill" style="width:${i*20}%"></span>${PU_ST.map(([,l],j)=>`<div class="${j<i?"d":j===i?"now":""}">${l==="Предложили"?"Предло-<br>жили":l}</div>`).join("")}</div>`}
+function puTag(r){return r.stage==="new"?(puLate(r)?`<span class="pu-tag a">не взята</span>`:`<span class="pu-tag b">новая</span>`):r.stage==="offered"?`<span class="pu-tag v">ждём ответ</span>`:r.stage==="order"?`<span class="pu-tag g">заказ</span>`:r.stage==="closed"?`<span class="pu-tag">закрыта</span>`:""}
+function puRow(r){return `<button class="pu-req press" data-pureq="${esc(r._id)}"><span class="ph"${r.img?` style="background-image:url('${esc(r.img)}')"`:""}>${r.img?"":PU_I.gal}</span>
+  <div class="pu-r1"><b>${esc(puTitle(r))}</b><small>${puHM(r.createdAt)} · ${puAgo(r.createdAt)}</small></div>
+  <div class="pu-r2">${esc(puWho(r))}${r.want&&r.want.budget?" · до "+eur(r.want.budget):""} ${puTag(r)}</div>${puTrack(r)}</button>`}
+/* похожее в каталоге: бренд + тип, есть нужный размер, ближе к бюджету («до 2000» — не дешёвое, а около суммы) */
+function puMatch(w){if(!w||!(w.brand||w.type))return [];const b=String(w.brand||"").toLowerCase(),cat=PU_CAT[w.type],sz=String(w.size||"").trim(),md=String(w.model||"").toLowerCase();
+  const L=P.filter(p=>(!b||String(p.brand||"").toLowerCase()===b||String(p.brand||"").toLowerCase().startsWith(b))&&(!cat||p.cat===cat));
+  const hasSz=p=>!sz||!(p.sizes||[]).length||(p.sizes||[]).some(s=>String(s.size||s).replace(/\s/g,"")===sz.replace(/\s/g,"")&&s.status!=="out");
+  const sc=p=>(md&&String(p.name||"").toLowerCase().includes(md.split(" ")[0])?-1e6:0)+(w.budget?Math.abs((+p.price||0)-w.budget*.85):0);
+  return L.filter(hasSz).sort((a,c)=>sc(a)-sc(c)).slice(0,3)}
+const puImg=p=>String(p.shape||"").startsWith("img:")?p.shape.slice(4):"";
+function puMatchHTML(list){return list.length?`<div class="pq-m">${list.map(p=>`<button class="pq-mi press" data-pumi="${esc(p.id)}"><span class="im" style="background-image:url('${esc(puImg(p))}')"></span><b>${esc(p.name)}</b><span>${eur(p.price)}</span></button>`).join("")}</div>`:`<p class="pu-empty" style="padding:0">В каталоге похожего нет — проверить в бутике.</p>`}
+
+async function openPult(){
+  const s=push("Пульт",`<div class="pu"><div class="pu-hd"><h1>Пульт</h1><span class="pu-dt"></span></div><div class="pu-kpi"></div><div class="pu-alert" hidden></div>
+    <section class="pu-sec" id="puReqs"><div class="pu-sh"><b>Заявки</b><button class="pu-add press" data-puadd>+ Заявка</button></div><div class="pu-list"><p class="pu-empty">Завантажуємо…</p></div></section>
+    <section class="pu-sec" id="puAppr" hidden><div class="pu-sh"><b>Одобрить</b><span>от агентов</span></div><div class="pu-appr"></div></section>
+    <section class="pu-sec" id="puTasks" hidden><div class="pu-sh"><b>Поручения</b><span>вы → Claude и агенты</span></div><div class="pu-tasks"></div></section>
+    <section class="pu-sec" id="puAg" hidden><div class="pu-sh"><b>Агенты</b><span class="pu-agat"></span></div><div class="pu-ag"></div></section><div style="height:110px"></div></div>`);
+  const root=s&&s.querySelector?s:document;let showDone=false;
+  const draw=()=>{const D=PU;if(!D)return;const q=x=>root.querySelector(x);
+    q(".pu-dt").textContent=new Date().toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"})+" · "+puHM(new Date().toISOString());
+    const c=D.counts||{};q(".pu-kpi").innerHTML=[["k1",c.reqs,"заявок","reqs"],["k2",c.orders,"заказов","orders"],["k3",c.approve,"одобрить","appr"],["k4",c.urgent,"срочно","urg"]].map(([k,n,l,go])=>`<button class="pu-k ${k} press" data-pugo="${go}"><b class="num">${n||0}</b><span>${l}</span></button>`).join("");
+    const al=q(".pu-alert");al.hidden=!c.urgent;if(c.urgent)al.innerHTML=`<i>!</i>${c.urgent} ${c.urgent===1?"заявка ждёт":"заявки ждут"} больше 2 часов — никто не взял`;
+    const act=(D.reqs||[]).filter(r=>!["order","closed"].includes(r.stage)).sort((a,b)=>(puLate(b)-puLate(a))||String(b.createdAt).localeCompare(String(a.createdAt))),done=(D.reqs||[]).filter(r=>["order","closed"].includes(r.stage));
+    q(".pu-list").innerHTML=(act.length?act.map(puRow).join(""):`<p class="pu-empty">Активных заявок нет. Нажмите «+ Заявка».</p>`)+(done.length?(showDone?done.map(puRow).join("")+`<button class="pu-more" data-pudone>Скрыть завершённые</button>`:`<button class="pu-more" data-pudone>Завершённые · ${done.length}</button>`):"");
+    const ap=D.approvals||[];q("#puAppr").hidden=!ap.length;q(".pu-appr").innerHTML=ap.map(a=>`<a class="pu-ap" href="${esc(a.url||"#")}" target="_blank" rel="noopener"><span class="im"${a.img?` style="background-image:url('${esc(a.img)}')"`:""}></span><b>${esc(a.title||"")}</b><span>${esc(a.sub||"")}</span></a>`).join("");
+    const tk=D.tasks||[],TI={done:["✓","var(--pgb)","var(--pg)","готово","g"],work:["↻","var(--pbb)","var(--pb)","в работе","b"],you:["?","var(--pab)","var(--pa)","ждёт вас","a"]};
+    q("#puTasks").hidden=!tk.length;q(".pu-tasks").innerHTML=tk.map(t=>{const z=TI[t.st]||TI.work;return `<div class="pu-task"><span class="ic" style="background:${z[1]};color:${z[2]}">${z[0]}</span><div>${esc(t.t||"")}<small>${esc(t.sub||"")}</small></div><span class="pu-tag ${z[4]}">${z[3]}</span></div>`}).join("");
+    const ag=D.agents||[];q("#puAg").hidden=!ag.length;q(".pu-agat").textContent=D.agentsAt||"";q(".pu-ag").innerHTML=ag.map(a=>`<div><i style="background:${a.ok===false?"var(--pa)":"var(--pg)"}"></i>${esc(a.n||"")}<small>${esc(a.s||"")}</small></div>`).join("")};
+  const load=async()=>{try{PU=await soCall("pult");draw()}catch(e){const l=root.querySelector(".pu-list");if(l)l.innerHTML=`<p class="pu-empty">${esc(e.message)}</p>`}};
+  root.addEventListener("click",e=>{const t=e.target;let x;
+    if(t.closest("[data-puadd]"))return puNew(load);
+    if(x=t.closest("[data-pureq]")){const r=(PU.reqs||[]).find(z=>z._id===x.dataset.pureq);if(r)puOpen(r,load);return}
+    if(t.closest("[data-pudone]")){showDone=!showDone;draw();return}
+    if(x=t.closest("[data-pugo]")){const g=x.dataset.pugo;if(g==="orders")return openStaffOrders();const el=root.querySelector(g==="appr"?"#puAppr":"#puReqs");if(el&&!el.hidden)el.scrollIntoView({behavior:"smooth",block:"start"})}});
+  load();
+}
+
+/* карточка заявки: фото, что ищет, этап, похожее в каталоге, подборка клиенту */
+function puOpen(r,reload){const w=r.want||{},i=PU_ST.findIndex(x=>x[0]===r.stage),nx=PU_ST[i+1],m=puMatch(w);
+  openSheet(puTitle(r),`<div class="pq">${r.img?`<div class="pq-big" style="background-image:url('${esc(r.img)}')"></div>`:""}
+    <div class="pq-kv"><span>Клиент</span><b>${esc(puWho(r))}${r.who&&r.who.name&&r.who.nick?" · "+esc(r.who.name):""}</b>${w.brand?`<span>Бренд</span><b>${esc(w.brand)}</b>`:""}${w.type||w.model?`<span>Что</span><b>${esc([w.model,PU_T[w.type]].filter(Boolean).join(" · "))}</b>`:""}${w.color?`<span>Цвет</span><b>${esc(w.color)}</b>`:""}${w.size?`<span>Размер</span><b>${esc(w.size)}</b>`:""}${w.budget?`<span>Бюджет</span><b>до ${eur(w.budget)}</b>`:""}${r.note?`<span>Заметка</span><b>${esc(r.note)}</b>`:""}<span>Создана</span><b>${fmtD?esc(fmtD(r.createdAt)):""} ${puHM(r.createdAt)} · ${esc(r.by||"")}</b></div>
+    ${puTrack(r)}
+    <div class="pq-l"><span>Похоже в каталоге</span></div>${puMatchHTML(m)}
+    <div class="pq-st">${m.length?`<button class="pq-c press" data-pusel>📎 Подборка клиенту</button>`:""}${r.stage!=="closed"&&r.stage!=="order"?`<button class="pq-c press" data-puclose>Закрыть</button>`:""}${r.stage==="closed"?`<button class="pq-c press" data-pureopen>Вернуть в работу</button>`:""}</div></div>`,
+    nx&&r.stage!=="closed"?`<button class="btn block" data-punext>${nx[0]==="taken"?"Взял в работу":nx[0]==="found"?"Нашли вещь":nx[0]==="offered"?"Предложили клиенту":"Клиент купил → заказ"}</button>`:"");
+  const sh=document.querySelector(".sheet");if(!sh)return;
+  const save=async d=>{try{await soCall("reqSave",{id:r._id,...d});closeSheet();toast("Сохранено");reload&&reload()}catch(e){toast(e.message)}};
+  sh.addEventListener("click",async e=>{const t=e.target,x=t.closest("[data-pumi]");if(x){closeSheet();openProduct(x.dataset.pumi);return}
+    if(t.closest("[data-punext]")){if(nx[0]==="order"){await save({stage:"order"});try{openStaffOrders()}catch(e){}return}return save({stage:nx[0]})}
+    if(t.closest("[data-puclose]"))return save({stage:"closed"});
+    if(t.closest("[data-pureopen]"))return save({stage:"taken"});
+    if(t.closest("[data-pusel]")){try{const items=m.map(p=>({id:p.id,g:p.g||"",b:p.brand,n:p.name,p:eur(p.price),img:puImg(p)}));const j=await meCall({a:"sel",ids:m.map(p=>p.id),items,title:puTitle(r)});if(j.error)throw new Error(j.error);
+      await copy(j.link);if(r.stage!=="offered"&&r.stage!=="order")soCall("reqSave",{id:r._id,stage:"offered"}).then(()=>reload&&reload()).catch(()=>{})}catch(err){toast(err.message)}}})}
+
+/* + Заявка (вариант A): скрин первым — система читает бренд, вещь, размер, ник; остальное — нажатиями */
+async function puShrink(file){const bm=await createImageBitmap(file),k=Math.min(1,1280/Math.max(bm.width,bm.height)),c=document.createElement("canvas");c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);
+  const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(bm,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.82)}
+let PU_CL=null;
+function puNew(reload){
+  const S={want:{brand:"",type:"",model:"",color:"",size:"",budget:null},who:{nick:"",name:""},cust:null,noClient:false,q:"",img:"",data:"",guess:{},reading:false};
+  openSheet("Новая заявка",`<div class="pq" id="pq"></div>`,`<button class="btn block" data-pqsave>Сохранить</button>`);
+  const sh=document.querySelector(".sheet"),B=sh.querySelector("#pq");
+  if(!PU_CL)soCall("clients").then(r=>{PU_CL=r.clients||[];const c=B.querySelector("[data-pqcands]");if(c)c.innerHTML=cands()}).catch(()=>{PU_CL=[]});
+  const cand=()=>{const q=S.q.trim().toLowerCase().replace(/^@/,"");const L=PU_CL||[];if(!q)return L.filter(c=>c.n>0).slice(0,3);
+    return L.filter(c=>[c.name,c.username,c.insta,c.phone].some(v=>String(v||"").toLowerCase().replace(/^@/,"").includes(q))).slice(0,4)};
+  const cl=c=>c.username?"@"+c.username:c.insta?"@"+String(c.insta).replace(/^@/,""):c.name||"клиент";
+  const szs=()=>S.want.type==="shoes"?["36","37","38","39","40","41"]:S.want.type==="clothing"?["XS","S","M","L"]:S.want.type==="jewelry"?["15","16","17","18"]:[];
+  const cands=()=>`${(PU_CL?cand():[]).map(c=>`<button class="pq-c" data-pqcl="${esc(c.id)}">${esc(cl(c))}${c.name&&c.username?" · "+esc(c.name):""}</button>`).join("")}${S.q.trim()?`<button class="pq-c nw" data-pqnew>+ новый: ${esc(S.q.trim().replace(/^@/,""))}</button>`:""}<button class="pq-c nw" data-pqnone>без клиента</button>`;
+  const G=k=>S.guess[k]?`<em>✦ ${S.guess[k]}</em>`:"";
+  function draw(){const w=S.want,ph=S.img||S.data;
+    B.innerHTML=`<div class="pq-ph">
+      <button class="pq-t ps${ph?" has":""}${S.reading?" read":""}" data-pqpaste${ph?` style="background-image:url('${esc(ph)}')"`:""}>${ph?`<span class="x" data-pqx>✕</span>${S.reading?`<span class="ai">Читаю скрин…</span>`:w.brand||w.type?`<span class="ai">✦ ${esc([w.brand,PU_T[w.type]].filter(Boolean).join(" · "))}</span>`:""}`:`<span class="rg">${PU_I.paste}</span>Вставить`}</button>
+      <label class="pq-t cm press"><span class="rg">${PU_I.cam}</span>Камера<input type="file" accept="image/*" capture="environment" hidden data-pqf></label>
+      <label class="pq-t gl press"><span class="rg">${PU_I.gal}</span>Галерея<input type="file" accept="image/*" hidden data-pqf></label></div>
+      <div class="pq-l"><span>Клиент</span>${G("nick")}</div>
+      ${S.cust||S.noClient||(S.who.nick&&!S.q)?`<div class="pq-ch"><button class="pq-c on" data-pqcl="">${esc(S.noClient?"без клиента":S.cust?S.who.label||"клиент":"@"+S.who.nick+" · новый")} ✕</button></div>`
+        :`<input class="pq-in" data-pqq placeholder="ник, имя или телефон" value="${esc(S.q)}" autocomplete="off"><div class="pq-ch" data-pqcands>${cands()}</div>`}
+      <div class="pq-l"><span>Бренд</span>${G("brand")}</div>
+      <input class="pq-in${S.guess.brand?" g":""}" data-pqb list="pqBr" placeholder="Chanel, Dior, LV…" value="${esc(w.brand)}" autocomplete="off"><datalist id="pqBr">${PU_BR.map(b=>`<option value="${esc(b)}">`).join("")}</datalist>
+      <div class="pq-l"><span>Что</span>${G("type")}</div>
+      <div class="pq-ch">${["bag","shoes","clothing","jewelry","accessory","watch"].map(k=>`<button class="pq-c${w.type===k?" on":""}" data-pqt="${k}">${PU_T[k]}</button>`).join("")}</div>
+      <div class="pq-row2"><input class="pq-in${S.guess.model?" g":""}" data-pqm placeholder="модель (по желанию)" value="${esc(w.model)}"><input class="pq-in${S.guess.color?" g":""}" data-pqc placeholder="цвет" value="${esc(w.color)}"></div>
+      <div class="pq-l"><span>Размер · бюджет</span>${G("size")}</div>
+      <div class="pq-ch">${szs().map(z=>`<button class="pq-c${w.size===z?" on":""}" data-pqs="${z}">${z}</button>`).join("")}<input class="pq-in" data-pqsz placeholder="размер" value="${esc(szs().includes(w.size)?"":w.size)}" style="width:92px;padding:6px 10px;font-size:13px"></div>
+      <div class="pq-ch">${[[1000,"до 1 000"],[2000,"до 2 000"],[5000,"до 5 000"],[10000,"до 10 000"],[0,"не важно"]].map(([v,l])=>`<button class="pq-c${(w.budget||0)===v&&(v||w.budget===0)?" on":""}" data-pqbu="${v}">${l}</button>`).join("")}</div>
+      <div class="pq-l"><span>Похоже в каталоге</span></div><div data-pqmt>${puMatchHTML(puMatch(w))}</div>
+      <input class="pq-in" data-pqn placeholder="заметка (по желанию)" value="">`}
+  const refreshM=()=>{const m=B.querySelector("[data-pqmt]");if(m)m.innerHTML=puMatchHTML(puMatch(S.want))};
+  async function take(file){if(!file)return;try{S.data=await puShrink(file);S.reading=true;S.img="";draw();
+    const b64=S.data.split(",")[1];
+    const [p,u]=await Promise.allSettled([soCall("reqParse",{data:b64}),soCall("img",{data:b64})]);
+    if(u.status==="fulfilled"&&u.value.url)S.img=u.value.url;
+    const g=p.status==="fulfilled"&&p.value.guess;S.reading=false;
+    if(g){const su=g.sure||{},w=S.want;
+      if(g.brand&&!w.brand){w.brand=PU_BR.find(b=>b.toLowerCase()===g.brand.toLowerCase())||g.brand;S.guess.brand=su.brand?"по знаку":"догадка"}
+      if(g.type&&!w.type){w.type=g.type;S.guess.type="по фото"}
+      if(g.model&&!w.model){w.model=g.model;S.guess.model="1"}
+      if(g.color&&!w.color){w.color=g.color;S.guess.color="1"}
+      if(g.size&&!w.size){w.size=g.size;S.guess.size="из текста"}
+      if(g.budget&&!w.budget)w.budget=g.budget;
+      if(g.nick&&!S.cust&&!S.noClient&&!S.who.nick){const n=g.nick.toLowerCase(),c=(PU_CL||[]).find(c=>[c.username,c.insta].some(v=>String(v||"").toLowerCase().replace(/^@/,"")===n));
+        if(c){S.cust=c.id;S.who={label:cl(c)}}else S.who={nick:g.nick,name:""};S.guess.nick="со скрина"}
+    }else toast(p.status==="fulfilled"&&p.value.why?"Не прочитал скрин: "+p.value.why+" — заполните кнопками":"Не прочитал скрин — заполните кнопками");
+    draw()}catch(e){S.reading=false;draw();toast(e.message)}}
+  sh.addEventListener("change",e=>{if(e.target.matches("[data-pqf]"))take(e.target.files&&e.target.files[0])});
+  sh.addEventListener("paste",e=>{const it=[...(e.clipboardData&&e.clipboardData.items||[])].find(i=>i.type.startsWith("image/"));if(it){e.preventDefault();take(it.getAsFile())}});
+  sh.addEventListener("input",e=>{const t=e.target,w=S.want;
+    if(t.matches("[data-pqq]")){S.q=t.value;const c=B.querySelector("[data-pqcands]");if(c)c.innerHTML=cands();return}
+    if(t.matches("[data-pqb]")){w.brand=t.value.trim();delete S.guess.brand;refreshM()}
+    if(t.matches("[data-pqm]")){w.model=t.value.trim();refreshM()}
+    if(t.matches("[data-pqc]"))w.color=t.value.trim();
+    if(t.matches("[data-pqsz]")){w.size=t.value.trim();refreshM()}});
+  sh.addEventListener("click",async e=>{const t=e.target,w=S.want;let x;
+    if(t.closest("[data-pqx]")){e.preventDefault();S.img="";S.data="";draw();return}
+    if(t.closest("[data-pqpaste]")&&!S.data){try{const its=await navigator.clipboard.read();for(const it of its){const ty=it.types.find(z=>z.startsWith("image/"));if(ty){take(await it.getType(ty));return}}toast("В буфере нет картинки — нажмите «Галерея»")}catch(err){toast("Не получилось вставить — нажмите «Галерея»")}return}
+    if(x=t.closest("[data-pqcl]")){const id=x.dataset.pqcl;if(!id){S.cust=null;S.noClient=false;S.who={nick:"",name:""};S.q="";delete S.guess.nick}else{const c=(PU_CL||[]).find(z=>z.id===id);S.cust=id;S.who={label:c?cl(c):"клиент"}}draw();return}
+    if(t.closest("[data-pqnew]")){S.who={nick:S.q.trim().replace(/^@/,""),name:""};S.q="";draw();return}
+    if(t.closest("[data-pqnone]")){S.noClient=true;draw();return}
+    if(x=t.closest("[data-pqt]")){w.type=w.type===x.dataset.pqt?"":x.dataset.pqt;delete S.guess.type;draw();return}
+    if(x=t.closest("[data-pqs]")){w.size=w.size===x.dataset.pqs?"":x.dataset.pqs;delete S.guess.size;draw();return}
+    if(x=t.closest("[data-pqbu]")){const v=+x.dataset.pqbu;w.budget=w.budget===v?null:v;draw();return}
+    if(x=t.closest("[data-pumi]")){closeSheet();openProduct(x.dataset.pumi);return}
+    if(x=t.closest("[data-pqsave]")){if(S.reading)return toast("Секунду — дочитываю скрин");x.disabled=true;
+      const note=(B.querySelector("[data-pqn]")||{}).value||"";
+      try{await soCall("reqNew",{want:{...w,budget:w.budget||null},img:S.img,cust:S.cust,who:S.cust?null:(S.noClient?{}:S.who),note,guess:Object.fromEntries(Object.keys(S.guess).map(k=>[k,true])),matches:puMatch(w).map(p=>p.id),source:"pult"});
+        closeSheet();toast("Заявка создана");reload&&reload()}catch(err){x.disabled=false;toast(err.message)}}});
+  draw()}
 const soFlag=d=>({ua:"🇺🇦",eu:"🇪🇺",dxb:"🇦🇪"}[d||"ua"]||"");
 const soName=l=>(l.tg&&l.tg.name)||(l.delivery&&l.delivery.name)||(l.tg&&l.tg.username?"@"+l.tg.username:"")||"Клиент";
 /* цвет и значок этапа — те же, что на маршруте у клиента */
@@ -5329,7 +5534,7 @@ function openAccount(){
       <div class="acl"><span>Обране</span>${FL.length?`<button data-act="favs">Усі · <span class="num">${FL.length}</span></button>`:""}</div>
       ${FL.length?`<div class="acx">${FL.slice(0,4).map(p=>{const r=p.id[0]==="r";return `<button class="li press" data-act="product" data-id="${p.id}">${th(p)}<div><b>${esc(p.brand)}</b><small>${esc(p.name)}</small></div><span class="pr num">${!r&&isPor(p)?"Ціна за запитом":eur(r?p.price:priceFor(p,prefs.dest||"ua"))}</span></button>`}).join("")}</div>`
         :`<p class="ace">Натисніть на сердечко на товарі — він зʼявиться тут.</p>`}
-      ${isStaff()?`<div class="acl"><span>Для менеджера</span></div><div class="acm"><button class="s press" data-sorders><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span><div><b>Заказы клиентов</b><small>этапы, новый заказ, список для водителя</small></div><span class="go">›</span></button><button class="s press" data-selmode><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><div><b>Режим добірки</b><small>${selModeOn()?"увімкнено — «+» на картках":"вимкнено"}</small></div><span class="tgl" role="switch" aria-checked="${selModeOn()}"><i></i></span></button></div>
+      ${isStaff()?`<div class="acl"><span>Для менеджера</span></div><div class="acm"><button class="s press" data-pult><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><path d="M16.5 13v7M13 16.5h7"/></svg></span><div><b>Пульт</b><small>заявки, одобрить, поручения, агенты</small></div><span class="go">›</span></button><button class="s press" data-sorders><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span><div><b>Заказы клиентов</b><small>этапы, новый заказ, список для водителя</small></div><span class="go">›</span></button><button class="s press" data-selmode><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><div><b>Режим добірки</b><small>${selModeOn()?"увімкнено — «+» на картках":"вимкнено"}</small></div><span class="tgl" role="switch" aria-checked="${selModeOn()}"><i></i></span></button></div>
       <div class="acl"><span>Активні добірки</span></div><div class="acm" id="selAct"><p class="ace">Завантажуємо…</p></div>`:""}
       <div class="acl"><span>Мій профіль</span></div><div class="acm">
       ${row('data-go="sizes"','<path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/>',"Мої розміри",[prefs.shoe&&"обувь "+esc(prefs.shoe),prefs.cloth&&"одяг "+esc(prefs.cloth)].filter(Boolean).join(" · ")||"взуття та одяг — збережемо для замовлень")}
@@ -5348,7 +5553,7 @@ function openAccount(){
     <div class="sec"><div class="cells" style="padding:0 16px"><div class="clist"><a class="crow" href="#" data-priv><span>Конфіденційність</span><b>як ми зберігаємо дані ›</b></a></div></div></div>
     ${u?`<div class="pad" style="margin-top:14px"><button class="btn block soft" data-logout>Вийти з профілю</button></div>`:""}
     <div style="height:30px"></div>`;
-    {const lg=box.querySelector("[data-login]");if(lg)lg.onclick=()=>authGate(true);const lo=box.querySelector("[data-logout]");if(lo)lo.onclick=logout;box.querySelectorAll("[data-acmore]").forEach(b=>b.onclick=()=>{const l=document.getElementById(b.dataset.acmore);if(l)l.classList.add("open");b.remove()});{const so=box.querySelector("[data-sorders]");if(so)so.onclick=openStaffOrders}const sm=box.querySelector("[data-selmode]");if(sm)sm.onclick=()=>{const on=!selModeOn();selModeSet(on);const sb=sm.querySelector("small");if(sb)sb.textContent=on?"увімкнено — «+» на картках":"вимкнено";sm.querySelector(".tgl").setAttribute("aria-checked",on)};if(box.querySelector("#selAct"))selActive(box.querySelector("#selAct"))}
+    {const lg=box.querySelector("[data-login]");if(lg)lg.onclick=()=>authGate(true);const lo=box.querySelector("[data-logout]");if(lo)lo.onclick=logout;box.querySelectorAll("[data-acmore]").forEach(b=>b.onclick=()=>{const l=document.getElementById(b.dataset.acmore);if(l)l.classList.add("open");b.remove()});{const so=box.querySelector("[data-sorders]");if(so)so.onclick=openStaffOrders;const pu=box.querySelector("[data-pult]");if(pu)pu.onclick=openPult}const sm=box.querySelector("[data-selmode]");if(sm)sm.onclick=()=>{const on=!selModeOn();selModeSet(on);const sb=sm.querySelector("small");if(sb)sb.textContent=on?"увімкнено — «+» на картках":"вимкнено";sm.querySelector(".tgl").setAttribute("aria-checked",on)};if(box.querySelector("#selAct"))selActive(box.querySelector("#selAct"))}
 /* активные добірки менеджера: название, сколько вещей, сколько осталось, выбрал ли клиент */
 async function selActive(el){const r=await meCall({a:"sels"});const L=(r&&r.sels)||[];if(!L.length){el.innerHTML='<p class="ace">Немає активних добірок — посилання діють 24 години.</p>';return}
   const left=t=>{const h=Math.max(0,Math.round((t-Date.now())/36e5));return h>=1?"ще "+h+" год":"менше години"};

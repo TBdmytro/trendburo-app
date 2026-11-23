@@ -262,9 +262,11 @@ test("копии страниц бренда для автопроверки к�
   const r = await call(handler, { method: "POST", query: { a: "snapSave" }, body: { host: "dior.com", section, ver: "v54", list: { url: "https://www.dior.com/x", gz: gz("<html>list</html>"), got: { links: 58 } }, pages: [{ url: "https://www.dior.com/p", gz: gz("<html>p</html>"), got: { title: "Belt", sizes: ["90"] } }, { gz: "<script>" }] }, headers: H });
   assert.equal(r.status, 200, JSON.stringify(r.body)); assert.equal(r.body.pages, 1); // мусор отброшен
   const diag = (await import("../api/diag.js")).default;
-  const L = await new Promise(res => diag({ method: "GET", url: "/api/diag?probe=snaps", headers: {} }, { statusCode: 200, setHeader() {}, end(b) { res(JSON.parse(b)); } }));
+  const anon = await new Promise(res => diag({ method: "GET", url: "/api/diag?probe=snaps", headers: {} }, { statusCode: 200, setHeader() {}, end(b) { res(this.statusCode); } }));
+  assert.equal(anon, 404, "без входа диагностика закрыта");
+  const L = await new Promise(res => diag({ method: "GET", url: "/api/diag?probe=snaps", headers: { cookie } }, { statusCode: 200, setHeader() {}, end(b) { res(JSON.parse(b)); } }));
   const s = L.find(x => x.section === section); assert.ok(s); assert.equal(s.n, 1); assert.equal(s.lg.links, 58); assert.equal(s.pg[0].got.title, "Belt");
-  const g = await new Promise(res => diag({ method: "GET", url: "/api/diag?probe=snap&id=" + s._id + "&i=0", headers: {} }, { statusCode: 200, setHeader() {}, end(b) { res(b); } }));
+  const g = await new Promise(res => diag({ method: "GET", url: "/api/diag?probe=snap&id=" + s._id + "&i=0", headers: { cookie } }, { statusCode: 200, setHeader() {}, end(b) { res(b); } }));
   assert.equal(gzipSync && (await import("node:zlib")).gunzipSync(Buffer.from(g, "base64")).toString(), "<html>p</html>");
 });
 
