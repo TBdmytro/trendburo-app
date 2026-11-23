@@ -884,7 +884,13 @@ export default async function handler(req, res) {
       case "trPending": {
         // товары, оставшиеся не на английском (перевод упёрся в лимит), — переводим пачками по 8, пока лимит не кончится
         const { translatePending } = await import("../lib/translate.js");
+        // каждая открытая админка зовёт это раз в час, и каждый вызов перебирает все товары: не повторяем, пока
+        // перевод недоступен (лимит/ошибка — 30 мин) или переводить нечего и новых товаров не прибавилось (6 ч)
+        const memo = await store.get("settings.trpend").catch(() => null), cnt = await store.count("product").catch(() => -1), age = memo ? Date.now() - Date.parse(memo.at) : Infinity;
+        if (!/[?&]force=1\b/.test(String(req.url || "")) && memo && ((memo.err && age < 30 * 60e3) || (!memo.left && memo.cnt === cnt && age < 6 * 3600e3)))
+          return send(res, 200, { done: 0, left: memo.err ? memo.left || 0 : 0, limited: !!memo.limited, err: memo.err || null, skipped: true });
         const r = await translatePending(store, { budgetMs: 40000 }); if (r.done) PCACHE = null;
+        await store.put({ _id: "settings.trpend", _type: "settings", at: new Date().toISOString(), cnt, left: r.left, limited: !!r.limited, err: r.err ? String(r.err).slice(0, 200) : null }).catch(() => {});
         return send(res, 200, r);
       }
       case "collList": { const { inColl } = await import("../lib/collections.js");

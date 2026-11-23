@@ -13,21 +13,41 @@ import { allow, tooMany } from "../lib/ratelimit.js";
 const MEMO = [null, null, null];
 const TTL = 3 * 60e3; // 3 минуты: правки видны чуть позже, зато база не собирает каталог по каждому заходу
 let FRESH = false; // каталог сбросили после правки в админке — собираем заново, а не отдаём сохранённый
-export function _resetCatalogMemo() { MEMO[0] = MEMO[1] = MEMO[2] = null; CUST.clear(); FRESH = true; }
+export function _resetCatalogMemo() { MEMO[0] = MEMO[1] = MEMO[2] = null; CUST.clear(); FRESH = true; STAMP = null; }
+/* «Отпечаток» базы (время последней правки товаров/коллекций/баннеров): смотрим не чаще раза в минуту на экземпляр.
+   Не изменился — отдаём готовый каталог хоть час, без пересборки (раньше пересобирали 27 000 товаров каждые 3 минуты — основная нагрузка сервера) */
+const CHECK = 60e3, HARD = 30 * 60e3;
+let STAMP = null;
+async function stampNow(store) {
+  if (typeof store.catStamp !== "function") return null;
+  if (STAMP && Date.now() - STAMP.at < CHECK) return STAMP.p;
+  const p = store.catStamp().catch(() => null); STAMP = { at: Date.now(), p };
+  return p;
+}
+// короткая метка содержимого каталога (без времени сборки): телефон присылает свою — тот же каталог отдаём одной строкой, а не 20 МБ
+async function tagOf(body) { const { createHash } = await import("node:crypto"); const i = body.lastIndexOf(',"generatedAt"'); return createHash("sha1").update(i > 0 ? body.slice(0, i) : body).digest("hex").slice(0, 16); }
+export async function catalogTag(compact) { const k = compact === 2 ? 2 : compact ? 1 : 0, body = await catalogBody(compact), m = MEMO[k]; if (m && m.body === body) { if (!m.tag) m.tag = await tagOf(body); return m.tag; } return tagOf(body); }
 // доступ клиента — из памяти на 2 минуты (без запроса к базе при каждом открытии приложения)
 const CUST = new Map();
 async function custCached(store, id) { const m = CUST.get(id); if (m && Date.now() - m.at < 120e3) return m.c; const c = await store.get(customerId(id)); if (CUST.size > 5000) CUST.clear(); if (c?.access === "ok") CUST.set(id, { c, at: Date.now() }); return c; } // помним только «пускаем» — одобренный только что попадает сразу
 // готовый каталог хранится и в базе (сжатым): новый экземпляр сервера (после выкладки или простоя) отдаёт его сразу,
 // а не собирает 23 000 товаров 10–15 с — раньше в это время сайт «висел» на заставке
 const SAVED_AT = [0, 0, 0]; const LOADP = [null, null, null];
-async function savedCatalog(store, k) { try { const d = await store.get("settings.catcache" + k); if (!d || !d.gz || Date.now() - Date.parse(d.at) > 12 * 3600e3) return null; const { gunzipSync } = await import("node:zlib"); return { body: gunzipSync(Buffer.from(d.gz, "base64")).toString("utf8"), at: Date.parse(d.at) }; } catch { return null; } }
-async function saveCatalog(store, k, body) { if (Date.now() - SAVED_AT[k] < 5 * 60e3) return; SAVED_AT[k] = Date.now(); try { const { gzipSync } = await import("node:zlib"); await store.put({ _id: "settings.catcache" + k, _type: "settings", at: new Date().toISOString(), gz: gzipSync(Buffer.from(body)).toString("base64") }); } catch {} }
+async function savedCatalog(store, k) { try { const d = await store.get("settings.catcache" + k); if (!d || !d.gz || Date.now() - Date.parse(d.at) > 12 * 3600e3) return null; const { gunzipSync } = await import("node:zlib"); return { body: gunzipSync(Buffer.from(d.gz, "base64")).toString("utf8"), at: Date.parse(d.at), stamp: d.stamp || null }; } catch { return null; } }
+async function saveCatalog(store, k, body, stamp) { if (!stamp && Date.now() - SAVED_AT[k] < 5 * 60e3) return; SAVED_AT[k] = Date.now(); try { const { gzipSync } = await import("node:zlib"); const at = new Date().toISOString(); await store.put({ _id: "settings.catcache" + k, _type: "settings", at, stamp: stamp || null, gz: gzipSync(Buffer.from(body)).toString("base64") }); if (stamp) await store.put({ _id: "settings.catmeta" + k, _type: "settings", at, stamp }); } catch {} }
+// другой экземпляр сервера уже собрал каталог под этот отпечаток — берём его готовым (маленький документ-метка, потом сам каталог)
+async function savedFor(store, k, stamp) { try { const m = await store.get("settings.catmeta" + k); if (!m || m.stamp !== stamp) return null; const sv = await savedCatalog(store, k); return sv && sv.stamp === stamp ? sv : null; } catch { return null; } }
 // прогрев лёгкого каталога после выкладки (без него первый покупатель ждал бы сборку 27 000 товаров)
-export async function warmCatalog(v = 2) { _resetCatalogMemo(); const b = await catalogBody(v); /* всегда свежая сборка: иначе прогрев мог пересохранить старый каталог */ SAVED_AT[v] = 0; await saveCatalog(getStore(), v, b); return b.length; }
+export async function warmCatalog(v = 2) { _resetCatalogMemo(); const b = await catalogBody(v); /* всегда свежая сборка: иначе прогрев мог пересохранить старый каталог */ SAVED_AT[v] = 0; await saveCatalog(getStore(), v, b, MEMO[v]?.stamp); return b.length; }
 async function catalogBody(compact) {
   const k = compact === 2 ? 2 : compact ? 1 : 0; let m = MEMO[k];
-  if (m && m.body && Date.now() - m.at < TTL) return m.body;
-  if (!m && !FRESH) { const L = LOADP[k] = LOADP[k] || savedCatalog(getStore(), k); const sv = await L; m = MEMO[k]; if (!m && sv) MEMO[k] = m = { body: sv.body, at: 0 }; }
+  const st = await stampNow(getStore()); m = MEMO[k];
+  if (m && m.body && !m.wait) {
+    if (st && m.stamp) { if (st === m.stamp && Date.now() - m.at < HARD) return m.body; }
+    else if (Date.now() - m.at < TTL) return m.body;
+  }
+  if (!m && !FRESH) { const L = LOADP[k] = LOADP[k] || savedCatalog(getStore(), k); const sv = await L; LOADP[k] = null; m = MEMO[k]; if (!m && sv) MEMO[k] = m = { body: sv.body, at: sv.stamp && sv.stamp === st ? sv.at : 0, stamp: sv.stamp || null }; if (m && st && m.stamp === st && Date.now() - m.at < HARD) return m.body; }
+  else if (m && m.body && st && m.stamp !== st && !m.wait && !FRESH) { const sv = await savedFor(getStore(), k, st); if (sv && MEMO[k] === m) { MEMO[k] = m = { body: sv.body, at: Date.now(), stamp: st }; return m.body; } }
   if (m && m.wait && Date.now() - (m.waitAt || 0) < 90e3) return m.body || m.wait; // сборка уже идёт — отдаём прежний каталог, не ждём. Старше 90 с — сборка оборвалась (сервер «заморозили» после ответа), иначе каталог застревал на часы: собираем заново
   const wait = (async () => {
     const store = getStore();
@@ -45,7 +65,7 @@ async function catalogBody(compact) {
     return JSON.stringify({ products, content, collections, generatedAt: new Date(now).toISOString(), demo: !!store.demo });
   })();
   MEMO[k] = { ...(m || {}), wait, waitAt: Date.now() };
-  const done = wait.then(body => { MEMO[k] = { body, at: Date.now() }; saveCatalog(getStore(), k, body); return body; }, e => { MEMO[k] = m && m.body ? { body: m.body, at: m.at } : null; throw e; });
+  const done = wait.then(body => { MEMO[k] = { body, at: Date.now(), stamp: st || null }; const sv = saveCatalog(getStore(), k, body, st); try { globalThis[Symbol.for("@vercel/request-context")]?.get?.()?.waitUntil?.(sv); } catch {} return body; }, e => { MEMO[k] = m && m.body ? { body: m.body, at: m.at, stamp: m.stamp } : null; throw e; });
   if (m && m.body && !FRESH) { done.catch(() => {}); try { globalThis[Symbol.for("@vercel/request-context")]?.get?.()?.waitUntil?.(done.catch(() => {})); } catch {} return m.body; } // Vercel: дособрать свежий каталог после ответа, а не «заморозить» сборку // есть прежний каталог — отдаём сразу, свежий соберётся в фоне
   done.then(() => { FRESH = false; }, () => {});
   try { const body = await done; return body; }
@@ -108,8 +128,13 @@ export default async function handler(req, res) {
     catch (e) { res.statusCode = 503; res.setHeader("Cache-Control", "no-store"); return res.end('{"collections":null}'); }
   }
   try {
-    const body = await catalogBody(compact);
+    const body = await catalogBody(compact), mk = MEMO[compact === 2 ? 2 : compact ? 1 : 0];
+    let tag = null; try { tag = mk && mk.body === body ? (mk.tag || (mk.tag = await tagOf(body))) : await tagOf(body); } catch {}
     res.setHeader("Content-Type", "application/json; charset=utf-8");
+    if (tag) res.setHeader("X-Cat-Tag", tag);
+    // у телефона уже этот же каталог (прислал свою метку) — отвечаем одной строкой вместо 20 МБ
+    const have = (String(req.url || "").match(/[?&]h=([a-f0-9]{16})\b/) || [])[1];
+    if (tag && have === tag) { res.setHeader("Cache-Control", "private, no-store"); res.statusCode = 200; return res.end(JSON.stringify({ same: true, tag })); }
     // кэш на CDN: свежий 30 с; дальше (до суток) отдаётся сразу из кэша, а обновление идёт в фоне — первый покупатель после простоя не ждёт сборку каталога
     res.setHeader("Cache-Control", closed ? "private, no-store" : "public, s-maxage=120, stale-while-revalidate=86400");
     if (closed) res.setHeader("Vary", "x-tb-auth");

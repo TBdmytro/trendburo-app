@@ -483,7 +483,7 @@ button.r2c{cursor:pointer}
 #app:has(> .screen.pushed:last-child .pv-hero) ~ .selbar{display:none}
 </style>
 <title>Trend Büro</title>
-<script>/* каталог заранее — только при первом входе; дальше он уже есть на телефоне, и качать его вместе с фото главной не нужно */try{if(!localStorage.getItem("tb_catc")){var l=document.createElement("link");l.rel="preload";l.href="/api/catalog?v=2";l.as="fetch";l.crossOrigin="anonymous";document.head.appendChild(l)}}catch(e){}</script>
+<script>/* каталог заранее — только при первом входе; дальше он уже есть на телефоне, и качать его вместе с фото главной не нужно */try{if(!localStorage.getItem("tb_catc")){var l=document.createElement("link");l.rel="preload";l.href="/api/catalog?v=3";l.as="fetch";l.crossOrigin="anonymous";document.head.appendChild(l)}}catch(e){}</script>
 <link rel="preconnect" href="https://cdn.shopify.com">
 <link rel="preconnect" href="https://cdn.sanity.io" crossorigin>
 <link rel="preconnect" href="https://cdn.sanity.io">
@@ -5629,12 +5629,13 @@ const CATK="/api/catalog?v=3",CATSTO="tb-cat-1"; /* v=3 — лёгкий кат�
 async function catLocal(){try{if(!window.caches)return null;const c=await caches.open(CATSTO),r=await c.match(CATK);if(!r)return null;const t=await r.text();return {j:JSON.parse(t),t}}catch(e){return null}}
 const catCore=t=>{const i=String(t||"").lastIndexOf('"generatedAt"');return i>0?t.slice(0,i):String(t||"")}; // каталог без времени сборки — сравниваем «то же ли самое», не разбирая 20+ МБ
 const catPend=x=>typeof x==="string"?JSON.parse(x):x;
-async function catSave(txt){try{if(!window.caches)return;const c=await caches.open(CATSTO);await c.put(CATK,new Response(txt,{headers:{"content-type":"application/json"}}));try{await c.delete("/api/catalog?v=2")}catch(e){}try{localStorage.setItem("tb_catc","1")}catch(e){}}catch(e){}}
+async function catSave(txt,tag){try{if(!window.caches)return;const c=await caches.open(CATSTO);await c.put(CATK,new Response(txt,{headers:{"content-type":"application/json"}}));try{await c.delete("/api/catalog?v=2")}catch(e){}try{localStorage.setItem("tb_catc","1");localStorage.setItem("tb_cattag",tag||"")}catch(e){}}catch(e){}}
+const catTag=()=>{try{return localStorage.getItem("tb_cattag")||""}catch(e){return ""}}; /* метка сохранённого каталога: сервер отвечает «тот же» одной строкой вместо 20 МБ */
 let CLOSED=false;
 async function catNet(){const b=authBody(),r=await fetch(b?CATK+"&a=1":CATK,b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});
   // закрытый сайт: каталог только с открытым доступом; сохранённый на телефоне каталог стираем
   if(r.status===403){CLOSED=true;try{window.caches&&caches.delete(CATSTO)}catch(e){}return {j:{products:[]},ok:false,closed:true}}
-  const t=await r.text();const j=JSON.parse(t);const ok=r.ok&&Array.isArray(j.products);if(ok&&j.products.length){const sv=()=>catSave(t);window.requestIdleCallback?requestIdleCallback(sv,{timeout:4000}):setTimeout(sv,1500)}return {j,ok}}
+  const t=await r.text();const j=JSON.parse(t);const ok=r.ok&&Array.isArray(j.products);if(ok&&j.products.length){const tg=r.headers.get("x-cat-tag")||"",sv=()=>catSave(t,tg);window.requestIdleCallback?requestIdleCallback(sv,{timeout:4000}):setTimeout(sv,1500)}return {j,ok}}
 const catSig=l=>(l||[]).length+":"+(l||[]).reduce((a,x)=>(a+((x.price&&x.price.ua)||0)+x.id.length*7+(x.stock?1:0))%1e9,0);
 function catApply(j,fresh){COLL=collKeep(Array.isArray(j.collections)?j.collections:[]);if(j.content)CMS={banners:[],stories:[],news:[],rails:[],site:null,...j.content};applySite(CMS.site);applyLive(j.products||[],fresh);try{renderWhatsNew()}catch(e){}}
 async function catReload(){CLOSED=false;const n=await catNet().catch(()=>null);if(n&&n.ok){catApply(n.j,true);catRefreshUI()}}
@@ -5659,12 +5660,13 @@ function catRefreshUI(){try{renderFeed();renderFeedFollow();renderCatalog();rend
     // обложки коллекций — сразу маленьким запросом (раньше ждали весь каталог: на телефоне могла долго оставаться старая фотография баннера)
     (async()=>{try{const b=authBody(),r=await fetch(CATK+"&colls=1"+(b?"&a=1":""),b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});if(!r.ok)return;const j=await r.json();const C=j&&j.collections;if(Array.isArray(C)&&C.length&&JSON.stringify(collKeep(C))!==JSON.stringify(COLL)){COLL=collKeep(C);const hb=document.getElementById("hCover");if(hb&&typeof hCover==="function"){hb.style.transition="opacity .35s";hb.style.opacity=0;setTimeout(()=>{try{hCover()}catch(e){}hb.style.opacity=1},360)}}}catch(e){}})();
     await new Promise(r=>setTimeout(()=>window.requestIdleCallback?requestIdleCallback(r,{timeout:2500}):r(),3200));
-    let n=null;try{const b=authBody(),r=await fetch(b?CATK+"&a=1":CATK,b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});n={st:r.status,ok:r.ok,t:await r.text()}}catch(e){}
+    let n=null;try{const b=authBody(),h=catTag(),hq=/^[a-f0-9]{16}$/.test(h)?"&h="+h:"",r=await fetch((b?CATK+"&a=1":CATK)+hq,b?{headers:{"x-tb-auth":encodeURIComponent(JSON.stringify(b))}}:{});n={st:r.status,ok:r.ok,t:await r.text(),tag:r.headers.get("x-cat-tag")||""};if(n.ok&&n.t.length<200&&/"same":true/.test(n.t))n=null}catch(e){}
     if(n&&n.st===403){CLOSED=true;try{window.caches&&caches.delete(CATSTO)}catch(e){}catApply({products:[]},false);catRefreshUI();try{authGate(true)}catch(e){}}
-    else if(n&&n.ok&&catCore(n.t)!==catCore(local.t)){const t=n.t;window.requestIdleCallback?requestIdleCallback(()=>catSave(t),{timeout:4000}):setTimeout(()=>catSave(t),1500);
+    else if(n&&n.ok&&catCore(n.t)!==catCore(local.t)){const t=n.t,tg=n.tag;window.requestIdleCallback?requestIdleCallback(()=>catSave(t,tg),{timeout:4000}):setTimeout(()=>catSave(t,tg),1500);
       // баннеры коллекций (маленькая часть каталога) — обновляем сразу и только их: главная не перерисовывается, меняется один блок
       try{const cut=x=>{const i=x.lastIndexOf(',"collections":'),k=x.lastIndexOf(',"generatedAt"');return i>0&&k>i?x.slice(i+15,k):""},c1=cut(t),c0=cut(local.t);if(c1&&c1!==c0){const C=JSON.parse(c1);if(Array.isArray(C)){COLL=collKeep(C);const hb=document.getElementById("hCover");if(hb&&typeof hCover==="function"){hb.style.transition="opacity .35s";hb.style.opacity=0;setTimeout(()=>{try{hCover()}catch(e){}hb.style.opacity=1},360)}}}}catch(e){}
-      window.CATPEND=t;const vh=()=>{if(document.hidden&&window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(catPend(j),true);catRefreshUI()}catch(e){}}};document.addEventListener("visibilitychange",vh)}}
+      window.CATPEND=t;const vh=()=>{if(document.hidden&&window.CATPEND){const j=window.CATPEND;window.CATPEND=null;try{catApply(catPend(j),true);catRefreshUI()}catch(e){}}};document.addEventListener("visibilitychange",vh)}
+    else if(n&&n.ok&&n.tag&&n.st===200){try{localStorage.setItem("tb_cattag",n.tag)}catch(e){}}}
   // заранее разобрать фото для «Это или это» (в фоне, когда приложение уже открыто)
   setTimeout(()=>{try{const d=AUTO.find(r=>r.k==="duel");d&&d.warm&&d.warm()}catch(e){}},2500);
 })();
