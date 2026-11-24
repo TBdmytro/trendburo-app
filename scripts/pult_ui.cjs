@@ -7,7 +7,7 @@ const reqs=[{_id:"req.a",code:"K7Q2",stage:"new",createdAt:iso(500),who:{nick:"m
  {_id:"req.b",code:"A1B2",stage:"offered",createdAt:iso(1500),who:{name:"Ирина"},want:{brand:"Louis Vuitton",model:"Neverfull MM",type:"bag"}},
  {_id:"req.c",code:"C3D4",stage:"found",createdAt:iso(1600),who:{nick:"kate.fit"},want:{brand:"Alo",type:"clothing",size:"S"}},
  {_id:"req.d",code:"E5F6",stage:"order",createdAt:iso(4000),who:{name:"Анна"},want:{brand:"Cartier",model:"Love",type:"jewelry",size:"17"}}];
-let saved=null;
+let saved=null,weekSave=null;
 const p=await br.newPage({viewport:{width:390,height:844}});const errs=[];p.on("pageerror",e=>errs.push(e.message));
 await p.route("**/*",async r=>{const u=r.request().url(),m=r.request().method();
   if(u.startsWith("http://t.local/api/catalog"))return r.fulfill({contentType:"application/json",body:JSON.stringify({products:prods,collections:[],content:{banners:[],rails:[],news:[],stories:[],site:{}}})});
@@ -18,7 +18,7 @@ await p.route("**/*",async r=>{const u=r.request().url(),m=r.request().method();
       if(op==="reqParse")j={guess:{brand:"chanel",type:"shoes",model:"",color:"Black",size:"38",budget:null,nick:"marina.kyiv",sure:{brand:true}}};
       if(op==="img")j={url:"https://cdn.sanity.io/images/a/b/up.jpg"};
       if(op==="reqNew"){saved=b.d;j={req:{_id:"req.new",...b.d,stage:"new",createdAt:new Date().toISOString(),code:"NEW1"}}}
-      if(op==="reqSave")j={req:{}};
+      if(op==="reqSave")j={req:{}};if(op==="save"){weekSave=b.d;j={}}
       return r.fulfill({contentType:"application/json",body:JSON.stringify(j)})}
     return r.fulfill({contentType:"application/json",body:JSON.stringify({staff:true,beta:false,access:"ok",user:{id:1,name:"Дмитрий"},profile:{name:"Дмитрий"},orders:[]})})}
   if(u.startsWith("http://t.local/api/"))return r.fulfill({status:404,body:"{}"});
@@ -40,4 +40,11 @@ res.matches=await p.evaluate(()=>document.querySelectorAll("[data-pqmt] .pq-mi")
 await p.evaluate(()=>document.querySelector("[data-pqsave]").click());await p.waitForTimeout(800);
 res.saved=saved;
 await p.evaluate(()=>document.querySelector('[data-pureq="req.a"]').click());await p.waitForTimeout(700);await p.screenshot({path:out+"/5_card.png"});
+await p.evaluate(()=>closeSheet&&closeSheet());await p.waitForTimeout(400);
+await p.evaluate(()=>soOrder({_id:"lead.w",number:"1",status:"work",createdAt:new Date(Date.now()-9*864e5).toISOString(),items:[{name:"Bag",price:1000}],dest:"ua",delivery:{}},()=>{},[]));await p.waitForTimeout(600);
+res.wk0=await p.evaluate(()=>document.querySelector(".so-wkr").innerText);
+await p.evaluate(()=>document.querySelector("[data-sowk]").click());await p.waitForTimeout(200);
+await p.screenshot({path:out+"/6_week.png"});
+await p.evaluate(()=>document.querySelectorAll("[data-sowkto]")[1].click());await p.waitForTimeout(500);
+res.wk1=await p.evaluate(()=>document.querySelector(".so-wkr").innerText);res.weekSave=weekSave;
 res.errs=errs;console.log(JSON.stringify(res,null,1));await br.close()})();
