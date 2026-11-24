@@ -654,6 +654,40 @@ button.r2c{cursor:pointer}
 /* карточка товара — у неё своя кнопка «+» в добірку внизу; плавающая кнопка добірки не нужна и закрывала цену доставки */
 #app:has(> .screen.pushed:last-child .pv-hero) ~ .selbar{display:none}
 .sn-ph .snc,.sn-it .snc{width:44px;height:44px;border-radius:50%;background:#26282c;display:grid;place-items:center;flex:none}.sn-ph .snc svg{width:22px;height:22px}.sn-ph .snt{display:flex;flex-direction:column;gap:2px;text-align:left;align-items:flex-start}.sn-ph .snt b{font-size:14px;font-weight:600;color:#26282c}.sn-ph .snt small{font-size:12px;color:#6b6e73}.sn-it .snc.sm{width:34px;height:34px;background:#5fa98f}.sn-it .snc.sm svg{width:18px;height:18px}.sn-ph{border-style:solid!important;border-color:#e3e4e6!important;background:#f7f7f8!important}.sn-ph.on{border-color:#1f9459!important}.sn-it label.im.add{border:0!important;background:#e6f2ed!important}
+.wl{padding:12px 16px 0;display:flex;flex-direction:column;gap:12px}
+.wl-ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;font-style:normal}.wl-ic svg{width:52%;height:52%;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.wl-hero,.wl-sum{border-radius:22px;background:linear-gradient(135deg,#26282c,#3b3f45);color:#fff;padding:18px;box-shadow:0 10px 26px rgba(38,40,44,.22)}
+.wl-ht{display:flex;gap:14px;align-items:center}.wl-ht b{display:block;font-size:18px}.wl-ht small{display:block;color:#a8dcc9;font-size:13px;margin-top:3px;line-height:1.35}
+.wl-sum{display:flex;gap:14px;align-items:center}.wl-sum small{display:block;color:#a8dcc9;font-size:13px}.wl-sum b{display:block;font-size:28px;font-weight:700}.wl-sum>span{margin-left:auto;text-align:right;font-size:12.5px;color:#a8dcc9;line-height:1.4}
+.wl-meta{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg-2,#6b6e73)}.wl-meta button{margin-left:auto;border:0;background:none;font:600 13px var(--f);color:var(--fg);text-decoration:underline}
+.wl-li{display:flex;gap:12px;align-items:center;border:0;background:var(--soft);border-radius:20px;padding:12px;text-align:left;font:inherit;color:inherit;width:100%}.wl-li .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.wl-li .tx b{font-size:15px}.wl-li .tx small{font-size:12.5px;color:var(--fg-2,#6b6e73)}.wl-li .go{color:#8a8c90;font-size:20px}
+.wl-th{display:flex;flex:none}.wl-th span{width:40px;height:52px;border-radius:10px;background:#e8eef3 center/cover;margin-left:-14px;box-shadow:0 0 0 2px var(--soft)}.wl-th span:first-child{margin-left:0}
+.wl-it{background:var(--soft);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:10px}.wl-it.gone{opacity:.55}
+.wl-r{display:flex;gap:12px;align-items:center}.wl-im{width:64px;height:80px;border-radius:12px;background:#e8eef3 center/cover;flex:none}.wl-r .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.wl-r .tx small{font-size:12px;color:var(--fg-2,#6b6e73)}.wl-r .tx b{font-size:15px}.wl-r .tx span{font-size:13px;color:#55585d}
+.wl-pill{align-self:flex-start;font-style:normal;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;margin-top:2px}.wl-pill.ok{background:#e5efe8;color:#2f7a4a}.wl-pill.mt{background:#e6f2ed;color:#3f7f69}.wl-pill.am{background:#f7eedf;color:#8a4f0e}
+.wl-bar{height:8px;border-radius:8px;background:#e6f2ed;overflow:hidden}.wl-bar i{display:block;height:8px;border-radius:8px;background:#5fa98f}
+.wl-acts{display:flex;gap:8px;flex-wrap:wrap}.wl-acts button,.wl-acts .wl-a{height:38px;padding:0 14px;border-radius:12px;border:1px solid var(--line,#d5d6d9);background:#fff;font:600 13px var(--f);color:var(--fg);text-decoration:none;display:inline-flex;align-items:center}.wl-acts .del{color:#8a8c90}.wl-acts .ok{background:#2f7a4a;border-color:#2f7a4a;color:#fff}
+.wl-pend{display:flex;gap:10px;align-items:center;background:#eaeef6;border-radius:14px;padding:10px;font-size:13px;color:#3b4f7a}.wl-pend a{margin-left:auto;font-weight:700;color:#26282c}
+.wl-gf{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:16px;background:#fbeeed}.wl-gf b{font-size:14px}.wl-gf small{display:block;font-size:13px;color:#8c4a45;margin-top:2px}
+.wl-form{display:flex;flex-direction:column;gap:14px;padding:4px 0 8px}.wl-f{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#55585d}.wl-f input,.wl-f select,.wl-f textarea{height:46px;border-radius:12px;border:1px solid var(--line,#d5d6d9);padding:0 14px;font:500 15px var(--f);color:var(--fg);background:#fff;box-sizing:border-box;width:100%}.wl-f textarea{height:76px;padding:12px 14px;resize:none;border:0}.wl-hint{font-style:normal;color:#8a8c90}
+.wl-card{background:#fbeeed;border-radius:16px;padding:12px;color:#8c4a45}
+.wl-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.wl-chips{display:flex;gap:8px;flex-wrap:wrap}.wl-chip{height:38px;padding:0 14px;border-radius:99px;border:1px solid var(--line,#d5d6d9);background:#fff;font:500 14px var(--f);color:var(--fg)}.wl-chip.on{background:#26282c;border-color:#26282c;color:#fff}
+.wl-tog{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:15px;padding:10px 0;border-bottom:1px solid var(--line,#eceded)}.wl-tog small{display:block;font-size:12px;color:#6b6e73;margin-top:2px}
+.wl-tog input{appearance:none;-webkit-appearance:none;width:48px;height:28px;border-radius:99px;background:#d5d6d9;position:relative;flex:none;margin:0;transition:background .2s}.wl-tog input:checked{background:#26282c}.wl-tog input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s}.wl-tog input:checked::after{left:23px}
+.wl-seg{display:flex;gap:8px;align-items:center}.wl-seg button{flex:1;height:44px;border-radius:12px;border:1px solid var(--line,#d5d6d9);background:#fff;font:600 14px var(--f);color:var(--fg)}.wl-seg button.on{background:#26282c;border-color:#26282c;color:#fff}.wl-who{background:#efedf8;border-radius:16px;padding:8px}
+.wl-amts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.wl-amts button,.wl-amts input{height:44px;border-radius:12px;border:1px solid var(--line,#d5d6d9);background:#fff;font:600 15px var(--f);color:var(--fg);text-align:center;min-width:0;box-sizing:border-box}.wl-amts button.on{background:#26282c;border-color:#26282c;color:#fff}
+.wl-pub{border-radius:22px;background:linear-gradient(135deg,#26282c,#3b3f45);color:#fff;padding:20px;display:flex;flex-direction:column;gap:6px}.wl-pub small{color:#a8dcc9;font-size:13px}.wl-pub b{font-size:22px}.wl-pub em{align-self:flex-start;font-style:normal;font-size:13px;font-weight:600;padding:5px 12px;border-radius:99px;background:rgba(255,255,255,.16)}
+.wl-go{height:40px;padding:0 14px;border-radius:12px;border:0;background:#26282c;color:#fff;font:600 14px var(--f);flex:none}
+.wl-how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.wl-how>div{padding:12px;border-radius:16px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;line-height:1.35}.wl-how b{display:block;font-size:13px}
+.wl-ok{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:60px 20px 30px;border-radius:24px;background:linear-gradient(180deg,#e5efe8,transparent)}.wl-ok b{font-size:24px}.wl-ok span{font-size:15px;line-height:1.5;color:#45484d}
+.wl-pay-h{display:flex;flex-direction:column;gap:4px}.wl-pay-h small{color:#6b6e73;font-size:13px}.wl-pay-h b{font-size:24px}.wl-pay-h b em{font-style:normal;color:#5fa98f}.wl-pay-h span{font-size:14px;color:#55585d}
+.wl-steps{display:flex;flex-direction:column;gap:14px}.wl-st{display:flex;gap:12px;align-items:flex-start}.wl-st>span{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;flex:none;box-sizing:border-box}.wl-st .done{background:#2f7a4a;color:#fff}.wl-st .now{border:2px solid #26282c}.wl-st .next{background:#eceded;color:#8a8c90}.wl-st b{display:block;font-size:15px}.wl-st small{display:block;font-size:13px;color:#6b6e73;margin-top:2px}
+.wl-paybox{display:flex;gap:12px;align-items:center;padding:14px;border-radius:18px;background:#eaeef6}.wl-paybox b{display:block;font-size:15px;color:#3b4f7a}.wl-paybox small{display:block;font-size:12.5px;color:#55585d;margin-top:2px}
+.wl-pu{display:flex;gap:12px;align-items:center;width:100%;border:0;border-radius:18px;background:#e6f2ed;padding:12px 14px;font:inherit;color:inherit;text-align:left}.wl-pu b{display:block;font-size:15px}.wl-pu small{display:block;font-size:12.5px;color:#3f7f69}.wl-pu em{margin-left:auto;font-style:normal;font-size:20px;color:#3f7f69}
+.wl-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.wl-k{border:0;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;text-align:left;font:inherit}.wl-k b{font-size:22px}.wl-k span{font-size:12px}.wl-k.on{box-shadow:inset 0 0 0 2px currentColor}
+.wl-q{display:flex;flex-direction:column;gap:10px;margin-top:12px}.wl-qi{background:var(--soft);border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}.wl-qi b{font-size:15px}.wl-qi small{font-size:12.5px;color:#6b6e73}
+.wl-lk{display:flex;gap:8px}.wl-lk input{flex:1;min-width:0;height:42px;border-radius:12px;border:1px solid var(--line,#d5d6d9);padding:0 12px;font:500 14px var(--f)}.wl-lk button{height:42px;padding:0 14px;border-radius:12px;border:0;background:#26282c;color:#fff;font:600 13px var(--f)}
 </style>
 <title>Trend Büro</title>
 <script>/* каталог заранее — только при первом входе; дальше он уже есть на телефоне, и качать его вместе с фото главной не нужно */try{if(!localStorage.getItem("tb_catc")){var l=document.createElement("link");l.rel="preload";l.href="/api/catalog?v=3";l.as="fetch";l.crossOrigin="anonymous";document.head.appendChild(l)}}catch(e){}</script>
@@ -3370,7 +3404,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
    ${r?"":`<button class="pv-how press" type="button" data-how><span class="ic"><svg viewBox="0 0 24 24">${IC.shield}</svg></span><span><b>Як ми працюємо</b><small>Пошук, викуп, перевірка, відправка</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`}
    <div class="ondark" id="pvlike"></div>
    </div>`,{clear:true,right:cartBtnHTML(),accent:r?"var(--c-resale)":"",
-    foot:`<div class="foot dark glass">${staffOn()?`<button class="fv selp" data-selp aria-label="У добірку для клієнта" aria-pressed="${SEL.has(it.id)}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`:""}<button class="fv" data-favp aria-label="В обране" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
+    foot:`<div class="foot dark glass">${staffOn()?`<button class="fv selp" data-selp aria-label="У добірку для клієнта" aria-pressed="${SEL.has(it.id)}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`:""}${r?"":`<button class="fv" data-wlp aria-label="У вішліст"><svg viewBox="0 0 24 24"><rect x="3.5" y="8.5" width="17" height="12" rx="2"/><path d="M12 8.5v12M3.5 12.5h17M12 8.5c-2-4-6-4-6-1.5S10 8.5 12 8.5zm0 0c2-4 6-4 6-1.5S14 8.5 12 8.5z"/></svg></button>`}<button class="fv" data-favp aria-label="В обране" aria-pressed="${favs.has(it.id)}"><svg viewBox="0 0 24 24">${I_HEART}</svg></button><button class="btn" data-order><span class="bl">${btnLabel()}</span></button></div>`});
   // остальные фото карточки грузим, когда она уже выехала: иначе iPhone раскодирует все снимки разом и анимация замирает
   setTimeout(()=>{if(!s.isConnected)return;s.querySelectorAll("#pvg img[data-src]").forEach(im=>{im.setAttribute("style",im.dataset.style||"");im.src=im.dataset.src;im.removeAttribute("data-src")})},620);
   // «Похожие» дорисовываем после того, как карточка выехала — открытие без пауз
@@ -3453,6 +3487,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   const setLbl=t=>{const l=ob.querySelector(".bl");if(!l){ob.textContent=t;return}ob.classList.add("swap");setTimeout(()=>{l.textContent=t;ob.classList.remove("swap")},180)};
   const resetBtn=()=>{if(!r){delete ob.dataset.added;setLbl(btnLabel())}};
   fb.onclick=()=>{toggleFav(it.id);fb.setAttribute("aria-pressed",favs.has(it.id))};
+  {const wp=s.querySelector("[data-wlp]");if(wp)wp.onclick=()=>wlAddSheet(it.id,{size:typeof size!=="undefined"?size:"",color:(p&&p.col)||""})}
   if(kitFor)s.addEventListener("click",e=>{if(!(e.target.closest&&e.target.closest("[data-kitgo]")))return;window.KIT_PRE=kitFor.isS?{s:kitFor.code,col:(cws&&cws[ci]&&cws[ci].name)||p.col||""}:{b:kitFor.code};openProduct(kitFor.kp.id)});
   if(K)s.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-kb],[data-ks],[data-kz]");if(!t)return;e.preventDefault();let bc=false;if(t.dataset.kb){if(kb===t.dataset.kb)return;kb=t.dataset.kb;bc=true;kHero()}else if(t.dataset.ks){if(ks===t.dataset.ks)return;ks=t.dataset.ks;kHero()}else kz=t.dataset.kz;kUpd(bc);resetBtn()});
   draw();
@@ -4479,7 +4514,7 @@ const avatarHTML=(u,cls="")=>u&&u.photo?`<img class="${cls}" src="${esc(u.photo)
 const I_TG='<svg viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><path d="M9 13l8-6"/></svg>';
 /* Вход: Telegram решает, кто вы. Есть учётная запись — «Войти», нет — «Регистрация» с именем. Один Telegram = одна учётная запись. */
 /* ссылка на добірку (из Telegram или Instagram): человек без аккаунта видит подборку сразу, без окна входа */
-const SEL_LINK=(()=>{try{const sp=new URLSearchParams(location.search),t=(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.start_param)||sp.get("tgWebAppStartParam")||"";return /^sel_[a-z0-9]{10}$/.test(t)||/^[a-z0-9]{10}$/.test(sp.get("sel")||"")||/^[oc]_[a-z0-9]{12}$/.test(t)||/^[a-z0-9]{12}$/.test(sp.get("order")||sp.get("client")||"")}catch(e){return false}})(); /* добірка и ссылки на заказ открываются без входа */
+const SEL_LINK=(()=>{try{const sp=new URLSearchParams(location.search),t=(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.start_param)||sp.get("tgWebAppStartParam")||"";return /^sel_[a-z0-9]{10}$/.test(t)||/^wl_[a-z2-9]{8}$|^wg_[a-z2-9]{16}$/.test(t)||/^[a-z2-9]{8}$/.test(sp.get("wl")||"")||/^[a-z2-9]{16}$/.test(sp.get("wlg")||"")||/^[a-z0-9]{10}$/.test(sp.get("sel")||"")||/^[oc]_[a-z0-9]{12}$/.test(t)||/^[a-z0-9]{12}$/.test(sp.get("order")||sp.get("client")||"")}catch(e){return false}})(); /* добірка и ссылки на заказ открываются без входа */
 function authGate(force){if(!LIVE)return;const b=authBody();if(SEL_LINK&&!(b&&store.get("tb_signed",0)))return;
   if(b&&store.get("tb_signed",0)&&!force){loadMe().then(r=>{if(!r&&ME_ERR&&ME_ERR.code==="no_account"){store.set("tb_signed",0);ME=null;renderTopIcons();return authGate(true)}if(r&&r.access&&r.access!=="ok")authGate(true);else if(r&&CLOSED)catReload()});return}
   document.querySelectorAll(".gate").forEach(x=>x.remove());
@@ -4858,12 +4893,13 @@ const puImg=p=>String(p.shape||"").startsWith("img:")?p.shape.slice(4):"";
 function puMatchHTML(list){return list.length?`<div class="pq-m">${list.map(p=>`<button class="pq-mi press" data-pumi="${esc(p.id)}"><span class="im" style="background-image:url('${esc(puImg(p))}')"></span><b>${esc(p.name)}</b><span>${eur(p.price)}</span></button>`).join("")}</div>`:`<p class="pu-empty" style="padding:0">В каталоге похожего нет — проверить в бутике.</p>`}
 
 async function openPult(){
-  const s=push("Пульт",`<div class="pu"><div class="pu-hd"><h1>Пульт</h1><span class="pu-dt"></span></div><div class="pu-kpi"></div><div class="pu-alert" hidden></div>
+  const s=push("Пульт",`<div class="pu"><div class="pu-hd"><h1>Пульт</h1><span class="pu-dt"></span></div><div class="pu-kpi"></div><div class="pu-alert" hidden></div><button class="wl-pu press" data-puwl><i class="wl-ic" style="background:#5fa98f;width:36px;height:36px"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1.5S10 8 12 8zm0 0c2-4 6-4 6-1.5S14 8 12 8z"/></svg></i><span><b>Вішлісти</b><small>посилання на оплату й підтвердження грошей</small></span><em>›</em></button>
     <section class="pu-sec" id="puReqs"><div class="pu-sh"><b>Заявки</b><button class="pu-add press" data-puadd>+ Заявка</button></div><div class="pu-list"><p class="pu-empty">Завантажуємо…</p></div></section>
     <section class="pu-sec" id="puAppr" hidden><div class="pu-sh"><b>Одобрить</b><span>от агентов</span></div><div class="pu-appr"></div></section>
     <section class="pu-sec" id="puTasks" hidden><div class="pu-sh"><b>Поручения</b><span>вы → Claude и агенты</span></div><div class="pu-tasks"></div></section>
     <section class="pu-sec" id="puAg" hidden><div class="pu-sh"><b>Агенты</b><span class="pu-agat"></span></div><div class="pu-ag"></div></section><div style="height:110px"></div></div>`);
   const root=s&&s.querySelector?s:document;let showDone=false;
+  {const wb=root.querySelector("[data-puwl]");if(wb)wb.onclick=openWlPult}
   const draw=()=>{const D=PU;if(!D)return;const q=x=>root.querySelector(x);
     q(".pu-dt").textContent=new Date().toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"})+" · "+puHM(new Date().toISOString());
     const c=D.counts||{};q(".pu-kpi").innerHTML=[["k1",c.reqs,"заявок","reqs"],["k2",c.orders,"заказов","orders"],["k3",c.approve,"одобрить","appr"],["k4",c.urgent,"срочно","urg"]].map(([k,n,l,go])=>`<button class="pu-k ${k} press" data-pugo="${go}"><b class="num">${n||0}</b><span>${l}</span></button>`).join("");
@@ -5545,6 +5581,7 @@ function openAccount(){
       <div class="acl"><span>Обране</span>${FL.length?`<button data-act="favs">Усі · <span class="num">${FL.length}</span></button>`:""}</div>
       ${FL.length?`<div class="acx">${FL.slice(0,4).map(p=>{const r=p.id[0]==="r";return `<button class="li press" data-act="product" data-id="${p.id}">${th(p)}<div><b>${esc(p.brand)}</b><small>${esc(p.name)}</small></div><span class="pr num">${!r&&isPor(p)?"Ціна за запитом":eur(r?p.price:priceFor(p,prefs.dest||"ua"))}</span></button>`}).join("")}</div>`
         :`<p class="ace">Натисніть на сердечко на товарі — він зʼявиться тут.</p>`}
+      <div class="acl"><span>Вішлісти</span></div><div class="acm"><button class="s press" data-wlmine><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="8.5" width="17" height="12" rx="2"/><path d="M12 8.5v12M3.5 12.5h17M12 8.5c-2-4-6-4-6-1.5S10 8.5 12 8.5zm0 0c2-4 6-4 6-1.5S14 8.5 12 8.5z"/></svg></span><div><b>Мої вішлісти</b><small>поділіться — друзі подарують річ або частину</small></div><span class="go">›</span></button></div>
       ${isStaff()?`<div class="acl"><span>Для менеджера</span></div><div class="acm"><button class="s press" data-pult><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><path d="M16.5 13v7M13 16.5h7"/></svg></span><div><b>Пульт</b><small>заявки, одобрить, поручения, агенты</small></div><span class="go">›</span></button><button class="s press" data-sorders><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span><div><b>Заказы клиентов</b><small>этапы, новый заказ, список для водителя</small></div><span class="go">›</span></button><button class="s press" data-selmode><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><div><b>Режим добірки</b><small>${selModeOn()?"увімкнено — «+» на картках":"вимкнено"}</small></div><span class="tgl" role="switch" aria-checked="${selModeOn()}"><i></i></span></button></div>
       <div class="acl"><span>Активні добірки</span></div><div class="acm" id="selAct"><p class="ace">Завантажуємо…</p></div>`:""}
       <div class="acl"><span>Мій профіль</span></div><div class="acm">
@@ -5564,7 +5601,7 @@ function openAccount(){
     <div class="sec"><div class="cells" style="padding:0 16px"><div class="clist"><a class="crow" href="#" data-priv><span>Конфіденційність</span><b>як ми зберігаємо дані ›</b></a></div></div></div>
     ${u?`<div class="pad" style="margin-top:14px"><button class="btn block soft" data-logout>Вийти з профілю</button></div>`:""}
     <div style="height:30px"></div>`;
-    {const lg=box.querySelector("[data-login]");if(lg)lg.onclick=()=>authGate(true);const lo=box.querySelector("[data-logout]");if(lo)lo.onclick=logout;box.querySelectorAll("[data-acmore]").forEach(b=>b.onclick=()=>{const l=document.getElementById(b.dataset.acmore);if(l)l.classList.add("open");b.remove()});{const so=box.querySelector("[data-sorders]");if(so)so.onclick=openStaffOrders;const pu=box.querySelector("[data-pult]");if(pu)pu.onclick=openPult}const sm=box.querySelector("[data-selmode]");if(sm)sm.onclick=()=>{const on=!selModeOn();selModeSet(on);const sb=sm.querySelector("small");if(sb)sb.textContent=on?"увімкнено — «+» на картках":"вимкнено";sm.querySelector(".tgl").setAttribute("aria-checked",on)};if(box.querySelector("#selAct"))selActive(box.querySelector("#selAct"))}
+    {const lg=box.querySelector("[data-login]");if(lg)lg.onclick=()=>authGate(true);const lo=box.querySelector("[data-logout]");if(lo)lo.onclick=logout;box.querySelectorAll("[data-acmore]").forEach(b=>b.onclick=()=>{const l=document.getElementById(b.dataset.acmore);if(l)l.classList.add("open");b.remove()});{const so=box.querySelector("[data-sorders]");if(so)so.onclick=openStaffOrders;const pu=box.querySelector("[data-pult]");if(pu)pu.onclick=openPult}{const wm=box.querySelector("[data-wlmine]");if(wm)wm.onclick=openWishlists}const sm=box.querySelector("[data-selmode]");if(sm)sm.onclick=()=>{const on=!selModeOn();selModeSet(on);const sb=sm.querySelector("small");if(sb)sb.textContent=on?"увімкнено — «+» на картках":"вимкнено";sm.querySelector(".tgl").setAttribute("aria-checked",on)};if(box.querySelector("#selAct"))selActive(box.querySelector("#selAct"))}
 /* активные добірки менеджера: название, сколько вещей, сколько осталось, выбрал ли клиент */
 async function selActive(el){const r=await meCall({a:"sels"});const L=(r&&r.sels)||[];if(!L.length){el.innerHTML='<p class="ace">Немає активних добірок — посилання діють 24 години.</p>';return}
   const left=t=>{const h=Math.max(0,Math.round((t-Date.now())/36e5));return h>=1?"ще "+h+" год":"менше години"};
@@ -6130,7 +6167,142 @@ function blkShareBtn(){const h=document.querySelector("#catItems .itemshead");if
     const c=document.getElementById("blkC");if(c)c.onclick=async()=>{try{await navigator.clipboard.writeText(L.link);toast("Скопійовано")}catch(e){const i=document.getElementById("blkL");i.select();toast("Виділено — скопіюйте")}}}}
 /* ссылки из сообщений: экран приложения ещё может строиться (медленный телефон) — пробуем снова, пока не откроется */
 const linkTry=(f,n=0)=>Promise.resolve().then(f).catch(()=>{if(n<12)setTimeout(()=>linkTry(f,n+1),700)});
-setTimeout(()=>{linkTry(selOpenFromLink);linkTry(orderOpenFromLink);linkTry(clientOpenFromLink);linkTry(blockOpenFromLink);selBar()},1500);
+/* ===== Вішлісти (24.11.2026, макет «Вишлисты — готовое решение»): список клиента, подарок по ссылке, очередь менеджера в Пульте ===== */
+const WL_I={gift:'<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1.5S10 8 12 8zm0 0c2-4 6-4 6-1.5S14 8 12 8z"/></svg>',
+  split:'<svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><circle cx="16" cy="12" r="4"/></svg>',
+  mask:'<svg viewBox="0 0 24 24"><path d="M3 11c0-3 4-4 9-4s9 1 9 4-2 6-5 6c-2 0-3-2-4-2s-2 2-4 2c-3 0-5-3-5-6z"/><circle cx="8.5" cy="11.5" r="1.2"/><circle cx="15.5" cy="11.5" r="1.2"/></svg>',
+  card:'<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg>',
+  link:'<svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>',
+  clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  check:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'};
+const WL_OCC={birthday:"День народження",newyear:"Новий рік",wedding:"Весілля",self:"Для себе",other:"Інше"};
+const wlIc=(k,bg,sz)=>`<i class="wl-ic" style="background:${bg}${sz?`;width:${sz}px;height:${sz}px`:""}">${WL_I[k]}</i>`;
+const wlDays=d=>{if(!d)return "";const n=Math.ceil((Date.parse(d+"T23:59:00")-Date.now())/864e5);return n>1?`ще ${n} ${plural(n,["день","дні","днів"])}`:n===1?"завтра":n===0?"сьогодні":""};
+const wlDate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("uk-UA",{day:"numeric",month:"long"}):"";
+const wlBar=(got,price)=>`<div class="wl-bar"><i style="width:${price?Math.min(100,Math.round((got||0)/price*100)):0}%"></i></div>`;
+const wlPill=st=>st==="done"?`<em class="wl-pill ok">Подаровано повністю</em>`:st==="order"?`<em class="wl-pill ok">Замовлення оформлено</em>`:st==="part"?`<em class="wl-pill mt">Збирають</em>`:`<em class="wl-pill am">Чекає на дарувальника</em>`;
+const wlImg=u=>u?szU(u,400):"";
+let WL=null;
+async function wlLoad(){const r=await meCall({a:"wl",op:"mine"});if(r&&r.lists){WL=r;return r}toast(r&&r.error||"Не вдалося завантажити");return null}
+
+/* «Мої вішлісти» */
+async function openWishlists(){if(!authBody())return authGate(true);
+  const s=push("Вішлісти",`<div class="wl"><p class="pu-empty">Завантажуємо…</p></div>`);const box=(s&&s.querySelector?s:document).querySelector(".wl");
+  const r=await wlLoad();if(!r)return;
+  const draw=()=>{const L=WL.lists||[];box.innerHTML=`<div class="wl-hero"><div class="wl-ht">${wlIc("gift","#5fa98f",44)}<div><b>Мої вішлісти</b><small>Діліться посиланням — друзі подарують цілу річ або частину</small></div></div></div>
+    ${L.length?L.map(w=>`<button class="wl-li press" data-wlopen="${w.code}"><div class="wl-th">${(w.items||[]).slice(0,3).map(it=>`<span style="background-image:url('${esc(wlImg(it.img))}')"></span>`).join("")||wlIc("gift","#26282c",36)}</div><div class="tx"><b>${esc(w.title)}</b><small>${esc([WL_OCC[w.occasion],wlDate(w.date),(w.items||[]).length+" "+plural((w.items||[]).length,["річ","речі","речей"])].filter(Boolean).join(" · "))}</small>${w.total?`<em class="wl-pill mt">Подарували ${eur(w.total)}</em>`:""}</div><span class="go">›</span></button>`).join(""):`<p class="ace">Створіть перший вішліст — на день народження, Новий рік або «для себе».</p>`}
+    <button class="btn block" data-wlnew style="margin-top:14px">Створити вішліст</button>`;
+    box.querySelector("[data-wlnew]").onclick=()=>wlEdit(null,draw);box.querySelectorAll("[data-wlopen]").forEach(b=>b.onclick=()=>wlOpen(b.dataset.wlopen))};
+  draw()}
+
+/* создать / настройки */
+function wlEdit(w,done){const o=w?w.opts||{}:{part:true,anon:true,surprise:false,prices:true};let occ=w?w.occasion:"birthday";
+  const sh=openSheet(w?"Налаштування":"Новий вішліст",`<div class="wl-form"><label class="wl-f"><span>Назва</span><input id="wlT" maxlength="60" value="${esc(w?w.title:"Мій день народження")}"></label>
+    <div class="wl-f"><span>Привід</span><div class="wl-chips">${Object.entries(WL_OCC).map(([k,v])=>`<button class="wl-chip${k===occ?" on":""}" data-occ="${k}">${v}</button>`).join("")}</div></div>
+    <div class="wl-2"><label class="wl-f"><span>Дата</span><input id="wlD" type="date" value="${esc(w?w.date:"")}"></label><label class="wl-f"><span>Посилання діє</span><select id="wlTerm"><option value="date">До дати + 14 днів</option><option value="3m">3 місяці</option><option value="forever">Безстроково</option></select></label></div>
+    ${[["part","Можна скидатися частинами","Друзі вносять 50, 100 € або свою суму"],["anon","Можна дарувати інкогніто","Ім’я бачить лише менеджер"],["surprise","Сюрприз","Я не бачу, хто що подарував, до дати"],["prices","Показувати ціни друзям",""]].map(([k,t,d])=>`<label class="wl-tog"><span>${t}${d?`<small>${d}</small>`:""}</span><input type="checkbox" data-op="${k}" ${o[k]!==false&&(k!=="surprise"||o[k])?"checked":""}></label>`).join("")}
+    <button class="btn block" data-wlsave style="margin-top:8px">${w?"Зберегти":"Створити"}</button></div>`);
+  sh.querySelectorAll("[data-occ]").forEach(b=>b.onclick=()=>{occ=b.dataset.occ;sh.querySelectorAll("[data-occ]").forEach(x=>x.classList.toggle("on",x===b))});
+  sh.querySelector("[data-wlsave]").onclick=async e=>{const bt=e.currentTarget;bt.disabled=true;const opts={};sh.querySelectorAll("[data-op]").forEach(i=>opts[i.dataset.op]=i.checked);
+    const r=await meCall({a:"wl",op:"save",d:{code:w?w.code:undefined,title:sh.querySelector("#wlT").value,occasion:occ,date:sh.querySelector("#wlD").value,term:sh.querySelector("#wlTerm").value,opts}});bt.disabled=false;
+    if(!r||!r.list)return toast(r&&r.error||"Не вдалося");closeSheet();await wlLoad();if(done)done();if(!w)wlOpen(r.list.code)}}
+
+/* один список клиента */
+function wlOpen(code){const w=(WL&&WL.lists||[]).find(x=>x.code===code);if(!w)return;
+  const link=(WL.base||"https://trendburo.com.ua/?wl=")+w.code;
+  const s=push(w.title,`<div class="wl" id="wlOne"></div>`,{foot:`<div class="foot glass"><button class="btn" data-wlshare style="flex:1">Поділитися посиланням</button><button class="btn soft" data-wladd>+ Річ</button></div>`});
+  const root=s&&s.querySelector?s:document,box=root.querySelector("#wlOne");
+  const draw=()=>{const w=(WL.lists||[]).find(x=>x.code===code);if(!w)return;
+    box.innerHTML=`<div class="wl-sum">${wlIc("gift","#5fa98f",44)}<div><small>Вам подарували</small><b class="num">${eur(w.total||0)}</b></div><span>${w.people?`від ${w.people} ${plural(w.people,["людини","людей","людей"])}`:"ще нікого"}${w.surprise?"<br>сюрприз до дати":""}</span></div>
+      <div class="wl-meta">${esc([WL_OCC[w.occasion],wlDate(w.date),wlDays(w.date)].filter(Boolean).join(" · "))}<button data-wlset>Налаштування</button></div>
+      ${(w.items||[]).length?(w.items||[]).map(it=>`<div class="wl-it"><div class="wl-r"><span class="wl-im" style="background-image:url('${esc(wlImg(it.img))}')" data-act="product" data-id="${esc(it.pid)}"></span><div class="tx"><small>${esc(it.b)}</small><b>${esc(it.t)}</b><span class="num">${eur(it.got||0)} з ${eur(it.price)}${[it.size&&"розмір "+it.size,it.color].filter(Boolean).map(x=>" · "+esc(x)).join("")}</span>${wlPill(it.st)}</div></div>
+        ${wlBar(it.got,it.price)}
+        <div class="wl-acts">${it.st!=="done"&&it.st!=="order"&&it.left?`<button data-wltop="${it.k}">Доплатити ${eur(it.left)}</button>`:""}${it.st==="done"?`<a class="wl-a" href="https://t.me/trendburomanager" target="_blank" rel="noopener">Оформити замовлення</a>`:""}${!(it.got>0)?`<button class="del" data-wldel="${it.k}">Прибрати</button>`:""}</div>
+        ${(w.pending||[]).filter(p=>p.k===it.k).map(p=>`<div class="wl-pend">${wlIc("card","#6f8fb3",30)}<span>${p.link?`Посилання на ${eur(p.amount)} готове`:`Чекаємо посилання від менеджера · ${eur(p.amount)}`}</span>${p.link?`<a href="${esc(p.link)}" target="_blank" rel="noopener">Оплатити</a>`:""}</div>`).join("")}
+      </div>`).join(""):`<p class="ace">Додайте речі: на картці товару кнопка з подарунком «У вішліст».</p>`}
+      ${(w.gifts||[]).length?`<div class="acl"><span>Листівки та подарунки</span></div>${w.gifts.map(g=>`<div class="wl-gf">${wlIc(g.anon?"mask":"gift",g.anon?"#8f86c9":"#d98b86",32)}<div><b>${g.anon?"Інкогніто":esc(g.name)} · ${eur(g.amount)}</b>${g.msg?`<small>«${esc(g.msg)}»</small>`:""}</div></div>`).join("")}`:""}
+      <div style="height:110px"></div>`;
+    box.querySelector("[data-wlset]").onclick=()=>wlEdit(w,draw);
+    box.querySelectorAll("[data-wldel]").forEach(b=>b.onclick=async()=>{const r=await meCall({a:"wl",op:"item",d:{code,del:b.dataset.wldel}});if(r&&r.list){await wlLoad();draw()}else toast(r&&r.error||"Не вдалося")});
+    box.querySelectorAll("[data-wltop]").forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await meCall({a:"wl",op:"topup",d:{code,k:b.dataset.wltop}});b.disabled=false;if(!r||!r.gift)return toast(r&&r.error||"Не вдалося");toast("Менеджер надішле посилання на оплату");await wlLoad();draw()})};
+  draw();
+  root.querySelector("[data-wladd]").onclick=()=>{toast("Відкрийте річ у каталозі й натисніть 🎁 «У вішліст»");tab("catalog")};
+  root.querySelector("[data-wlshare]").onclick=async()=>{const w=(WL.lists||[]).find(x=>x.code===code),t=`Мій вішліст «${w.title}» у Trend Büro`;
+    if(TGW&&TGW.openTelegramLink){try{TGW.openTelegramLink("https://t.me/share/url?url="+encodeURIComponent(link)+"&text="+encodeURIComponent(t));return}catch(e){}}
+    let ok=false;try{await navigator.clipboard.writeText(link);ok=true}catch(e){}toast(ok?"Посилання скопійовано":link)}}
+
+/* кнопка на карточке товара: в какой список, размер, цвет, комментарий */
+async function wlAddSheet(pid,{size,color}={}){if(!authBody())return authGate(true);if(!WL)await wlLoad();const L=(WL&&WL.lists)||[];const p=findItem(pid);
+  if(!L.length){toast("Спочатку створіть вішліст");return wlEdit(null,()=>wlAddSheet(pid,{size,color}))}
+  let prio="want";const sz=p&&p.sizes?[...new Set(p.sizes.map(z=>z.size))]:[];
+  const sh=openSheet("У вішліст",`<div class="wl-form">${sz.length>1?`<div class="wl-f"><span>Розмір</span><div class="wl-chips">${sz.map(z=>`<button class="wl-chip${z===size?" on":""}" data-wsz="${esc(z)}">${esc(z)}</button>`).join("")}</div></div>`:""}
+    <label class="wl-f"><span>У який список</span><select id="wlL">${L.map(w=>`<option value="${w.code}">${esc(w.title)}${w.date?" · "+esc(wlDate(w.date)):""}</option>`).join("")}</select></label>
+    <label class="wl-f"><span>Коментар для друзів</span><input id="wlN" maxlength="120" placeholder="Напр. «мрію про чорну»"></label>
+    <div class="wl-chips"><button class="wl-chip on" data-pr="want">Дуже хочу</button><button class="wl-chip" data-pr="nice">Було б чудово</button></div>
+    <button class="btn block" data-wladd2>Додати</button><p class="ace" style="text-align:center">Ціна фіксується на сьогодні</p></div>`);
+  sh.querySelectorAll("[data-wsz]").forEach(b=>b.onclick=()=>{size=b.dataset.wsz;sh.querySelectorAll("[data-wsz]").forEach(x=>x.classList.toggle("on",x===b))});
+  sh.querySelectorAll("[data-pr]").forEach(b=>b.onclick=()=>{prio=b.dataset.pr;sh.querySelectorAll("[data-pr]").forEach(x=>x.classList.toggle("on",x===b))});
+  sh.querySelector("[data-wladd2]").onclick=async e=>{e.currentTarget.disabled=true;const r=await meCall({a:"wl",op:"item",d:{code:sh.querySelector("#wlL").value,pid,size:size&&size!=="?"?size:"",color:color||"",note:sh.querySelector("#wlN").value,prio}});
+    if(!r||!r.list){e.currentTarget.disabled=false;return toast(r&&r.error||"Не вдалося")}closeSheet();await wlLoad();toast("Додано у вішліст «"+r.list.title+"»")}}
+
+/* друг открыл ссылку: t.me/<бот>?startapp=wl_… или ?wl=…; статус подарка: ?wlg=… */
+async function wlOpenFromLink(){let code="",tok="";try{const sp=(TGW&&TGW.initDataUnsafe&&TGW.initDataUnsafe.start_param)||new URLSearchParams(location.search).get("tgWebAppStartParam")||"";if(/^wl_[a-z2-9]{8}$/.test(sp))code=sp.slice(3);if(/^wg_[a-z2-9]{16}$/.test(sp))tok=sp.slice(3)}catch(e){}
+  const q=new URLSearchParams(location.search);if(!code&&/^[a-z2-9]{8}$/.test(q.get("wl")||""))code=q.get("wl");if(!tok&&/^[a-z2-9]{16}$/.test(q.get("wlg")||""))tok=q.get("wlg");
+  if(tok)return wlStatus(tok);if(code)return wlPublicOpen(code)}
+async function wlPublicOpen(code){let d=null,st=0;try{const r=await fetch("/api/me?wl="+code,{cache:"no-store"});st=r.status;d=await r.json().catch(()=>null)}catch(e){}
+  if(st===410)return push("Вішліст",`<div class="wl"><div class="wl-hero"><div class="wl-ht">${wlIc("clock","#d39a4a",44)}<div><b>Посилання вже не діє</b><small>Попросіть автора вішліста надіслати нове</small></div></div></div></div>`);
+  if(!d||st!==200)return toast("Вішліст не знайдено");
+  const s=push("Вішліст",`<div class="wl"><div class="wl-pub"><small>Вішліст</small><b>${esc(d.owner)} · ${esc(WL_OCC[d.occasion]||d.title)}</b>${d.date?`<em>${esc(wlDate(d.date))}${wlDays(d.date)?" · "+esc(wlDays(d.date)):""}</em>`:""}</div>
+    ${(d.items||[]).map(it=>`<div class="wl-it${it.st==="done"||it.st==="order"?" gone":""}"><div class="wl-r"><span class="wl-im" style="background-image:url('${esc(wlImg(it.img))}')"></span><div class="tx"><small>${esc(it.b)}${it.prio==="want"?" · «дуже хочу»":""}</small><b>${esc(it.t)}</b>${it.note?`<span>«${esc(it.note)}»</span>`:""}<span class="num">${it.st==="done"||it.st==="order"?"Вже подарували":it.price!==undefined?`Зібрано ${eur(it.got)} з ${eur(it.price)}`:`Зібрано ${it.pct}%`}</span></div>${it.st==="done"||it.st==="order"?"":`<button class="wl-go" data-wlg="${it.k}">Подарувати</button>`}</div>${it.st==="done"||it.st==="order"?"":wlBar(it.got||it.pct,it.price||100)}</div>`).join("")}
+    <div class="wl-how"><div style="background:#fbeeed">${wlIc("gift","#d98b86",32)}<span><b>Всю річ</b>одразу ваша</span></div>${d.opts.part?`<div style="background:#e6f2ed">${wlIc("split","#5fa98f",32)}<span><b>Частину</b>від 20 €</span></div>`:""}${d.opts.anon?`<div style="background:#efedf8">${wlIc("mask","#8f86c9",32)}<span><b>Інкогніто</b>за бажанням</span></div>`:""}</div>
+    <p class="ace">Оплата — за посиланням від Trend Büro. Подарунок доставимо ${esc(d.owner)}.</p><div style="height:90px"></div></div>`);
+  const root=s&&s.querySelector?s:document;root.querySelectorAll("[data-wlg]").forEach(b=>b.onclick=()=>wlGiftSheet(d,d.items.find(x=>x.k===b.dataset.wlg)))}
+function wlGiftSheet(d,it){let full=!d.opts.part,amt=100,anon=false;const left=it.left!==undefined?it.left:null;
+  const sh=openSheet(it.t,`<div class="wl-form">${left!==null?`<p class="ace" style="margin:0">Залишилось зібрати <b class="num">${eur(left)}</b></p>`:""}
+    <div class="wl-seg"><button data-full="1" class="${full?"on":""}">Всю річ${left!==null?" · "+eur(left):""}</button>${d.opts.part?`<button data-full="0" class="${full?"":"on"}">Частину</button>`:""}</div>
+    <div class="wl-amts" ${full?"hidden":""}>${[50,100,200].map(v=>`<button data-am="${v}" class="${v===amt?"on":""}">${v} €</button>`).join("")}<input id="wgA" inputmode="numeric" placeholder="Інша"></div>
+    ${d.opts.anon?`<div class="wl-seg wl-who">${wlIc("mask","#8f86c9",36)}<button data-an="0" class="on">Від мене</button><button data-an="1">Інкогніто</button></div>`:""}
+    <label class="wl-f"><span>Ваше ім’я <em class="wl-hint">${d.opts.anon?"(при «Інкогніто» бачить лише менеджер)":""}</em></span><input id="wgN" maxlength="40"></label>
+    <label class="wl-f wl-card"><span>Листівка · її побачить ${esc(d.owner)}</span><textarea id="wgM" maxlength="300" placeholder="Ваше побажання"></textarea></label>
+    <label class="wl-f"><span>Куди надіслати посилання на оплату</span><input id="wgC" maxlength="60" placeholder="@telegram або телефон"></label>
+    <button class="btn block" data-wgo>Подарувати</button><p class="ace" style="text-align:center">Контакт бачить лише менеджер Trend Büro</p></div>`);
+  const upd=()=>{sh.querySelectorAll("[data-full]").forEach(b=>b.classList.toggle("on",(b.dataset.full==="1")===full));sh.querySelector(".wl-amts").hidden=full;const n=Number(sh.querySelector("#wgA").value)||amt;sh.querySelector("[data-wgo]").textContent="Подарувати"+(full?left!==null?" "+eur(left):"":" "+eur(n))};
+  sh.querySelectorAll("[data-full]").forEach(b=>b.onclick=()=>{full=b.dataset.full==="1";upd()});
+  sh.querySelectorAll("[data-am]").forEach(b=>b.onclick=()=>{amt=+b.dataset.am;sh.querySelector("#wgA").value="";sh.querySelectorAll("[data-am]").forEach(x=>x.classList.toggle("on",x===b));upd()});
+  sh.querySelector("#wgA").oninput=()=>{sh.querySelectorAll("[data-am]").forEach(x=>x.classList.remove("on"));upd()};
+  sh.querySelectorAll("[data-an]").forEach(b=>b.onclick=()=>{anon=b.dataset.an==="1";sh.querySelectorAll("[data-an]").forEach(x=>x.classList.toggle("on",x===b))});
+  upd();
+  sh.querySelector("[data-wgo]").onclick=async e=>{const bt=e.currentTarget;bt.disabled=true;let j=null;try{const r=await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"wlGift",d:{code:d.code,k:it.k,full,amount:Number(sh.querySelector("#wgA").value)||amt,anon,name:sh.querySelector("#wgN").value,msg:sh.querySelector("#wgM").value,contact:sh.querySelector("#wgC").value}})});j=await r.json().catch(()=>null)}catch(x){}
+    bt.disabled=false;if(!j||!j.token)return toast(j&&j.error||"Не вдалося");try{const L=JSON.parse(localStorage.getItem("tb_wlg")||"[]");L.unshift(j.token);localStorage.setItem("tb_wlg",JSON.stringify(L.slice(0,20)))}catch(x){}closeSheet();wlStatus(j.token)}}
+async function wlStatus(tok){let d=null;try{d=await fetch("/api/me?wlg="+tok,{cache:"no-store"}).then(r=>r.ok?r.json():null)}catch(e){}if(!d)return toast("Не знайдено");
+  const steps=[["Заявку прийнято","менеджер уже бачить її"],["Посилання на оплату","прийде в Telegram і з’явиться тут"],["Оплата","банк або платіжний сервіс"],["Менеджер підтверджує","зазвичай протягом години"]];
+  const at=d.st==="paid"?4:d.st==="claimed"?3:d.st==="link"?2:1;
+  if(d.st==="paid")return push("Подарунок",`<div class="wl"><div class="wl-ok">${wlIc("check","#2f7a4a",72)}<b>Дякуємо!</b><span>${eur(d.amount)} зараховано на ${esc(d.item)}. ${esc(d.owner)} побачить вашу листівку.</span></div></div>`);
+  const s=push("Подарунок",`<div class="wl"><div class="wl-pay-h"><small>Вішліст ${esc(d.owner)}</small><b>Ваш подарунок · <em>${eur(d.amount)}</em></b><span>${esc(d.item)}</span></div>
+    <div class="wl-steps">${steps.map((x,i)=>`<div class="wl-st"><span class="${i<at?"done":i===at?"now":"next"}">${i<at?"✓":i+1}</span><div><b>${x[0]}</b><small>${x[1]}</small></div></div>`).join("")}</div>
+    ${d.st==="cancel"?`<p class="ace">Заявку скасовано. Питання — @trendburomanager</p>`:d.link?`<div class="wl-paybox">${wlIc("card","#6f8fb3",40)}<div style="flex:1"><b>Посилання готове</b></div></div><a class="btn block" style="text-decoration:none;margin-top:10px" href="${esc(d.link)}" target="_blank" rel="noopener">Оплатити ${eur(d.amount)}</a>${d.st==="link"?`<button class="btn block soft" data-wlclaim style="margin-top:8px">Я вже оплатив(ла)</button>`:`<p class="ace">Дякуємо! Менеджер перевіряє оплату.</p>`}`
+      :`<div class="wl-paybox">${wlIc("clock","#d39a4a",40)}<div><b>Готуємо посилання</b><small>Сторінку можна закрити — посилання прийде на ваш контакт</small></div></div><button class="btn block soft" data-wlre style="margin-top:10px">Оновити</button>`}
+    <p class="ace" style="text-align:center">Питання: @trendburomanager</p></div>`);
+  const root=s&&s.querySelector?s:document;const re=root.querySelector("[data-wlre]");if(re)re.onclick=()=>wlStatus(tok);
+  const cl=root.querySelector("[data-wlclaim]");if(cl)cl.onclick=async()=>{cl.disabled=true;await fetch("/api/me",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"wlClaim",token:tok})}).catch(()=>{});wlStatus(tok)}}
+
+/* Пульт: вишлисты — нужна ссылка / ждём оплату / проверить деньги */
+async function openWlPult(){const s=push("Вішлісти",`<div class="pu"><div class="wl-kpi"></div><div class="wl-q"><p class="pu-empty">Завантажуємо…</p></div><div style="height:110px"></div></div>`);
+  const root=s&&s.querySelector?s:document;let tab="new";
+  const load=async()=>{const j=await meCall({a:"st",op:"wlQueue"});if(!j||!j.gifts){root.querySelector(".wl-q").innerHTML=`<p class="pu-empty">${esc(j&&j.error||"Не вдалося")}</p>`;return}
+    const c=j.counts||{};root.querySelector(".wl-kpi").innerHTML=[["new","#f7eedf","#8a4f0e","link","#d39a4a",c.link,"нужна ссылка"],["link","#eaeef6","#3b4f7a","clock","#6f8fb3",c.wait,"ждём оплату"],["claimed","#e5efe8","#2f7a4a","check","#2f7a4a",c.check,"проверить деньги"]].map(([k,bg,fg,ic,icb,n,l])=>`<button class="wl-k${tab===k?" on":""}" data-wlk="${k}" style="background:${bg};color:${fg}">${wlIc(ic,icb,30)}<b class="num">${n||0}</b><span>${l}</span></button>`).join("");
+    const G=j.gifts.filter(g=>g.st===tab);
+    root.querySelector(".wl-q").innerHTML=G.length?G.map(g=>`<div class="wl-qi"><b>${g.owner?"Доплата клиента":"+"+eur(g.amount)+" · "+esc(g.anon?"инкогнито ("+g.name+")":g.name)} → ${esc(g.client||"")}</b><small>${esc(g.item)} · ${esc(g.wlTitle)} · ${esc(g.contact||"")} · ${fmtD(g.at)}</small>${g.msg?`<small>«${esc(g.msg)}»</small>`:""}
+      ${g.st==="new"||g.st==="link"?`<div class="wl-lk"><input placeholder="Ссылка на оплату ${g.amount} € из банка" value="${esc(g.link||"")}" data-wlin="${g.id}"><button data-wlsend="${g.id}">${g.link?"Обновить":"Сохранить"}</button></div>`:""}
+      <div class="wl-acts">${g.link?`<button data-wlcp="${esc(g.link)}" data-wlct="${esc(g.contact||"")}">Скопировать для ${esc(g.contact||"гостя")}</button>`:""}<button class="ok" data-wlpaid="${g.id}">Деньги пришли · ${eur(g.amount)}</button><button class="del" data-wlcancel="${g.id}">Отменить</button></div></div>`).join(""):`<p class="pu-empty">Здесь пусто</p>`;
+    root.querySelectorAll("[data-wlk]").forEach(b=>b.onclick=()=>{tab=b.dataset.wlk;load()});
+    root.querySelectorAll("[data-wlsend]").forEach(b=>b.onclick=async()=>{const v=root.querySelector(`[data-wlin="${b.dataset.wlsend}"]`).value.trim();const r=await meCall({a:"st",op:"wlGiftSet",d:{id:b.dataset.wlsend,link:v}});if(r&&r.gift){toast("Ссылка сохранена — гость увидит её на своей странице");load()}else toast(r&&r.error||"Не вдалося")});
+    root.querySelectorAll("[data-wlcp]").forEach(b=>b.onclick=async()=>{const t=`Посилання на оплату подарунка: ${b.dataset.wlcp}`;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){}toast(ok?"Скопировано — отправьте "+(b.dataset.wlct||"гостю"):t)});
+    root.querySelectorAll("[data-wlpaid]").forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await meCall({a:"st",op:"wlGiftSet",d:{id:b.dataset.wlpaid,st:"paid"}});if(r&&r.gift){toast("Зачислено на вещь");load()}else{b.disabled=false;toast(r&&r.error||"Не вдалося")}});
+    root.querySelectorAll("[data-wlcancel]").forEach(b=>b.onclick=async()=>{const r=await meCall({a:"st",op:"wlGiftSet",d:{id:b.dataset.wlcancel,st:"cancel"}});if(r&&r.gift)load();else toast(r&&r.error||"Не вдалося")})};
+  load()}
+
+setTimeout(()=>{linkTry(selOpenFromLink);linkTry(wlOpenFromLink);linkTry(orderOpenFromLink);linkTry(clientOpenFromLink);linkTry(blockOpenFromLink);selBar()},1500);
 // защита витрины: без меню «сохранить фото», без перетаскивания и копирования (кроме полей ввода)
 (function(){const ed=t=>t&&t.closest&&t.closest("input,textarea,[contenteditable]");
   document.addEventListener("contextmenu",e=>{if(!ed(e.target))e.preventDefault()});

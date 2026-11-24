@@ -25,6 +25,9 @@ export default async function handler(req, res) {
       { const im = new URL(req.url, "http://x").searchParams.get("img"); if (im) { if (!/^[a-z0-9]{16}$/.test(im)) { res.statusCode = 404; return res.end(); }
         const d = await getStore().get("upimg." + im); if (!d || !d.data) { res.statusCode = 404; return res.end(); }
         res.statusCode = 200; res.setHeader("Content-Type", d.ct || "image/jpeg"); res.setHeader("Cache-Control", "public, max-age=31536000, immutable"); return res.end(Buffer.from(d.data, "base64")); } }
+      // вишлист по ссылке (без входа) и статус подарка гостя
+      { const sp = new URL(req.url, "http://x").searchParams, wlc = sp.get("wl"), wlt = sp.get("wlg");
+        if (wlc || wlt) { const W = await import("../lib/wishlist.js"); const r = wlc ? await W.wlPublic(getStore(), wlc) : await W.wlGiftStatus(getStore(), wlt); return send(res, r.code, r.body); } }
       // подборка от менеджера: по ссылке клиент видит выбранные вещи
       const selId = new URL(req.url, "http://x").searchParams.get("sel");
       if (selId) { if (!/^[a-z0-9]{10}$/.test(selId)) return send(res, 404, { error: "Добірку не знайдено" }); const d = await getStore().get("selection." + selId);
@@ -91,6 +94,13 @@ export default async function handler(req, res) {
       await store.put({ ...d, picks: [...(d.picks || []), { ids: picks, by: who ? String(who.id) : "", at: new Date().toISOString() }].slice(-20) }).catch(() => {});
       return send(res, 200, { ok: true, sent });
     }
+    if (body.a === "wlGift" || body.a === "wlClaim") { // гость дарит по ссылке на вишлист (вход не нужен)
+      if (!allow(req, "wlgift", 8, 60000)) return tooMany(res);
+      const W = await import("../lib/wishlist.js"), store = getStore();
+      const notify = async text => { try { const { toAdmins } = await import("../lib/access.js"); await toAdmins(store, { text, parse_mode: "HTML" }); } catch {} };
+      const r = body.a === "wlGift" ? await W.wlGift(store, body.d || {}, notify) : await W.wlClaim(store, body.token, notify);
+      return send(res, r.code, r.body);
+    }
     const user = userFrom(body);
     if (!user) return send(res, 401, { error: "Telegram не підтвердив вхід — відкрийте застосунок знову", code: "bad_sign" });
     const store = getStore();
@@ -119,6 +129,14 @@ export default async function handler(req, res) {
       c = await store.put(c);
     } else if (body.a === "save") c = await saveProfile(store, user, body.profile || {});
     else c = await touchCustomer(store, user);
+    if (body.a === "wl") { // вишлисты клиента
+      const W = await import("../lib/wishlist.js"), d = body.d && typeof body.d === "object" ? body.d : {}, cid = customerId(user.id);
+      const notify = async text => { try { const { toAdmins } = await import("../lib/access.js"); await toAdmins(store, { text, parse_mode: "HTML" }); } catch {} };
+      const r = body.op === "save" ? await W.wlSave(store, cid, c.profile?.name || user.name || "", d) : body.op === "item" ? await W.wlItem(store, cid, d) : body.op === "topup" ? await W.wlTopup(store, cid, d, notify) : await W.wlMine(store, cid);
+      if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
+      if (r.code === 200) r.body.base = BOT ? `https://t.me/${BOT}?startapp=wl_` : "https://trendburo.com.ua/?wl=";
+      return send(res, r.code, r.body);
+    }
     if (body.a === "sels") { // сотрудник: мои активные добірки (живут 24 часа)
       if (!c.staff) return send(res, 403, { error: "Только для сотрудников Trend Büro" });
       if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
@@ -134,6 +152,7 @@ export default async function handler(req, res) {
         : body.op === "img" ? await S.opImage(store, d, String(req.headers["x-forwarded-host"] || req.headers.host || "trendburo.com.ua")) : body.op === "costs" ? await S.opCosts(store, d): body.op === "split" ? await S.opSplit(store, d, by) : body.op === "join" ? await S.opJoin(store, d, by) : body.op === "del" ? await S.opLeadDelete(store, d, by) : body.op === "claim" ? await S.opClaim(store, d, by) : body.op === "merge" ? await S.opMerge(store, d, by) : body.op === "clientEdit" ? await S.opClientEdit(store, d, by)
         : body.op === "leads" ? await S.opLeads(store, d.status) : body.op === "save" ? await S.opLeadSave(store, d, by) : body.op === "bulk" ? await S.opLeadBulk(store, d, by)
         : body.op === "driver" ? await S.opDriverList(store, d.days) : body.op === "clients" ? await S.opClientsLite(store) : body.op === "order" ? await S.opManualOrder(store, d, by) : body.op === "client" ? await S.opClientCreate(store, d, by)
+        : ["wlQueue", "wlGiftSet", "wlList", "wlOrder"].includes(body.op) ? await (async () => { const W = await import("../lib/wishlist.js"); return body.op === "wlQueue" ? W.wlQueue(store) : body.op === "wlGiftSet" ? W.wlGiftSet(store, d, by) : body.op === "wlList" ? W.wlStaffList(store, d.code) : W.wlItemOrder(store, d); })()
         : ["pult", "reqNew", "reqSave", "reqParse"].includes(body.op) ? await (async () => { const P = await import("../lib/pult.js"); return body.op === "pult" ? P.opPult(store) : body.op === "reqNew" ? P.opReqNew(store, d, by) : body.op === "reqSave" ? P.opReqSave(store, d, by) : P.opReqParse(d); })()
         : { code: 400, body: { error: "Неизвестное действие" } };
       // новый заказ — ссылка для клиента: по личной ссылке он войдёт и увидит свой заказ с маршрутом
