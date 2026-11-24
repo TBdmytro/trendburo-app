@@ -53,7 +53,7 @@ async function catalogBody(compact) {
     const store = getStore();
     // без потолка в 5000: товаров на витрине стало больше — новые бренды (Saint Laurent) не попадали в каталог
     const list = await store.list("product", { status: "published" }, { order: "publishedAt desc", limit: 30000,
-      fields: "_id, brand, title, sourceTitle, category, subcategory, subFor, modelSku, colors, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos, webSections, sourceUrl, kit" });
+      fields: "_id, brand, title, sourceTitle, category, subcategory, subFor, modelSku, colors, gender, images, variants, offers, pricing, overrides, status, publishedAt, stock, secPos, webSections, sourceUrl, kit, dia" });
     const now = Date.now();
     const products = list.map(p => toStorefront(p, now, { compact: !!compact, lean: compact === 2 })).filter(Boolean);
     // популярность у покупателей (просмотры, избранное, корзина) — витрина ставит такие товары выше

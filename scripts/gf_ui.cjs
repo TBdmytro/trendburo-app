@@ -1,0 +1,22 @@
+// Graff в beta: карточка кольца — группы карат, список камней, смена цены, заявка менеджеру; скриншоты в папку
+const {chromium}=require('playwright');const fs=require('fs');const html=fs.readFileSync(process.argv[2],'utf8');const out=process.argv[3];const prod=JSON.parse(fs.readFileSync(process.argv[4],'utf8'));const img=fs.readFileSync(process.argv[5]);
+(async()=>{const br=await chromium.launch();const p=await br.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});const errs=[];p.on("pageerror",e=>errs.push(e.message));
+await p.route("**/*",async r=>{const u=r.request().url();
+  if(u.startsWith("http://t.local/api/catalog"))return r.fulfill({contentType:"application/json",body:JSON.stringify({products:[prod],collections:[],content:{banners:[],rails:[],news:[],stories:[],site:{}}})});
+  if(u.startsWith("http://t.local/api/me"))return r.fulfill({contentType:"application/json",body:JSON.stringify({staff:false,access:"ok",user:{id:1,name:"Анна"},profile:{name:"Анна"},orders:[]})});
+  if(u.startsWith("http://t.local/api/"))return r.fulfill({status:404,body:"{}"});
+  if(u.startsWith("http://t.local/"))return r.fulfill({contentType:"text/html",body:html});
+  if(/sanity/.test(u))return r.fulfill({contentType:"image/jpeg",body:img,headers:{"access-control-allow-origin":"*"}});return r.abort()});
+await p.addInitScript(()=>{localStorage.setItem("tb_sp","1")});
+await p.goto("http://t.local/");await p.waitForTimeout(3000);await p.evaluate(()=>document.querySelectorAll(".gate,#splash").forEach(x=>x.remove()));
+await p.evaluate(()=>openProduct("product.manual.graff-op01"));await p.waitForTimeout(1200);
+await p.screenshot({path:out+"/g1.png"});
+const pr0=await p.evaluate(()=>document.querySelector(".pv-top .pr b").textContent);
+await p.evaluate(()=>document.querySelector(".dia").scrollIntoView());await p.waitForTimeout(300);await p.screenshot({path:out+"/g2.png"});
+await p.evaluate(()=>document.querySelector('[data-dg="1"]').click());await p.waitForTimeout(300);
+await p.evaluate(()=>document.querySelectorAll('[data-ds]')[2].click());await p.waitForTimeout(300);
+const pr1=await p.evaluate(()=>[document.querySelector(".pv-top .pr b").textContent,document.querySelector("[data-dn]").textContent,document.querySelectorAll("[data-ds]").length,[...document.querySelectorAll("[data-dg]")].map(b=>b.textContent)]);
+await p.evaluate(()=>document.querySelector(".dia .dct").scrollIntoView());await p.screenshot({path:out+"/g3.png"});
+await p.evaluate(()=>document.querySelector('[data-dg="2"]').click());await p.waitForTimeout(200);const pr2=await p.evaluate(()=>[document.querySelector(".pv-top .pr b").textContent,document.querySelectorAll("[data-ds]").length]);
+await p.evaluate(()=>document.querySelector("[data-order]").click());await p.waitForTimeout(500);const msg=await p.evaluate(()=>(document.querySelector("#om")||{}).textContent);await p.screenshot({path:out+"/g4.png"});
+console.log(JSON.stringify({errs,pr0,pr1,pr2,msg},null,1));await br.close()})();

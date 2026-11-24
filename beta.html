@@ -858,6 +858,23 @@ button{cursor:pointer}
 .pv-sib .t{width:64px;height:76px;border-radius:14px;background:#f6f5f3 center/contain no-repeat;border:2px solid transparent}
 .pv-sib button.on .t{border-color:#fff}.pc .nv{display:block;font-size:11px;opacity:.6;margin-top:2px}
 .kit .kprev{position:sticky;top:calc(56px + var(--st));z-index:3;display:flex;align-items:center;gap:12px;padding:8px 12px 8px 8px;margin:0 0 10px;border-radius:16px;background:rgba(34,36,40,.94);color:#fff;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 6px 18px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1)}.kit .kprev img{width:96px;height:64px;object-fit:contain;background:#f2f3f4;border-radius:10px;flex:none}.kit .kprev div{display:flex;flex-direction:column;gap:2px;min-width:0}.kit .kprev b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kit .kprev span{font-size:13px;color:rgba(255,255,255,.7)}
+/* Graff: вибір каменя — групи карат і список каменів (тільки те, що є на сайті) */
+.dia{display:flex;flex-direction:column;gap:12px}
+.dia .dsel{position:sticky;top:calc(56px + var(--st));z-index:3;display:flex;align-items:center;gap:12px;padding:10px 14px 10px 10px;border-radius:18px;background:rgba(34,36,40,.94);border:1px solid rgba(255,255,255,.1);box-shadow:0 6px 18px rgba(0,0,0,.25);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.dia .dsel>div{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}.dia .dsel b{font-size:14px;font-weight:600}.dia .dsel div span{font-size:12px;color:rgba(255,255,255,.6)}.dia .dsel>.num{font-size:17px;font-weight:700;white-space:nowrap}
+.dia .dgem{width:40px;height:40px;border-radius:99px;background:#f2f3f4;display:flex;align-items:center;justify-content:center;flex:none}.dia .dgem svg{width:22px;height:22px;fill:none;stroke:#26282c;stroke-width:1.5;stroke-linejoin:round}
+.dia .dstep{border-radius:22px;padding:14px 12px 12px;display:flex;flex-direction:column;gap:10px}.dia .dstep.sun{background:rgba(214,172,96,.14)}.dia .dstep.mint{background:rgba(95,169,143,.15)}
+.dia .dh{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600}.dia .dh i{width:24px;height:24px;border-radius:99px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:12.5px;color:#fff}.dia .sun .dh i{background:#b98a3c}.dia .mint .dh i{background:#5fa98f}.dia .dh small{margin-left:auto;font-size:12px;font-weight:500;color:rgba(255,255,255,.6)}
+.dia .dct{display:flex;flex-wrap:wrap;gap:7px}.dia .dct button{border:2px solid transparent;border-radius:16px;background:rgba(255,255,255,.08);color:#fff;font:600 14px Onest,system-ui,sans-serif;padding:8px 12px;text-align:left;cursor:pointer}
+.dia .dct button em{font-style:normal;display:inline-block;margin-left:6px;font-size:11px;font-weight:700;background:#b98a3c;color:#fff;border-radius:99px;padding:1px 7px;vertical-align:1px}.dia .dct small{display:block;font-size:11px;font-weight:500;color:rgba(255,255,255,.6);margin-top:1px}
+.dia button[aria-pressed="true"]{border-color:#fff}
+.dia .dlist{display:flex;flex-direction:column;gap:6px}.dia .dlist button{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;border:2px solid transparent;border-radius:16px;background:rgba(255,255,255,.08);color:#fff;padding:10px 12px;text-align:left;font:inherit;cursor:pointer}
+.dia .dmid{display:flex;flex-direction:column;min-width:0}.dia .dmid b{font-size:14.5px}.dia .dmid small{font-size:11.5px;color:rgba(255,255,255,.6)}.dia .dpr{font-weight:700;white-space:nowrap}
+.dia .dpill{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;color:#26282c;background:#f1f1ee;white-space:nowrap}.dia .dc-D{background:#e7f0fb}.dia .dc-E{background:#e9f1f8}.dia .dc-F{background:#edf1f4}.dia .dc-H,.dia .dc-I,.dia .dc-J{background:#f5efe2}
+.dia .dleg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dia .dleg div{background:rgba(255,255,255,.06);border-radius:14px;padding:9px 10px;font-size:11.5px;color:rgba(255,255,255,.6)}.dia .dleg b{display:block;color:#fff;font-size:12px}
+.dia .dnote{margin:0;font-size:12.5px;color:rgba(255,255,255,.55)}
+.pv-top .pr b.dbump{animation:dbump .28s ease}@keyframes dbump{50%{transform:scale(1.07)}}
+@media (prefers-reduced-motion:reduce){.pv-top .pr b.dbump{animation:none}}
 .kit .kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin:6px 0 14px}.kit .kgrid button{border:2px solid transparent;border-radius:14px;background:rgba(255,255,255,.07);padding:6px;display:flex;flex-direction:column;align-items:center;gap:3px;color:inherit;font:inherit;cursor:pointer}.kit .kgrid button[aria-pressed="true"]{border-color:currentColor}.kit .kgrid img{width:100%;aspect-ratio:3/2;object-fit:contain;background:#f2f3f4;border-radius:10px}.kit .kgrid .kbi{display:block;width:100%;aspect-ratio:3/2;overflow:hidden;background:#fff;border-radius:10px}.kit .kgrid .kbi img{background:#fff;border-radius:0;transform:scale(2.3);transform-origin:60% 72%}.kit .kgrid span{font-size:11px;line-height:1.2;text-align:center}.kit .kgrid small{font-size:10.5px;opacity:.65}.kit .kz{margin-bottom:6px}
 .pv-sib .c{font-size:10.5px;opacity:.7;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pv-sib.ver button{width:88px}.pv-sib.ver .t{width:88px;height:96px}.pv-sib.ver .c{max-width:88px;white-space:normal;text-align:center;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}.pv-sib .c.sp{opacity:1;font-weight:600;-webkit-line-clamp:1}
@@ -3391,11 +3408,15 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   let like=null;const likeOf=()=>like||(like=p?similarTo(p):RESALE.filter(x=>x.id!==it.id));
   const showDl=!r&&!(st&&st.loc==="ua");
   const K=p&&p.kit&&p.kit.def?p.kit:null;let kb=K?K.def.b:"",ks=K?K.def.s:"",kz="";
+  // Graff: каблучка з каменями з сайту — групи карат (0.55 → 0.5, 1.01 → 1) і всі камені групи, від дешевшого
+  const DIA=p&&p.dia&&p.dia.list&&p.dia.list.length?p.dia:null,DG=[.3,.4,.5,.7,.9,1,1.5,2,2.5,3,4,5,6,8,10],dGrp=c=>{let g=null;DG.forEach(x=>{if(c+1e-9>=x)g=x});return g==null?Math.floor(c*10)/10:g};
+  const dL=DIA?DIA.list.map((x,i)=>({i,ct:+x[0],col:x[1],cla:x[2],p:+x[3],g:dGrp(+x[0])})).sort((a,b)=>a.p-b.p||a.ct-b.ct):[],dGs=[...new Set(dL.map(x=>x.g))].sort((a,b)=>a-b);
+  let dg=dL.length?dL[0].g:null,ds=dL.length?dL[0].i:null;
   // пришли из карточки отдельного ремня / пряжки — конструктор открывается уже с этой частью
   if(K&&window.KIT_PRE){const q=window.KIT_PRE;window.KIT_PRE=null;const put=(arr,c,col)=>{if(!c)return"";if(arr.some(x=>x.c===c))return c;const sib=arr.find(x=>x.c.slice(0,7)===c.slice(0,7));if(!sib)return"";arr.push({c,n:sib.n,col:col||sib.col,p:sib.p,k:sib.k});return c};const s1=put(K.straps,q.s,q.col),b1=put(K.buckles,q.b);if(s1)ks=s1;if(b1)kb=b1}
   // отдельный ремень без пряжки / пряжка Hermès: предлагаем собрать в конструкторе нужной ширины
   const kitFor=(()=>{if(K||!p||!/herm/i.test(p.brand||""))return null;const nm=String(p.name||""),isS=/belt strap|g[uü]rtelriemen|leather strap/i.test(nm),isB=/buckle|g[uü]rtelschlie[sß]/i.test(nm);if(!isS&&!isB)return null;const w=+(nm.match(/(\d{2})\s*mm/)||[])[1]||0,code=String(p.id).split("-").pop().toUpperCase();const kp=P.find(x=>x.kit&&(!w||x.kit.w===w)&&(isS?x.kit.straps:x.kit.buckles).some(y=>y.c.slice(0,7)===code.slice(0,7)))||(w?P.find(x=>x.kit&&x.kit.w===w):null);return kp?{kp,isS,code}:null})();
-  const btnLabel=()=>r?"Купити":K?"Замовити цей ремінь":isPor(it)?"Уточнити ціну":isPre()?"Уточнити наявність":"У кошик · "+eur(priceFor(it,d));
+  const btnLabel=()=>r?"Купити":DIA?"Замовити каблучку":K?"Замовити цей ремінь":isPor(it)?"Уточнити ціну":isPre()?"Уточнити наявність":"У кошик · "+eur(priceFor(it,d));
   const hasPh=!!(p&&p.live&&p.imgs&&p.imgs.length);
   const s=push(it.brand,`<div class="pv-hero${hasPh?" ph":""}">${(()=>{const b=[p&&p.sale?`<span class="sale">−${p.sale}%</span>`:"",p&&p.st?"<span>В наявності</span>":p&&p.availability==="preorder"?"<span>Передзамовлення</span>":p&&p.isNew?"<span>Новинка</span>":r?`<span>${esc(r.cond)}</span>`:""].join("");return b?`<div class="pv-bdg">${b}</div>`:""})()}${hasPh?`<div class="pv-gal" id="pvg">${p.imgs.slice(0,8).map((im,i)=>`<div class="sl" data-full="1" data-res="0"><img ${i?"data-":""}style="background:url(&quot;${esc(im.thumb||im.src)}&quot;) center/contain no-repeat" ${i?"data-":""}src="${esc(im.src)}"${/^https:\/\/cdn\.sanity\.io\//.test(im.src)?' crossorigin="anonymous"':""} data-zi="${i}" alt="${esc(it.brand+" "+it.name)}" ${i?"":'fetchpriority="high"'} decoding="async"></div>`).join("")}</div>${p.imgs.length>1?`<div class="pv-dots">${p.imgs.slice(0,8).map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}`:`<span class="v ${LOW.includes(it.shape)?"low":""}" id="pvv">${shapeSVG(it.shape,it.c,"")}</span>`}</div>
    <div class="pv-panel"><span class="grab2"></span><div id="pvb" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -3456,18 +3477,34 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   const kOrder=()=>{if(!kz){toast("Оберіть розмір ременя");s.querySelector(".kz")?.scrollIntoView({behavior:"smooth",block:"center"});return}
     const sku=`U_BELT_${K.w}_HOMME-${kb}-${ks}${String(kz).padStart(3,"0")}`;
     orderSheet("Ремінь Hermès "+K.w+" мм",`Вітаю! Хочу ремінь-конструктор Hermès ${K.w} мм:\nПряжка: ${kB().n} (${kb})\nРемінь: ${[kS().col,kS().n].filter(Boolean).join(", ")} (${ks})\nРозмір: ${kz}\nЦіна: ${kTxt(kb,ks)}\nДоставка: ${{ua:"Україна",eu:"Європа",dxb:"Дубай"}[d]||d}\nАртикул Hermès: ${sku}`)};
+  const dOur=v=>{const our=priceFor(it,d);return Math.round(v*our/(DIA.base||v)/5)*5},dTxt=v=>{const o=dOur(v);return o>POR_EUR?"за запитом":eur(o)},dSt=()=>dL.find(x=>x.i===ds)||dL[0];
+  const ctL=g=>(g%1?String(g):g.toFixed(0))+" ct",dWord=n=>n===1?"камінь":n<5?"камені":"каменів";
+  const dStones=()=>dL.filter(x=>x.g===dg).map(x=>`<button type="button" data-ds="${x.i}" aria-pressed="${x.i===ds}"><span class="dpill dc-${esc(x.col)}">${esc(x.col)} · ${esc(x.cla)}</span><span class="dmid"><b>${x.ct.toFixed(2)} ct</b><small>колір ${esc(x.col)} · чистота ${esc(x.cla)}</small></span><span class="dpr num">${dTxt(x.p)}</span></button>`).join("");
+  const dHTML=()=>{const S=dSt();return `<div class="dia">
+      <div class="dsel"><span class="dgem"><svg viewBox="0 0 24 24"><path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18M9 4l3 16 3-16"/></svg></span><div><b data-dn>${S.ct.toFixed(2)} ct · ${esc(S.col)} · ${esc(S.cla)}</b><span>Обраний камінь Graff</span></div><span class="num" data-dp>${dTxt(S.p)}</span></div>
+      <div class="dstep sun"><div class="dh"><i>1</i>Карат<small>скільки є на сайті</small></div><div class="dct">${dGs.map(g=>{const m=dL.filter(x=>x.g===g);return `<button type="button" data-dg="${g}" aria-pressed="${g===dg}">${ctL(g)}<em>${m.length}</em><small>${dOur(m[0].p)>POR_EUR?"ціна за запитом":"від "+eur(dOur(m[0].p))}</small></button>`}).join("")}</div></div>
+      <div class="dstep mint"><div class="dh"><i>2</i>Доступні камені<small data-dcnt>${dL.filter(x=>x.g===dg).length} ${dWord(dL.filter(x=>x.g===dg).length)}</small></div><div class="dlist" data-dlist>${dStones()}</div></div>
+      <div class="dleg"><div><b>Колір D → H</b>D — найбіліший, H — ледь теплий</div><div><b>Чистота VVS → VS</b>VVS — включень майже немає</div></div>
+      <p class="dnote">Розмір каблучки підбере менеджер у бутику Graff.</p></div>`};
+  const dUpd=gChanged=>{const S=dSt();s.querySelectorAll("[data-dg]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.dg===dg)));
+    if(gChanged){const l=s.querySelector("[data-dlist]");if(l)l.innerHTML=dStones();const n=dL.filter(x=>x.g===dg).length,c=s.querySelector("[data-dcnt]");if(c)c.textContent=n+" "+dWord(n)}
+    else s.querySelectorAll("[data-ds]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.ds===ds)));
+    const q=(a,v)=>{const e=s.querySelector(a);if(e)e.textContent=v};q("[data-dn]",S.ct.toFixed(2)+" ct · "+S.col+" · "+S.cla);q("[data-dp]",dTxt(S.p));
+    const pb=s.querySelector(".pv-top .pr b");if(pb){pb.textContent=dTxt(S.p).replace("за запитом","Ціна за запитом");pb.classList.remove("dbump");void pb.offsetWidth;pb.classList.add("dbump")}
+    try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(e){}};
+  const dOrder=()=>{const S=dSt();orderSheet("Каблучка Graff",`Вітаю! Хочу каблучку Graff:\n${it.name}\nКамінь: ${S.ct.toFixed(2)} ct, колір ${S.col}, чистота ${S.cla}\nЦіна: ${dTxt(S.p)}\nРозмір: допоможіть підібрати\nДоставка: ${{ua:"Україна",eu:"Європа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`)};
   const oldP=()=>p&&p.sale&&p.oldPrices?(p.oldPrices[d]??p.oldPrices.ua):0;
   const draw=()=>{const cw=cws[ci];
     s.querySelector("#pvb").innerHTML=`
     <div class="pv-top"><div style="min-width:0">${p?`<button class="bl" data-act="brand" data-bk="${p.bk}">${esc(it.brand)} ›</button>`:`<span class="bl">${esc(it.brand)}</span>`}<h2>${esc(it.name)}</h2></div>
-      <div class="pr"><b class="num">${K?kTxt(kb,ks).replace("за запитом","Ціна за запитом"):!r&&isPor(it)?"Ціна за запитом":eur(r?it.price:priceFor(it,d))}</b>${oldP()?`<s class="num">${eur(oldP())}</s>`:r?"<span>Ціна продавця</span>":""}</div></div>
+      <div class="pr"><b class="num">${DIA?dTxt(dSt().p).replace("за запитом","Ціна за запитом"):K?kTxt(kb,ks).replace("за запитом","Ціна за запитом"):!r&&isPor(it)?"Ціна за запитом":eur(r?it.price:priceFor(it,d))}</b>${oldP()?`<s class="num">${eur(oldP())}</s>`:r?"<span>Ціна продавця</span>":""}</div></div>
     ${st?`<span class="avail"><span class="gdot"></span>В наявності · ${st.city}${st.loc==="ua"?", Україна":", Німеччина"}</span>`:""}
     ${st&&st.loc==="ua"?`<div class="pv-note">Вже в Україні — відправимо Новою поштою за 1–3 дні</div>`:!st&&p&&p.live&&isPre()?`<div class="pv-note">${p.availability==="preorder"?"У бутика передзамовлення — наявність і термін уточнить менеджер":noSz?"Розмір і наявність уточнить менеджер — викупимо в бутику":"Онлайн зараз немає — менеджер уточнить наявність і викупить у бутику"}</div>`:!st&&p&&p.live&&!p.orderable?`<div class="pv-note">Наявність і розмір менеджер підтвердить після замовлення</div>`:""}`;
     s.querySelector("#pvx").innerHTML=`
     ${st&&st.size?`<div><div class="pv-lbl">Розмір</div><div class="fixsz"><b>${st.size}</b><span>один екземпляр</span></div></div>`:""}
     ${r?`<div class="tags"><span class="dark" style="background:#fff;color:var(--fg)">Перевірено Trend Büro</span><span style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">${esc(r.set)}</span></div>`:""}
     ${cws.length>1?`<div><div class="pv-lbl">Колір · ${cw.name}${cw.ok?"":" · під замовлення"}</div><div class="cw">${cws.map((c,i)=>`<button data-ci="${i}" class="${c.ok?"":"na"}" aria-pressed="${i===ci}" aria-label="Колір ${c.name}"><span class="t">${shapeSVG(it.shape,c.c,"")}</span><span>${c.name}</span></button>`).join("")}</div></div>`:""}
-    ${K?kHTML():""}
+    ${K?kHTML():""}${DIA?dHTML():""}
     ${kitFor?`<button class="btn block soft" type="button" data-kitgo style="margin:4px 0 10px">${kitFor.isS?"Підібрати пряжку — зібрати ремінь":"Підібрати ремінь до пряжки"} ›</button><p class="muted" style="font-size:13px;margin:0 0 10px">${kitFor.isS?"Це ремінь без пряжки. У конструкторі оберіть пряжку і розмір — побачите фото й ціну готового ременя.":"Це пряжка без ременя. У конструкторі оберіть шкіру і розмір."}</p>`:""}
     ${sizes&&!K?`<button class="szpick press" type="button" data-szopen><span>${p.cat==="jewelry"?"Розмір каблучки":"Розмір"} <small>· ${size&&size!=="?"?size:size==="?"?"підібрати":"обрати"}</small></span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`:""}
     ${(()=>{const L=famSibs(p);if(!L.length)return "";const pp=x=>isPor(x)?"за запитом":eur(priceFor(x,d)),dif=new Set(L.map(pp)).size>1,ver=dif||/van cleef/i.test(p.brand||"");/* версии отличаются не только цветом (размер модели, ряды, камни) — подпись «Версии» и цена каждой */return `<div><div class="pv-lbl">${ver?"Версії":"Інші кольори"} · ${L.length}</div><div class="pv-sib${ver?" ver":""}">${L.map(x=>{const im=x.imgs&&x.imgs[0];return `<button class="${x.id===p.id?"on":""}" ${x.id===p.id?"disabled":`data-sib="${x.id}"`} aria-label="${esc((x.col||x.name)+(dif?", "+pp(x):""))}"><span class="t" style="${im?`background-image:url(&quot;${esc(im.thumb||im.src)}&quot;)`:""}"></span><span class="c">${esc(x.col||"")}</span>${dif?`<span class="c sp num">${esc(pp(x))}</span>`:""}</button>`}).join("")}</div></div>`})()}
@@ -3489,6 +3526,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   fb.onclick=()=>{toggleFav(it.id);fb.setAttribute("aria-pressed",favs.has(it.id))};
   {const wp=s.querySelector("[data-wlp]");if(wp)wp.onclick=()=>wlAddSheet(it.id,{size:typeof size!=="undefined"?size:"",color:(p&&p.col)||""})}
   if(kitFor)s.addEventListener("click",e=>{if(!(e.target.closest&&e.target.closest("[data-kitgo]")))return;window.KIT_PRE=kitFor.isS?{s:kitFor.code,col:(cws&&cws[ci]&&cws[ci].name)||p.col||""}:{b:kitFor.code};openProduct(kitFor.kp.id)});
+  if(DIA)s.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-dg],[data-ds]");if(!t)return;e.preventDefault();if(t.dataset.dg){const g=+t.dataset.dg;if(g===dg)return;dg=g;ds=dL.find(x=>x.g===g).i;dUpd(true)}else{const i=+t.dataset.ds;if(i===ds)return;ds=i;dUpd(false)}});
   if(K)s.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-kb],[data-ks],[data-kz]");if(!t)return;e.preventDefault();let bc=false;if(t.dataset.kb){if(kb===t.dataset.kb)return;kb=t.dataset.kb;bc=true;kHero()}else if(t.dataset.ks){if(ks===t.dataset.ks)return;ks=t.dataset.ks;kHero()}else kz=t.dataset.kz;kUpd(bc);resetBtn()});
   draw();
   if(showDl){const box=s.querySelector("#pvd");box.innerHTML=dlvHTML(d);
@@ -3510,6 +3548,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   // высота фото задаётся пропорциями снимка (см. --phh в стилях .pv-hero.ph) — фото на всю ширину, без полос и без обрезки
   ob.onclick=()=>{
     if(K){kOrder();return}
+    if(DIA){dOrder();return}
     if(sizes&&!size){szSheet();return}
     const cw=cws[ci];
     if(!r&&isPor(it)){orderSheet("Уточнити ціну: "+it.brand,`Вітаю! Хочу уточнити ціну та наявність:\n${it.brand} — ${it.name}${cws.length>1?"\nКолір: "+cw.name:""}${sizes?"\nРозмір: "+(size==="?"?"допомогти підібрати":size):""}\nДоставка: ${{ua:"Україна",eu:"Європа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`);return}
@@ -6334,7 +6373,7 @@ function applyLive(list,fresh){PV++;CMXV++;
   list.forEach(x=>{if(!CATS[x.cat])CATS[x.cat]="Інше";
     // скидка закончилась, а каталог ещё из кэша — показываем обычную цену
     const sOn=x.sale&&x.oldPrice&&!(x.saleUntil&&Date.now()>endOf(x.saleUntil)),pr=x.sale&&!sOn&&x.oldPrice?x.oldPrice:x.price;if(!pr)return; /* без цены — не роняем весь каталог из-за одной вещи */
-    P.push({id:x.id,kit:x.kit||null,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,mk:+x.mk||0,por:Math.max(+pr.ua||0,+pr.eu||0,+pr.dxb||0)>POR_EUR,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
+    P.push({id:x.id,kit:x.kit||null,dia:x.dia||null,bk:x.bk,brand:x.brand,name:x.title,g:x.g,cat:x.cat,price:pr.ua,prices:pr,mk:+x.mk||0,por:Math.max(+pr.ua||0,+pr.eu||0,+pr.dxb||0)>POR_EUR,sale:sOn?x.sale:0,oldPrices:sOn?x.oldPrice:null,dims:x.dims||"",material:x.material||"",city:"de",c:"#8a8d93",isNew:!!x.isNew,
       shape:(()=>{const u=x.im?x.im[0]&&szU(XU(x.im[0]),400):x.images&&x.images[0]&&x.images[0].thumb;return u?"img:"+u:(shapeByCat[x.cat]||"bag")})(),imn:x.imn||0,get imgs(){return this._im||(this._im=imgsOf(x))},colors:(x.colors||[]).map(c=>c.image&&c.image[0]==="~"?{...c,image:XU(c.image)}:c),sizes:x.sizes||szX(x.sz),
       orderable:!!x.orderable,availability:x.availability,checkedAt:x.checkedAt,live:true,st:x.stock||undefined,best:x.best??null,pop:x.pop||0,na:x.na?Date.parse(x.na):0,fam:x.fam||null,col:x.col||"",ct:x.ct||""})});FAMS=null;
   NEWS.length=0;RESALE.length=0;ICONS.length=0;

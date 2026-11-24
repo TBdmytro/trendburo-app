@@ -121,7 +121,7 @@ async function webIdFor(store, id, url) {
   const m = id.match(/^(product\.manual\.[a-z0-9]{1,12}-)([a-z0-9]+)$/);
   return { id: m[1] + m[2].slice(0, 22) + createHash("sha1").update(h).digest("hex").slice(0, 8), moved: true };
 }
-const KEY_ACTIONS = new Set(["me", "knownProducts", "webImport", "webUpdate", "sectionKnown", "sectionSync", "markNew", "imageUpload", "subcats", "snapSave", "webProgress"]);
+const KEY_ACTIONS = new Set(["me", "knownProducts", "webImport", "webUpdate", "sectionKnown", "sectionSync", "markNew", "imageUpload", "subcats", "snapSave", "webProgress", "diaImport"]);
 const keyHash = k => createHash("sha256").update(String(k)).digest("hex");
 async function keySession(req, a, store) {
   const k = String(req.headers["x-tb-key"] || ""); if (!/^[a-f0-9]{48}$/.test(k) || !KEY_ACTIONS.has(a)) return null;
@@ -976,6 +976,12 @@ export default async function handler(req, res) {
         let changed = 0;
         for (const id of ids) { try { await saveOverrides(store, id, { category: body.category }, me.name, pricingCfg); changed++; } catch {} }
         return send(res, 200, { changed });
+      }
+      case "diaImport": { // Graff: модель кольца и все камни со страницы («Select your diamond») — в «Новые с сайтов»
+        if (req.method !== "POST") return send(res, 405, { error: "POST" });
+        const { buildDiaProduct } = await import("../lib/graff.js");
+        try { const r = await buildDiaProduct(store, body.item || {}, { pricingCfg, by: me.name }); PCACHE = null; return send(res, 200, r); }
+        catch (e) { return send(res, 400, { error: String(e.message || e).slice(0, 200) }); }
       }
       case "webImport": {
         // товар с кнопки «В Trend Büro» одним запросом: сервер сам скачивает фото по ссылкам (параллельно) и сохраняет товар скрытым
