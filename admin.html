@@ -689,6 +689,7 @@ body:has(.sv) .tglogo,body:has(.splash) .tglogo{opacity:0}
 .ag-news{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.ag-nw{background:#fff;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:4px;color:inherit;text-decoration:none}.ag-nw .tg{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9a6b17}.ag-nw b{font-size:14px}.ag-nw small{color:#6b6e74;font-size:12.5px}
 .ag-err{color:#a8343a;font-size:12.5px}
 .ag-ctl{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line,#e6e6ea);border-radius:18px;padding:12px 14px;margin:0 0 14px}.ag-ctl .tx{flex:1;min-width:0}.ag-ctl b{display:block;font-size:15px}.ag-ctl small{display:block;color:#8e8e93;font-size:12.5px;line-height:1.35}.ag-bot{width:40px;height:40px;border-radius:12px;background:#1c1c1e;color:#fff;display:grid;place-items:center;flex:none}.ag-bot svg{width:22px;height:22px;stroke:#fff}.ag-sw{flex:none;width:52px;height:32px;border-radius:16px;border:0;background:#d1d1d6;position:relative;cursor:pointer;transition:background .2s}.ag-sw i{position:absolute;left:2px;top:2px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:left .2s}.ag-sw.on{background:#34c759}.ag-sw.on i{left:22px}
+.bfocus{display:flex;gap:6px;overflow-x:auto;width:100%;margin-bottom:8px;padding-bottom:2px;scrollbar-width:none}.bfocus .fchip{flex:none;white-space:nowrap}.bfocus .num{opacity:.6;margin-left:2px}
 </style>
 </head>
 <body>
@@ -2961,7 +2962,9 @@ async function vProducts2(pre) {
     // Женское / Мужское — отдельно, для удобства контроля
     const gn = k => ((facets.genders || []).find(x => x.k === k) || {}).n || 0;
     const gRow = `<div class="gseg" style="display:flex;gap:6px;margin-bottom:8px;width:100%">${[["", "Все"], ["w", "Женское"], ["m", "Мужское"], ["u", "Унисекс"], ["k", "Детское"]].filter(([k]) => k !== "k" || gn("k")).map(([k, v]) => `<button class="fchip ${F.g === k ? "on" : ""}" data-gq="${k}" style="flex:1;justify-content:center;font-weight:600">${v}${k ? " · " + gn(k) : ""}</button>`).join("")}</div>`;
-    $("#pf").innerHTML = gRow + (incomingN || F.status === "incoming" ? `<button class="fchip ${F.status === "incoming" ? "on" : ""}" data-st="incoming" style="${F.status === "incoming" ? "" : "border-color:#b4582f;color:#b4582f"}">Новые с сайтов · ${incomingN}</button>` : "")
+    // «Новые с сайтов»: бренды кнопками — выбрали один и разбираете только его (24.11, просьба владельца)
+    const bRow = F.status === "incoming" && (facets.brands || []).length > 1 ? `<div class="bfocus" role="group" aria-label="Бренд">${[{ k: "", n: incomingN }].concat([...facets.brands].sort((a, b) => b.n - a.n)).map(b => `<button class="fchip ${F.brand === b.k ? "on" : ""}" data-bq="${esc(b.k)}">${b.k ? esc(b.k) : "Все бренды"} <span class="num">${b.n}</span></button>`).join("")}</div>` : "";
+    $("#pf").innerHTML = gRow + bRow + (incomingN || F.status === "incoming" ? `<button class="fchip ${F.status === "incoming" ? "on" : ""}" data-st="incoming" style="${F.status === "incoming" ? "" : "border-color:#b4582f;color:#b4582f"}">Новые с сайтов · ${incomingN}</button>` : "")
       + [["", "Все"], ["published", "На витрине"], ["draft", "Скрытые"]].map(([k, v]) => `<button class="fchip ${F.status === k ? "on" : ""}" data-st="${k}">${v}</button>`).join("")
       + `<button class="fchip ${F.avail ? "on" : ""}" data-avail>Можно купить</button><button class="fchip ${F.pre ? "on" : ""}" data-pre>Уточнить наличие</button><button class="fchip ${F.nw ? "on" : ""}" data-nw>Новинки</button>`
       + chipSel("source", "Поставщик", facets.sources, sname) + chipSel("brand", "Бренд", facets.brands) + chipSel("cat", "Категория", facets.cats, k => CATS[k] || k);
@@ -3060,6 +3063,7 @@ async function vProducts2(pre) {
     const cq = e.target.closest("[data-catq]"); if (cq) { F.cat = cq.dataset.catq; sel.clear(); return load(); }
     const co = e.target.closest("[data-collq]"); if (co) { F.q = F.q === co.dataset.collq ? "" : co.dataset.collq; const qi = $("#pq"); if (qi) qi.value = F.q; document.querySelectorAll("#pcoll [data-collq]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.collq === F.q))); sel.clear(); return load(); }
     const gq = e.target.closest("[data-gq]"); if (gq) { F.g = gq.dataset.gq; sel.clear(); return load(); }
+    const bq = e.target.closest("[data-bq]"); if (bq) { F.brand = F.brand === bq.dataset.bq ? "" : bq.dataset.bq; sel.clear(); return load(); }
     if (e.target.closest("[data-avail]")) { F.avail = F.avail ? "" : "1"; return load(); }
     if (e.target.closest("[data-pre]")) { F.pre = F.pre ? "" : "1"; return load(); }
     if (e.target.closest("[data-nw]")) { F.nw = F.nw ? "" : "1"; return load(); }
