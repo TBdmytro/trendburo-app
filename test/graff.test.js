@@ -28,8 +28,8 @@ test("Graff: модель с камнями — в «Новые с сайтов�
 });
 test("Graff: обручальное кольцо без камней — одна цена, без dia; название с подписью", async () => {
   const st = new MemoryStore();
-  const r = await buildDiaProduct(st, { name: "Laurence Graff Signature Diamond Band", sub: "white gold", mpn: "RGR449", sku: "RGR449ALL_RGR449", url: "https://www.graff.com/eu-en/x.html", imgs: ["https://www.graff.com/dw/image/b.jpg"], st: [], price: 8200, g: "u" });
-  const p = await st.get(r.id); assert.equal(p.title, "Laurence Graff Signature Diamond Band, White Gold"); assert.equal(p.offers[0].boutique, 8200); assert.equal(p.dia, null); assert.equal(p.gender, "u");
+  const r = await buildDiaProduct(st, { name: "Laurence Graff Signature Diamond Band", sub: "WHITE GOLD, 0.75 CARAT", mpn: "RGR449", sku: "RGR449ALL_RGR449", url: "https://www.graff.com/eu-en/x.html", imgs: ["https://www.graff.com/dw/image/b.jpg"], st: [], price: 8200, g: "u" });
+  const p = await st.get(r.id); assert.equal(p.title, "Laurence Graff Signature Diamond Band, White Gold, 0.75 Carat"); assert.equal(p.offers[0].boutique, 8200); assert.equal(p.dia, null); assert.equal(p.gender, "u");
   await assert.rejects(buildDiaProduct(st, { name: "x", mpn: "Z1", st: [], price: 0 }), /Нет камней/);
 });
 test("Graff: жёлтые бриллианты и цветные камни без характеристик", () => {
