@@ -870,7 +870,7 @@ button{cursor:pointer}
 .dia button[aria-pressed="true"]{border-color:#fff}
 .dia .dlist{display:flex;flex-direction:column;gap:6px}.dia .dlist button{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;border:2px solid transparent;border-radius:16px;background:rgba(255,255,255,.08);color:#fff;padding:10px 12px;text-align:left;font:inherit;cursor:pointer}
 .dia .dmid{display:flex;flex-direction:column;min-width:0}.dia .dmid b{font-size:14.5px}.dia .dmid small{font-size:11.5px;color:rgba(255,255,255,.6)}.dia .dpr{font-weight:700;white-space:nowrap}
-.dia .dpill{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;color:#26282c;background:#f1f1ee;white-space:nowrap}.dia .dc-D{background:#e7f0fb}.dia .dc-E{background:#e9f1f8}.dia .dc-F{background:#edf1f4}.dia .dc-H,.dia .dc-I,.dia .dc-J{background:#f5efe2}
+.dia .dpill{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;color:#26282c;background:#f1f1ee;white-space:nowrap}.dia .dc-D{background:#e7f0fb}.dia .dc-E{background:#e9f1f8}.dia .dc-F{background:#edf1f4}.dia .dc-H,.dia .dc-I,.dia .dc-J{background:#f5efe2}.dia .dc-Y{background:#f6e7a6}.dia .dc-N{background:#e9e3f5}
 .dia .dleg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dia .dleg div{background:rgba(255,255,255,.06);border-radius:14px;padding:9px 10px;font-size:11.5px;color:rgba(255,255,255,.6)}.dia .dleg b{display:block;color:#fff;font-size:12px}
 .dia .dnote{margin:0;font-size:12.5px;color:rgba(255,255,255,.55)}
 .pv-top .pr b.dbump{animation:dbump .28s ease}@keyframes dbump{50%{transform:scale(1.07)}}
@@ -3478,21 +3478,22 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     const sku=`U_BELT_${K.w}_HOMME-${kb}-${ks}${String(kz).padStart(3,"0")}`;
     orderSheet("Ремінь Hermès "+K.w+" мм",`Вітаю! Хочу ремінь-конструктор Hermès ${K.w} мм:\nПряжка: ${kB().n} (${kb})\nРемінь: ${[kS().col,kS().n].filter(Boolean).join(", ")} (${ks})\nРозмір: ${kz}\nЦіна: ${kTxt(kb,ks)}\nДоставка: ${{ua:"Україна",eu:"Європа",dxb:"Дубай"}[d]||d}\nАртикул Hermès: ${sku}`)};
   const dOur=v=>{const our=priceFor(it,d);return Math.round(v*our/(DIA.base||v)/5)*5},dTxt=v=>{const o=dOur(v);return o>POR_EUR?"за запитом":eur(o)},dSt=()=>dL.find(x=>x.i===ds)||dL[0];
+  const dCol=c=>({"F.Y":"Fancy Yellow","F.I.Y":"Fancy Intense Yellow","F.V.Y":"Fancy Vivid Yellow"})[c]||c,dLab=x=>x.col?dCol(x.col)+" · "+x.cla:"",dYel=c=>/^F\./.test(c||"");
   const ctL=g=>(g%1?String(g):g.toFixed(0))+" ct",dWord=n=>n===1?"камінь":n<5?"камені":"каменів";
-  const dStones=()=>dL.filter(x=>x.g===dg).map(x=>`<button type="button" data-ds="${x.i}" aria-pressed="${x.i===ds}"><span class="dpill dc-${esc(x.col)}">${esc(x.col)} · ${esc(x.cla)}</span><span class="dmid"><b>${x.ct.toFixed(2)} ct</b><small>колір ${esc(x.col)} · чистота ${esc(x.cla)}</small></span><span class="dpr num">${dTxt(x.p)}</span></button>`).join("");
+  const dStones=()=>dL.filter(x=>x.g===dg).map(x=>`<button type="button" data-ds="${x.i}" aria-pressed="${x.i===ds}"><span class="dpill ${dYel(x.col)?"dc-Y":"dc-"+esc(x.col||"N")}">${x.col?esc(x.col)+" · "+esc(x.cla):"ct"}</span><span class="dmid"><b>${x.ct.toFixed(2)} ct</b><small>${x.col?(dYel(x.col)?esc(dCol(x.col)):"колір "+esc(x.col))+" · чистота "+esc(x.cla):"центральний камінь"}</small></span><span class="dpr num">${dTxt(x.p)}</span></button>`).join("");
   const dHTML=()=>{const S=dSt();return `<div class="dia">
-      <div class="dsel"><span class="dgem"><svg viewBox="0 0 24 24"><path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18M9 4l3 16 3-16"/></svg></span><div><b data-dn>${S.ct.toFixed(2)} ct · ${esc(S.col)} · ${esc(S.cla)}</b><span>Обраний камінь Graff</span></div><span class="num" data-dp>${dTxt(S.p)}</span></div>
+      <div class="dsel"><span class="dgem"><svg viewBox="0 0 24 24"><path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18M9 4l3 16 3-16"/></svg></span><div><b data-dn>${S.ct.toFixed(2)} ct${S.col?" · "+esc(dLab(S)):""}</b><span>Обраний камінь Graff</span></div><span class="num" data-dp>${dTxt(S.p)}</span></div>
       <div class="dstep sun"><div class="dh"><i>1</i>Карат<small>скільки є на сайті</small></div><div class="dct">${dGs.map(g=>{const m=dL.filter(x=>x.g===g);return `<button type="button" data-dg="${g}" aria-pressed="${g===dg}">${ctL(g)}<em>${m.length}</em><small>${dOur(m[0].p)>POR_EUR?"ціна за запитом":"від "+eur(dOur(m[0].p))}</small></button>`}).join("")}</div></div>
       <div class="dstep mint"><div class="dh"><i>2</i>Доступні камені<small data-dcnt>${dL.filter(x=>x.g===dg).length} ${dWord(dL.filter(x=>x.g===dg).length)}</small></div><div class="dlist" data-dlist>${dStones()}</div></div>
-      <div class="dleg"><div><b>Колір D → H</b>D — найбіліший, H — ледь теплий</div><div><b>Чистота VVS → VS</b>VVS — включень майже немає</div></div>
+      ${dL.some(x=>x.col)?`<div class="dleg"><div>${dL.some(x=>dYel(x.col))?"<b>Жовті діаманти</b>Fancy → Intense → Vivid — що яскравіше, то рідше":"<b>Колір D → H</b>D — найбіліший, H — ледь теплий"}</div><div><b>Чистота IF → VS</b>IF, VVS — включень майже немає</div></div>`:""}
       <p class="dnote">Розмір каблучки підбере менеджер у бутику Graff.</p></div>`};
   const dUpd=gChanged=>{const S=dSt();s.querySelectorAll("[data-dg]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.dg===dg)));
     if(gChanged){const l=s.querySelector("[data-dlist]");if(l)l.innerHTML=dStones();const n=dL.filter(x=>x.g===dg).length,c=s.querySelector("[data-dcnt]");if(c)c.textContent=n+" "+dWord(n)}
     else s.querySelectorAll("[data-ds]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.ds===ds)));
-    const q=(a,v)=>{const e=s.querySelector(a);if(e)e.textContent=v};q("[data-dn]",S.ct.toFixed(2)+" ct · "+S.col+" · "+S.cla);q("[data-dp]",dTxt(S.p));
+    const q=(a,v)=>{const e=s.querySelector(a);if(e)e.textContent=v};q("[data-dn]",S.ct.toFixed(2)+" ct"+(S.col?" · "+dLab(S):""));q("[data-dp]",dTxt(S.p));
     const pb=s.querySelector(".pv-top .pr b");if(pb){pb.textContent=dTxt(S.p).replace("за запитом","Ціна за запитом");pb.classList.remove("dbump");void pb.offsetWidth;pb.classList.add("dbump")}
     try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(e){}};
-  const dOrder=()=>{const S=dSt();orderSheet("Каблучка Graff",`Вітаю! Хочу каблучку Graff:\n${it.name}\nКамінь: ${S.ct.toFixed(2)} ct, колір ${S.col}, чистота ${S.cla}\nЦіна: ${dTxt(S.p)}\nРозмір: допоможіть підібрати\nДоставка: ${{ua:"Україна",eu:"Європа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`)};
+  const dOrder=()=>{const S=dSt();orderSheet("Каблучка Graff",`Вітаю! Хочу каблучку Graff:\n${it.name}\nКамінь: ${S.ct.toFixed(2)} ct${S.col?", колір "+dCol(S.col)+", чистота "+S.cla:""}\nЦіна: ${dTxt(S.p)}\nРозмір: допоможіть підібрати\nДоставка: ${{ua:"Україна",eu:"Європа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`)};
   const oldP=()=>p&&p.sale&&p.oldPrices?(p.oldPrices[d]??p.oldPrices.ua):0;
   const draw=()=>{const cw=cws[ci];
     s.querySelector("#pvb").innerHTML=`

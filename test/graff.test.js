@@ -32,3 +32,9 @@ test("Graff: обручальное кольцо без камней — одн�
   const p = await st.get(r.id); assert.equal(p.title, "Laurence Graff Signature Diamond Band, White Gold"); assert.equal(p.offers[0].boutique, 8200); assert.equal(p.dia, null); assert.equal(p.gender, "u");
   await assert.rejects(buildDiaProduct(st, { name: "x", mpn: "Z1", st: [], price: 0 }), /Нет камней/);
 });
+test("Graff: жёлтые бриллианты и цветные камни без характеристик", () => {
+  assert.deepEqual(normStone({ id: "Y_GR1", ct: 1.08, col: "F.V.Y", cla: "VS1", p: 65500 }), { id: "Y_GR1", ct: 1.08, col: "F.V.Y", cla: "VS1", p: 65500 });
+  assert.equal(normStone({ id: "Y_GR2", ct: 1, col: "VS2", cla: "F.Y", p: 26000 }).col, "F.Y");
+  assert.deepEqual(normStone({ id: "R_GR3", ct: 1.52, col: "null", cla: "null", p: 62000 }), { id: "R_GR3", ct: 1.52, col: "", cla: "", p: 62000 });
+  assert.equal(normStone({ id: "x", ct: 1, col: "G", cla: "null", p: 5 }), null);
+});
