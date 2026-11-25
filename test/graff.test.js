@@ -40,8 +40,8 @@ test("Graff: жёлтые бриллианты и цветные камни бе
 });
 test("Graff: серьги — своя подкатегория, запонки без подкатегории", async () => {
   const st = new MemoryStore();
-  const a = await buildDiaProduct(st, { name: "Classic Graff Diamond Stud Earrings", sub: "platinum", mpn: "RGE1", sku: "RGE1", imgs: [], st: [], price: 9000, cat2: "earrings" });
+  const a = await buildDiaProduct(st, { name: "Classic Graff Diamond Stud Earrings", sub: "platinum", mpn: "RGE1", sku: "RGE1", imgs: ["https://www.graff.com/dw/image/e.jpg"], st: [], price: 9000, cat2: "earrings" });
   assert.equal((await st.get(a.id)).subcategory, "earrings");
-  const b = await buildDiaProduct(st, { name: "Diamond Cufflinks", mpn: "CL1", sku: "CL1", imgs: [], st: [], price: 5000, cat2: "", g: "m" });
+  const b = await buildDiaProduct(st, { name: "Diamond Cufflinks", mpn: "CL1", sku: "CL1", imgs: ["https://www.graff.com/dw/image/c.jpg"], st: [], price: 5000, cat2: "", g: "m" });
   assert.ok(!(await st.get(b.id)).subcategory || (await st.get(b.id)).subcategory !== "rings");
 });
