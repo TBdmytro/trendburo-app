@@ -872,6 +872,7 @@ button{cursor:pointer}
 .dia .dmid{display:flex;flex-direction:column;min-width:0}.dia .dmid b{font-size:14.5px}.dia .dmid small{font-size:11.5px;color:rgba(255,255,255,.6)}.dia .dpr{font-weight:700;white-space:nowrap}
 .dia .dpill{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;color:#26282c;background:#f1f1ee;white-space:nowrap}.dia .dc-D{background:#e7f0fb}.dia .dc-E{background:#e9f1f8}.dia .dc-F{background:#edf1f4}.dia .dc-H,.dia .dc-I,.dia .dc-J{background:#f5efe2}.dia .dc-Y{background:#f6e7a6}.dia .dc-N{background:#e9e3f5}
 .dia .dleg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dia .dleg div{background:rgba(255,255,255,.06);border-radius:14px;padding:9px 10px;font-size:11.5px;color:rgba(255,255,255,.6)}.dia .dleg b{display:block;color:#fff;font-size:12px}
+.dia .dpair{font-style:normal;font-weight:500;font-size:11.5px;color:rgba(255,255,255,.6)}
 .dia .dnote{margin:0;font-size:12.5px;color:rgba(255,255,255,.55)}
 .pv-top .pr b.dbump{animation:dbump .28s ease}@keyframes dbump{50%{transform:scale(1.07)}}
 @media (prefers-reduced-motion:reduce){.pv-top .pr b.dbump{animation:none}}
@@ -3410,7 +3411,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   const K=p&&p.kit&&p.kit.def?p.kit:null;let kb=K?K.def.b:"",ks=K?K.def.s:"",kz="";
   // Graff: каблучка з каменями з сайту — групи карат (0.55 → 0.5, 1.01 → 1) і всі камені групи, від дешевшого
   const DIA=p&&p.dia&&p.dia.list&&p.dia.list.length?p.dia:null,DG=[.3,.4,.5,.7,.9,1,1.5,2,2.5,3,4,5,6,8,10],dGrp=c=>{let g=null;DG.forEach(x=>{if(c+1e-9>=x)g=x});return g==null?Math.floor(c*10)/10:g};
-  const dL=DIA?DIA.list.map((x,i)=>({i,ct:+x[0],col:x[1],cla:x[2],p:+x[3],g:dGrp(+x[0])})).sort((a,b)=>a.p-b.p||a.ct-b.ct):[],dGs=[...new Set(dL.map(x=>x.g))].sort((a,b)=>a-b);
+  const dL=DIA?DIA.list.map((x,i)=>({i,ct:+x[0],col:x[1],cla:x[2],p:+x[3],pair:x[4]||"",g:dGrp(+x[0])})).sort((a,b)=>a.p-b.p||a.ct-b.ct):[],dGs=[...new Set(dL.map(x=>x.g))].sort((a,b)=>a-b);
   let dg=dL.length?dL[0].g:null,ds=dL.length?dL[0].i:null;
   // пришли из карточки отдельного ремня / пряжки — конструктор открывается уже с этой частью
   if(K&&window.KIT_PRE){const q=window.KIT_PRE;window.KIT_PRE=null;const put=(arr,c,col)=>{if(!c)return"";if(arr.some(x=>x.c===c))return c;const sib=arr.find(x=>x.c.slice(0,7)===c.slice(0,7));if(!sib)return"";arr.push({c,n:sib.n,col:col||sib.col,p:sib.p,k:sib.k});return c};const s1=put(K.straps,q.s,q.col),b1=put(K.buckles,q.b);if(s1)ks=s1;if(b1)kb=b1}
@@ -3480,7 +3481,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
   const dOur=v=>{const our=priceFor(it,d);return Math.round(v*our/(DIA.base||v)/5)*5},dTxt=v=>{const o=dOur(v);return o>POR_EUR?"за запитом":eur(o)},dSt=()=>dL.find(x=>x.i===ds)||dL[0];
   const dCol=c=>({"F.Y":"Fancy Yellow","F.I.Y":"Fancy Intense Yellow","F.V.Y":"Fancy Vivid Yellow"})[c]||c,dLab=x=>x.col?dCol(x.col)+" · "+x.cla:"",dYel=c=>/^F\./.test(c||"");
   const ctL=g=>(g%1?String(g):g.toFixed(0))+" ct",dWord=n=>n===1?"камінь":n<5?"камені":"каменів";
-  const dStones=()=>dL.filter(x=>x.g===dg).map(x=>`<button type="button" data-ds="${x.i}" aria-pressed="${x.i===ds}"><span class="dpill ${dYel(x.col)?"dc-Y":"dc-"+esc(x.col||"N")}">${x.col?esc(x.col)+" · "+esc(x.cla):"ct"}</span><span class="dmid"><b>${x.ct.toFixed(2)} ct</b><small>${x.col?(dYel(x.col)?esc(dCol(x.col)):"колір "+esc(x.col))+" · чистота "+esc(x.cla):"центральний камінь"}</small></span><span class="dpr num">${dTxt(x.p)}</span></button>`).join("");
+  const dStones=()=>dL.filter(x=>x.g===dg).map(x=>`<button type="button" data-ds="${x.i}" aria-pressed="${x.i===ds}"><span class="dpill ${dYel(x.col)?"dc-Y":"dc-"+esc(x.col||"N")}">${x.col?esc(x.col)+" · "+esc(x.cla):"ct"}</span><span class="dmid"><b>${x.ct.toFixed(2)} ct${x.pair?` <i class="dpair">пара ${esc(x.pair)}</i>`:""}</b><small>${x.col?(dYel(x.col)?esc(dCol(x.col)):"колір "+esc(x.col))+" · чистота "+esc(x.cla):"центральний камінь"}</small></span><span class="dpr num">${dTxt(x.p)}</span></button>`).join("");
   const dHTML=()=>{const S=dSt();return `<div class="dia">
       <div class="dsel"><span class="dgem"><svg viewBox="0 0 24 24"><path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18M9 4l3 16 3-16"/></svg></span><div><b data-dn>${S.ct.toFixed(2)} ct${S.col?" · "+esc(dLab(S)):""}</b><span>Обраний камінь Graff</span></div><span class="num" data-dp>${dTxt(S.p)}</span></div>
       <div class="dstep sun"><div class="dh"><i>1</i>Карат<small>скільки є на сайті</small></div><div class="dct">${dGs.map(g=>{const m=dL.filter(x=>x.g===g);return `<button type="button" data-dg="${g}" aria-pressed="${g===dg}">${ctL(g)}<em>${m.length}</em><small>${dOur(m[0].p)>POR_EUR?"ціна за запитом":"від "+eur(dOur(m[0].p))}</small></button>`}).join("")}</div></div>
@@ -3493,7 +3494,7 @@ if(size&&size!=="?"&&p.sizes&&p.sizes.length){const z=p.sizes.filter(x=>x.size==
     const q=(a,v)=>{const e=s.querySelector(a);if(e)e.textContent=v};q("[data-dn]",S.ct.toFixed(2)+" ct"+(S.col?" · "+dLab(S):""));q("[data-dp]",dTxt(S.p));
     const pb=s.querySelector(".pv-top .pr b");if(pb){pb.textContent=dTxt(S.p).replace("за запитом","Ціна за запитом");pb.classList.remove("dbump");void pb.offsetWidth;pb.classList.add("dbump")}
     try{TGW&&TGW.HapticFeedback&&TGW.HapticFeedback.selectionChanged()}catch(e){}};
-  const dOrder=()=>{const S=dSt();orderSheet("Каблучка Graff",`Вітаю! Хочу каблучку Graff:\n${it.name}\nКамінь: ${S.ct.toFixed(2)} ct${S.col?", колір "+dCol(S.col)+", чистота "+S.cla:""}\nЦіна: ${dTxt(S.p)}\nРозмір: допоможіть підібрати\nДоставка: ${{ua:"Україна",eu:"Європа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`)};
+  const dOrder=()=>{const S=dSt();orderSheet("Каблучка Graff",`Вітаю! Хочу каблучку Graff:\n${it.name}\nКамінь: ${S.ct.toFixed(2)} ct${S.pair?" (пара "+S.pair+")":""}${S.col?", колір "+dCol(S.col)+", чистота "+S.cla:""}\nЦіна: ${dTxt(S.p)}\nРозмір: допоможіть підібрати\nДоставка: ${{ua:"Україна",eu:"Європа",dxb:"Дубай"}[d]||d}\nКод: ${it.id.toUpperCase()}`)};
   const oldP=()=>p&&p.sale&&p.oldPrices?(p.oldPrices[d]??p.oldPrices.ua):0;
   const draw=()=>{const cw=cws[ci];
     s.querySelector("#pvb").innerHTML=`

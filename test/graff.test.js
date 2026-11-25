@@ -45,3 +45,7 @@ test("Graff: серьги — своя подкатегория, запонки 
   const b = await buildDiaProduct(st, { name: "Diamond Cufflinks", mpn: "CL1", sku: "CL1", imgs: ["https://www.graff.com/dw/image/c.jpg"], st: [], price: 5000, cat2: "", g: "m" });
   assert.ok(!(await st.get(b.id)).subcategory || (await st.get(b.id)).subcategory !== "rings");
 });
+test("Graff: серьги — пара камней", () => {
+  assert.deepEqual(normStone({ id: "E_GE1", ct: 0.61, col: "F/G", cla: "VVS1/VVS2", p: 10000, pair: "0.30 + 0.31" }), { id: "E_GE1", ct: 0.61, col: "F/G", cla: "VVS1/VVS2", p: 10000, pair: "0.30 + 0.31" });
+  assert.equal(normStone({ id: "E_GE2", ct: 0.44, col: "F", cla: "VVS2", p: 5650, pair: "<b>" }).pair, undefined);
+});
