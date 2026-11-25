@@ -38,3 +38,10 @@ test("Graff: жёлтые бриллианты и цветные камни бе
   assert.deepEqual(normStone({ id: "R_GR3", ct: 1.52, col: "null", cla: "null", p: 62000 }), { id: "R_GR3", ct: 1.52, col: "", cla: "", p: 62000 });
   assert.equal(normStone({ id: "x", ct: 1, col: "G", cla: "null", p: 5 }), null);
 });
+test("Graff: серьги — своя подкатегория, запонки без подкатегории", async () => {
+  const st = new MemoryStore();
+  const a = await buildDiaProduct(st, { name: "Classic Graff Diamond Stud Earrings", sub: "platinum", mpn: "RGE1", sku: "RGE1", imgs: [], st: [], price: 9000, cat2: "earrings" });
+  assert.equal((await st.get(a.id)).subcategory, "earrings");
+  const b = await buildDiaProduct(st, { name: "Diamond Cufflinks", mpn: "CL1", sku: "CL1", imgs: [], st: [], price: 5000, cat2: "", g: "m" });
+  assert.ok(!(await st.get(b.id)).subcategory || (await st.get(b.id)).subcategory !== "rings");
+});
