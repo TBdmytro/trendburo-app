@@ -78,3 +78,20 @@ test("клиент через менеджера без приложения: з
   assert.equal(mine.length, 1); assert.equal(mine[0].items[0].icon, "bag");
   assert.equal(await linkInvite(store, { id: 55 }, "c_" + off.invite), null); // карточки больше нет
 });
+
+test("доставка, которую доплатил клиент, — не наш заработок; заказы с другим получателем — всё равно этого клиента", async () => {
+  const s = clientStats([
+    { kind: "order", status: "delivered", total: 22088, shipFee: 88, cost: 8000, dest: "eu", delivery: { name: "Sinkevych Svitlana" } },
+    { kind: "order", status: "paid", total: 2422, shipFee: 48, cost: 2260, dest: "ua", delivery: { name: "Влада" } },
+    { kind: "order", status: "delivered", total: 1048, shipFee: 48, dest: "ua", delivery: { name: "Охранник" } } // без закупки: оценка по наценке от суммы без доставки
+  ], { ua: 0.25, eu: 0.25, dxb: 0.25 });
+  assert.equal(s.orders, 3, "три заказа — все этого клиента, кому бы ни ехала посылка");
+  assert.equal(s.spent, 22088 + 2422 + 1048, "клиент заплатил всё, включая доставку");
+  assert.equal(s.earned, (22000 - 8000) + (2374 - 2260) + 200, "заработок без доставки");
+  const { MemoryStore } = await import("../lib/store.js"); const { opLeads } = await import("../lib/staffops.js");
+  const st = new MemoryStore();
+  await st.put({ _id: "customer.513570559", _type: "customer", tg: { id: 513570559, name: "🌞", username: "clfemme" }, profile: { name: "Влада" } });
+  await st.put({ _id: "lead.a", _type: "lead", kind: "order", status: "work", tgId: 513570559, tg: { id: 513570559, name: "🌞" }, delivery: { name: "Maria Nelep" }, items: [], createdAt: "2026-11-20T10:00:00Z" });
+  const r = await opLeads(st, "");
+  assert.equal(r.body.leads[0].cname, "Влада", "имя клиента — с его карточки, не получатель");
+});

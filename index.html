@@ -4647,14 +4647,16 @@ const SO_ORIG=["Франція","Італія","Німеччина","Австр�
 const soFlow=l=>["new","work",...(l.payLater?[]:["paid"]),"bought",...(l.buyMode==="online"?["received"]:[]),"packed",...(l.handover?[...((l.dest||"ua")==="ua"?["shipping"]:[]),"ready"]:["shipping",...((l.dest||"ua")==="ua"?["np"]:[])]),"delivered"];
 const soCall=async(op,d)=>{const r=await meCall({a:"st",op,d:d||{}});if(r.error)throw new Error(r.error);return r};
 const soFlag=d=>({ua:"🇺🇦",eu:"🇪🇺",dxb:"🇦🇪"}[d||"ua"]||"");
-const soName=l=>(l.tg&&l.tg.name)||(l.delivery&&l.delivery.name)||(l.tg&&l.tg.username?"@"+l.tg.username:"")||"Клиент";
+/* клиент — тот, кто заказал (имя с его карточки); получатель посылки клиентом не считается и имя клиента не подменяет */
+const soName=l=>{const L=/\p{L}/u,c=[l.cname,l.tg&&l.tg.name,l.tg&&l.tg.username?"@"+l.tg.username:""].filter(Boolean);return c.find(x=>L.test(x))||c[0]||"Клиент"};
 /* цвет и значок этапа — те же, что на маршруте у клиента */
 const SO_IC={new:"card",work:"card",paid:"card",bought:"bag",received:"home",packed:"box",shipping:"truck",np:"np",ready:"hand",delivered:"check",cancelled:"card"};
 const soCol=k=>k==="new"||k==="work"?"#6b6d72":k==="cancelled"?"#9a9da3":R2D[SO_IC[k]]||"#6b6d72";
 const soPill=k=>`<em class="so-st" style="--c:${soCol(k)}">${SO_ST[k]||k}</em>`;
 /* наш номер (#1001) и код для клиента (7KQ4) */
 const soNo=l=>"#"+String(l.number||"").replace(/^TB-/,"")+(l.code?" · "+l.code:"");
-const soMoney=l=>{const t=l.total||0,c=l.cost||0;return{t,c,p:c?t-c:0}};
+/* заработок = вещи минус закупка; доплата клиента за доставку (shipFee) уходит водителю — не наш заработок */
+const soMoney=l=>{const t=l.total||0,c=l.cost||0,f=l.shipFee||0;return{t,c,f,p:c?Math.max(0,t-f)-c:0}};
 async function openStaffOrders(){let st="",all=[];const sel=new Set();let mode="boutique",origin="";
   const s=push("Заказы",`<div class="so">
     <div class="so-hd"><div><h1>Заказы</h1><p class="so-sub"></p></div></div>
@@ -4867,7 +4869,7 @@ function soOrder(l,reload){if(!l)return;const ua=(l.dest||"ua")==="ua",dv=l.deli
     <div class="frow"><input type="text" id="soDn" value="${esc(dv.name||"")}" placeholder="Отримувач"><input type="tel" id="soDp" data-ua="${ua?1:0}" value="${esc(snPhone(dv.phone||"",ua))}" placeholder="Телефон" inputmode="tel"></div>
     <div class="frow"><input type="text" id="soDc" value="${esc(dv.city||"")}" placeholder="Місто">${ua?`<input type="text" id="soDb" value="${esc(dv.npPoint||"")}" placeholder="Відділення №" inputmode="numeric">`:`<input type="text" id="soTr" value="${esc(l.track||"")}" placeholder="Трек-номер">`}</div>
     <input type="text" id="soDa" value="${esc(dv.address||"")}" placeholder="Адреса (якщо курʼєр)">
-    <div class="field"><label for="soSf">Клиент доплатил за доставку, € — входит в сумму, клиент увидит строку «Доставка»</label><input type="text" id="soSf" value="${l.shipFee||""}" placeholder="0" inputmode="decimal"></div>
+    <div class="field"><label for="soSf">Клиент доплатил за доставку, € — входит в сумму (клиент увидит строку «Доставка»), в заработок не входит</label><input type="text" id="soSf" value="${l.shipFee||""}" placeholder="0" inputmode="decimal"></div>
     <label class="so-tg"><input type="checkbox" id="soNt" checked> Сообщить клиенту о смене этапа</label>
     <textarea id="soNo" placeholder="Заметка — только для нас" style="min-height:60px">${esc(l.note||"")}</textarea></div>`,`<button class="btn" data-sosave style="flex:1">Сохранить</button>`);
   const B=d.querySelector(".sn");snNoJump(d);

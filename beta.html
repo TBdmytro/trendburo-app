@@ -5051,14 +5051,16 @@ function puNew(reload){
         closeSheet();toast("Заявка создана");reload&&reload()}catch(err){x.disabled=false;toast(err.message)}}});
   draw()}
 const soFlag=d=>({ua:"🇺🇦",eu:"🇪🇺",dxb:"🇦🇪"}[d||"ua"]||"");
-const soName=l=>(l.tg&&l.tg.name)||(l.delivery&&l.delivery.name)||(l.tg&&l.tg.username?"@"+l.tg.username:"")||"Клиент";
+/* клиент — тот, кто заказал (имя с его карточки); получатель посылки клиентом не считается и имя клиента не подменяет */
+const soName=l=>{const L=/\p{L}/u,c=[l.cname,l.tg&&l.tg.name,l.tg&&l.tg.username?"@"+l.tg.username:""].filter(Boolean);return c.find(x=>L.test(x))||c[0]||"Клиент"};
 /* цвет и значок этапа — те же, что на маршруте у клиента */
 const SO_IC={new:"card",work:"card",paid:"card",bought:"bag",received:"home",packed:"box",shipping:"truck",np:"np",ready:"hand",delivered:"check",cancelled:"card"};
 const soCol=k=>k==="new"||k==="work"?"#6b6d72":k==="cancelled"?"#9a9da3":R2D[SO_IC[k]]||"#6b6d72";
 const soPill=k=>`<em class="so-st" style="--c:${soCol(k)}">${SO_ST[k]||k}</em>`;
 /* наш номер (#1001) и код для клиента (7KQ4) */
 const soNo=l=>"#"+String(l.number||"").replace(/^TB-/,"")+(l.code?" · "+l.code:"");
-const soMoney=l=>{const t=l.total||0,c=l.cost||0;return{t,c,p:c?t-c:0}};
+/* заработок = вещи минус закупка; доплата клиента за доставку (shipFee) уходит водителю — не наш заработок */
+const soMoney=l=>{const t=l.total||0,c=l.cost||0,f=l.shipFee||0;return{t,c,f,p:c?Math.max(0,t-f)-c:0}};
 /* вид списка заказов v2 (пробный, ?so=2): пульт «Требует внимания», режим «Коротко», действия вместо «N этапа», фото из каталога вместо буквы */
 const SO2=(()=>{try{if(/[?&]so=2/.test(location.search))localStorage.so2="1";return localStorage.so2==="1"}catch(e){return /[?&]so=2/.test(location.search)}})();
 const SO_ACT={new:"принять",work:"ждём оплату",paid:"выкупить",bought:"упаковать",received:"упаковать",packed:"отправить",shipping:"в дороге",np:"на почте",ready:"отдать",delivered:"получен",cancelled:"отменён"};
@@ -5452,7 +5454,7 @@ function soOrder(l,reload,all=[]){if(!l)return;let dst=l.dest||"ua";const ua=dst
       ${ty==="courier"?`<div class="frow">${dIn("postcode","Индекс")}${dIn("address","Улица, дом, квартира")}</div>`:dIn("npPoint",ty==="locker"?"Почтомат №":"Отделение №")}
       <div class="fl">Отправка</div>${dIn("track","Трек-номер")}
       ${dIn("comment","Комментарий для перевозчика")}<small class="so-hint">Трек клиент увидит в заказе со ссылкой на отслеживание перевозчика.</small>`;
-    h+=`<div class="fl">Клиент доплатил за доставку, €</div>${dIn("shipFee","0",'inputmode="decimal"')}<small class="so-hint">Входит в сумму заказа — клиент увидит строку «Доставка».</small>`;
+    h+=`<div class="fl">Клиент доплатил за доставку, €</div>${dIn("shipFee","0",'inputmode="decimal"')}<small class="so-hint">Входит в сумму заказа — клиент увидит строку «Доставка». Это деньги водителю: в заработок не входит.</small>`;
     B.querySelector(".so-dv").innerHTML=h};
   B.addEventListener("input",e=>{const t=e.target;if(t.dataset.dk){D[t.dataset.dk]=t.value;if(t.dataset.dk==="shipFee"){const m=B.querySelector(".sn-money");if(m&&typeof mny==="function")m.outerHTML=mny()}}else if(t.dataset.dn){const f=B.querySelector('[data-dn="f"]'),g=B.querySelector('[data-dn="l"]');D.name=[f&&f.value.trim(),g&&g.value.trim()].filter(Boolean).join(" ")}});
   drawDv();
@@ -5468,7 +5470,7 @@ function soOrder(l,reload,all=[]){if(!l)return;let dst=l.dest||"ua";const ua=dst
   const mrgHTML=()=>{if(adding)return "";if(!mrgOpen)return `<button class="so-ch2" data-mrgo style="align-self:flex-start">⇄ Объединить с другим заказом</button>`;const L=(mrgAll||!mine.length?others:mine).slice(0,25);
     return `<div class="so-split so-mrg"><b>Объединить с другим заказом</b><small>Вещи выбранного заказа перейдут сюда, а тот заказ исчезнет. Это заказ ${esc(soNo(l))}.</small>${L.map(oRow).join("")||'<small>Других активных заказов нет</small>'}${!mrgAll&&mine.length&&others.length>mine.length?`<button class="so-ch2" data-mrga style="align-self:flex-start">Показать все заказы</button>`:""}<button class="so-ch2" data-mrgx style="align-self:flex-start">Свернуть</button></div>`};
   const sibHTML=()=>sibs.length?`<div class="so-split"><b>Посылки этого заказа · ${sibs.length+1}</b>${sibs.map(x=>`<div class="so-sib"><span>${soFlag(x.dest)} <b>${esc(soNo(x))}</b> · ${(x.items||[]).length} ${(x.items||[]).length===1?"вещь":"вещи"}<small>${esc((x.items||[]).map(i=>[i.brand,i.size&&"р. "+i.size].filter(Boolean).join(" ")).join(", "))}</small></span><button class="so-ch2" data-join="${esc(x._id)}">↩ Вернуть эти вещи в этот заказ</button></div>`).join("")}</div>`:"";
-  const mny=()=>{const t=items.reduce((a,i)=>a+snNum(i.price)*(+i.qty||1),0)+snNum(D.shipFee||0),c=items.reduce((a,i)=>a+snNum(i.cost)*(+i.qty||1),0)||(l.cost||0);return `<div class="sn-money"><div><small>Продажа</small><b>${eur(t)}</b></div><div><small>Закупка</small><b>${c?eur(c):"—"}</b></div><div class="p"><small>Заработок</small><b>${c?eur(t-c):"—"}</b></div></div>`};
+  const mny=()=>{const t=items.reduce((a,i)=>a+snNum(i.price)*(+i.qty||1),0)+snNum(D.shipFee||0),c=items.reduce((a,i)=>a+snNum(i.cost)*(+i.qty||1),0)||(l.cost||0);const f=snNum(D.shipFee||0);return `<div class="sn-money"><div><small>Продажа${f?" + доставка":""}</small><b>${eur(t)}</b></div><div><small>Закупка</small><b>${c?eur(c):"—"}</b></div><div class="p"><small>Заработок</small><b>${c?eur(t-f-c):"—"}</b></div></div>${f?`<div class="hint">Доставка ${eur(f)} — водителю, в заработок не входит.</div>`:""}`};
   const drawI=()=>{B.querySelector(".sn-items").innerHTML=`<div class="fl">Вещи · ${items.length}</div>${items.map((i,j)=>snItemRow(i,j,false)).join("")}${mny()}`;
     B.querySelector(".sn-add").innerHTML=sibHTML()+splitHTML()+mrgHTML()+(adding?`<div class="sn-pick">${snPickHTML(C,l.dest||"ua")}<button class="so-ch2" data-addx style="align-self:flex-start">Свернуть</button></div>`:`<button class="so-ch2" data-addo style="align-self:flex-start">+ Добавить вещь в этот заказ</button>`)};
   drawI();
@@ -5524,7 +5526,7 @@ function soOrder(l,reload,all=[]){if(!l)return;let dst=l.dest||"ua";const ua=dst
 /* Клиент: все его посылки по странам (вариант A, 21.11) — получатель, адрес, перевозчик, трек; отметить 2–3 одной страны и объединить */
 const soCliKey=l=>l.cust||(l.tgId?"tg"+l.tgId:"")||(l.tg&&l.tg.username?"@"+l.tg.username:"")||"n:"+soName(l);
 const soCliAll=(l,all)=>{const k=soCliKey(l);return all.filter(x=>x.status!=="cancelled"&&soCliKey(x)===k)};
-const soCliName=l=>{const a=(l.delivery&&l.delivery.name)||"",b=soName(l);return /\p{L}/u.test(b)?b:a||b};
+const soCliName=l=>soName(l);
 const SO_CARR={np:"Nova Post",dhl:"DHL",ups:"UPS",fedex:"FedEx",dpd:"DPD",inpost:"InPost",gls:"GLS"};
 function soClient(l0,all,reload){const L=soCliAll(l0,all).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));const sel=new Set();
   const nm=soCliName(l0),tg=l0.tg&&l0.tg.username?"@"+l0.tg.username:"",ph=(L.find(x=>x.delivery&&x.delivery.phone)||{}).delivery?.phone||"";

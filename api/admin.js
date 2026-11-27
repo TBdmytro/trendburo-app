@@ -1074,7 +1074,7 @@ export default async function handler(req, res) {
       case "driverList": { const r = await opDriverList(store, req.query.days); return send(res, r.code, r.body); }
       case "customers": {
         // клиенты из Telegram: профиль, заказы с сайта и через менеджера, оплачено, заработок, лояльность
-        const [cs, ls] = await Promise.all([store.list("customer", {}, { order: "lastSeen desc", limit: 1000 }), store.list("lead", {}, { limit: 5000, fields: "_id, tgId, cust, number, kind, source, status, total, cost, dest, createdAt, items[]{brand, title, price, size, photo, icon}" })]);
+        const [cs, ls] = await Promise.all([store.list("customer", {}, { order: "lastSeen desc", limit: 1000 }), store.list("lead", {}, { limit: 5000, fields: "_id, tgId, cust, number, kind, source, status, total, shipFee, cost, dest, createdAt, items[]{brand, title, price, size, photo, icon}" })]);
         const mk = mergeConfig(pricingCfg).official.markup, acc = await accessSettings(store, { fresh: true });
         const by = {}; ls.forEach(l => { const k = l.tgId || l.cust; if (k) (by[k] = by[k] || []).push(l); });
         let bot = ""; if (cs.some(c => c.offline)) { try { bot = (await tg("getMe", {})).username || ""; } catch {} }
@@ -1182,16 +1182,20 @@ export default async function handler(req, res) {
       case "finance": {
         const days = { week: 7, month: 31, quarter: 92, year: 366 }[req.query.period] || 31;
         const since = new Date(Date.now() - days * 864e5).toISOString();
-        const all = (await store.list("lead", { kind: "order" }, { order: "createdAt desc", limit: 5000, fields: "createdAt, status, total, cost, dest, tgId, cust, tg, delivery, test, items[]{brand, price, cost}" })).filter(l => l.status !== "cancelled" && !l.test); // тестовые заказы в деньги не идут
+        const all = (await store.list("lead", { kind: "order" }, { order: "createdAt desc", limit: 5000, fields: "createdAt, status, total, shipFee, cost, dest, tgId, cust, tg, test, items[]{brand, price, cost}" })).filter(l => l.status !== "cancelled" && !l.test); // тестовые заказы в деньги не идут
         const inPeriod = all.filter(l => l.createdAt >= since);
         const done = inPeriod.filter(l => ["paid", "bought", "received", "packed", "ready", "shipping", "inua", "np", "delivered"].includes(l.status));
         const mk = mergeConfig(pricingCfg).official.markup;
         // заработок: точный, если знаем закупку (вписана или из каталога), иначе — оценка по наценке направления
         const costOf = l => l.cost || ((l.items || []).length && (l.items || []).every(i => i.cost) ? l.items.reduce((a, i) => a + i.cost, 0) : 0);
-        const margin = l => costOf(l) ? (l.total || 0) - costOf(l) : (l.total || 0) - (l.total || 0) / (1 + (l.dest === "ua" || !l.dest ? mk.ua : l.dest === "eu" ? mk.eu : mk.dxb));
+        // доставка, которую доплатил клиент (shipFee), — деньги водителю/перевозчику, не наш заработок
+        const net = l => Math.max(0, (l.total || 0) - (l.shipFee || 0));
+        const margin = l => costOf(l) ? net(l) - costOf(l) : net(l) - net(l) / (1 + (l.dest === "ua" || !l.dest ? mk.ua : l.dest === "eu" ? mk.eu : mk.dxb));
         // клиенты: кто сколько заказал и сколько мы с него заработали
+        // клиент — тот, кто заказал (аккаунт Telegram или карточка менеджера); получатель посылки клиентом не считается
+        const cnames = {}; (await store.list("customer", {}, { limit: 3000, fields: "_id, offline, tg, profile, insta" })).forEach(c => { cnames[String(c.offline ? c._id : c.tg?.id)] = c.profile?.name || c.tg?.name || (c.insta ? "@" + c.insta : c.tg?.username ? "@" + c.tg.username : ""); });
         const cl = {}; done.forEach(l => { const k = String(l.tgId || l.cust || ""); if (!k) return; const x = cl[k] = cl[k] || { name: "", orders: 0, total: 0, profit: 0, est: 0, last: "" };
-          x.name = x.name || l.tg?.name || (l.tg?.username ? "@" + l.tg.username : "") || l.delivery?.name || "Клиент"; x.orders++; x.total += l.total || 0; x.profit += margin(l); if (!costOf(l)) x.est++; if (l.createdAt > x.last) x.last = l.createdAt; });
+          x.name = x.name || cnames[k] || l.tg?.name || (l.tg?.username ? "@" + l.tg.username : "") || "Клиент"; x.orders++; x.total += l.total || 0; x.profit += margin(l); if (!costOf(l)) x.est++; if (l.createdAt > x.last) x.last = l.createdAt; });
         const sum = (a, f) => Math.round(a.reduce((s, x) => s + (f(x) || 0), 0));
         const byBrand = {};
         done.forEach(l => (l.items || []).forEach(i => { if (i.brand) byBrand[i.brand] = (byBrand[i.brand] || 0) + (i.price || 0); }));
