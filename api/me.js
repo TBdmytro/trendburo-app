@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       if (selId) { if (!/^[a-z0-9]{10}$/.test(selId)) return send(res, 404, { error: "Добірку не знайдено" }); const d = await getStore().get("selection." + selId);
         if (!d) return send(res, 404, { error: "Добірку не знайдено" });
         if (d.exp && d.exp < Date.now()) return send(res, 410, { error: "Термін дії добірки минув", expired: true, by: d.byName || "Trend Büro" });
-        return send(res, 200, { ids: d.ids || [], items: d.items || [], title: d.title || "", note: d.note || "", by: d.byName || "Trend Büro", at: d.at, exp: d.exp || null }); }
+        return send(res, 200, { ids: d.ids || [], items: d.items || [], title: d.title || "", note: d.note || "", by: d.byName || "Trend Büro", byU: d.byU || "", at: d.at, exp: d.exp || null }); }
       // ссылка на один заказ: только этот заказ, получатель — имя и первая буква фамилии
       const view = new URL(req.url, "http://x").searchParams.get("order"), cinv = new URL(req.url, "http://x").searchParams.get("client");
       // ссылки для клиентов без приложения живут, пока заказ в пути, и ещё 3 дня после «Отримано»
@@ -83,7 +83,9 @@ export default async function handler(req, res) {
       const text = `❤️ <b>Вибір з добірки «${esc(d.title || "Добірка")}»</b>\n${lines.join("\n")}\n\nКлієнт: ${client}${body.msg ? "\nКоментар: " + esc(String(body.msg).slice(0, 300)) : ""}\nДобірка: створена ${esc(hm(d.at))} · ${esc(d.byName || "")}${d.note ? " · " + esc(d.note) : ""}\n<a href="https://trendburo.com.ua/?sel=${id}">Відкрити добірку</a>`;
       const one = items.length === 1 && /^https:\/\//.test(String(items[0].img || "")) && text.length < 1000 ? items[0].img : "";
       const body1 = one ? { photo: one, caption: text, parse_mode: "HTML" } : { text, parse_mode: "HTML", disable_web_page_preview: true };
-      let sent = 0; try { await tg(one ? "sendPhoto" : "sendMessage", { chat_id: Number(d.by), ...body1 }); sent++; } catch { try { await tg("sendMessage", { chat_id: Number(d.by), text, parse_mode: "HTML" }); sent++; } catch {} }
+      // выбор приходит тому, кто делал добірку (он ведёт клиента): бот магазина, а если он у сотрудника не запущен — админ-бот; копия — админам
+      const { adminBotToken } = await import("../lib/access.js"), aTok = adminBotToken();
+      let sent = 0; try { await tg(one ? "sendPhoto" : "sendMessage", { chat_id: Number(d.by), ...body1 }); sent++; } catch { try { await tg("sendMessage", { chat_id: Number(d.by), text, parse_mode: "HTML" }); sent++; } catch { if (aTok) try { await tg("sendMessage", { chat_id: Number(d.by), text, parse_mode: "HTML", disable_web_page_preview: true }, { token: aTok }); sent++; } catch {} } }
       try { const { toAdmins } = await import("../lib/access.js"); sent += await toAdmins(store, body1, undefined, "", one ? "sendPhoto" : "sendMessage"); } catch {}
       // выбрано несколько вещей — фото каждой отдельным сообщением (до 8), чтобы сразу видеть, что выбрали
       if (items.length > 1) for (const i of items.filter(i => /^https:\/\//.test(String(i.img || ""))).slice(0, 8)) {
@@ -172,7 +174,7 @@ export default async function handler(req, res) {
       const items = (Array.isArray(body.items) ? body.items : []).filter(i => i && ids.includes(String(i.id))).slice(0, 40).map(i => ({ id: String(i.id), g: ["w", "m", "u", "k"].includes(i.g) ? i.g : "", b: str(i.b, 40), n: str(i.n, 120), p: str(i.p, 24), img: /^https:\/\//.test(String(i.img || "")) ? String(i.img).slice(0, 600) : "" }));
       // добірка живёт 24 часа; просроченные удаляем при создании новой — в базе не копятся
       try { const old = (await store.list("selection", {}, { limit: 500 })).filter(x => (x.exp || (Date.parse(x.at) + 864e5)) < now).map(x => x._id); if (old.length) await store.delMany(old); } catch {}
-      await store.put({ _id: "selection." + id, _type: "selection", ids, items, title: str(body.title, 60), note: str(body.note, 300), by: String(user.id), byName: c.profile?.name || user.name || "Trend Büro", at: new Date(now).toISOString(), exp: now + 864e5 });
+      await store.put({ _id: "selection." + id, _type: "selection", ids, items, title: str(body.title, 60), note: str(body.note, 300), by: String(user.id), byName: c.profile?.name || user.name || "Trend Büro", byU: /^[A-Za-z0-9_]{4,32}$/.test(String(user.username || "")) ? user.username : "", at: new Date(now).toISOString(), exp: now + 864e5 });
       if (!BOT && process.env.TELEGRAM_BOT_TOKEN) { try { BOT = (await tg("getMe", {})).username || null; } catch {} }
       const site = "https://trendburo.com.ua";
       return send(res, 200, { id, link: BOT ? `https://t.me/${BOT}?startapp=sel_${id}` : `${site}/?sel=${id}`, web: `${site}/?sel=${id}` });

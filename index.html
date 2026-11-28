@@ -3341,7 +3341,8 @@ const SX=[[/сумк|сумоч/,/\bbags?\b|tote|pouch|clutch|backpack|crossbody
  [/черн/,/\bblack\b|noir/,"col"],[/бел/,/\bwhite\b|blanc/,"col"],[/беж/,/\bbeige\b|sand|nude|camel/,"col"],[/коричн/,/\bbrown\b|cognac|chocolate|camel/,"col"],[/^сер(ый|ая|ое|ые|ого|ую|ой|ых)|^сир(ий|а|е|и|ого|у)$/,/\bgrey\b|gray/,"col"],[/зелен/,/\bgreen\b|olive|khaki/,"col"],[/розов|рожев/,/\bpink\b|rose/,"col"],[/син|голуб|блакит/,/\bblue\b|navy/,"col"],[/красн|червон|бордо/,/\bred\b|burgundy/,"col"],[/молоч|крем/,/ivory|cream|ecru|\bwhite\b/,"col"],[/золот/,/\bgold\b/,"col"],[/серебр|сриб/,/\bsilver\b/,"col"],[/желт|жовт/,/\byellow\b/,"col"],[/оранж|помаранч/,/\borange\b/,"col"],[/фиолет|фиалк|бузков|лилов|сирен/,/\bpurple\b|lilac|violet/,"col"],[/разноцвет|кольоров|багатокол/,/\bmulticolor\b/,"col"],
  [/хардв/,/hardwear/],[/^кнот|^нот$|^ноут/,/\bknot\b/],[/^лок$/,/\block\b/],[/перет+и/,/peretti/],[/^эльз|^ельз/,/elsa|peretti/],[/^бон$|бон ?каф|боун/,/bone/],[/ретерн|ретёрн|ритерн/,/return to tiffany/],[/^т ?1$|^т ?уан|^т1/,/\bt ?(1|one)\b/],[/серпент/,/serpenti/],[/альгамбр|альхамбр|алхамбр/,/alhambra/],[/клэш|клеш|клаш/,/\bclash\b/],
  [/кож/,/leather|calfskin|lambskin/],[/замш/,/suede/],[/кашемир/,/cashmere/],[/шелк/,/silk/],[/^лен$|льнян/,/linen/],[/шерст/,/wool/],[/хлопок|хлопк/,/cotton/],[/джинсов/,/denim/]];
-const QSTOP=/^(для|и|в|на|с|со|из|по|до|от|под|за|мне|хочу|ищу|нужн\w*|какие|какой|есть|the|for|and|a|an|in|of|with|under|from|купить|цена|евро|эвро|euro|eur|€|грн|бюджет\w*|дороже|дешевле|не|тыс\w*|к)$/;
+/* слова-«вода» не должны отсекать всё: «товары до 500 евро», «подарок для девушки до 300», «что-нибудь до 500», «покажи сумки» */
+const QSTOP=/^(для|и|в|на|с|со|из|по|до|от|под|за|мне|хочу|ищу|нужн\w*|какие|какой|есть|the|for|and|a|an|in|of|with|under|from|купить|цена|евро|эвро|euro|eur|€|грн|бюджет\w*|дороже|дешевле|не|тыс\w*|к|товар\w*|вещ\w*|вещь|подар\w*|подарун\w*|gift\w*|что|що|чтото|что-то|что-нибудь|щось|нибудь|покажи|покажіть|найди|найти|знайди|все|всё|усі|любой|любые|недорог\w*|красив\w*|стильн\w*|модн\w*|девушк\w*|дівчин\w*|женщин\w*|жінк\w*|мужчин\w*|чоловік\w*|парн\w*|хлопц\w*|мам\w*|жен[аеуы]|муж[ау]?|нее|неё|неї|него|нього|ней|ним)$/;
 const QM_MEMO={};
 // матчер запроса: каждое слово должно найтись — в бренде (в т.ч. по-русски/украински), в названии (прямо или через перевод), в категории/подразделе/цвете
 const RUK={lv:"louisvuitton",bv:"bottegaveneta",ysl:"saintlaurent",lp:"loropiana",bc:"brunellocucinelli"};
@@ -3355,7 +3356,7 @@ function brandWords(){if(BWM&&BWN===BRANDS.length)return BWM;BWN=BRANDS.length;c
   return BWM=out}
 function qMatcher(raw){const key=raw;if(QM_MEMO[key])return QM_MEMO[key];
   const q=ruQ(raw);let toks=q.split(/[\s,.;:!?/]+/).filter(t=>t&&!QSTOP.test(t)&&!/^\d/.test(t)&&t.length>1);
-  const g=/женск/.test(q)?"w":/мужск/.test(q)?"m":/детск/.test(q)?"k":"";
+  const g=/женск|девушк|дівчин|женщин|жінк|для не[её]|для неї|для жены|для мам/.test(q)?"w":/мужск|мужчин|чоловік|парн|хлопц|для него|для нього|для мужа/.test(q)?"m":/детск/.test(q)?"k":"";
   const BW=brandWords(),btk=[],used=new Set();
   for(let i=0;i<toks.length;i++){if(used.has(i))continue;const ab=qComp(toks[i]);if(RUK[ab]){used.add(i);btk.push({t:ab,en:[],cat:[],col:false,bk:[ab,RUK[ab]],brand:true});continue}
     for(let n=Math.min(3,toks.length-i);n>=1;n--){const v=qComp(toks.slice(i,i+n).join(""));if(v.length<4)continue;
@@ -3575,7 +3576,9 @@ function runSearch(raw){const q=norm(raw.trim());const box=$("#sres"),body=$("#h
   const SF=smartParse(raw),szSt=p=>{if(!SF.size)return "";const z=(p.sizes||[]).find(z=>String(z.size).toUpperCase()===SF.size);return z?z.status||"ask":"none"};
   // бюджет (владелец, 21.11): «сумка до 1000» — человек готов потратить 1000, показываем 600–1000 (до 1500 — от 60%, дороже — от 70%: «до 5000» → 3500–5000),
   // сначала ближе к бюджету; если в таком коридоре мало вещей — расширяем вниз. «от 2000» — от 2000 и дороже, сначала ближе к 2000; «1000–2000 €» — ровно так
-  const pool=P.filter(p=>(QX.toks.length||QX.g?QX.test(p):norm(p.brand+" "+p.name).includes(q))&&(!SF.size||!["none","out"].includes(szSt(p)))&&p.price>0);
+  /* в запросе только цена / категория / цвет / «для неё» («до 500 евро», «подарок до 300») — берём всю витрину под эти условия */
+  const onlySF=!QX.toks.length&&!QX.g&&SF.any,sfOk=p=>(!SF.cats.length||SF.cats.includes(p.cat))&&(!SF.g||p.g===SF.g||p.g==="u");
+  const pool=P.filter(p=>(QX.toks.length||QX.g?QX.test(p):onlySF?sfOk(p):norm(p.brand+" "+p.name).includes(q))&&(!SF.size||!["none","out"].includes(szSt(p)))&&p.price>0);
   let lo=SF.min||0,hi=SF.max||0;if(hi&&!SF.min&&!SF.rng){const band=x=>pool.filter(p=>p.price<=hi&&p.price>=x).length;lo=Math.round(hi*(hi>1500?.7:.6));if(band(lo)<6)lo=Math.round(hi*.4);if(band(lo)<6)lo=0}
   const HS=hotIds(),RK={online:0,boutique:1,preorder:2,ask:3,unknown:3},all=twinOne(pool.filter(p=>(!hi||p.price<=hi)&&(!lo||p.price>=lo))
     .sort((a,b)=>(SF.size?(RK[szSt(a)]??4)-(RK[szSt(b)]??4):0)||(hi&&!SF.min?b.price-a.price:SF.min&&!hi?a.price-b.price:0)||HS.has(b.id)-HS.has(a.id))),items=all.slice(0,8); // в поиске ходовая коллекция — первой
@@ -5495,7 +5498,10 @@ function selSheet(){const items=[...SEL].map(findItem).filter(Boolean);
 async function selOpenFromLink(){let id="";try{const sp=(TGW&&TGW.initDataUnsafe&&TGW.initDataUnsafe.start_param)||new URLSearchParams(location.search).get("tgWebAppStartParam")||"";if(/^sel_[a-z0-9]{10}$/.test(sp))id=sp.slice(4)}catch(e){}
   if(!id){const q=new URLSearchParams(location.search).get("sel");if(/^[a-z0-9]{10}$/.test(q||""))id=q}
   if(!id)return;let d=null,st=0;try{const r=await fetch("/api/me?sel="+id,{cache:"no-store"});st=r.status;d=await r.json().catch(()=>null)}catch(e){}
-  const mgr=`<a class="btn" style="text-decoration:none" href="https://t.me/trendburomanager" target="_blank" rel="noopener">Написати менеджеру</a>`;
+  /* «Написати менеджеру» из добірки — тому, кто её зробив (він веде клієнта), а не на загальний акаунт */
+  const mu=d&&/^[A-Za-z0-9_]{4,32}$/.test(d.byU||"")?"https://t.me/"+d.byU:"https://t.me/trendburomanager";
+  if(d&&d.byU){try{const mc=CONTACTS.find(c=>/менеджер/i.test(c.label));if(mc){mc.url=mu;mc.handle="@"+d.byU}const m=document.getElementById("mchat");if(m)m.href=mu}catch(e){}}
+  const mgr=`<a class="btn" style="text-decoration:none" href="${mu}" target="_blank" rel="noopener">Написати менеджеру</a>`;
   if(st===410||(d&&d.expired))return push("Добірка",`<div class="selx"><div class="k">Добірка Trend Büro</div><h1>Термін дії добірки минув</h1><p>Посилання діє 24 години. Напишіть менеджеру — він надішле свіжу добірку.</p>${mgr}</div>`);
   if(!d||st!==200)return toast("Добірку не знайдено");
   const snap=new Map((d.items||[]).map(i=>[i.id,i]));
